@@ -39,7 +39,22 @@ plt.rcParams["font.sans-serif"] = [
 plt.rcParams["axes.unicode_minus"] = False
 
 # Paths
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Resolve the biztrends.TW repo root regardless of whether this script is run from
+# biztrends.TW/scripts/ (2 levels up) or biztrends.TW/skills/*/scripts/ (4 levels up).
+def _find_repo_root(start: str) -> str:
+    """Walk upward until we find a directory that contains both 'data' and 'output'."""
+    current = os.path.abspath(start)
+    for _ in range(6):  # Search at most 6 levels up
+        if os.path.isdir(os.path.join(current, "data")) and os.path.isdir(os.path.join(current, "output")):
+            return current
+        parent = os.path.dirname(current)
+        if parent == current:  # Reached filesystem root
+            break
+        current = parent
+    # Fallback: 2 levels up from script (original behaviour)
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+ROOT = _find_repo_root(os.path.dirname(os.path.abspath(__file__)))
 RAW_PERFORMANCE_CSV = os.path.join(ROOT, "data", "Python-Actions.GoodInfo.Analyzer", "raw_performance1.csv")
 CYCLE_WEIGHTS_CSV = os.path.join(ROOT, "data", "tw_major_company_cycle_weights.csv")
 CYCLE_MAPPING_CSV = os.path.join(ROOT, "data", "tw_company_cycle_mapping.csv")
