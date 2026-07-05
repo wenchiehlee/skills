@@ -1,54 +1,45 @@
 # Skills Registry
 
-This repository is a shared registry for reusable skills collected from multiple
-repositories. Its goal is to make skills easy to discover, version, reuse, and
-update across projects without copying undocumented or stale skill definitions.
+本儲存庫是共享的技能登錄庫，用來集中管理從多個儲存庫收集而來的可重用技能。目標是讓技能更容易被發現、版本化、重用與更新，避免各專案複製到缺少文件或已過期的技能定義。
 
-## Goals
+## 目標
 
-- Collect reusable skills from different repositories in one place.
-- Preserve clear ownership, source, and version information for every skill.
-- Make outdated skill copies detectable in downstream repositories.
-- Support automatic updates by fetching the latest approved skill version from
-  this repository.
-- Deploy skills according to the rules of each target LLM.
-- Keep each skill self-contained so it can be reused without depending on the
-  original source repository.
+- 將不同儲存庫中的可重用技能集中收集到同一個位置。
+- 為每個技能保留清楚的擁有者、來源與版本資訊。
+- 讓下游儲存庫能夠偵測本地技能是否已過期。
+- 支援從本儲存庫自動取得最新核准版本並更新技能。
+- 依照各目標 LLM 的規則部署技能。
+- 讓每個技能都能自包含，重用時不需要依賴原始來源儲存庫。
 
-## Skill Versioning
+## 技能版本管理
 
-Every skill in this registry must be versioned. Versioning allows consumers to
-compare their local copy with the registry and detect when a skill is outdated.
+本登錄庫中的每個技能都必須版本化。版本資訊讓使用者可以比較本地副本與登錄庫版本，並判斷技能是否已過期。
 
-Recommended version format:
+建議版本格式：
 
 ```text
 MAJOR.MINOR.PATCH
 ```
 
-Version changes should follow these rules:
+版本變更應遵循以下規則：
 
-- `MAJOR`: Breaking changes to behavior, required inputs, file structure, or
-  external assumptions.
-- `MINOR`: Backward-compatible features, new workflows, or expanded coverage.
-- `PATCH`: Fixes, wording improvements, metadata corrections, or small internal
-  updates that do not change expected behavior.
+- `MAJOR`：行為、必要輸入、檔案結構或外部假設有破壞性變更。
+- `MINOR`：向後相容的新功能、新工作流程或涵蓋範圍擴充。
+- `PATCH`：修正、文字改善、metadata 校正，或不改變預期行為的小型內部更新。
 
-Each skill should include metadata that identifies:
+每個技能都應包含可識別以下資訊的 metadata：
 
-- Skill name
-- Current version
-- Source repository or origin
-- Maintainer or owning team
-- Short description
-- Last updated date
-- Compatibility notes, if any
+- 技能名稱
+- 目前版本
+- 來源儲存庫或原始出處
+- 維護者或負責團隊
+- 簡短描述
+- 最後更新日期
+- 相容性備註，如適用
 
-## Suggested Skill Layout
+## 建議技能目錄結構
 
-Skills should be grouped by target LLM. Each LLM has its own sub-folder under
-`skills/`, and the skills in that folder must follow that LLM's deployment
-rules.
+技能應依目標 LLM 分組。每個 LLM 在 `skills/` 底下都有自己的子資料夾，該資料夾中的技能必須遵循該 LLM 的部署規則。
 
 ```text
 skills/
@@ -61,19 +52,18 @@ skills/
       scripts/
 ```
 
-Minimum required files:
+最低必要檔案：
 
-- `SKILL.md`: The main reusable skill instructions.
-- `metadata.json`: Machine-readable metadata used for version checks and update
-  automation.
+- `SKILL.md`：主要的可重用技能指令。
+- `metadata.json`：供版本檢查與更新自動化使用的機器可讀 metadata。
 
-Optional files:
+選用檔案：
 
-- `README.md`: Human-readable usage notes for the skill.
-- `references/`: Supporting documentation, examples, or templates.
-- `scripts/`: Helper scripts used by the skill.
+- `README.md`：供人閱讀的技能使用說明。
+- `references/`：支援文件、範例或範本。
+- `scripts/`：技能使用的輔助腳本。
 
-Example `metadata.json`:
+`metadata.json` 範例：
 
 ```json
 {
@@ -89,13 +79,11 @@ Example `metadata.json`:
 }
 ```
 
-## LLM Deployment Rules
+## LLM 部署規則
 
-Deployment is organized by LLM-specific folders. A skill should be deployed from
-the folder that matches the target LLM runtime, because different LLMs may expect
-different filenames, metadata fields, packaging rules, or instruction formats.
+部署依 LLM 專屬資料夾組織。技能應從符合目標 LLM runtime 的資料夾部署，因為不同 LLM 可能期待不同的檔名、metadata 欄位、封裝規則或指令格式。
 
-For example:
+例如：
 
 ```text
 skills/
@@ -107,74 +95,64 @@ skills/
     skill-a/
 ```
 
-The same conceptual skill may exist in multiple LLM folders, but each copy must
-carry its own version and metadata. If an LLM-specific version diverges from the
-shared behavior, update its version independently and document the compatibility
-notes in `metadata.json`.
+同一個概念上的技能可以存在於多個 LLM 資料夾中，但每份副本都必須有自己的版本與 metadata。如果某個 LLM 專屬版本與共用行為產生差異，應獨立更新該版本號，並在 `metadata.json` 中記錄相容性備註。
 
-Deployment tooling should:
+部署工具應執行：
 
-1. Select the target LLM folder.
-2. Validate that each skill follows that LLM's required structure.
-3. Compare versions within the selected LLM folder.
-4. Install or update only the skills compatible with that target LLM.
+1. 選擇目標 LLM 資料夾。
+2. 驗證每個技能都符合該 LLM 要求的結構。
+3. 在選定的 LLM 資料夾內比較版本。
+4. 只安裝或更新與該目標 LLM 相容的技能。
 
-## Update Model
+## 更新模型
 
-Downstream repositories should treat this repository as the source of truth for
-shared skills.
+下游儲存庫應將本儲存庫視為共享技能的唯一可信來源。
 
-A consumer can check for updates by comparing the local skill metadata with the
-metadata in this registry:
+使用者可以透過比較本地技能 metadata 與本登錄庫中的 metadata 來檢查更新：
 
-1. Read the local skill name and version.
-2. Fetch the matching skill metadata from this repository.
-3. Compare versions.
-4. If the registry version is newer, replace or merge the local skill from this
-   repository.
-5. Record the updated version in the consumer repository.
+1. 讀取本地技能名稱與版本。
+2. 從本儲存庫取得對應技能的 metadata。
+3. 比較版本。
+4. 如果登錄庫版本較新，從本儲存庫取代或合併本地技能。
+5. 在使用端儲存庫記錄更新後的版本。
 
-This makes stale skills visible and gives projects a consistent way to update to
-the latest approved skill definition.
+這讓過期技能更容易被發現，也讓各專案能用一致方式更新到最新核准的技能定義。
 
-## Collection Rules
+## 收集規則
 
-When adding or updating a skill:
+新增或更新技能時：
 
-1. Put the skill in a dedicated directory under the correct LLM folder.
-2. Include `SKILL.md` and `metadata.json`.
-3. Use semantic versioning.
-4. Preserve the original source or origin in metadata.
-5. Keep the skill self-contained.
-6. Follow the deployment rules for the target LLM folder.
-7. Document breaking changes by increasing the `MAJOR` version.
-8. Avoid unrelated formatting churn when importing a skill from another
-   repository.
-9. Verify that the skill can be read and reused without private repository
-   context.
+1. 將技能放在正確 LLM 資料夾底下的專屬目錄。
+2. 包含 `SKILL.md` 與 `metadata.json`。
+3. 使用語意化版本管理。
+4. 在 metadata 中保留原始來源或出處。
+5. 保持技能自包含。
+6. 遵循目標 LLM 資料夾的部署規則。
+7. 以增加 `MAJOR` 版本記錄破壞性變更。
+8. 從其他儲存庫匯入技能時，避免不相關的格式調整。
+9. 確認技能不需要私有儲存庫脈絡也能被閱讀與重用。
 
-## Future Automation
+## 未來自動化
 
-This repository is intended to support tooling such as:
+本儲存庫預期支援以下工具：
 
-- A version checker that reports outdated skills in a consumer repository.
-- An updater that fetches the newest skill version from this registry.
-- A validation command that checks required files and metadata fields.
-- A changelog generator that summarizes skill updates by version.
+- 版本檢查器：回報使用端儲存庫中已過期的技能。
+- 更新器：從本登錄庫取得最新技能版本。
+- 驗證指令：檢查必要檔案與 metadata 欄位。
+- changelog 產生器：依版本彙整技能更新內容。
 
-The first automation target should be a simple command that answers:
+第一個自動化目標應是一個能回答以下問題的簡單指令：
 
 ```text
-Which local skills are outdated compared with this registry?
+哪些本地技能相較於本登錄庫已經過期？
 ```
 
-The second target should be:
+第二個目標應是：
 
 ```text
-Update selected local skills to the newest compatible version.
+將選定的本地技能更新到最新相容版本。
 ```
 
-## Status
+## 狀態
 
-This is the first version of the registry README. The repository structure,
-metadata schema, and automation commands may evolve as more skills are collected.
+這是登錄庫 README 的第一版。隨著更多技能被收集，儲存庫結構、metadata schema 與自動化指令可能會持續演進。
