@@ -1,0 +1,8 @@
+{
+  "name": "Skill Revenue Predict",
+  "description": "營收預測與 10-Model 評估 SOP",
+  "version": "1.0.0",
+  "author": "wenchiehlee",
+  "license": "MIT",
+  "tags": ["revenue", "forecast", "10-model", "time-series"]
+}
