@@ -55,6 +55,18 @@ SRT 檔案開頭含 `[METADATA]` 區塊（Source、Language），之後為 `(MM:
 
 同目錄下前一季度的 `_ir.md` / `_FIN.srt` 即為前次法說會資料，若存在應一併載入，用於「與前次財測比較」。
 
+### 3.5 輔助腳本（scripts/）
+
+分析前應優先執行以下腳本（於 InvestorConference repo 根目錄執行）：
+
+| 腳本 | 用途 | 時機 |
+| :--- | :--- | :--- |
+| `scripts/find_sources.py {StockID} [Year q{N}]` | 依優先序解析資料來源、列出缺檔與前一季檔案 | **每次分析的第一步** |
+| `scripts/lint_sources.py {StockID} [Year q{N}] [--issue-draft out.md]` | 機械性資料完整性檢查（SRT 時間戳、QA 引用、IR OCR 空頁、音檔長度交叉比對），可產出 Issue 表格草稿 | 分析前執行；發現問題依第 7 節回報 |
+| `scripts/check_digest_freshness.py [--srt-only]` | 掃描全庫，列出「有資料但尚未產出 digest」的季度 | 批次補做規劃時 |
+
+`lint_sources.py` 回傳非零 exit code 代表有 ERROR 級問題；`--all` 可全庫掃描。
+
 ---
 
 ## 4. 回覆語言
@@ -217,7 +229,8 @@ SRT 檔案開頭含 `[METADATA]` 區塊（Source、Language），之後為 `(MM:
 
 ### 7.2 回報流程
 
-1.  **先查重**：`gh issue list -R wenchiehlee-money/InvestorConference --search "{StockID} {Year} q{N}"`，若已有相同檔案的 issue，改用 `gh issue comment` 補充，不開重複 issue。
+0.  **先跑自動檢查**：`python scripts/lint_sources.py {StockID} {Year} q{N} --issue-draft <暫存檔>`，機械性問題（無效時間戳、OCR 空頁、字幕長度異常）自動產出表格草稿；LLM 再補上語意類發現（人名、術語、數字、幻覺句）。
+1.  **再查重**：`gh issue list -R wenchiehlee-money/InvestorConference --search "{StockID} {Year} q{N}"`，若已有相同檔案的 issue，改用 `gh issue comment` 補充，不開重複 issue。
 2.  **一季一 issue**（或同公司多季合併為一個 issue），標題格式：
     `[data-quality] {StockID} {公司名}: {受影響檔案摘要} ({Year} Q{N})`
 3.  **內文格式**：每個問題一列，必須包含 **檔案路徑、位置（SRT 時間戳或簡報頁碼）、問題描述、建議修正**。範例：

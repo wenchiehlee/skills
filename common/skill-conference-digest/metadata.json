@@ -1,7 +1,7 @@
 {
   "name": "Skill Conference Digest",
   "description": "法說會重點萃取與分析 SOP（台灣股市）— 從法說會字幕(SRT)與簡報(Markdown)萃取影響股價的重要資訊",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee-money/InvestorConference",
