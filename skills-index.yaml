@@ -1,0 +1,57 @@
+# 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
+generated_at: '2026-07-07'
+skills:
+- name: skill-all-models-benchmark
+  group: common
+  path: common/skill-all-models-benchmark
+  version: 1.0.0
+  description: 多模型與分析師共識效能評估標準作業程序。
+  maintainer: WJLEE
+  source: biztrends.TW/Skills/skill-all-models-benchmark.md
+  updated_at: '2026-07-05'
+  revised_at: '2026-07-05'
+- name: skill-conference-digest
+  group: common
+  path: common/skill-conference-digest
+  version: 1.2.0
+  description: 法說會重點萃取與分析 SOP（台灣股市）— 從法說會字幕(SRT)與簡報(Markdown)萃取影響股價的重要資訊
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee-money/InvestorConference
+  updated_at: '2026-07-05'
+  revised_at: '2026-07-05'
+- name: skill-download-logo
+  group: common
+  path: common/skill-download-logo
+  version: 1.0.0
+  description: 指定台灣股票代碼或美股概念股 Ticker，自動下載高解析度公司官方 Logo PNG，並限制在固定大小。
+  maintainer: wenchiehlee
+  source: ''
+  updated_at: '2026-07-07'
+  revised_at: '2026-07-05'
+- name: skill-mac-mini-ocr
+  group: common
+  path: common/skill-mac-mini-ocr
+  version: 1.0.1
+  description: 使用自建在 Mac-mini 上的 OCR API 服務（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee/FamilyHealthyCheck
+  updated_at: '2026-07-07'
+  revised_at: '2026-07-07'
+- name: skill-revenue-expense-profit-predict
+  group: common
+  path: common/skill-revenue-expense-profit-predict
+  version: 1.0.0
+  description: 季度損益三線（營業收入 / 總支出 / 營業利益）底部加總預測 SOP
+  maintainer: ''
+  source: ''
+  updated_at: ''
+  revised_at: '2026-07-05'
+- name: skill-revenue-predict
+  group: common
+  path: common/skill-revenue-predict
+  version: 1.0.0
+  description: 營收預測與 10-Model 評估 SOP
+  maintainer: ''
+  source: ''
+  updated_at: ''
+  revised_at: '2026-07-05'

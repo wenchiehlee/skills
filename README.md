@@ -11,6 +11,23 @@
 - 依照各目標 LLM 的規則部署技能。
 - 讓每個技能都能自包含，重用時不需要依賴原始來源儲存庫。
 
+## 目前收錄的技能
+
+下表由 `scripts/generate_skills_index.py` 自動產生（每日透過 GitHub Actions 更新），資料同步於機器可讀的 [`skills-index.yaml`](skills-index.yaml)。「修訂日期」為該技能資料夾在 git 中的最後 commit 日期。
+
+<!-- SKILLS-TABLE:START -->
+| 技能 | 群組 | 版本 | 說明 | 修訂日期 |
+| :--- | :--- | :--- | :--- | :--- |
+| [skill-all-models-benchmark](common/skill-all-models-benchmark) | common | 1.0.0 | 多模型與分析師共識效能評估標準作業程序。 | 2026-07-05 |
+| [skill-conference-digest](common/skill-conference-digest) | common | 1.2.0 | 法說會重點萃取與分析 SOP（台灣股市）— 從法說會字幕(SRT)與簡報(Markdown)萃取影響股價的重要資訊 | 2026-07-05 |
+| [skill-download-logo](common/skill-download-logo) | common | 1.0.0 | 指定台灣股票代碼或美股概念股 Ticker，自動下載高解析度公司官方 Logo PNG，並限制在固定大小。 | 2026-07-05 |
+| [skill-mac-mini-ocr](common/skill-mac-mini-ocr) | common | 1.0.1 | 使用自建在 Mac-mini 上的 OCR API 服務（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-07-07 |
+| [skill-revenue-expense-profit-predict](common/skill-revenue-expense-profit-predict) | common | 1.0.0 | 季度損益三線（營業收入 / 總支出 / 營業利益）底部加總預測 SOP | 2026-07-05 |
+| [skill-revenue-predict](common/skill-revenue-predict) | common | 1.0.0 | 營收預測與 10-Model 評估 SOP | 2026-07-05 |
+
+最後產生日期：2026-07-07
+<!-- SKILLS-TABLE:END -->
+
 ## 技能版本管理
 
 本登錄庫中的每個技能都必須版本化。版本資訊讓使用者可以比較本地副本與登錄庫版本，並判斷技能是否已過期。

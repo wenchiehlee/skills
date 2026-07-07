@@ -1,0 +1,51 @@
+name: Update skills index
+
+on:
+  schedule:
+    - cron: "0 21 * * *" # 每日 05:00（Asia/Taipei, UTC+8）
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "common/**"
+      - "codex/**"
+      - "claude/**"
+      - "gemini/**"
+      - "scripts/generate_skills_index.py"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: skills-index
+  cancel-in-progress: false
+
+jobs:
+  update-index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 需要完整歷史以取得各技能的最後 commit 日期
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Generate skills index
+        run: python scripts/generate_skills_index.py
+
+      - name: Commit and push if changed
+        run: |
+          if ! git diff --quiet -- skills-index.yaml README.md; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add skills-index.yaml README.md
+            git commit -m "chore: update skills index [skip ci]"
+            git push
+          else
+            echo "No changes to commit."
+          fi
