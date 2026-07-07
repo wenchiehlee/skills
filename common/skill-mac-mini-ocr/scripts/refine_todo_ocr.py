@@ -108,8 +108,9 @@ def refine(md_path: Path, pdf_path: Path | None, pages: set[int] | None, dpi: in
                 )
                 md_text += f"\n\n## 第 {page} 頁（OCR 補轉錄 {today}）\n\n{ocr_md}\n"
             done += 1
+            # 每頁完成即存檔，中斷後重跑只會處理剩餘的 TODO:OCR 頁面
+            md_path.write_text(md_text, encoding="utf-8", newline="\n")
 
-    md_path.write_text(md_text, encoding="utf-8", newline="\n")
     print(f"[refine] 完成：補轉錄 {done} 頁，已更新 {md_path}")
     return done
 
