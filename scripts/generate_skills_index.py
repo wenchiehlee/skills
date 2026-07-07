@@ -101,7 +101,8 @@ def write_index(skills: list[dict]) -> None:
     }
     header = "# 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。\n"
     body = yaml.safe_dump(index, allow_unicode=True, sort_keys=False, default_flow_style=False)
-    INDEX_FILE.write_text(header + body, encoding="utf-8")
+    # 固定使用 LF，避免 Windows 本機與 CI (Ubuntu) 交替執行造成整檔換行字元 churn
+    INDEX_FILE.write_text(header + body, encoding="utf-8", newline="\n")
     print(f"[index] 已寫入 {INDEX_FILE.name}（{len(skills)} 個技能）")
 
 
@@ -132,7 +133,7 @@ def update_readme(skills: list[dict]) -> None:
         f"最後產生日期：{generated}\n"
         f"{TABLE_END}"
     )
-    README_FILE.write_text(before + new_section + after, encoding="utf-8")
+    README_FILE.write_text(before + new_section + after, encoding="utf-8", newline="\n")
     print("[index] 已更新 README.md 技能總表")
 
 
