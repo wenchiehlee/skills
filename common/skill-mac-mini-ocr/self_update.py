@@ -17,9 +17,18 @@ self_update.py — mac-mini-ocr 技能自我更新工具
 - 僅在遠端版本嚴格大於本地版本時才會覆寫檔案。
 """
 import json
+import platform
 import sys
 import urllib.request
 from pathlib import Path
+
+# Fix Windows console encoding for Chinese characters
+if platform.system() == "Windows":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 REMOTE_REPO = "wenchiehlee/skills"
 SKILL_SUBPATH = "common/skill-mac-mini-ocr"
