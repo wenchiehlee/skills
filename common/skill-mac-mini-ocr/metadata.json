@@ -1,7 +1,7 @@
 {
   "name": "mac-mini-ocr",
   "description": "使用自建在 Mac-mini 上的 OCR API 服務（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee/FamilyHealthyCheck",
@@ -11,7 +11,7 @@
   "tags": ["ocr", "pdf", "image", "markdown", "mac-mini", "tailscale", "api-client"],
   "compatibility": {
     "python": ">=3.10",
-    "requires": ["requests", "python-dotenv"],
+    "requires": ["requests", "python-dotenv", "pypdf"],
     "env": ["OCR_API_URL", "OCR_API_KEY"]
   }
 }

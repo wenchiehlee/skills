@@ -39,6 +39,8 @@ FILES = [
     "metadata.json",
     "self_update.py",
     "scripts/ocr_client.py",
+    "scripts/pdf_fallback.py",
+    "scripts/refine_todo_ocr.py",
 ]
 
 
