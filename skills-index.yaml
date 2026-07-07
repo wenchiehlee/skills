@@ -9,7 +9,7 @@ skills:
   maintainer: WJLEE
   source: biztrends.TW/Skills/skill-all-models-benchmark.md
   updated_at: '2026-07-05'
-  revised_at: '2026-07-05'
+  revised_at: '2026-07-07'
 - name: skill-conference-digest
   group: common
   path: common/skill-conference-digest
@@ -27,7 +27,7 @@ skills:
   maintainer: wenchiehlee
   source: ''
   updated_at: '2026-07-07'
-  revised_at: '2026-07-05'
+  revised_at: '2026-07-07'
 - name: skill-mac-mini-ocr
   group: common
   path: common/skill-mac-mini-ocr
