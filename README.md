@@ -24,6 +24,11 @@
 | [skill-mac-mini-ocr](common/skill-mac-mini-ocr) | common | 1.1.1 | 使用自建在 Mac-mini 上的 OCR API 服務（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-07-07 |
 | [skill-revenue-expense-profit-predict](common/skill-revenue-expense-profit-predict) | common | 1.0.0 | 季度損益三線（營業收入 / 總支出 / 營業利益）底部加總預測 SOP | 2026-07-05 |
 | [skill-revenue-predict](common/skill-revenue-predict) | common | 1.0.0 | 營收預測與 10-Model 評估 SOP | 2026-07-05 |
+| [skill-taiex-compare](common/skill-taiex-compare) | common | 1.0.0 | 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異 | 2026-07-07 |
+| [skill-taiex-monitor](common/skill-taiex-monitor) | common | 1.0.0 | 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板 | 2026-07-07 |
+| [skill-taiex-report](common/skill-taiex-report) | common | 1.0.0 | 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖） | 2026-07-07 |
+| [skill-taiex-sync](common/skill-taiex-sync) | common | 1.0.0 | 更新本地資料目錄索引，生成批次處理所需的投資標的清單 | 2026-07-07 |
+| [skill-taiex-viz](common/skill-taiex-viz) | common | 1.0.0 | 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖 | 2026-07-07 |
 
 最後產生日期：2026-07-07
 <!-- SKILLS-TABLE:END -->

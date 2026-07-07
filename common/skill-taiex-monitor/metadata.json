@@ -1,0 +1,8 @@
+{
+  "name": "skill-taiex-monitor",
+  "description": "財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板",
+  "version": "1.0.0",
+  "maintainer": "wenchiehlee",
+  "source": "TAIEX.TW",
+  "updated_at": "2026-07-07"
+}

@@ -55,3 +55,48 @@ skills:
   source: ''
   updated_at: ''
   revised_at: '2026-07-05'
+- name: skill-taiex-compare
+  group: common
+  path: common/skill-taiex-compare
+  version: 1.0.0
+  description: 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異
+  maintainer: wenchiehlee
+  source: TAIEX.TW
+  updated_at: '2026-07-07'
+  revised_at: '2026-07-07'
+- name: skill-taiex-monitor
+  group: common
+  path: common/skill-taiex-monitor
+  version: 1.0.0
+  description: 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板
+  maintainer: wenchiehlee
+  source: TAIEX.TW
+  updated_at: '2026-07-07'
+  revised_at: '2026-07-07'
+- name: skill-taiex-report
+  group: common
+  path: common/skill-taiex-report
+  version: 1.0.0
+  description: 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖）
+  maintainer: wenchiehlee
+  source: TAIEX.TW
+  updated_at: '2026-07-07'
+  revised_at: '2026-07-07'
+- name: skill-taiex-sync
+  group: common
+  path: common/skill-taiex-sync
+  version: 1.0.0
+  description: 更新本地資料目錄索引，生成批次處理所需的投資標的清單
+  maintainer: wenchiehlee
+  source: TAIEX.TW
+  updated_at: '2026-07-07'
+  revised_at: '2026-07-07'
+- name: skill-taiex-viz
+  group: common
+  path: common/skill-taiex-viz
+  version: 1.0.0
+  description: 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖
+  maintainer: wenchiehlee
+  source: TAIEX.TW
+  updated_at: '2026-07-07'
+  revised_at: '2026-07-07'

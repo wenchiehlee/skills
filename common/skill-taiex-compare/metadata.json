@@ -1,0 +1,8 @@
+{
+  "name": "skill-taiex-compare",
+  "description": "財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異",
+  "version": "1.0.0",
+  "maintainer": "wenchiehlee",
+  "source": "TAIEX.TW",
+  "updated_at": "2026-07-07"
+}
