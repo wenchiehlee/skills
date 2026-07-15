@@ -29,4 +29,5 @@ skill-market-cost-distribution/
 
 ## 版本
 
+- 1.0.1 (2026-07-15)：加入 self_update.py（下游部署副本可與登錄庫同步）。
 - 1.0.0 (2026-07-15)：自 MarketCostDistribution 收錄。統一可信度公式（上市年資/股權鎖定/換手率/資料新鮮度），支援 0000 加權指數（IX0001）、離線快取模式。
