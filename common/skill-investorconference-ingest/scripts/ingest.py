@@ -2014,30 +2014,90 @@ def fetch_alphaspread_transcript(stock_id: str, year: str, quarter: str, stem: s
         return [md_path]
     outputs: list[Path] = []
 
-    # Build potential URLs
-    bases = [
-        f"https://www.alphaspread.com/security/twse/{stock_id}/investor-relations/earnings-call",
-        f"https://www.alphaspread.com/security/twse/{stock_id}",
-        f"https://www.alphaspread.com/stock/twse/{stock_id}",
-        f"https://www.alphaspread.com/stocks/twse/{stock_id}"
-    ]
-    if not stock_id.isdigit():
-        symbol = stock_id.lower()
-        bases += [
-            f"https://www.alphaspread.com/stock/nasdaq/{symbol}", f"https://www.alphaspread.com/stock/nyse/{symbol}",
-            f"https://www.alphaspread.com/stocks/nasdaq/{symbol}", f"https://www.alphaspread.com/stocks/nyse/{symbol}",
-            f"https://www.alphaspread.com/security/nasdaq/{symbol}", f"https://www.alphaspread.com/security/nyse/{symbol}"
+    def alphaspread_quarter_labels() -> list[tuple[str, str]]:
+        labels = []
+        if detect_market(stock_id) == "US":
+            fy_year, fy_q = calendar_to_fiscal(stock_id, year, quarter)
+            if fy_year and fy_q:
+                labels.append((fy_year, fy_q))
+        labels.append((year, quarter))
+        deduped = []
+        seen = set()
+        for label in labels:
+            if label not in seen:
+                deduped.append(label)
+                seen.add(label)
+        return deduped
+
+    def extracted_transcript_date(text: str) -> datetime.date | None:
+        month_names = (
+            "January|February|March|April|May|June|July|August|September|October|November|December"
+        )
+        patterns = [
+            rf"\b({month_names})\s+(\d{{1,2}}),\s+(\d{{4}})\b",
+            rf"\brecorded,?\s+({month_names})\s+(\d{{1,2}}),\s+(\d{{4}})\b",
         ]
-    
+        for pat in patterns:
+            match = re.search(pat, text, re.IGNORECASE)
+            if not match:
+                continue
+            try:
+                return datetime.datetime.strptime(
+                    " ".join(match.groups()), "%B %d %Y"
+                ).date()
+            except ValueError:
+                continue
+        match = re.search(r"\b(20\d{2})[-/](\d{1,2})[-/](\d{1,2})\b", text)
+        if match:
+            try:
+                return datetime.date(
+                    int(match.group(1)), int(match.group(2)), int(match.group(3))
+                )
+            except ValueError:
+                return None
+        return None
+
+    def transcript_date_matches_target(text: str) -> tuple[bool, str]:
+        event_date = extracted_transcript_date(text)
+        if event_date is None:
+            return True, "no transcript date found"
+        target_year, month_min, month_max = _quarter_date_window(year, quarter)
+        if event_date.year == int(target_year) and month_min <= event_date.month <= month_max:
+            return True, event_date.isoformat()
+        return (
+            False,
+            f"{event_date.isoformat()} outside expected {target_year}-{month_min:02d}..{target_year}-{month_max:02d}",
+        )
+
+    # Build potential URLs
+    if detect_market(stock_id) == "US":
+        symbol = stock_id.lower()
+        bases = [
+            f"https://www.alphaspread.com/security/nasdaq/{symbol}",
+            f"https://www.alphaspread.com/security/nyse/{symbol}",
+            f"https://www.alphaspread.com/stock/nasdaq/{symbol}",
+            f"https://www.alphaspread.com/stock/nyse/{symbol}",
+            f"https://www.alphaspread.com/stocks/nasdaq/{symbol}",
+            f"https://www.alphaspread.com/stocks/nyse/{symbol}",
+        ]
+    else:
+        bases = [
+            f"https://www.alphaspread.com/security/twse/{stock_id}/investor-relations/earnings-call",
+            f"https://www.alphaspread.com/security/twse/{stock_id}",
+            f"https://www.alphaspread.com/stock/twse/{stock_id}",
+            f"https://www.alphaspread.com/stocks/twse/{stock_id}",
+        ]
+
     urls = []
     for b in bases:
-        if "investor-relations" in b:
-            urls.append(f"{b}/q{quarter}-{year}")
-        else:
-            urls.append(f"{b}/transcripts/q{quarter}-{year}")
-            urls.append(f"{b}/earnings-calls/q{quarter}-{year}")
-            urls.append(f"{b}/earnings-call/q{quarter}-{year}")
-            urls.append(f"{b}/investor-relations/earnings-call/q{quarter}-{year}")
+        for label_year, label_q in alphaspread_quarter_labels():
+            if "investor-relations" in b:
+                urls.append(f"{b}/q{label_q}-{label_year}")
+            else:
+                urls.append(f"{b}/transcripts/q{label_q}-{label_year}")
+                urls.append(f"{b}/earnings-calls/q{label_q}-{label_year}")
+                urls.append(f"{b}/earnings-call/q{label_q}-{label_year}")
+                urls.append(f"{b}/investor-relations/earnings-call/q{label_q}-{label_year}")
 
     def clean_noise(text: str) -> str:
         # Locate the real transcript start
@@ -2092,7 +2152,8 @@ def fetch_alphaspread_transcript(stock_id: str, year: str, quarter: str, stem: s
                 has_transcript_markers = any(x in content for x in ["Operator", "Question-and-Answer", "Prepared Remarks"])
                 is_404 = any(x in content for x in ["Oops!", "can't find that page", "Page not found"])
                 
-                if len(content) > 2000 and not is_404: # Increased length requirement for full transcript
+                date_ok, date_reason = transcript_date_matches_target(content)
+                if len(content) > 2000 and not is_404 and has_transcript_markers and date_ok: # Increased length requirement for full transcript
                     header = f"[METADATA]\nSource: {url}\nGenerated-At: {datetime.date.today().isoformat()}\n---\n\n"
                     md_path.write_text(header + content, encoding="utf-8")
                     print(f"[AlphaSpread] OK Saved transcript -> {md_path.name} ({len(content)} chars)")
@@ -2100,7 +2161,14 @@ def fetch_alphaspread_transcript(stock_id: str, year: str, quarter: str, stem: s
                     outputs.append(md_path)
                     break
                 else:
-                    reason = "404 detected" if is_404 else f"content too short or summary only ({len(content)} chars)"
+                    if is_404:
+                        reason = "404 detected"
+                    elif not has_transcript_markers:
+                        reason = "transcript markers missing; page appears to be a summary"
+                    elif not date_ok:
+                        reason = f"wrong transcript date ({date_reason})"
+                    else:
+                        reason = f"content too short or summary only ({len(content)} chars)"
                     print(f"[AlphaSpread] ⚠ {reason} for {url} - trying next...")
             except Exception as e:
                 print(f"[AlphaSpread] FAILED Failed for {url}: {str(e)[:100]}")
