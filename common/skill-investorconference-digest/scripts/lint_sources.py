@@ -260,7 +260,11 @@ def lint_quarter(root: Path, sid: str, year: int, q: int, durations: dict):
 
     gt = company / f"{base}_GT.srt"
     fin = company / f"{base}_FIN.srt"
+    is_us = not sid.isdigit()
     ir = company / f"{base}_ir.md"
+    us_report = company / f"{base}_report_en.md"
+    us_tables = company / f"{base}_financial_tables.md"
+    us_review = company / f"{base}_performance_review.md"
     qa = company / f"{base}_qa.md"
 
     srt_end = 0.0
@@ -279,10 +283,17 @@ def lint_quarter(root: Path, sid: str, year: int, q: int, durations: dict):
     if not gt.exists() and not fin.exists():
         findings.append(Finding("WARN", f"{base}_*.srt", "—", "本季無任何字幕檔", "確認是否有音檔可轉錄"))
 
-    if ir.exists():
-        findings += check_ir(ir)
+    if is_us:
+        company_docs = [p for p in (us_report, us_tables, us_review, company / f"{base}_ir_en.md") if p.exists()]
+        if not company_docs:
+            findings.append(Finding("WARN", f"{base}_report_en.md", "—",
+                                    "缺美股公司正式財務文件（earnings release/report、financial tables 或 performance review）",
+                                    "用 ingest 補抓公司文件；digest 不應只依 FIN 產出財務結論"))
     else:
-        findings.append(Finding("INFO", ir.name, "—", "缺中文簡報 MD", "確認 PDF 是否已轉檔"))
+        if ir.exists():
+            findings += check_ir(ir)
+        else:
+            findings.append(Finding("INFO", ir.name, "—", "缺中文簡報 MD", "確認 PDF 是否已轉檔"))
 
     if qa.exists():
         findings += check_qa(qa, srt_end)

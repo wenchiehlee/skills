@@ -24,14 +24,20 @@ SOURCE_SPEC = [
     ("_GT.srt", "人工校正字幕 (Ground Truth)", "字幕第一優先", "primary_transcript"),
     ("_FIN.srt", "Whisper 自動轉錄字幕", "字幕第二優先", "fallback_transcript"),
     (".md", "音檔逐字稿 (含時間戳)", "字幕第三優先", "plain_transcript"),
-    ("_ir.md", "中文法說會簡報 (PDF→MD)", "財務數據第一優先", "ir_files"),
-    ("_ir_en.md", "英文法說會簡報 (PDF→MD)", "財務數據補充", "ir_files"),
+    ("_ir.md", "中文法說會簡報 (PDF→MD)", "TW 財務數據第一優先", "ir_files"),
+    ("_ir_en.md", "英文法說會簡報 (PDF→MD)", "TW/US 財務數據補充", "ir_files"),
+    ("_report_en.md", "美股 earnings release / report", "US 財務數據第一優先", "ir_files"),
+    ("_financial_tables.md", "美股 financial tables", "US GAAP/non-GAAP 與財表驗證", "ir_files"),
+    ("_performance_review.md", "美股 performance review / deck", "US guidance / segment 補充", "ir_files"),
+    ("_10q.md", "SEC 10-Q/10-K 摘要或連結", "US filing 交叉驗證", "ir_files"),
     ("_qa.md", "官方 Q&A 紀錄 (PDF→MD)", "Q&A 分析必讀", "qa_files"),
+    ("_transcript.md", "公司或第三方逐字稿", "補充來源", "supplemental_files"),
     ("_alphaspread_transcript.md", "第三方逐字稿 (AlphaSpread)", "補充來源", "supplemental_files"),
     ("_yahoo_transcript.md", "第三方逐字稿 (Yahoo Finance)", "補充來源", "supplemental_files"),
     ("_alphamemo_transcript.md", "第三方會議紀要 (AlphaMemo)", "補充來源", "supplemental_files"),
 ]
-KEY_SUFFIXES = ("_GT.srt", "_ir.md", "_qa.md")
+KEY_SUFFIXES_TW = ("_GT.srt", "_ir.md", "_qa.md")
+KEY_SUFFIXES_US = ("_GT.srt", "_report_en.md", "_financial_tables.md", "_performance_review.md")
 
 
 def find_repo_root(start: Path) -> Path:
@@ -121,7 +127,9 @@ def build_manifest(root: Path, sid: str, year: int, q: int, quarters):
         return [r["path"] for r in rows if r["bucket"] == bucket and r["exists"]]
 
     missing = [r["name"] for r in rows if not r["exists"]]
-    key_missing = [r["name"] for r in rows if not r["exists"] and r["name"].endswith(KEY_SUFFIXES)]
+    is_us = not sid.isdigit()
+    key_suffixes = KEY_SUFFIXES_US if is_us else KEY_SUFFIXES_TW
+    key_missing = [r["name"] for r in rows if not r["exists"] and r["name"].endswith(key_suffixes)]
     manifest = {
         "stock_id": sid,
         "quarter": f"{year}_q{q}",
