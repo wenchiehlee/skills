@@ -22,6 +22,7 @@
 | [skill-conference-digest](common/skill-conference-digest) | common | 1.2.0 | 法說會重點萃取與分析 SOP（台灣股市）— 從法說會字幕(SRT)與簡報(Markdown)萃取影響股價的重要資訊 | 2026-07-05 |
 | [skill-download-logo](common/skill-download-logo) | common | 1.0.0 | 指定台灣股票代碼或美股概念股 Ticker，自動下載高解析度公司官方 Logo PNG，並限制在固定大小。 | 2026-07-07 |
 | [skill-mac-mini-ocr](common/skill-mac-mini-ocr) | common | 1.1.1 | 使用自建在 Mac-mini 上的 OCR API 服務（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-07-07 |
+| [skill-market-cost-distribution](common/skill-market-cost-distribution) | common | 1.0.0 | 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。 | 2026-07-15 |
 | [skill-revenue-expense-profit-predict](common/skill-revenue-expense-profit-predict) | common | 1.0.0 | 季度損益三線（營業收入 / 總支出 / 營業利益）底部加總預測 SOP | 2026-07-05 |
 | [skill-revenue-predict](common/skill-revenue-predict) | common | 1.0.0 | 營收預測與 10-Model 評估 SOP | 2026-07-05 |
 | [skill-taiex-compare](common/skill-taiex-compare) | common | 1.0.0 | 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異 | 2026-07-07 |
@@ -30,7 +31,7 @@
 | [skill-taiex-sync](common/skill-taiex-sync) | common | 1.0.0 | 更新本地資料目錄索引，生成批次處理所需的投資標的清單 | 2026-07-07 |
 | [skill-taiex-viz](common/skill-taiex-viz) | common | 1.0.0 | 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖 | 2026-07-07 |
 
-最後產生日期：2026-07-14
+最後產生日期：2026-07-15
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理
