@@ -10,15 +10,6 @@ skills:
   source: biztrends.TW/Skills/skill-all-models-benchmark.md
   updated_at: '2026-07-05'
   revised_at: '2026-07-07'
-- name: skill-conference-digest
-  group: common
-  path: common/skill-conference-digest
-  version: 1.2.0
-  description: 法說會重點萃取與分析 SOP（台灣股市）— 從法說會字幕(SRT)與簡報(Markdown)萃取影響股價的重要資訊
-  maintainer: wenchiehlee
-  source: https://github.com/wenchiehlee-money/InvestorConference
-  updated_at: '2026-07-05'
-  revised_at: '2026-07-05'
 - name: skill-download-logo
   group: common
   path: common/skill-download-logo
@@ -28,6 +19,15 @@ skills:
   source: ''
   updated_at: '2026-07-07'
   revised_at: '2026-07-07'
+- name: skill-investorconference-digest
+  group: common
+  path: common/skill-investorconference-digest
+  version: 1.2.0
+  description: 法說會重點萃取與分析 SOP（台灣股市）— 從法說會字幕(SRT)與簡報(Markdown)萃取影響股價的重要資訊
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee-money/InvestorConference
+  updated_at: '2026-07-05'
+  revised_at: '2026-07-15'
 - name: skill-investorconference-ingest
   group: common
   path: common/skill-investorconference-ingest
