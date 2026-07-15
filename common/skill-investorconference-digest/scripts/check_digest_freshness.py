@@ -2,7 +2,7 @@
 """check_digest_freshness.py — digest 覆蓋率掃描 (skill-conference-digest)
 
 掃描 InvestorConference 全庫，列出「已有法說會資料但尚未產出 digest 報告」的季度，
-方便批次補做。digest 報告位置: Conference-digest/{sid}_{year}_q{n}_digest.md
+方便批次補做。digest 報告位置: data/reports/conference-digests/{sid}/{sid}_{year}_q{n}_digest.md
 
 用法:
     python check_digest_freshness.py [--root <InvestorConference 路徑>] [--srt-only]
@@ -36,7 +36,8 @@ def main():
     args = ap.parse_args()
 
     root = (args.root or find_repo_root(Path.cwd())).resolve()
-    digest_dir = root / "Conference-digest"
+    digest_dir = root / "data" / "reports" / "conference-digests"
+    legacy_digest_dir = root / "Conference-digest"
 
     rows = []  # (sid, year, q, has_srt, has_ir, has_digest)
     for company in sorted(root.iterdir()):
@@ -55,8 +56,10 @@ def main():
             if f.name.endswith("_ir.md"):
                 info["ir"] = True
         for (year, q), info in quarters.items():
-            digest = digest_dir / f"{sid}_{year}_q{q}_digest.md"
-            rows.append((sid, year, q, info["srt"], info["ir"], digest.exists()))
+            digest_name = f"{sid}_{year}_q{q}_digest.md"
+            digest = digest_dir / sid / digest_name
+            legacy_digest = legacy_digest_dir / digest_name
+            rows.append((sid, year, q, info["srt"], info["ir"], digest.exists() or legacy_digest.exists()))
 
     missing = [r for r in rows
                if not r[5] and (r[3] or (not args.srt_only and r[4]))]

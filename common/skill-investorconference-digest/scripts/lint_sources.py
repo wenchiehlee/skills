@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""lint_sources.py — 法說會資料完整性檢查 (skill-conference-digest)
+"""lint_sources.py — 法說會資料完整性檢查 (skill-investorconference-digest)
 
 對指定公司/季度（或全庫）的資料來源執行機械性完整性檢查，
 產出問題清單與可直接貼入 GitHub Issue 的 Markdown 表格草稿。
@@ -7,7 +7,7 @@
 
 檢查項目:
   [SRT]  時間戳格式、秒數 >= 60、時間戳倒退、空白字幕行、
-         FIN 檔缺 [METADATA] 區塊、字幕總長 vs audio_durations.json 音檔長度
+         FIN 檔缺 [METADATA] 區塊、GT 檔 metadata/review level、字幕總長 vs audio_durations.json 音檔長度
   [QA]   `webcast MM:SS` 引用時間戳無效（秒數 >= 60）或超出字幕總長
   [IR]   含財務關鍵字的頁面 OCR 數字遺失（疑似空頁）
   [檔案] 缺 GT 校正字幕、缺中文簡報 MD、缺 QA 檔
@@ -75,6 +75,91 @@ def load_audio_durations(root: Path) -> dict:
     return {}
 
 
+
+GT_REQUIRED_METADATA = (
+    "Source",
+    "Review-Level",
+    "Reviewer",
+    "Reviewed-At",
+    "Audio-Checked",
+    "Correction-Sources",
+    "Corrections",
+    "Confidence",
+)
+GT_REVIEW_LEVELS = {"human_verified", "partial_audio_checked", "conservative_from_FIN"}
+GT_AUDIO_CHECKED = {"full", "sampled", "none"}
+GT_CONFIDENCE = {"high", "medium", "low"}
+
+
+def read_metadata(lines: list[str]) -> dict[str, str]:
+    meta = {}
+    if not lines or lines[0].strip() != "[METADATA]":
+        return meta
+    for line in lines[1:]:
+        line = line.strip()
+        if line == "---":
+            break
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        meta[key.strip()] = value.strip()
+    return meta
+
+
+def check_gt_metadata(path: Path, lines: list[str]):
+    findings = []
+    rel = path.name
+    meta = read_metadata(lines)
+    if not meta:
+        findings.append(Finding(
+            "WARN", rel, "檔首",
+            "GT 檔缺 [METADATA] 區塊，無法判定 review level",
+            "依 digest SOP 補上 Source/Review-Level/Audio-Checked/Correction-Sources 等欄位"))
+        return findings
+
+    missing = [k for k in GT_REQUIRED_METADATA if not meta.get(k)]
+    if missing:
+        findings.append(Finding(
+            "WARN", rel, "檔首",
+            f"GT metadata 缺必要欄位: {', '.join(missing)}",
+            "依 digest SOP 補齊 GT metadata"))
+
+    level = meta.get("Review-Level", "")
+    if level and level not in GT_REVIEW_LEVELS:
+        findings.append(Finding(
+            "WARN", rel, "Review-Level",
+            f"GT Review-Level 不合法: {level}",
+            "限用 human_verified / partial_audio_checked / conservative_from_FIN"))
+
+    audio_checked = meta.get("Audio-Checked", "")
+    if audio_checked and audio_checked not in GT_AUDIO_CHECKED:
+        findings.append(Finding(
+            "WARN", rel, "Audio-Checked",
+            f"GT Audio-Checked 不合法: {audio_checked}",
+            "限用 full / sampled / none"))
+
+    confidence = meta.get("Confidence", "")
+    if confidence and confidence not in GT_CONFIDENCE:
+        findings.append(Finding(
+            "WARN", rel, "Confidence",
+            f"GT Confidence 不合法: {confidence}",
+            "限用 high / medium / low"))
+
+    if level == "human_verified" and audio_checked == "none":
+        findings.append(Finding(
+            "ERROR", rel, "metadata",
+            "Review-Level 為 human_verified 但 Audio-Checked 為 none",
+            "改為 partial_audio_checked/conservative_from_FIN，或補做音訊校對"))
+
+    if level == "conservative_from_FIN":
+        findings.append(Finding(
+            "INFO", rel, "Review-Level",
+            "GT 為 conservative_from_FIN，屬 GT-candidate，非完整人工校正版",
+            "Digest 可使用但重大結論需交叉驗證；後續可補音訊校對"))
+
+    return findings
+
+
 def parse_srt(path: Path):
     """回傳 (findings, last_seconds)。"""
     findings = []
@@ -84,6 +169,8 @@ def parse_srt(path: Path):
     has_metadata = any(l.strip() == "[METADATA]" for l in lines[:5])
     if path.name.endswith("_FIN.srt") and not has_metadata:
         findings.append(Finding("INFO", rel, "檔首", "FIN 檔缺 [METADATA] 區塊", "補上 Source/Language"))
+    if path.name.endswith("_GT.srt"):
+        findings += check_gt_metadata(path, lines)
 
     prev = -1.0
     last = 0.0

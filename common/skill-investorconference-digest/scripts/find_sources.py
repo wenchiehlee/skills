@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""find_sources.py — 法說會資料來源解析 (skill-conference-digest)
+"""find_sources.py — 法說會資料來源解析 (skill-investorconference-digest)
 
 依 SOP 優先序解析指定公司/季度的資料來源檔案，列出前一季檔案供財測、承諾與措辭比對。
 可用 --json 輸出 machine-readable manifest，降低 agent 選錯季度或來源的風險。
@@ -27,7 +27,9 @@ SOURCE_SPEC = [
     ("_ir.md", "中文法說會簡報 (PDF→MD)", "財務數據第一優先", "ir_files"),
     ("_ir_en.md", "英文法說會簡報 (PDF→MD)", "財務數據補充", "ir_files"),
     ("_qa.md", "官方 Q&A 紀錄 (PDF→MD)", "Q&A 分析必讀", "qa_files"),
-    ("_alphaspread_transcript.md", "第三方逐字稿", "補充來源", "supplemental_files"),
+    ("_alphaspread_transcript.md", "第三方逐字稿 (AlphaSpread)", "補充來源", "supplemental_files"),
+    ("_yahoo_transcript.md", "第三方逐字稿 (Yahoo Finance)", "補充來源", "supplemental_files"),
+    ("_alphamemo_transcript.md", "第三方會議紀要 (AlphaMemo)", "補充來源", "supplemental_files"),
 ]
 KEY_SUFFIXES = ("_GT.srt", "_ir.md", "_qa.md")
 

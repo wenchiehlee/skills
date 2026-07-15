@@ -1,11 +1,21 @@
 {
   "name": "skill-investorconference-digest",
-  "description": "法說會重點萃取與分析 SOP（台灣股市）— 從法說會字幕(SRT)與簡報(Markdown)萃取影響股價的重要資訊",
-  "version": "1.2.0",
+  "description": "法說會重點萃取、GT 字幕生成/校正與投資影響分析 SOP（台灣股市）— 從 FIN、音檔、IR、Q&A、Yahoo/AlphaSpread/AlphaMemo 等第三方逐字稿與前後期資料生成/修正 GT，並以 metadata/review level 驗證字幕可信度；digest 報告輸出至 data/reports/conference-digests/",
+  "version": "1.4.1",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee-money/InvestorConference",
-  "updated_at": "2026-07-05",
+  "updated_at": "2026-07-15",
   "license": "MIT",
-  "tags": ["investor-conference", "earnings-call", "digest", "sell-side", "taiwan-stock"]
+  "tags": [
+    "investor-conference",
+    "earnings-call",
+    "digest",
+    "sell-side",
+    "taiwan-stock",
+    "surprise-analysis",
+    "qa-pressure-map",
+    "management-credibility",
+    "data-reports"
+  ]
 }

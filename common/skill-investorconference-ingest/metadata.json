@@ -1,7 +1,7 @@
 {
   "name": "skill-investorconference-ingest",
-  "description": "投資人說明會（法說會）智慧影音與簡報下載與管理 Ingest 模組（支援美股與台股）",
-  "version": "1.0.0",
+  "description": "投資人說明會（法說會）影音、簡報、第三方逐字稿與 metadata 材料蒐集/同步 Ingest 模組（支援美股與台股）；GT 生成與研究級字幕校正由 digest skill 負責",
+  "version": "1.0.1",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee-money/InvestorConference",

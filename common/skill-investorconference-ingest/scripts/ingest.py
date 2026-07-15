@@ -1615,17 +1615,18 @@ def update_readme() -> None:
         return audio
 
     def _srt_cells(stock_id: str, year: str, quarter: str) -> tuple[str, str]:
-        fin = "-"
+        def _link_for(name: str, label: str) -> str:
+            new_rel = f"data/{stock_id}/{name}"
+            old_rel = f"{stock_id}/{name}"
+            if (repo / new_rel).exists():
+                return f"[{label}]({new_rel})"
+            if (repo / old_rel).exists():
+                return f"[{label}]({old_rel})"
+            return "-"
+
         fin_name = f"{stock_id}_{year}_q{quarter}_FIN.srt"
-        if (repo / stock_id / fin_name).exists():
-            fin = f"[📝]({stock_id}/{fin_name})"
-
-        gt = "-"
         gt_name = f"{stock_id}_{year}_q{quarter}_GT.srt"
-        if (repo / stock_id / gt_name).exists():
-            gt = f"[✅]({stock_id}/{gt_name})"
-
-        return fin, gt
+        return _link_for(fin_name, "📝"), _link_for(gt_name, "✅")
 
     def _call_transcript_cells(r: dict) -> tuple[str, str]:
         fin, gt = _srt_cells(r["stock_id"], r["year"], r["quarter"])
@@ -1948,10 +1949,13 @@ def sync_all_audio_durations(repo: Path) -> None:
 
     # 2. Keep entries from current_durations if they match the manifest (even if missing locally)
     for key, val in current_durations.items():
-        if key not in new_durations:
-            stem = Path(key).stem
-            if stem in manifest_stems:
-                new_durations[key] = val
+        stem = Path(key).stem
+        if stem in manifest_stems:
+            new_key = key
+            if not key.startswith("data/"):
+                new_key = f"data/{key}"
+            if new_key not in new_durations:
+                new_durations[new_key] = val
 
     # Write back
     durations_file.write_text(
