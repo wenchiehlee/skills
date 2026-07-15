@@ -22,17 +22,19 @@ skills:
 - name: skill-investorconference-digest
   group: common
   path: common/skill-investorconference-digest
-  version: 1.2.0
-  description: 法說會重點萃取與分析 SOP（台灣股市）— 從法說會字幕(SRT)與簡報(Markdown)萃取影響股價的重要資訊
+  version: 1.4.1
+  description: 法說會重點萃取、GT 字幕生成/校正與投資影響分析 SOP（台灣股市）— 從 FIN、音檔、IR、Q&A、Yahoo/AlphaSpread/AlphaMemo
+    等第三方逐字稿與前後期資料生成/修正 GT，並以 metadata/review level 驗證字幕可信度；digest 報告輸出至 data/reports/conference-digests/
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
-  updated_at: '2026-07-05'
+  updated_at: '2026-07-15'
   revised_at: '2026-07-15'
 - name: skill-investorconference-ingest
   group: common
   path: common/skill-investorconference-ingest
-  version: 1.0.0
-  description: 投資人說明會（法說會）智慧影音與簡報下載與管理 Ingest 模組（支援美股與台股）
+  version: 1.0.1
+  description: 投資人說明會（法說會）影音、簡報、第三方逐字稿與 metadata 材料蒐集/同步 Ingest 模組（支援美股與台股）；GT 生成與研究級字幕校正由
+    digest skill 負責
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
   updated_at: '2026-07-15'

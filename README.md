@@ -20,8 +20,8 @@
 | :--- | :--- | :--- | :--- | :--- |
 | [skill-all-models-benchmark](common/skill-all-models-benchmark) | common | 1.0.0 | 多模型與分析師共識效能評估標準作業程序。 | 2026-07-07 |
 | [skill-download-logo](common/skill-download-logo) | common | 1.0.0 | 指定台灣股票代碼或美股概念股 Ticker，自動下載高解析度公司官方 Logo PNG，並限制在固定大小。 | 2026-07-07 |
-| [skill-investorconference-digest](common/skill-investorconference-digest) | common | 1.2.0 | 法說會重點萃取與分析 SOP（台灣股市）— 從法說會字幕(SRT)與簡報(Markdown)萃取影響股價的重要資訊 | 2026-07-15 |
-| [skill-investorconference-ingest](common/skill-investorconference-ingest) | common | 1.0.0 | 投資人說明會（法說會）智慧影音與簡報下載與管理 Ingest 模組（支援美股與台股） | 2026-07-15 |
+| [skill-investorconference-digest](common/skill-investorconference-digest) | common | 1.4.1 | 法說會重點萃取、GT 字幕生成/校正與投資影響分析 SOP（台灣股市）— 從 FIN、音檔、IR、Q&A、Yahoo/AlphaSpread/AlphaMemo 等第三方逐字稿與前後期資料生成/修正 GT，並以 metadata/review level 驗證字幕可信度；digest 報告輸出至 data/reports/conference-digests/ | 2026-07-15 |
+| [skill-investorconference-ingest](common/skill-investorconference-ingest) | common | 1.0.1 | 投資人說明會（法說會）影音、簡報、第三方逐字稿與 metadata 材料蒐集/同步 Ingest 模組（支援美股與台股）；GT 生成與研究級字幕校正由 digest skill 負責 | 2026-07-15 |
 | [skill-mac-mini-ocr](common/skill-mac-mini-ocr) | common | 1.1.1 | 使用自建在 Mac-mini 上的 OCR API 服務（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-07-07 |
 | [skill-market-cost-distribution](common/skill-market-cost-distribution) | common | 1.0.1 | 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。 | 2026-07-15 |
 | [skill-pptx-to-md](common/skill-pptx-to-md) | common | 1.0.0 | 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。 | 2026-07-15 |
