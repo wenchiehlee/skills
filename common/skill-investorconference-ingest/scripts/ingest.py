@@ -1020,6 +1020,93 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
+def probe_audio_duration(path: Path) -> float | None:
+    """Return ffprobe duration in seconds, or None when probing fails."""
+    try:
+        r = subprocess.run(
+            ["ffprobe", "-v", "quiet", "-show_entries", "format=duration",
+             "-of", "default=noprint_wrappers=1:nokey=1", str(path)],
+            capture_output=True, text=True, timeout=20,
+        )
+        if r.returncode == 0:
+            return float(r.stdout.strip())
+    except Exception as e:
+        print(f"[audio-metadata] ffprobe failed for {path}: {e}")
+    return None
+
+
+def load_audio_metadata(repo: Path) -> dict:
+    """Load audio_metadata.json. The file is partial and append-only friendly."""
+    metadata_file = repo / "audio_metadata.json"
+    if not metadata_file.exists():
+        return {}
+    try:
+        data = json.loads(metadata_file.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except Exception as e:
+        print(f"[audio-metadata] Could not read audio_metadata.json: {e}")
+        return {}
+
+
+def write_audio_metadata(repo: Path, metadata: dict) -> None:
+    metadata_file = repo / "audio_metadata.json"
+    metadata_file.write_text(
+        json.dumps(metadata, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def release_url_for_stem(repo: Path, stem: str) -> str | None:
+    manifest_file = repo / "audio_manifest.json"
+    if not manifest_file.exists():
+        return None
+    try:
+        manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
+        url = manifest.get(stem)
+        return url if isinstance(url, str) else None
+    except Exception:
+        return None
+
+
+def find_audio_metadata_duplicate(repo: Path, candidate_sha: str, expected_stem: str) -> str | None:
+    """Return duplicate description from audio_metadata.json if the checksum is known."""
+    for stem, item in load_audio_metadata(repo).items():
+        if stem == expected_stem or not isinstance(item, dict):
+            continue
+        if str(item.get("sha256", "")).lower() == candidate_sha.lower():
+            status = item.get("status", "known")
+            return f"audio_metadata.json entry {stem} ({status})"
+    return None
+
+
+def update_audio_metadata(
+    repo: Path,
+    audio_path: Path,
+    release_url: str | None = None,
+    status: str = "ok",
+    duplicate_of: str | None = None,
+) -> None:
+    """Record checksum, size and probed duration for a local audio file."""
+    stem = audio_path.stem
+    duration = probe_audio_duration(audio_path)
+    item = {
+        "file": str(audio_path.relative_to(repo)).replace("\\", "/"),
+        "sha256": sha256_file(audio_path),
+        "size_bytes": audio_path.stat().st_size,
+        "duration_sec": round(duration, 3) if duration is not None else None,
+        "release_url": release_url or release_url_for_stem(repo, stem),
+        "checked_at": datetime.date.today().isoformat(),
+        "source": "local_file",
+        "status": status,
+    }
+    if duplicate_of:
+        item["duplicate_of"] = duplicate_of
+    metadata = load_audio_metadata(repo)
+    metadata[stem] = item
+    write_audio_metadata(repo, metadata)
+    print(f"[audio-metadata] Updated {stem}: sha256={item['sha256'][:12]}..., duration={item['duration_sec']}s")
+
+
 def _release_audio_asset_digests() -> dict[str, str]:
     """Return {asset_name: sha256_hex} for GitHub release audio assets when available."""
     url = "https://api.github.com/repos/wenchiehlee-money/InvestorConference/releases/tags/audio-files"
@@ -1051,6 +1138,10 @@ def find_duplicate_audio(repo: Path, audio_path: Path, expected_stem: str) -> st
 
     candidate_sha = sha256_file(audio_path)
     candidate_name = audio_path.name
+
+    metadata_duplicate = find_audio_metadata_duplicate(repo, candidate_sha, expected_stem)
+    if metadata_duplicate:
+        return metadata_duplicate
 
     # Local audio may be sparse because most files are stored as release assets, but check it first.
     exclude_dirs = {".git", ".github", "tmp", "tools", "web", "data", "skills", "scripts"}
@@ -1968,16 +2059,11 @@ def sync_all_audio_durations(repo: Path) -> None:
 def update_audio_durations(repo: Path, audio_path: Path) -> None:
     """Update audio_durations.json with the duration of the given audio file."""
     durations_file = repo / "audio_durations.json"
-    try:
-        r = subprocess.run(
-            ["ffprobe", "-v", "quiet", "-show_entries", "format=duration",
-             "-of", "default=noprint_wrappers=1:nokey=1", str(audio_path)],
-            capture_output=True, text=True,
-        )
-        duration_sec = int(float(r.stdout.strip()))
-    except Exception as e:
-        print(f"[durations] ffprobe failed: {e}")
+    duration = probe_audio_duration(audio_path)
+    if duration is None:
+        print("[durations] ffprobe failed")
         return
+    duration_sec = int(duration)
 
     durations = {}
     if durations_file.exists():
@@ -2312,9 +2398,13 @@ def commit_push_files(stock_id: str, year: str, quarter: str,
     update_audio_durations(repo, target_audio)
     git("add", "audio_durations.json")
 
-    # Upload to GDrive and update manifest
-    upload_to_gdrive_and_update_manifest(repo, stock_id, target_audio)
+    # Upload to GitHub Releases and update manifest
+    release_url, _manifest_path = upload_to_gdrive_and_update_manifest(repo, stock_id, target_audio)
     git("add", "audio_manifest.json")
+
+    # Persist checksum metadata after the final release URL is known.
+    update_audio_metadata(repo, target_audio, release_url=release_url)
+    git("add", "audio_metadata.json")
 
     # Regenerate README.md and stage it
     update_readme()

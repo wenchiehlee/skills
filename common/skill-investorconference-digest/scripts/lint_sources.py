@@ -8,6 +8,7 @@
 檢查項目:
   [SRT]  時間戳格式、秒數 >= 60、時間戳倒退、空白字幕行、
          FIN 檔缺 [METADATA] 區塊、GT 檔 metadata/review level、字幕總長 vs audio_durations.json 音檔長度
+  [Audio] audio_metadata.json duplicate/invalid 音檔錯配檢查
   [QA]   `webcast MM:SS` 引用時間戳無效（秒數 >= 60）或超出字幕總長
   [IR]   含財務關鍵字的頁面 OCR 數字遺失（疑似空頁）
   [檔案] 缺 GT 校正字幕、缺中文簡報 MD、缺 QA 檔
@@ -74,6 +75,47 @@ def load_audio_durations(root: Path) -> dict:
             pass
     return {}
 
+
+
+def load_audio_metadata(root: Path) -> dict:
+    f = root / "audio_metadata.json"
+    if f.exists():
+        try:
+            data = json.loads(f.read_text(encoding="utf-8"))
+            return data if isinstance(data, dict) else {}
+        except Exception:
+            pass
+    return {}
+
+
+def check_audio_metadata(base: str, metadata: dict):
+    findings = []
+    item = metadata.get(base)
+    if not isinstance(item, dict):
+        return findings
+    status = str(item.get("status", "ok"))
+    duplicate_of = item.get("duplicate_of")
+    if status in {"duplicate", "invalid"}:
+        suggestion = "重新取得正確季度音檔；GT/digest 前不可把 FIN 當成本季音訊證據"
+        if duplicate_of:
+            suggestion += f"；目前標示 duplicate_of={duplicate_of}"
+        findings.append(Finding(
+            "ERROR", f"{base}.m4a", "audio_metadata.json",
+            f"音檔 metadata 狀態為 {status}，疑似季度音訊錯配",
+            suggestion, "audio_mismatch"))
+    sha = str(item.get("sha256", "")).lower()
+    if sha:
+        same = sorted(
+            stem for stem, other in metadata.items()
+            if stem != base and isinstance(other, dict) and str(other.get("sha256", "")).lower() == sha
+        )
+        if same and status not in {"duplicate", "invalid"}:
+            findings.append(Finding(
+                "WARN", f"{base}.m4a", "audio_metadata.json",
+                f"音檔 sha256 與其他 stem 相同: {', '.join(same)}",
+                "確認是否為同一場法說會被錯掛；必要時標示 duplicate_of 或移除錯誤 release asset",
+                "audio_mismatch"))
+    return findings
 
 
 GT_REQUIRED_METADATA = (
@@ -253,10 +295,11 @@ def check_ir(path: Path):
     return findings
 
 
-def lint_quarter(root: Path, sid: str, year: int, q: int, durations: dict):
+def lint_quarter(root: Path, sid: str, year: int, q: int, durations: dict, audio_metadata: dict):
     company = root / "data" / sid
     base = f"{sid}_{year}_q{q}"
     findings = []
+    findings += check_audio_metadata(base, audio_metadata)
 
     gt = company / f"{base}_GT.srt"
     fin = company / f"{base}_FIN.srt"
@@ -348,6 +391,7 @@ def main():
 
     root = (args.root or find_repo_root(Path.cwd())).resolve()
     durations = load_audio_durations(root)
+    audio_metadata = load_audio_metadata(root)
 
     targets = []  # (sid, year, q)
     if args.all:
@@ -362,7 +406,7 @@ def main():
 
     all_findings = []
     for sid, year, q in targets:
-        fs = lint_quarter(root, sid, year, q, durations)
+        fs = lint_quarter(root, sid, year, q, durations, audio_metadata)
         if fs:
             print(f"\n== {sid} {year} Q{q}: {len(fs)} 項 ==")
             for f in sorted(fs, key=lambda x: ("ERROR", "WARN", "INFO").index(x.severity)):
