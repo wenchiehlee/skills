@@ -1,0 +1,19 @@
+{
+  "name": "skill-investorConference-ingest",
+  "description": "投資人說明會（法說會）智慧影音與簡報下載與管理 Ingest 模組（支援美股與台股）",
+  "version": "1.0.0",
+  "author": "wenchiehlee",
+  "maintainer": "wenchiehlee",
+  "source": "https://github.com/wenchiehlee-money/InvestorConference",
+  "updated_at": "2026-07-15",
+  "license": "MIT",
+  "tags": [
+    "investor-conference",
+    "earnings-call",
+    "ingest",
+    "webcast",
+    "whisper",
+    "gemini-speech",
+    "audio-pipeline"
+  ]
+}

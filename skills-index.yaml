@@ -28,6 +28,15 @@ skills:
   source: ''
   updated_at: '2026-07-07'
   revised_at: '2026-07-07'
+- name: skill-investorConference-ingest
+  group: common
+  path: common/skill-investorConference-ingest
+  version: 1.0.0
+  description: 投資人說明會（法說會）智慧影音與簡報下載與管理 Ingest 模組（支援美股與台股）
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee-money/InvestorConference
+  updated_at: '2026-07-15'
+  revised_at: '2026-07-15'
 - name: skill-mac-mini-ocr
   group: common
   path: common/skill-mac-mini-ocr
