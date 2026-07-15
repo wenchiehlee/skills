@@ -46,6 +46,15 @@ skills:
   source: https://github.com/wenchiehlee/MarketCostDistribution
   updated_at: '2026-07-15'
   revised_at: '2026-07-15'
+- name: skill-pptx-to-md
+  group: common
+  path: common/skill-pptx-to-md
+  version: 1.0.0
+  description: 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。
+  maintainer: wenchiehlee
+  source: ''
+  updated_at: '2026-07-09'
+  revised_at: '2026-07-09'
 - name: skill-revenue-expense-profit-predict
   group: common
   path: common/skill-revenue-expense-profit-predict
