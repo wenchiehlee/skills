@@ -16,7 +16,7 @@
     python lint_sources.py 2357                     # 該公司全部季度
     python lint_sources.py 2357 2026 q1             # 指定季度
     python lint_sources.py --all                    # 全庫掃描
-    python lint_sources.py 2357 --issue-draft out.md
+    python lint_sources.py 2357 --issue-draft out.md --issue-json out.json
 """
 import argparse
 import json
@@ -35,12 +35,27 @@ DURATION_TOLERANCE = 0.10  # 字幕總長與音檔長度差異容忍度
 
 
 class Finding:
-    def __init__(self, severity, file, location, problem, suggestion=""):
+    def __init__(self, severity, file, location, problem, suggestion="", issue_type="data_quality"):
         self.severity = severity  # ERROR / WARN / INFO
         self.file = file
         self.location = location
         self.problem = problem
         self.suggestion = suggestion
+        self.issue_type = issue_type
+
+    @property
+    def issue_severity(self):
+        return {"ERROR": "blocker", "WARN": "major", "INFO": "minor"}.get(self.severity, "minor")
+
+    def as_issue(self):
+        return {
+            "severity": self.issue_severity,
+            "file": self.file,
+            "location": self.location,
+            "type": self.issue_type,
+            "description": self.problem,
+            "suggestion": self.suggestion,
+        }
 
 
 def find_repo_root(start: Path) -> Path:
@@ -99,7 +114,7 @@ def parse_srt(path: Path):
 def check_srt_vs_audio(srt_name: str, srt_end: float, sid: str, year: int, q: int,
                        durations: dict):
     findings = []
-    keys = [k for k in durations if k.startswith(f"{sid}/{sid}_{year}_q{q}.")]
+    keys = [k for k in durations if k.startswith(f"data/{sid}/{sid}_{year}_q{q}.")]
     if not keys or srt_end <= 0:
         return findings
     audio = float(durations[keys[0]])
@@ -152,7 +167,7 @@ def check_ir(path: Path):
 
 
 def lint_quarter(root: Path, sid: str, year: int, q: int, durations: dict):
-    company = root / sid
+    company = root / "data" / sid
     base = f"{sid}_{year}_q{q}"
     findings = []
 
@@ -188,7 +203,7 @@ def lint_quarter(root: Path, sid: str, year: int, q: int, durations: dict):
 
 
 def list_company_quarters(root: Path, sid: str):
-    company = root / sid
+    company = root / "data" / sid
     quarters = set()
     if company.is_dir():
         for f in company.iterdir():
@@ -199,7 +214,7 @@ def list_company_quarters(root: Path, sid: str):
 
 
 def all_companies(root: Path):
-    return sorted(d.name for d in root.iterdir()
+    return sorted(d.name for d in (root / "data").iterdir()
                   if d.is_dir() and re.fullmatch(r"[0-9A-Z]{2,6}", d.name)
                   and any(QUARTER_RE.match(f.name) for f in d.iterdir()))
 
@@ -208,9 +223,18 @@ def issue_table(findings):
     lines = ["## 資料品質問題彙整（lint_sources.py 自動檢出）", "",
              "| 嚴重度 | 檔案 | 位置 | 問題 | 建議修正 |", "|---|---|---|---|---|"]
     for f in findings:
-        lines.append(f"| {f.severity} | `{f.file}` | {f.location} | {f.problem} | {f.suggestion} |")
+        lines.append(f"| {f.issue_severity} | `{f.file}` | {f.location} | {f.problem} | {f.suggestion} |")
     lines += ["", "_機械性檢查結果；人名/術語/幻覺句等語意類錯誤需另行人工或 LLM 判讀。_"]
     return "\n".join(lines)
+
+
+def issue_json_payload(stock_id, year, quarter, findings):
+    q = str(quarter).lower().lstrip("q")
+    return {
+        "stock_id": stock_id or "all",
+        "quarter": f"{year}_q{q}" if year and quarter else None,
+        "issues": [f.as_issue() for f in findings],
+    }
 
 
 def main():
@@ -221,6 +245,7 @@ def main():
     ap.add_argument("--all", action="store_true", help="掃描全庫所有公司")
     ap.add_argument("--root", type=Path, default=None)
     ap.add_argument("--issue-draft", type=Path, help="輸出 Issue Markdown 草稿到指定檔案")
+    ap.add_argument("--issue-json", type=Path, help="輸出 machine-readable issue sidecar JSON")
     args = ap.parse_args()
 
     root = (args.root or find_repo_root(Path.cwd())).resolve()
@@ -255,6 +280,11 @@ def main():
     if args.issue_draft and all_findings:
         args.issue_draft.write_text(issue_table(all_findings), encoding="utf-8")
         print(f"Issue 草稿已寫入: {args.issue_draft}")
+
+    if args.issue_json and all_findings:
+        payload = issue_json_payload(args.stock_id, args.year, args.quarter, all_findings)
+        args.issue_json.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"Issue JSON 已寫入: {args.issue_json}")
 
     sys.exit(1 if n_err else 0)
 
