@@ -33,7 +33,7 @@ skills:
 - name: skill-investorconference-ingest
   group: common
   path: common/skill-investorconference-ingest
-  version: 1.2.2
+  version: 1.2.4
   description: 投資人說明會（法說會）影音、簡報、第三方逐字稿與 metadata 材料蒐集/同步 Ingest 模組；支援台股與美股 earnings-call
     材料（earnings release、financial tables、performance review、Yahoo/AlphaSpread transcript），GT
     生成由 digest skill 負責
