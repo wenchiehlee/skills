@@ -1,6 +1,6 @@
 ---
 name: skill-investorconference-ingest
-version: 1.2.1
+version: 1.2.2
 description: 投資人說明會（法說會）智慧影音與簡報下載與管理 Ingest 模組（支援美股與台股）
 ---
 
@@ -51,6 +51,28 @@ python skills/skill-investorconference-ingest/scripts/audit_audio_metadata.py --
 
 > [!CAUTION]
 > 若 `audio_metadata.json` 顯示某 stem 為 `duplicate`，該季度的 FIN.srt 很可能也來自錯誤音檔。Ingest 不應關閉資料品質問題；digest skill 必須在 GT/digest 前把音訊錯配列為 Blocker/Major，直到正確音檔或足夠文字來源可支持保守 GT candidate。
+
+### 公司 IR / MOPS 來源選擇與日期窗口檢查
+
+Ingest 不得只信任 MOPS 查詢結果的第一個影音檔。部分公司或 MOPS 查詢會回傳該公司最新法說影音，即使目標是前一季度。
+
+來源優先順序：
+
+1. 已知的 quarter-specific 官方公司 IR / seminar / replay URL。
+2. 公司 IR seminar 頁中與目標季度名稱及會議日期一致的影音檔。
+3. MOPS video/PDF，但必須通過會議日期窗口檢查。
+4. 其他搜尋或 fallback。
+
+日期窗口規則：
+
+* `Q4` 法說會通常落在下一年度 `01` 至 `04` 月。
+* `Q1` 法說會通常落在同年度 `04` 至 `06` 月。
+* `Q2` 法說會通常落在同年度 `07` 至 `09` 月。
+* `Q3` 法說會通常落在同年度 `10` 至 `12` 月。
+
+若 MOPS 回傳影音或 PDF 檔名日期不在目標窗口，必須拒絕該 asset，不得下載、不得更新 manifest，也不得產 FIN。若公司 IR 頁列出更精確的目標季度影音，應將其加入 quarter-specific direct source，讓後續 re-ingest 可重現。
+
+驗證時不得用固定 45 或 60 分鐘作為正確音檔門檻；部分官方法說 replay 可能只有十幾分鐘。長度檢查只用來拒絕明顯空檔或截斷檔，正確性仍以官方來源、目標季度名稱、會議日期窗口與 checksum 去重為主。
 
 ### 錯誤/重複音檔的 re-ingest 前置清理
 
