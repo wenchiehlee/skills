@@ -1,5 +1,6 @@
 ---
 name: skill-investorconference-ingest
+version: 1.2.1
 description: 投資人說明會（法說會）智慧影音與簡報下載與管理 Ingest 模組（支援美股與台股）
 ---
 
@@ -50,6 +51,37 @@ python skills/skill-investorconference-ingest/scripts/audit_audio_metadata.py --
 
 > [!CAUTION]
 > 若 `audio_metadata.json` 顯示某 stem 為 `duplicate`，該季度的 FIN.srt 很可能也來自錯誤音檔。Ingest 不應關閉資料品質問題；digest skill 必須在 GT/digest 前把音訊錯配列為 Blocker/Major，直到正確音檔或足夠文字來源可支持保守 GT candidate。
+
+### 錯誤/重複音檔的 re-ingest 前置清理
+
+若發現某季度 release audio 與另一季度 checksum 相同，或 FIN 開頭明確屬於其他季度，必須先清掉錯誤狀態再重新 ingest。不可在錯誤 release asset 仍存在時直接重跑 ingest，否則 README、SRT player、Mac-mini FIN 可能繼續吃到舊音檔。
+
+清理順序：
+
+1. 用 GitHub release asset digest 確認重複關係，記錄錯誤 stem、canonical stem、sha256、size。
+2. 刪除錯誤季度的 GitHub release audio asset；只刪錯誤 stem，不刪 canonical stem。
+3. 移除錯誤 stem 在 `audio_manifest.json` 的 URL。
+4. 移除錯誤 stem 在 `audio_durations.json` 的顯示快取。
+5. 移除或改正 `audio_metadata.json` 中錯誤 stem；若保留稽核紀錄，必須標 `status: duplicate` 與 `duplicate_of`，不得標 `ok`。
+6. 刪除由錯誤音檔產生的 `{stem}_FIN.srt`；若 `{stem}_GT.srt` 是依錯 FIN 生成，也必須刪除。
+7. 更新 README，讓錯誤季度的音檔、FIN、GT 欄位回到缺失狀態。
+8. commit 清理狀態後，再重新執行 `ingest.py <stock_id> <year> <quarter> --push`。
+9. re-ingest 成功後，立刻跑 targeted audit：
+
+```bash
+python skills/skill-investorconference-ingest/scripts/audit_audio_metadata.py \
+  --stems <wrong_stem> <canonical_or_adjacent_stem> \
+  --cache-dir /tmp \
+  --update-durations \
+  --fail-on-duplicate
+```
+
+驗收條件：
+
+* 新音檔 sha256 不得等於任何不同 stem。
+* `audio_manifest.json` URL 必須指向新 release asset。
+* `audio_metadata.json` 的 stem 必須有 `sha256`、`size_bytes`、`duration_sec`、`status: ok`。
+* Mac-mini FIN 只能在音檔通過 checksum gate 後生成。
 
 
 ## 🇺🇸 美股材料蒐集規則
