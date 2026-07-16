@@ -41,6 +41,7 @@ FILES = [
     "scripts/ocr_client.py",
     "scripts/pdf_fallback.py",
     "scripts/refine_todo_ocr.py",
+    "scripts/convert_ir_pdfs.py",
 ]
 
 

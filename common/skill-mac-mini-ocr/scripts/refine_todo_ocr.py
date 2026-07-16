@@ -40,7 +40,7 @@ if platform.system() == "Windows":
 
 # 讓 ocr_client 可以在「python scripts/refine_todo_ocr.py」與模組導入兩種情境下被找到
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from ocr_client import transcribe_document_to_markdown  # noqa: E402
+from ocr_client import clean_ocr_markdown, transcribe_document_to_markdown  # noqa: E402
 
 TODO_RE = re.compile(r'<!-- TODO:OCR source="(?P<source>[^"]+)" page=(?P<page>\d+) reason=(?P<reason>[\w-]+) -->')
 PAGE_SECTION_RE = r'<!-- PAGE:{page} -->.*?(?=<!-- PAGE:\d+ -->|\Z)'
@@ -89,7 +89,7 @@ def refine(md_path: Path, pdf_path: Path | None, pages: set[int] | None, dpi: in
             page = todo["page"]
             print(f"[refine] OCR 第 {page} 頁（reason={todo['reason']}）…", file=sys.stderr)
             single = _extract_single_page_pdf(pdf_path, page, Path(tmp))
-            ocr_md = transcribe_document_to_markdown(single, dpi=dpi).strip()
+            ocr_md = clean_ocr_markdown(transcribe_document_to_markdown(single, dpi=dpi)).strip()
 
             new_section = (
                 f"<!-- PAGE:{page} -->\n"

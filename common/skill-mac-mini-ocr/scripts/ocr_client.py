@@ -9,6 +9,7 @@ import os
 import sys
 import requests
 import platform
+import re
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -22,12 +23,47 @@ if platform.system() == 'Windows':
 # Load environment variables from .env file
 load_dotenv()
 
-def transcribe_document_to_markdown(file_path: str | Path, dpi: int = 200) -> str:
+SAVE_RESULTS_MARKER = "===============save results:==============="
+
+
+def clean_ocr_markdown(markdown_text: str) -> str:
+    """Clean Mac-mini OCR debug/layout markup before saving Markdown."""
+    if not markdown_text:
+        return ""
+
+    text = markdown_text.replace("\r\n", "\n").replace("\r", "\n")
+    if SAVE_RESULTS_MARKER in text:
+        text = text.split(SAVE_RESULTS_MARKER, 1)[1]
+
+    cleaned_lines = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            cleaned_lines.append("")
+            continue
+        if stripped == "<PAGE>":
+            cleaned_lines.append("<!-- OCR_PAGE -->")
+            continue
+        if stripped == "[Non-Text]":
+            continue
+        if stripped.startswith("![](images/"):
+            continue
+        stripped = re.sub(r"<\|det\|>[^<]*<\|/det\|>", "", stripped).strip()
+        if stripped:
+            cleaned_lines.append(stripped)
+
+    text = "\n".join(cleaned_lines)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
+def transcribe_document_to_markdown(file_path: str | Path, dpi: int = 200, clean: bool = True) -> str:
     """
     將本地的 PDF 或圖片發送到 Mac-mini OCR API 進行轉錄，並回傳 Markdown 文本。
     
     :param file_path: 本地檔案路徑 (PDF 或圖片)
     :param dpi: PDF 渲染解析度，預設 200
+    :param clean: 是否清除 Mac-mini OCR 回傳中的 detector/debug 標記，預設 True
     :return: 轉錄後的 Markdown 文本
     :raises ValueError: 當缺少 API Key 時拋出
     :raises FileNotFoundError: 當檔案不存在時拋出
@@ -68,7 +104,8 @@ def transcribe_document_to_markdown(file_path: str | Path, dpi: int = 200) -> st
                 error_msg = response.text or "Unknown error"
             raise RuntimeError(f"OCR request failed ({response.status_code}): {error_msg}")
 
-        return response.json().get("markdown", "")
+        markdown = response.json().get("markdown", "")
+        return clean_ocr_markdown(markdown) if clean else markdown
     except requests.exceptions.Timeout as e:
         raise RuntimeError(f"OCR request timed out: {e}")
     except requests.exceptions.RequestException as e:
