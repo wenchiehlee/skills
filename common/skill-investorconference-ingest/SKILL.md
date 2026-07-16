@@ -1,6 +1,6 @@
 ---
 name: skill-investorconference-ingest
-version: 1.2.2
+version: 1.2.3
 description: 投資人說明會（法說會）智慧影音與簡報下載與管理 Ingest 模組（支援美股與台股）
 ---
 
@@ -55,6 +55,22 @@ python skills/skill-investorconference-ingest/scripts/audit_audio_metadata.py --
 ### 公司 IR / MOPS 來源選擇與日期窗口檢查
 
 Ingest 不得只信任 MOPS 查詢結果的第一個影音檔。部分公司或 MOPS 查詢會回傳該公司最新法說影音，即使目標是前一季度。
+
+### 來源層級與衝突處理
+
+Ingest 必須把來源分成兩層，且不得讓二級來源覆蓋一級來源的季度、日期、檔案類型或公司正式材料判定。
+
+| 層級 | 來源 | 可用用途 | 限制 |
+| :--- | :--- | :--- | :--- |
+| 一級來源 | 公司 IR 官網、公司正式 replay/webcast、公司正式 PDF、MOPS/TWSE 官方公告、SEC filing（美股） | 決定季度、日期、檔案類型、是否為正式公司材料；落檔與 README metadata 的主依據 | 若一級來源彼此衝突，必須保留衝突紀錄並降信心，不得靜默覆蓋 |
+| 二級來源 | FinmoConf、AlphaSpread、Yahoo Finance transcript、AlphaMemo、第三方法說會索引或摘要平台 | 發現資料、補逐字稿、補 speaker/Q&A、交叉驗證、產生候選來源清單 | 不得覆蓋一級來源的季度/日期/檔案類型；不得單獨作為官方音檔或官方簡報判定 |
+
+若一級與二級來源衝突，例如第三方索引把公司官方 `2026 Q2` 法說會標成 `2026Q3`：
+
+1. README、manifest、metadata 必須以一級來源為準。
+2. 二級來源只可記錄為 discovery/reference URL。
+3. 在 `audio_metadata.json`、sidecar metadata、issue draft 或 ingest log 中記錄 mismatch，包含來源 URL、二級來源標籤、官方判定與處理結果。
+4. 不得因二級來源存在而跳過官方頁面、官方 PDF、官方 replay 或 MOPS/TWSE 的核對。
 
 來源優先順序：
 
