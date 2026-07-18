@@ -161,7 +161,7 @@ skills:
   path: common/skill-tw-cycle-index
   version: 1.0.0
   description: 重建 biztrends.TW 台灣 canonical cycle index，確認最新 GoodInfo Analyzer 月營收已進入
-    derived CSV，並用最新資料生成 tw_cycle_index.png。角色定位為跨台股與美股法人研究員。
+    derived CSV，用最新資料生成 tw_cycle_index.png，並以跨台股與美股法人研究員角色產出深度洞察分析。
   category: financial-strategy
   maintainer: wenchiehlee
   source: biztrends.TW
