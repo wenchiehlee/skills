@@ -86,6 +86,7 @@ def collect_skills() -> list[dict]:
                 "path": f"{group_dir.name}/{skill_dir.name}",
                 "version": meta.get("version", "0.0.0"),
                 "description": meta.get("description", ""),
+                "category": meta.get("category", "basic"),
                 "maintainer": meta.get("maintainer", ""),
                 "source": meta.get("source", ""),
                 "updated_at": meta.get("updated_at", ""),
@@ -108,13 +109,13 @@ def write_index(skills: list[dict]) -> None:
 
 def render_table(skills: list[dict]) -> str:
     lines = [
-        "| 技能 | 群組 | 版本 | 說明 | 修訂日期 |",
-        "| :--- | :--- | :--- | :--- | :--- |",
+        "| 技能 | 群組 | 分類 | 版本 | 說明 | 修訂日期 |",
+        "| :--- | :--- | :--- | :--- | :--- | :--- |",
     ]
     for s in skills:
         desc = s["description"].replace("|", "\\|")
         lines.append(
-            f"| [{s['name']}]({s['path']}) | {s['group']} | {s['version']} | {desc} | {s['revised_at']} |"
+            f"| [{s['name']}]({s['path']}) | {s['group']} | {s['category']} | {s['version']} | {desc} | {s['revised_at']} |"
         )
     return "\n".join(lines)
 

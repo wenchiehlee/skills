@@ -1,6 +1,7 @@
 {
   "name": "skill-taiex-sync",
   "description": "更新本地資料目錄索引，生成批次處理所需的投資標的清單",
+  "category": "financial",
   "version": "1.0.0",
   "maintainer": "wenchiehlee",
   "source": "TAIEX.TW",

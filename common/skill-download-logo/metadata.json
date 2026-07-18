@@ -1,6 +1,7 @@
 {
   "name": "download-logo",
   "description": "指定台灣股票代碼或美股概念股 Ticker，自動下載高解析度公司官方 Logo PNG，並限制在固定大小。",
+  "category": "basic",
   "version": "1.0.0",
   "maintainer": "wenchiehlee",
   "source": "",

@@ -6,6 +6,7 @@ skills:
   path: common/skill-all-models-benchmark
   version: 1.0.0
   description: 多模型與分析師共識效能評估標準作業程序。
+  category: financial
   maintainer: WJLEE
   source: biztrends.TW/Skills/skill-all-models-benchmark.md
   updated_at: '2026-07-05'
@@ -15,6 +16,7 @@ skills:
   path: common/skill-download-logo
   version: 1.0.0
   description: 指定台灣股票代碼或美股概念股 Ticker，自動下載高解析度公司官方 Logo PNG，並限制在固定大小。
+  category: basic
   maintainer: wenchiehlee
   source: ''
   updated_at: '2026-07-07'
@@ -25,6 +27,7 @@ skills:
   version: 1.0.0
   description: 使用 google-analytics-cli 產生 GA4 網站監控 Markdown/README 報告，包含 YAML daily
     metadata、即時活躍人數、近 7/28 天短期趨勢、近 3 個月流量趨勢、來源/媒介、Top 10 URL、熱門頁面、事件與異常觀察。
+  category: analytics
   maintainer: wenchiehlee
   source: https://pypi.org/project/google-analytics-cli/
   updated_at: '2026-07-18'
@@ -36,6 +39,7 @@ skills:
   description: 法說會/earnings call 重點萃取、GT 字幕生成/校正與投資影響分析 SOP — 支援 TW/US market templates、US
     earnings-call source discovery/lint、Yahoo/AlphaSpread/AlphaMemo 等逐字稿、GT metadata/review
     level 驗證，以及美股對台股供應鏈/市場 read-through；digest 報告輸出至 data/reports/conference-digests/
+  category: financial
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
   updated_at: '2026-07-16'
@@ -47,6 +51,7 @@ skills:
   description: 投資人說明會（法說會）影音、簡報、第三方逐字稿與 metadata 材料蒐集/同步 Ingest 模組；支援台股與美股 earnings-call
     材料（earnings release、financial tables、performance review、Yahoo/AlphaSpread transcript），GT
     生成由 digest skill 負責
+  category: financial
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
   updated_at: '2026-07-16'
@@ -56,6 +61,7 @@ skills:
   path: common/skill-mac-mini-ocr
   version: 1.2.0
   description: 使用自建在 Mac-mini 上的 OCR API 服務（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。
+  category: document
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/FamilyHealthyCheck
   updated_at: '2026-07-17'
@@ -65,6 +71,7 @@ skills:
   path: common/skill-market-cost-distribution
   version: 1.0.1
   description: 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。
+  category: financial
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/MarketCostDistribution
   updated_at: '2026-07-15'
@@ -74,6 +81,7 @@ skills:
   path: common/skill-pptx-to-md
   version: 1.0.0
   description: 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。
+  category: document
   maintainer: wenchiehlee
   source: ''
   updated_at: '2026-07-09'
@@ -83,6 +91,7 @@ skills:
   path: common/skill-revenue-expense-profit-predict
   version: 1.0.0
   description: 季度損益三線（營業收入 / 總支出 / 營業利益）底部加總預測 SOP
+  category: financial
   maintainer: ''
   source: ''
   updated_at: ''
@@ -92,6 +101,7 @@ skills:
   path: common/skill-revenue-predict
   version: 1.0.0
   description: 營收預測與 10-Model 評估 SOP
+  category: financial
   maintainer: ''
   source: ''
   updated_at: ''
@@ -101,6 +111,7 @@ skills:
   path: common/skill-taiex-compare
   version: 1.0.0
   description: 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異
+  category: financial
   maintainer: wenchiehlee
   source: TAIEX.TW
   updated_at: '2026-07-07'
@@ -110,6 +121,7 @@ skills:
   path: common/skill-taiex-monitor
   version: 1.0.0
   description: 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板
+  category: financial
   maintainer: wenchiehlee
   source: TAIEX.TW
   updated_at: '2026-07-07'
@@ -119,6 +131,7 @@ skills:
   path: common/skill-taiex-report
   version: 1.0.0
   description: 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖）
+  category: financial
   maintainer: wenchiehlee
   source: TAIEX.TW
   updated_at: '2026-07-07'
@@ -128,6 +141,7 @@ skills:
   path: common/skill-taiex-sync
   version: 1.0.0
   description: 更新本地資料目錄索引，生成批次處理所需的投資標的清單
+  category: financial
   maintainer: wenchiehlee
   source: TAIEX.TW
   updated_at: '2026-07-07'
@@ -137,6 +151,7 @@ skills:
   path: common/skill-taiex-viz
   version: 1.0.0
   description: 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖
+  category: financial
   maintainer: wenchiehlee
   source: TAIEX.TW
   updated_at: '2026-07-07'

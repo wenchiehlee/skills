@@ -1,6 +1,7 @@
 {
   "name": "pptx-to-md",
   "description": "使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。",
+  "category": "document",
   "version": "1.0.0",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
