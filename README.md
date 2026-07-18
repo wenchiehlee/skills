@@ -19,21 +19,21 @@
 <!-- SKILLS-TABLE:START -->
 | 技能 | 群組 | 分類 | 版本 | 說明 | 修訂日期 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| [skill-all-models-benchmark](common/skill-all-models-benchmark) | common | financial | 1.0.0 | 多模型與分析師共識效能評估標準作業程序。 | 2026-07-07 |
-| [skill-download-logo](common/skill-download-logo) | common | basic | 1.0.0 | 指定台灣股票代碼或美股概念股 Ticker，自動下載高解析度公司官方 Logo PNG，並限制在固定大小。 | 2026-07-07 |
+| [skill-all-models-benchmark](common/skill-all-models-benchmark) | common | financial | 1.0.0 | 多模型與分析師共識效能評估標準作業程序。 | 2026-07-18 |
+| [skill-download-logo](common/skill-download-logo) | common | basic | 1.0.0 | 指定台灣股票代碼或美股概念股 Ticker，自動下載高解析度公司官方 Logo PNG，並限制在固定大小。 | 2026-07-18 |
 | [skill-google-analytics-monitor](common/skill-google-analytics-monitor) | common | analytics | 1.0.0 | 使用 google-analytics-cli 產生 GA4 網站監控 Markdown/README 報告，包含 YAML daily metadata、即時活躍人數、近 7/28 天短期趨勢、近 3 個月流量趨勢、來源/媒介、Top 10 URL、熱門頁面、事件與異常觀察。 | 2026-07-18 |
-| [skill-investorconference-digest](common/skill-investorconference-digest) | common | financial | 2.4.0 | 法說會/earnings call 重點萃取、GT 字幕生成/校正與投資影響分析 SOP — 支援 TW/US market templates、US earnings-call source discovery/lint、Yahoo/AlphaSpread/AlphaMemo 等逐字稿、GT metadata/review level 驗證，以及美股對台股供應鏈/市場 read-through；digest 報告輸出至 data/reports/conference-digests/ | 2026-07-16 |
-| [skill-investorconference-ingest](common/skill-investorconference-ingest) | common | financial | 1.2.6 | 投資人說明會（法說會）影音、簡報、第三方逐字稿與 metadata 材料蒐集/同步 Ingest 模組；支援台股與美股 earnings-call 材料（earnings release、financial tables、performance review、Yahoo/AlphaSpread transcript），GT 生成由 digest skill 負責 | 2026-07-16 |
-| [skill-mac-mini-ocr](common/skill-mac-mini-ocr) | common | document | 1.2.0 | 使用自建在 Mac-mini 上的 OCR API 服務（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-07-17 |
-| [skill-market-cost-distribution](common/skill-market-cost-distribution) | common | financial | 1.0.1 | 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。 | 2026-07-15 |
-| [skill-pptx-to-md](common/skill-pptx-to-md) | common | document | 1.0.0 | 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。 | 2026-07-15 |
-| [skill-revenue-expense-profit-predict](common/skill-revenue-expense-profit-predict) | common | financial | 1.0.0 | 季度損益三線（營業收入 / 總支出 / 營業利益）底部加總預測 SOP | 2026-07-05 |
-| [skill-revenue-predict](common/skill-revenue-predict) | common | financial | 1.0.0 | 營收預測與 10-Model 評估 SOP | 2026-07-05 |
-| [skill-taiex-compare](common/skill-taiex-compare) | common | financial | 1.0.0 | 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異 | 2026-07-07 |
-| [skill-taiex-monitor](common/skill-taiex-monitor) | common | financial | 1.0.0 | 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板 | 2026-07-07 |
-| [skill-taiex-report](common/skill-taiex-report) | common | financial | 1.0.0 | 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖） | 2026-07-07 |
-| [skill-taiex-sync](common/skill-taiex-sync) | common | financial | 1.0.0 | 更新本地資料目錄索引，生成批次處理所需的投資標的清單 | 2026-07-07 |
-| [skill-taiex-viz](common/skill-taiex-viz) | common | financial | 1.0.0 | 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖 | 2026-07-07 |
+| [skill-investorconference-digest](common/skill-investorconference-digest) | common | financial | 2.4.0 | 法說會/earnings call 重點萃取、GT 字幕生成/校正與投資影響分析 SOP — 支援 TW/US market templates、US earnings-call source discovery/lint、Yahoo/AlphaSpread/AlphaMemo 等逐字稿、GT metadata/review level 驗證，以及美股對台股供應鏈/市場 read-through；digest 報告輸出至 data/reports/conference-digests/ | 2026-07-18 |
+| [skill-investorconference-ingest](common/skill-investorconference-ingest) | common | financial | 1.2.6 | 投資人說明會（法說會）影音、簡報、第三方逐字稿與 metadata 材料蒐集/同步 Ingest 模組；支援台股與美股 earnings-call 材料（earnings release、financial tables、performance review、Yahoo/AlphaSpread transcript），GT 生成由 digest skill 負責 | 2026-07-18 |
+| [skill-mac-mini-ocr](common/skill-mac-mini-ocr) | common | document | 1.2.0 | 使用自建在 Mac-mini 上的 OCR API 服務（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-07-18 |
+| [skill-market-cost-distribution](common/skill-market-cost-distribution) | common | financial | 1.0.1 | 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。 | 2026-07-18 |
+| [skill-pptx-to-md](common/skill-pptx-to-md) | common | document | 1.0.0 | 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。 | 2026-07-18 |
+| [skill-revenue-expense-profit-predict](common/skill-revenue-expense-profit-predict) | common | financial | 1.0.0 | 季度損益三線（營業收入 / 總支出 / 營業利益）底部加總預測 SOP | 2026-07-18 |
+| [skill-revenue-predict](common/skill-revenue-predict) | common | financial | 1.0.0 | 營收預測與 10-Model 評估 SOP | 2026-07-18 |
+| [skill-taiex-compare](common/skill-taiex-compare) | common | financial | 1.0.0 | 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異 | 2026-07-18 |
+| [skill-taiex-monitor](common/skill-taiex-monitor) | common | financial | 1.0.0 | 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板 | 2026-07-18 |
+| [skill-taiex-report](common/skill-taiex-report) | common | financial | 1.0.0 | 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖） | 2026-07-18 |
+| [skill-taiex-sync](common/skill-taiex-sync) | common | financial | 1.0.0 | 更新本地資料目錄索引，生成批次處理所需的投資標的清單 | 2026-07-18 |
+| [skill-taiex-viz](common/skill-taiex-viz) | common | financial | 1.0.0 | 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖 | 2026-07-18 |
 
 最後產生日期：2026-07-18
 <!-- SKILLS-TABLE:END -->

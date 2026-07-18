@@ -10,7 +10,7 @@ skills:
   maintainer: WJLEE
   source: biztrends.TW/Skills/skill-all-models-benchmark.md
   updated_at: '2026-07-05'
-  revised_at: '2026-07-07'
+  revised_at: '2026-07-18'
 - name: skill-download-logo
   group: common
   path: common/skill-download-logo
@@ -20,7 +20,7 @@ skills:
   maintainer: wenchiehlee
   source: ''
   updated_at: '2026-07-07'
-  revised_at: '2026-07-07'
+  revised_at: '2026-07-18'
 - name: skill-google-analytics-monitor
   group: common
   path: common/skill-google-analytics-monitor
@@ -43,7 +43,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
   updated_at: '2026-07-16'
-  revised_at: '2026-07-16'
+  revised_at: '2026-07-18'
 - name: skill-investorconference-ingest
   group: common
   path: common/skill-investorconference-ingest
@@ -55,7 +55,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
   updated_at: '2026-07-16'
-  revised_at: '2026-07-16'
+  revised_at: '2026-07-18'
 - name: skill-mac-mini-ocr
   group: common
   path: common/skill-mac-mini-ocr
@@ -65,7 +65,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/FamilyHealthyCheck
   updated_at: '2026-07-17'
-  revised_at: '2026-07-17'
+  revised_at: '2026-07-18'
 - name: skill-market-cost-distribution
   group: common
   path: common/skill-market-cost-distribution
@@ -75,7 +75,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/MarketCostDistribution
   updated_at: '2026-07-15'
-  revised_at: '2026-07-15'
+  revised_at: '2026-07-18'
 - name: skill-pptx-to-md
   group: common
   path: common/skill-pptx-to-md
@@ -85,7 +85,7 @@ skills:
   maintainer: wenchiehlee
   source: ''
   updated_at: '2026-07-09'
-  revised_at: '2026-07-15'
+  revised_at: '2026-07-18'
 - name: skill-revenue-expense-profit-predict
   group: common
   path: common/skill-revenue-expense-profit-predict
@@ -95,7 +95,7 @@ skills:
   maintainer: ''
   source: ''
   updated_at: ''
-  revised_at: '2026-07-05'
+  revised_at: '2026-07-18'
 - name: skill-revenue-predict
   group: common
   path: common/skill-revenue-predict
@@ -105,7 +105,7 @@ skills:
   maintainer: ''
   source: ''
   updated_at: ''
-  revised_at: '2026-07-05'
+  revised_at: '2026-07-18'
 - name: skill-taiex-compare
   group: common
   path: common/skill-taiex-compare
@@ -115,7 +115,7 @@ skills:
   maintainer: wenchiehlee
   source: TAIEX.TW
   updated_at: '2026-07-07'
-  revised_at: '2026-07-07'
+  revised_at: '2026-07-18'
 - name: skill-taiex-monitor
   group: common
   path: common/skill-taiex-monitor
@@ -125,7 +125,7 @@ skills:
   maintainer: wenchiehlee
   source: TAIEX.TW
   updated_at: '2026-07-07'
-  revised_at: '2026-07-07'
+  revised_at: '2026-07-18'
 - name: skill-taiex-report
   group: common
   path: common/skill-taiex-report
@@ -135,7 +135,7 @@ skills:
   maintainer: wenchiehlee
   source: TAIEX.TW
   updated_at: '2026-07-07'
-  revised_at: '2026-07-07'
+  revised_at: '2026-07-18'
 - name: skill-taiex-sync
   group: common
   path: common/skill-taiex-sync
@@ -145,7 +145,7 @@ skills:
   maintainer: wenchiehlee
   source: TAIEX.TW
   updated_at: '2026-07-07'
-  revised_at: '2026-07-07'
+  revised_at: '2026-07-18'
 - name: skill-taiex-viz
   group: common
   path: common/skill-taiex-viz
@@ -155,4 +155,4 @@ skills:
   maintainer: wenchiehlee
   source: TAIEX.TW
   updated_at: '2026-07-07'
-  revised_at: '2026-07-07'
+  revised_at: '2026-07-18'
