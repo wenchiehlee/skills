@@ -33,7 +33,7 @@
 | [skill-taiex-sync](common/skill-taiex-sync) | common | 1.0.0 | 更新本地資料目錄索引，生成批次處理所需的投資標的清單 | 2026-07-07 |
 | [skill-taiex-viz](common/skill-taiex-viz) | common | 1.0.0 | 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖 | 2026-07-07 |
 
-最後產生日期：2026-07-17
+最後產生日期：2026-07-18
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理

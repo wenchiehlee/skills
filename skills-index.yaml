@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-07-17'
+generated_at: '2026-07-18'
 skills:
 - name: skill-all-models-benchmark
   group: common
