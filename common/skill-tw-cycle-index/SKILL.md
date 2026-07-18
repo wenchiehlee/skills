@@ -46,16 +46,17 @@ python ../skills/common/skill-tw-cycle-index/scripts/run_tw_cycle_index.py
 
 ## 深度洞察分析
 
-產圖後必須提供一段可直接放入研究備忘錄的深度分析，不可只描述圖表長相。Industry lifecycle stage 採用 Malta Business School 對 Introduction / Growth / Maturity / Decline 的四階段定義作為語意框架（https://mbs.edu.mt/knowledge/empowerment-through-knowledgeno-25-industry-life-cycle/），再以本地 YoY 與營收資料判斷。分析至少涵蓋：
+產圖後必須提供一段可直接放入研究備忘錄的深度分析，不可只描述圖表長相。可用 Malta Business School 對 Introduction / Growth / Maturity / Decline 的產業生命週期定義作為背景框架（https://mbs.edu.mt/knowledge/empowerment-through-knowledgeno-25-industry-life-cycle/），但 README 呈現必須是高階策略描述，不是生命週期明細表。分析至少涵蓋：
 
-- 每個 Canonical Cycle 都必須逐一分析 `begin -> top-peak -> bottom-peak -> end`，並標示 Introduction / Growth / Maturity / Decline stage。`bottom-peak` 為近 60 個月 YoY 最低點，`begin` 為 bottom-peak 後首個 YoY 轉正月，`top-peak` 為 begin 之後 YoY 最高點，`end` 為最新月份；AI_Compute_Infra 需另標註 2023 OpenAI/ChatGPT regime anchor。
-- 最新月份的 cycle leadership：哪些週期 YoY、營收規模或加速度最強，哪些轉弱。
+- 產出高階策略敘述，不輸出逐 cycle 明細表或生命週期操作欄位。
+- 用 3-5 段研究備忘錄式文字說明目前台灣 cycle index 的市場含義：主線、輪動、擴散、集中度與風險。
+- 最新月份的 cycle leadership：哪些週期 YoY、營收規模或加速度最強，哪些轉弱，並引用可追溯數字。
 - 跨週期輪動：AI Compute Infra、Memory、Network Infra、PC Consumer、Smartphone、EV Automotive、Software SaaS 之間的相對強弱與領先/落後關係。
 - 台股對美股 read-through：將台灣供應鏈週期變化連到美股 AI capex、半導體、雲端、網通、PC/手機、EV 等需求線索；明確標示這是從資料推論。
 - 結構與集中度：指出主要貢獻公司或 top contributors 是否造成指數集中，必要時讀 by-symbol CSV 驗證。
-- 投資研究含義：列出 3-5 個可追蹤的觀察點、風險與下一步資料驗證方向。
+- 投資研究含義：列出可追蹤的觀察點、風險與下一步資料驗證方向。
 
-分析必須引用具體月份、YoY 百分比、營收金額或公司貢獻數等可追溯數字；每個 cycle 的 begin/top-peak/bottom-peak/end 都要有月份與 YoY，且 begin 不可機械使用圖表第一個月；若只根據 PNG 視覺判讀而非 CSV 數字，要明確說明。
+分析必須引用具體月份、YoY 百分比、營收金額或公司貢獻數等可追溯數字；README 呈現應是策略解讀，不是流程表、生命週期明細表或操作明細。若只根據 PNG 視覺判讀而非 CSV 數字，要明確說明。
 
 ## 手動 fallback
 
