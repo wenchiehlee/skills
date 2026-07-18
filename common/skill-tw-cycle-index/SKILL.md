@@ -42,6 +42,7 @@ python ../skills/common/skill-tw-cycle-index/scripts/run_tw_cycle_index.py
 6. 執行 `CI=1 python3 scripts/plot_tw_cycle_index.py`，產生 `output/tw_cycle_index.png`。
 7. 驗證 PNG 存在且可讀，並輸出檔案尺寸。
 8. 以法人研究員角度解讀目標 PNG，必要時回讀 `data/tw_cycle_intensity_index.csv` 與 `data/tw_cycle_intensity_by_symbol.csv` 支撐判斷。
+9. 更新 `README.md` 的台灣 cycle index 區塊，將產出指令改為 skill runner，並寫入 timestamp 與深度洞察分析。
 
 ## 深度洞察分析
 
@@ -77,6 +78,7 @@ python3 -c "import pandas as pd; [print(f, pd.read_csv(f)['month'].max()) for f 
 - raw revenue 最新月份與申報筆數
 - 兩個 derived CSV 的最新月份
 - PNG 路徑與尺寸
+- `README.md` 是否已寫入 skill runner 產出指令、timestamp 與深度洞察分析
 - 深度洞察分析摘要，含 cycle leadership、跨市場 read-through、風險與下一步驗證
 - 是否有為了讓 pipeline 可執行而修改腳本
 
