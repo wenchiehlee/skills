@@ -156,3 +156,14 @@ skills:
   source: TAIEX.TW
   updated_at: '2026-07-07'
   revised_at: '2026-07-18'
+- name: skill-tw-cycle-index
+  group: common
+  path: common/skill-tw-cycle-index
+  version: 1.0.0
+  description: 重建 biztrends.TW 台灣 canonical cycle index，確認最新 GoodInfo Analyzer 月營收已進入
+    derived CSV，並用最新資料生成 tw_cycle_index.png。角色定位為跨台股與美股法人研究員。
+  category: financial-strategy
+  maintainer: wenchiehlee
+  source: biztrends.TW
+  updated_at: '2026-07-18'
+  revised_at: '2026-07-18'

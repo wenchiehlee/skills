@@ -34,6 +34,7 @@
 | [skill-taiex-report](common/skill-taiex-report) | common | financial-strategy | 1.0.0 | 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖） | 2026-07-18 |
 | [skill-taiex-sync](common/skill-taiex-sync) | common | financial-data | 1.0.0 | 更新本地資料目錄索引，生成批次處理所需的投資標的清單 | 2026-07-18 |
 | [skill-taiex-viz](common/skill-taiex-viz) | common | financial-accounting | 1.0.0 | 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖 | 2026-07-18 |
+| [skill-tw-cycle-index](common/skill-tw-cycle-index) | common | financial-strategy | 1.0.0 | 重建 biztrends.TW 台灣 canonical cycle index，確認最新 GoodInfo Analyzer 月營收已進入 derived CSV，並用最新資料生成 tw_cycle_index.png。角色定位為跨台股與美股法人研究員。 | 2026-07-18 |
 
 最後產生日期：2026-07-18
 <!-- SKILLS-TABLE:END -->
