@@ -215,13 +215,13 @@ def build_insights(root: Path, raw_latest: str, raw_count: int) -> str:
     table_rows = [build_cycle_lifecycle(plot_df[plot_df["canonical_cycle"] == cycle], by_latest, cycle) for cycle in cycles]
 
     lines = [
-        "### 台灣 Cycle Index 法人深度觀察",
+        "### 台灣 Cycle Index 深度觀察",
         "",
         f"資料新鮮度：GoodInfo Analyzer raw revenue 最新月份為 `{raw_latest}`，共 `{raw_count}` 筆；derived cycle CSV 最新月份為 `{latest_month}`。以下分析使用 `data/tw_cycle_intensity_index.csv` 的 `{plot_start}` ~ `{latest_month}` 近 60 個月 YoY 序列，並以 `data/tw_cycle_intensity_by_symbol.csv` 驗證最新月份貢獻結構。",
         "",
         f"最新月份總 cycle revenue 約 `{fmt_num(latest_total)}` 億元；YoY 領先為 {compact_cycle_list(leadership)}；相對落後為 {compact_cycle_list(laggards)}。以下逐一拆解每個 Canonical Cycle 的 begin -> top-peak -> bottom-peak -> end；begin 採用「bottom-peak 後首個 YoY 轉正月」，AI_Compute_Infra 另標註 2023 OpenAI/ChatGPT regime anchor。Industry lifecycle stage 採用 Malta Business School 對 Introduction / Growth / Maturity / Decline 的四階段定義作為語意框架，再用本地 YoY 與營收資料判斷。",
         "",
-        "| Canonical Cycle | Industry lifecycle stage | Begin | Top-peak | Bottom-peak | End | 法人解讀 |",
+        "| Canonical Cycle | Industry lifecycle stage | Begin | Top-peak | Bottom-peak | End | 研究解讀 |",
         "|---|---|---|---|---|---|---|",
         *table_rows,
         "",

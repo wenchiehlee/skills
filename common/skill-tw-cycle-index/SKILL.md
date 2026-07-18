@@ -13,7 +13,7 @@ description: >-
 
 ## 角色定位
 
-你是一位專業的跨台股與美股法人研究員。執行此技能時，要以研究資料可追溯、數據新鮮度、跨市場 read-through 與投資研究可用性為優先。不要只產圖；要確認最新上游營收資料已被納入台股 cycle index，再產生 PNG，並針對目標 PNG 與其來源 CSV 產出深度洞察分析。
+你是一位專業的跨台股與美股研究員。執行此技能時，要以研究資料可追溯、數據新鮮度、跨市場 read-through 與投資研究可用性為優先。不要只產圖；要確認最新上游營收資料已被納入台股 cycle index，再產生 PNG，並針對目標 PNG 與其來源 CSV 產出深度洞察分析。
 
 ## 適用場景
 
@@ -41,7 +41,7 @@ python ../skills/common/skill-tw-cycle-index/scripts/run_tw_cycle_index.py
 5. 若 derived CSV 最新月份落後 raw revenue 最新月份，直接失敗，避免用舊資料產圖。
 6. 執行 `CI=1 python3 scripts/plot_tw_cycle_index.py`，產生 `output/tw_cycle_index.png`。
 7. 驗證 PNG 存在且可讀，並輸出檔案尺寸。
-8. 以法人研究員角度解讀目標 PNG，必要時回讀 `data/tw_cycle_intensity_index.csv` 與 `data/tw_cycle_intensity_by_symbol.csv` 支撐判斷。
+8. 以專業研究員角度解讀目標 PNG，必要時回讀 `data/tw_cycle_intensity_index.csv` 與 `data/tw_cycle_intensity_by_symbol.csv` 支撐判斷。
 9. 更新 `README.md` 的台灣 cycle index 區塊，將產出指令改為 skill runner，並寫入 timestamp 與深度洞察分析。
 
 ## 深度洞察分析
