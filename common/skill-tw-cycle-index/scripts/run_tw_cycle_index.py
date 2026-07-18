@@ -63,68 +63,171 @@ def previous_month(month: str) -> str:
     return f"{year}/{month_num - 1:02d}"
 
 
+def format_point(row: pd.Series) -> str:
+    return f"{row['month']} / 營收 {fmt_num(float(row['revenue_twd_bn']))} 億元 / YoY {fmt_pct(float(row['yoy_pct']))}"
+
+
+def latest_phase(latest_yoy: float, yoy_delta_3m: float | None) -> str:
+    if latest_yoy >= 20 and yoy_delta_3m is not None and yoy_delta_3m > 5:
+        return "擴張加速"
+    if latest_yoy >= 20:
+        return "高檔擴張"
+    if latest_yoy >= 0 and yoy_delta_3m is not None and yoy_delta_3m < -5:
+        return "成長降溫"
+    if latest_yoy >= 0:
+        return "溫和成長"
+    if yoy_delta_3m is not None and yoy_delta_3m > 5:
+        return "低檔修復"
+    return "收縮"
+
+
+def industry_lifecycle_stage(latest_yoy: float, yoy_delta_3m: float | None, top_is_end: bool, months_since_begin: int) -> str:
+    # Stage vocabulary follows Malta Business School's four-stage Industry Life Cycle: Introduction, Growth, Maturity, Decline.
+    if months_since_begin <= 3 and latest_yoy >= 0:
+        return "Introduction / 導入"
+    if latest_yoy < 0:
+        return "Decline / 衰退"
+    if latest_yoy >= 20 and (top_is_end or yoy_delta_3m is None or yoy_delta_3m >= -5):
+        return "Growth / 成長"
+    if latest_yoy >= 0 and yoy_delta_3m is not None and yoy_delta_3m < -20:
+        return "Maturity-to-Decline / 成熟轉衰退"
+    return "Maturity / 成熟"
+
+
+def top_contributors(by_latest: pd.DataFrame, cycle: str) -> str:
+    cdf = by_latest[by_latest["canonical_cycle"] == cycle].sort_values("revenue_twd_bn", ascending=False)
+    if cdf.empty:
+        return "無 by-symbol 資料"
+    cycle_total = float(cdf["revenue_twd_bn"].sum())
+    parts = []
+    for _, row in cdf.head(3).iterrows():
+        revenue = float(row["revenue_twd_bn"])
+        share = revenue / cycle_total * 100 if cycle_total else 0
+        parts.append(f"{row['symbol']} {fmt_num(revenue)} 億/{share:.1f}%")
+    top3_share = float(cdf.head(3)["revenue_twd_bn"].sum()) / cycle_total * 100 if cycle_total else 0
+    return f"{'、'.join(parts)}；Top3 {top3_share:.1f}%"
+
+
+def first_recovery_after_bottom(cdf: pd.DataFrame, bottom_pos: int) -> pd.Series:
+    after_bottom = cdf.iloc[bottom_pos:].reset_index(drop=True)
+    non_negative = after_bottom[after_bottom["yoy_pct"] >= 0]
+    if not non_negative.empty:
+        return non_negative.iloc[0]
+    return cdf.iloc[bottom_pos]
+
+
+def ai_regime_anchor(cdf: pd.DataFrame) -> pd.Series | None:
+    anchor = cdf[cdf["month"].astype(str) >= "2023/01"]
+    if anchor.empty:
+        return None
+    return anchor.iloc[0]
+
+
+def build_cycle_lifecycle(cycle_df: pd.DataFrame, by_latest: pd.DataFrame, cycle: str) -> str:
+    cdf = cycle_df.sort_values("month_dt").reset_index(drop=True)
+    cdf["yoy_pct"] = pd.to_numeric(cdf["yoy_pct"], errors="coerce")
+    cdf["revenue_twd_bn"] = pd.to_numeric(cdf["revenue_twd_bn"], errors="coerce")
+    cdf = cdf.dropna(subset=["yoy_pct", "revenue_twd_bn"]).reset_index(drop=True)
+    if cdf.empty:
+        return f"| `{cycle}` | n/a | n/a | n/a | n/a | YoY 資料不足 |"
+
+    bottom_pos = int(cdf["yoy_pct"].idxmin())
+    bottom = cdf.iloc[bottom_pos]
+    begin = first_recovery_after_bottom(cdf, bottom_pos)
+    begin_pos = int(cdf.index[cdf["month"] == begin["month"]][0])
+    after_begin = cdf.iloc[begin_pos:]
+    top = after_begin.loc[after_begin["yoy_pct"].idxmax()] if not after_begin.empty else cdf.loc[cdf["yoy_pct"].idxmax()]
+    end = cdf.iloc[-1]
+    top_is_end = str(top["month"]) == str(end["month"])
+    months_since_begin = len(cdf.iloc[begin_pos:]) - 1
+
+    begin_text = format_point(begin)
+    anchor = ai_regime_anchor(cdf) if cycle == "AI_Compute_Infra" else None
+    if anchor is not None and str(anchor["month"]) != str(begin["month"]):
+        begin_text = f"AI regime anchor {anchor['month']} / data recovery {begin_text}"
+
+    latest_yoy = float(end["yoy_pct"])
+    yoy_delta_3m = None
+    if len(cdf) >= 4:
+        yoy_delta_3m = latest_yoy - float(cdf.iloc[-4]["yoy_pct"])
+    phase = latest_phase(latest_yoy, yoy_delta_3m)
+    lifecycle_stage = industry_lifecycle_stage(latest_yoy, yoy_delta_3m, top_is_end, months_since_begin)
+    slope_text = "n/a" if yoy_delta_3m is None else fmt_pct(yoy_delta_3m)
+    contributors = top_contributors(by_latest, cycle)
+    read = (
+        f"{phase}；bottom -> end YoY 修復 {fmt_pct(float(end['yoy_pct']) - float(bottom['yoy_pct']))}；"
+        f"近 3 個月 YoY 變化 {slope_text}；Top contributors: {contributors}"
+    )
+    return "| " + " | ".join([
+        f"`{cycle}`",
+        lifecycle_stage,
+        begin_text,
+        format_point(top),
+        format_point(bottom),
+        format_point(end),
+        read,
+    ]) + " |"
+
+
 def build_insights(root: Path, raw_latest: str, raw_count: int) -> str:
     index_path = root / "data" / "tw_cycle_intensity_index.csv"
     by_symbol_path = root / "data" / "tw_cycle_intensity_by_symbol.csv"
     df = pd.read_csv(index_path)
     by_symbol = pd.read_csv(by_symbol_path)
+    df["month_dt"] = pd.to_datetime(df["month"], format="%Y/%m")
+    df["yoy_pct"] = pd.to_numeric(df["yoy_pct"], errors="coerce")
+    df["revenue_twd_bn"] = pd.to_numeric(df["revenue_twd_bn"], errors="coerce")
+    by_symbol["revenue_twd_bn"] = pd.to_numeric(by_symbol["revenue_twd_bn"], errors="coerce")
 
     latest_month = str(df["month"].max())
-    prev_month = previous_month(latest_month)
-    latest = df[df["month"].astype(str) == latest_month].copy()
-    prev = df[df["month"].astype(str) == prev_month][["canonical_cycle", "yoy_pct"]].rename(columns={"yoy_pct": "prev_yoy_pct"})
-    latest = latest.merge(prev, on="canonical_cycle", how="left")
-    latest["yoy_delta_pct"] = latest["yoy_pct"] - latest["prev_yoy_pct"]
+    max_dt = df["month_dt"].max()
+    cutoff = max_dt - pd.DateOffset(months=59)
+    plot_df = df[df["month_dt"] >= cutoff].copy()
+    plot_start = str(plot_df["month"].min())
+    by_latest = by_symbol[by_symbol["month"].astype(str) == latest_month].copy()
 
-    latest = latest.sort_values("revenue_twd_bn", ascending=False)
-    revenue_leaders = latest.head(3)
-    yoy_leaders = latest.sort_values("yoy_pct", ascending=False).head(3)
-    acceleration_leaders = latest.dropna(subset=["yoy_delta_pct"]).sort_values("yoy_delta_pct", ascending=False).head(3)
+    latest = plot_df[plot_df["month"].astype(str) == latest_month].copy()
+    latest_total = float(latest["revenue_twd_bn"].sum())
+    leadership = latest.sort_values("yoy_pct", ascending=False).head(3)
     laggards = latest.sort_values("yoy_pct", ascending=True).head(2)
 
-    total_revenue = float(latest["revenue_twd_bn"].sum())
-    ai_row = latest[latest["canonical_cycle"] == "AI_Compute_Infra"]
-    ai_share = None
-    if not ai_row.empty and total_revenue:
-        ai_share = float(ai_row.iloc[0]["revenue_twd_bn"]) / total_revenue * 100
+    def compact_cycle_list(rows: pd.DataFrame) -> str:
+        return "、".join(
+            f"`{row['canonical_cycle']}` YoY {fmt_pct(float(row['yoy_pct']))} / {fmt_num(float(row['revenue_twd_bn']))} 億元"
+            for _, row in rows.iterrows()
+        )
 
-    by_latest = by_symbol[by_symbol["month"].astype(str) == latest_month].copy()
-    by_latest["revenue_twd_bn"] = pd.to_numeric(by_latest["revenue_twd_bn"], errors="coerce")
-    contributor_lines = []
-    for cycle in revenue_leaders["canonical_cycle"]:
-        cdf = by_latest[by_latest["canonical_cycle"] == cycle].sort_values("revenue_twd_bn", ascending=False)
-        cycle_total = float(cdf["revenue_twd_bn"].sum())
-        top3 = cdf.head(3)
-        parts = []
-        for _, row in top3.iterrows():
-            share = float(row["revenue_twd_bn"]) / cycle_total * 100 if cycle_total else 0
-            parts.append(f"{row['symbol']} {fmt_num(float(row['revenue_twd_bn']))} 億元/{share:.1f}%")
-        top3_share = float(top3["revenue_twd_bn"].sum()) / cycle_total * 100 if cycle_total else 0
-        contributor_lines.append(f"- `{cycle}` 前三大貢獻為 {'、'.join(parts)}，合計占該 cycle {top3_share:.1f}%。")
-
-    def cycle_summary(rows, metric: str) -> str:
-        items = []
-        for _, row in rows.iterrows():
-            revenue = fmt_num(float(row["revenue_twd_bn"]))
-            yoy = fmt_pct(float(row["yoy_pct"]))
-            delta = row.get("yoy_delta_pct")
-            if pd.notna(delta):
-                items.append(f"`{row['canonical_cycle']}` {revenue} 億元、YoY {yoy}、較 {prev_month} 變化 {fmt_pct(float(delta))}")
-            else:
-                items.append(f"`{row['canonical_cycle']}` {revenue} 億元、YoY {yoy}")
-        return "；".join(items)
+    cycle_order = [
+        "AI_Compute_Infra",
+        "AI_Compute",
+        "Memory",
+        "Network_Infra",
+        "Smartphone",
+        "PC_Consumer",
+        "EV_Automotive",
+        "Software_SaaS",
+        "Consumer_IoT",
+        "Digital_Ads",
+        "Other",
+    ]
+    cycles = [c for c in cycle_order if c in set(plot_df["canonical_cycle"])]
+    cycles += [c for c in sorted(set(plot_df["canonical_cycle"])) if c not in cycles]
+    table_rows = [build_cycle_lifecycle(plot_df[plot_df["canonical_cycle"] == cycle], by_latest, cycle) for cycle in cycles]
 
     lines = [
         "### 台灣 Cycle Index 法人深度觀察",
         "",
-        f"資料新鮮度：GoodInfo Analyzer raw revenue 最新月份為 `{raw_latest}`，共 `{raw_count}` 筆；derived cycle CSV 最新月份為 `{latest_month}`。以下判斷引用 `data/tw_cycle_intensity_index.csv` 與 `data/tw_cycle_intensity_by_symbol.csv`，不是單純目視 PNG。",
+        f"資料新鮮度：GoodInfo Analyzer raw revenue 最新月份為 `{raw_latest}`，共 `{raw_count}` 筆；derived cycle CSV 最新月份為 `{latest_month}`。以下分析使用 `data/tw_cycle_intensity_index.csv` 的 `{plot_start}` ~ `{latest_month}` 近 60 個月 YoY 序列，並以 `data/tw_cycle_intensity_by_symbol.csv` 驗證最新月份貢獻結構。",
         "",
-        f"- **Cycle leadership**：營收規模前三大為 {cycle_summary(revenue_leaders, 'revenue')}。YoY 動能前三大為 {cycle_summary(yoy_leaders, 'yoy')}。YoY 加速度前三大為 {cycle_summary(acceleration_leaders, 'accel')}。相對落後的是 {cycle_summary(laggards, 'yoy')}。",
-        f"- **跨週期輪動**：`AI_Compute_Infra`、`Network_Infra`、`Memory` 與 `PC_Consumer` 同步保持高雙位數到三位數 YoY，代表 AI server、先進半導體、網通交換器與終端硬體補庫存仍在同一個上行鏈條。`Software_SaaS` YoY 仍為正但規模小，較像應用端跟隨訊號，不是本輪台股營收擴張的主驅動。",
-        f"- **台股對美股 read-through（資料推論）**：台灣供應鏈在 `{latest_month}` 的強勢集中於 AI infrastructure、memory 與 network，對應到美股雲端 CSP AI capex、GPU/ASIC server supply chain、HBM/DRAM/NAND 與 Ethernet/optical networking 需求仍具支撐；`Smartphone` 與 `PC_Consumer` YoY 轉強則提供 Apple/Qualcomm/AMD/PC OEM demand recovery 的邊際確認，但目前訊號仍弱於 AI capex 主線。",
-        f"- **結構與集中度**：最新月份全 cycle 合計營收約 `{fmt_num(total_revenue)}` 億元；`AI_Compute_Infra` 占比約 `{ai_share:.1f}%`，顯示總指數高度受 AI infrastructure 權重影響。",
-        *contributor_lines,
-        "- **投資研究含義與風險**：後續追蹤重點是 `Memory` YoY 高成長能否延續到價格與毛利、`Network_Infra` 是否跟隨 CSP 資本支出持續擴張、`PC_Consumer`/`Smartphone` 是否只是低基期反彈，以及 `AI_Compute_Infra` 是否因少數大型權值公司造成 concentration bias。下一步應交叉驗證美股 CSP capex guidance、NVDA/AMD/Broadcom/Marvell 訂單訊號、台股 ODM 月營收與法說會 backlog/commentary。",
+        f"最新月份總 cycle revenue 約 `{fmt_num(latest_total)}` 億元；YoY 領先為 {compact_cycle_list(leadership)}；相對落後為 {compact_cycle_list(laggards)}。以下逐一拆解每個 Canonical Cycle 的 begin -> top-peak -> bottom-peak -> end；begin 採用「bottom-peak 後首個 YoY 轉正月」，AI_Compute_Infra 另標註 2023 OpenAI/ChatGPT regime anchor。Industry lifecycle stage 採用 Malta Business School 對 Introduction / Growth / Maturity / Decline 的四階段定義作為語意框架，再用本地 YoY 與營收資料判斷。",
+        "",
+        "| Canonical Cycle | Industry lifecycle stage | Begin | Top-peak | Bottom-peak | End | 法人解讀 |",
+        "|---|---|---|---|---|---|---|",
+        *table_rows,
+        "",
+        "**跨台股與美股 read-through（資料推論）**：若 `AI_Compute_Infra`、`Network_Infra`、`Memory` 同時處於高檔擴張或擴張加速，通常對應美股 CSP AI capex、GPU/ASIC server、HBM/DRAM/NAND、Ethernet/optical networking 需求仍強；若 `PC_Consumer`、`Smartphone` 從 bottom-peak 後續修復，代表終端補庫存改善，但需用 Apple/Qualcomm/AMD/PC OEM guidance 驗證是否為持續需求，而非低基期反彈。",
+        "",
+        "**下一步驗證**：逐月追蹤各 cycle 的 end 是否持續接近 top-peak、YoY 3 個月斜率是否轉負、Top3 貢獻是否過度集中；同步交叉檢查美股 NVDA/AMD/Broadcom/Marvell、CSP capex guidance，以及台股 ODM/網通/記憶體法說會 backlog 與價格評論。",
     ]
     return "\n".join(lines)
 
