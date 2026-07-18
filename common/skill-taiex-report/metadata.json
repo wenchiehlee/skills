@@ -1,7 +1,7 @@
 {
   "name": "skill-taiex-report",
   "description": "生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖）",
-  "category": "financial",
+  "category": "financial-strategy",
   "version": "1.0.0",
   "maintainer": "wenchiehlee",
   "source": "TAIEX.TW",

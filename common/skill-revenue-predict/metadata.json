@@ -1,7 +1,7 @@
 {
   "name": "Skill Revenue Predict",
   "description": "營收預測與 10-Model 評估 SOP",
-  "category": "financial",
+  "category": "financial-forecasting",
   "version": "1.0.0",
   "author": "wenchiehlee",
   "license": "MIT",
