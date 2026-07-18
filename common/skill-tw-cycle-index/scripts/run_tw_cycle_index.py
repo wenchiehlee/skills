@@ -139,6 +139,53 @@ def build_insights(root: Path, raw_latest: str, raw_count: int) -> str:
         share = float(cdf.head(3)["revenue_twd_bn"].sum()) / total * 100
         return f"{'、'.join(parts)}；Top3 {share:.1f}%"
 
+    def top3_pct(cycle: str) -> float | None:
+        cdf = by_latest[by_latest["canonical_cycle"] == cycle].sort_values("revenue_twd_bn", ascending=False)
+        if cdf.empty:
+            return None
+        total = float(cdf["revenue_twd_bn"].sum())
+        if total == 0:
+            return None
+        return float(cdf.head(3)["revenue_twd_bn"].sum()) / total * 100
+
+    def interpretation_qa_summary() -> str:
+        return (
+            "本次解讀已先把 `AI_Compute_Infra` 視為加權 exposure proxy，而不是純 AI server 營收；"
+            "同時檢查 YoY 極端值、YoY 月變化、Top contributors 集中度與 `Other` 占比，"
+            "用來降低因公司分項揭露缺漏、混合營收或分類權重假設造成的資料誤讀。"
+        )
+
+    def anomaly_summary() -> str:
+        notes = []
+        yoy_extremes = latest_with_prior[latest_with_prior["yoy_pct"].abs() >= 100].sort_values("yoy_pct", ascending=False)
+        if not yoy_extremes.empty:
+            notes.append("YoY 極端值：" + "、".join(
+                f"`{row['canonical_cycle']}` {fmt_pct(float(row['yoy_pct']))}"
+                for _, row in yoy_extremes.iterrows()
+            ))
+        slope_extremes = latest_with_prior.dropna(subset=["mom_yoy_change"])
+        slope_extremes = slope_extremes[slope_extremes["mom_yoy_change"].abs() >= 25].sort_values("mom_yoy_change", key=lambda s: s.abs(), ascending=False)
+        if not slope_extremes.empty:
+            notes.append("YoY 斜率突變：" + "、".join(
+                f"`{row['canonical_cycle']}` 月變化 {fmt_pct(float(row['mom_yoy_change']))}"
+                for _, row in slope_extremes.head(4).iterrows()
+            ))
+        concentrated = []
+        for cycle in sorted(set(by_latest["canonical_cycle"])):
+            share = top3_pct(cycle)
+            if share is not None and share >= 80:
+                concentrated.append(f"`{cycle}` Top3 {share:.1f}%")
+        if concentrated:
+            notes.append("成分集中：" + "、".join(concentrated[:5]))
+        other = one("Other")
+        if other is not None:
+            other_share = float(other["revenue_twd_bn"]) / latest_total * 100 if latest_total else 0
+            if other_share >= 10:
+                notes.append(f"`Other` 占總 cycle revenue {other_share:.1f}%，可能稀釋或扭曲主題週期訊號")
+        if not notes:
+            return "未偵測到明顯異常值；仍需逐月確認 raw revenue 與 cycle mapping 是否有分類或申報口徑變動，並回查 AI server / data server / PC 拆分所依賴的 investor conference、法說會或年報揭露是否完整。"
+        return "；".join(notes) + "。這些訊號應先視為需要查證的研究提醒，優先回看原始月營收、分類權重、一次性出貨或低基期，而不是直接外推成長趨勢；`AI_Compute_Infra` 應視為 AI/data center exposure proxy，不代表成分公司只做 AI server；AI server / data server / PC 拆分也需回查 investor conference、法說會或年報揭露，因部分公司可能缺漏分項、揭露口徑不同，或同時包含 PC、手機、消費與其他業務。"
+
     ai_text = cycle_value("AI_Compute_Infra")
     memory_text = cycle_value("Memory")
     network_text = cycle_value("Network_Infra")
@@ -172,13 +219,17 @@ def build_insights(root: Path, raw_latest: str, raw_count: int) -> str:
         "",
         f"資料新鮮度：GoodInfo Analyzer raw revenue 最新月份為 `{raw_latest}`，共 `{raw_count}` 筆；derived cycle CSV 最新月份為 `{latest_month}`。以下分析使用 `data/tw_cycle_intensity_index.csv` 的 `{plot_start}` ~ `{latest_month}` 近 60 個月 YoY 序列，並以 `data/tw_cycle_intensity_by_symbol.csv` 驗證最新月份貢獻結構。",
         "",
-        f"**策略主軸**：最新月份總 cycle revenue 約 `{fmt_num(latest_total)}` 億元，YoY 領先為 {compact_cycle_list(leadership)}，相對落後為 {compact_cycle_list(laggards)}。這代表目前台灣電子供應鏈的景氣主線仍偏向 AI infrastructure 與資料中心相關資本支出，而不是單純的終端消費電子復甦。{regime}",
+        f"**策略主軸**：最新月份總 cycle revenue 約 `{fmt_num(latest_total)}` 億元，YoY 領先為 {compact_cycle_list(leadership)}，相對落後為 {compact_cycle_list(laggards)}。這代表目前台灣電子供應鏈的景氣主線仍偏向 AI infrastructure 與資料中心相關資本支出，而不是單純的終端消費電子復甦；但 `AI_Compute_Infra` 是依公司揭露資料與權重建立的 AI/data center exposure proxy，不代表成分公司只聚焦 AI server；AI server / data server / PC 的拆分需要用分項揭露覆蓋率檢查其穩定性。{regime}",
         "",
-        f"**週期輪動**：{ai_text}、{network_text}、{memory_text} 同步位於高成長區，顯示 AI server 從 compute 擴張到 networking、memory/storage 的 read-through 正在成立；{pc_text} 與 {smartphone_text} 同步轉強，較像 AI PC、邊緣裝置與一般補庫存的第二層擴散，但仍需區分低基期反彈與真正需求上修。{software_read}",
+        f"**週期輪動**：{ai_text}、{network_text}、{memory_text} 同步位於高成長區，顯示 AI/data center demand 從 compute 擴張到 networking、memory/storage 的 read-through 正在成立；{pc_text} 與 {smartphone_text} 同步轉強，較像 AI PC、邊緣裝置與一般補庫存的第二層擴散，但仍需區分低基期反彈與真正需求上修。{software_read}",
         "",
         f"**結構與集中度**：AI_Compute_Infra 的主要貢獻為 {ai_concentration}；Memory 為 {memory_concentration}；Network_Infra 為 {network_concentration}。因此指數解讀不能只看總 YoY，還要看成長是否由少數大型權值股貢獻；若 Top3 集中度維持高檔，代表投資結論更偏供應鏈龍頭與關鍵零組件，而不是全面性產業復甦。",
         "",
         f"**跨台股與美股 read-through（資料推論）**：目前台股營收訊號對應到美股應優先觀察 CSP AI capex、GPU/ASIC server、HBM/DRAM/NAND、Ethernet/optical networking 與電源散熱鏈。若後續 {compact_accel_list(accelerating)} 持續，代表 AI inference 與 agentic workload 帶來的儲存、記憶體、CPU/GPU 協同需求可能繼續往台灣供應鏈擴散；反之，若 AI_Compute_Infra YoY 高檔但 Memory 或 Network_Infra 斜率先轉弱，需警覺 capex 節奏或庫存週期降溫。",
+        "",
+        f"**資料解讀 QA**：{interpretation_qa_summary()}",
+        "",
+        f"**異常與非預期資料提醒**：{anomaly_summary()}",
         "",
         "**研究含義**：短線重點是確認 AI infrastructure 是否從龍頭營收擴散到記憶體、網通、ODM、電源散熱與終端裝置。後續追蹤三個訊號：第一，AI_Compute_Infra、Memory、Network_Infra 的 YoY 斜率是否同步維持；第二，PC_Consumer 與 Smartphone 是否能延續兩到三個月而非一次性補庫存；第三，Top3 貢獻是否下降並讓更多公司參與成長。主要風險是高基期、CSP capex 遞延、記憶體價格波動，以及終端需求未跟上 infrastructure build-out。",
     ]

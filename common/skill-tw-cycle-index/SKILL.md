@@ -54,9 +54,11 @@ python ../skills/common/skill-tw-cycle-index/scripts/run_tw_cycle_index.py
 - 跨週期輪動：AI Compute Infra、Memory、Network Infra、PC Consumer、Smartphone、EV Automotive、Software SaaS 之間的相對強弱與領先/落後關係。
 - 台股對美股 read-through：將台灣供應鏈週期變化連到美股 AI capex、半導體、雲端、網通、PC/手機、EV 等需求線索；明確標示這是從資料推論。
 - 結構與集中度：指出主要貢獻公司或 top contributors 是否造成指數集中，必要時讀 by-symbol CSV 驗證。
+- 資料解讀 QA：在提出策略結論前，先檢查資料缺口與可能誤讀，包括分類覆蓋率、混合營收公司、權重來源信心、YoY 極端值、YoY 斜率突變、Top contributors 集中度與 `Other` 占比；若任何一項可能影響結論，README 必須主動寫成 caveat。
+- 異常與非預期資料提醒：主動標示 YoY 過高、YoY 斜率突變、單一或少數公司貢獻過度集中、或 `Other` 類別扭曲總指數的情況，並說明需回查一次性因素、分類權重或原始營收來源。特別注意 `AI_Compute_Infra` 是 AI/data center exposure proxy，不代表成分公司只做 AI server；同一家公司可能同時有 AI server、data center、PC、手機、消費或其他營收。AI server / data server / PC 的拆分依賴 investor conference、法說會、年報或公司揭露輸入；若公司缺漏揭露、口徑不同或只提供合併分類，分類結果應標示為加權研究推估，而非完整官方分項或純 AI server 營收。
 - 投資研究含義：列出可追蹤的觀察點、風險與下一步資料驗證方向。
 
-分析必須引用具體月份、YoY 百分比、營收金額或公司貢獻數等可追溯數字；README 呈現應是策略解讀，不是流程表、生命週期明細表或操作明細。若只根據 PNG 視覺判讀而非 CSV 數字，要明確說明。
+分析必須引用具體月份、YoY 百分比、營收金額或公司貢獻數等可追溯數字；README 呈現應是策略解讀，不是流程表、生命週期明細表或操作明細。若資料看起來異常、分類資料可能缺漏，或解讀容易被混合營收誤導，必須明確寫成研究提醒，而不是直接把異常值或分類 proxy 當成可外推趨勢。若只根據 PNG 視覺判讀而非 CSV 數字，要明確說明。
 
 ## 手動 fallback
 
