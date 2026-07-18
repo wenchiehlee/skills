@@ -20,6 +20,7 @@
 | :--- | :--- | :--- | :--- | :--- |
 | [skill-all-models-benchmark](common/skill-all-models-benchmark) | common | 1.0.0 | 多模型與分析師共識效能評估標準作業程序。 | 2026-07-07 |
 | [skill-download-logo](common/skill-download-logo) | common | 1.0.0 | 指定台灣股票代碼或美股概念股 Ticker，自動下載高解析度公司官方 Logo PNG，並限制在固定大小。 | 2026-07-07 |
+| [skill-google-analytics-monitor](common/skill-google-analytics-monitor) | common | 1.0.0 | 使用 google-analytics-cli 產生 GA4 網站監控 Markdown/README 報告，包含 YAML daily metadata、即時活躍人數、近 7/28 天短期趨勢、近 3 個月流量趨勢、來源/媒介、Top 10 URL、熱門頁面、事件與異常觀察。 | 2026-07-18 |
 | [skill-investorconference-digest](common/skill-investorconference-digest) | common | 2.4.0 | 法說會/earnings call 重點萃取、GT 字幕生成/校正與投資影響分析 SOP — 支援 TW/US market templates、US earnings-call source discovery/lint、Yahoo/AlphaSpread/AlphaMemo 等逐字稿、GT metadata/review level 驗證，以及美股對台股供應鏈/市場 read-through；digest 報告輸出至 data/reports/conference-digests/ | 2026-07-16 |
 | [skill-investorconference-ingest](common/skill-investorconference-ingest) | common | 1.2.6 | 投資人說明會（法說會）影音、簡報、第三方逐字稿與 metadata 材料蒐集/同步 Ingest 模組；支援台股與美股 earnings-call 材料（earnings release、financial tables、performance review、Yahoo/AlphaSpread transcript），GT 生成由 digest skill 負責 | 2026-07-16 |
 | [skill-mac-mini-ocr](common/skill-mac-mini-ocr) | common | 1.2.0 | 使用自建在 Mac-mini 上的 OCR API 服務（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-07-17 |

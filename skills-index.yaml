@@ -19,6 +19,16 @@ skills:
   source: ''
   updated_at: '2026-07-07'
   revised_at: '2026-07-07'
+- name: skill-google-analytics-monitor
+  group: common
+  path: common/skill-google-analytics-monitor
+  version: 1.0.0
+  description: 使用 google-analytics-cli 產生 GA4 網站監控 Markdown/README 報告，包含 YAML daily
+    metadata、即時活躍人數、近 7/28 天短期趨勢、近 3 個月流量趨勢、來源/媒介、Top 10 URL、熱門頁面、事件與異常觀察。
+  maintainer: wenchiehlee
+  source: https://pypi.org/project/google-analytics-cli/
+  updated_at: '2026-07-18'
+  revised_at: '2026-07-18'
 - name: skill-investorconference-digest
   group: common
   path: common/skill-investorconference-digest
