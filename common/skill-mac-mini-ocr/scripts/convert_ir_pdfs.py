@@ -37,8 +37,10 @@ if not REPO_ROOT:
     REPO_ROOT = _curr.parents[3]
 load_dotenv(REPO_ROOT / ".env")
 
-# 透過 skills/mac-mini-ocr 技能進行轉錄
-SKILL_SCRIPTS = REPO_ROOT / "skills" / "mac-mini-ocr" / "scripts"
+# 透過技能腳本進行轉錄
+SKILL_SCRIPTS = Path(__file__).resolve().parent
+if not SKILL_SCRIPTS.exists():
+    SKILL_SCRIPTS = REPO_ROOT / "skills" / "skill-mac-mini-ocr" / "scripts"
 sys.path.insert(0, str(SKILL_SCRIPTS))
 from ocr_client import transcribe_document_to_markdown  # noqa: E402
 from pdf_fallback import extract_pdf_to_markdown  # noqa: E402
