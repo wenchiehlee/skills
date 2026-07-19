@@ -340,7 +340,8 @@ def add_candidate(rows: list[dict], seen: set[tuple], rec: dict, path: Path, lin
         return False
     invalid_pattern = re.search(
         r"asia|america|europe|monitor|market share|client|bad debt|graphics card revenue|"
-        r"ai momentum|the percentage|i think|could reach|share has a chance|optimistic",
+        r"ai momentum|the percentage|i think|could reach|share has a chance|optimistic|"
+        r"商用產品營收占比",
         hint_l,
     )
     if not hint or hint_l in invalid_hints or invalid_pattern or len(hint) > 80:
