@@ -112,6 +112,17 @@ skills:
   source: https://github.com/wenchiehlee/MarketCostDistribution
   updated_at: '2026-07-15'
   revised_at: '2026-07-18'
+- name: skill-mops-financialreport-pdf-md
+  group: common
+  path: common/skill-mops-financialreport-pdf-md
+  version: 1.0.0
+  description: Download Taiwan MOPS quarterly financial-report PDFs, then convert
+    same-stem Markdown sidecars with skill-mac-mini-ocr hybrid PDF/OCR workflow.
+  category: financial-data
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee-money/MOPS
+  updated_at: '2026-07-19'
+  revised_at: '2026-07-19'
 - name: skill-pptx-to-md
   group: common
   path: common/skill-pptx-to-md
