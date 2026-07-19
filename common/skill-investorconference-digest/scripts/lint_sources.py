@@ -321,7 +321,7 @@ def lint_quarter(root: Path, sid: str, year: int, q: int, durations: dict, audio
         findings += check_srt_vs_audio(fin.name, fin_end, sid, year, q, durations)
         srt_end = max(srt_end, fin_end)
     if not gt.exists() and fin.exists():
-        findings.append(Finding("INFO", f"{base}_GT.srt", "—",
+        findings.append(Finding("WARN", f"{base}_GT.srt", "—",
                                 "缺人工校正字幕（僅有 FIN Whisper 版）", "建議補做 GT"))
     if not gt.exists() and not fin.exists():
         findings.append(Finding("WARN", f"{base}_*.srt", "—", "本季無任何字幕檔", "確認是否有音檔可轉錄"))
