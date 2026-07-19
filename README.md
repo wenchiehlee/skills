@@ -30,11 +30,11 @@
 | [skill-mac-mini-ocr](common/skill-mac-mini-ocr) | common | document | 1.2.0 | 使用自建在 Mac-mini 上的 OCR API 服務（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-07-18 |
 | [skill-market-cost-distribution](common/skill-market-cost-distribution) | common | financial-forecasting | 1.0.1 | 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。 | 2026-07-18 |
 | [skill-pptx-to-md](common/skill-pptx-to-md) | common | document | 1.0.0 | 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。 | 2026-07-18 |
-| [skill-revenue-expense-profit-predict](common/skill-revenue-expense-profit-predict) | common | financial-forecasting | 1.0.0 | 季度損益三線（營業收入 / 總支出 / 營業利益）底部加總預測 SOP | 2026-07-18 |
+| [skill-revenue-expense-profit-predict](common/skill-revenue-expense-profit-predict) | common | financial-forecasting | 1.0.0 | 季度損益三線（營業收入 / 總支出 / 營業利益）底部加總預測 SOP | 2026-07-19 |
 | [skill-revenue-predict](common/skill-revenue-predict) | common | financial-forecasting | 1.0.0 | 營收預測與 10-Model 評估 SOP | 2026-07-18 |
 | [skill-taiex-compare](common/skill-taiex-compare) | common | financial-accounting | 1.0.0 | 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異 | 2026-07-18 |
 | [skill-taiex-monitor](common/skill-taiex-monitor) | common | financial-data | 1.0.0 | 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板 | 2026-07-18 |
-| [skill-taiex-report](common/skill-taiex-report) | common | financial-strategy | 1.0.0 | 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖） | 2026-07-18 |
+| [skill-taiex-report](common/skill-taiex-report) | common | financial-strategy | 1.0.0 | 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖） | 2026-07-19 |
 | [skill-taiex-sync](common/skill-taiex-sync) | common | financial-data | 1.0.0 | 更新本地資料目錄索引，生成批次處理所需的投資標的清單 | 2026-07-18 |
 | [skill-taiex-viz](common/skill-taiex-viz) | common | financial-accounting | 1.0.0 | 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖 | 2026-07-18 |
 

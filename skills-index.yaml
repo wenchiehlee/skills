@@ -131,7 +131,7 @@ skills:
   maintainer: ''
   source: ''
   updated_at: ''
-  revised_at: '2026-07-18'
+  revised_at: '2026-07-19'
 - name: skill-revenue-predict
   group: common
   path: common/skill-revenue-predict
@@ -171,7 +171,7 @@ skills:
   maintainer: wenchiehlee
   source: TAIEX.TW
   updated_at: '2026-07-07'
-  revised_at: '2026-07-18'
+  revised_at: '2026-07-19'
 - name: skill-taiex-sync
   group: common
   path: common/skill-taiex-sync
