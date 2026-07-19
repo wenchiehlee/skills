@@ -14,13 +14,19 @@ from pathlib import Path
 PDF_MAGIC = b"%PDF-"
 
 
+def find_mac_mini_converter(repo: Path) -> Path | None:
+    for skill_dir in ("skill-mac-mini-ocr", "mac-mini-ocr"):
+        converter = repo / "skills" / skill_dir / "scripts" / "convert_ir_pdfs.py"
+        if converter.is_file():
+            return converter
+    return None
+
+
 def find_repo_root() -> Path:
     candidates = [Path.cwd(), *Path.cwd().parents]
     for candidate in candidates:
-        if (candidate / "audio_manifest.json").exists() or (
-            (candidate / "skills" / "skill-investorconference-ingest" / "scripts" / "ingest.py").is_file()
-            and (candidate / "skills" / "mac-mini-ocr" / "scripts" / "convert_ir_pdfs.py").is_file()
-        ):
+        ingest = candidate / "skills" / "skill-investorconference-ingest" / "scripts" / "ingest.py"
+        if (candidate / "audio_manifest.json").exists() or (ingest.is_file() and find_mac_mini_converter(candidate)):
             return candidate.resolve()
     raise SystemExit("Cannot find InvestorConference repo root. Run inside InvestorConference.")
 
@@ -138,7 +144,9 @@ def main() -> int:
     data_dir.mkdir(parents=True, exist_ok=True)
 
     ingest = repo / "skills" / "skill-investorconference-ingest" / "scripts" / "ingest.py"
-    converter = repo / "skills" / "mac-mini-ocr" / "scripts" / "convert_ir_pdfs.py"
+    converter = find_mac_mini_converter(repo)
+    if converter is None:
+        raise SystemExit("Cannot find skill-mac-mini-ocr converter under repo/skills.")
 
     if not args.skip_ingest:
         cmd = [sys.executable, str(ingest), stock_id, str(args.year), q]
