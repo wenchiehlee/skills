@@ -22,7 +22,7 @@ description: >-
 - `output/company_segment_weights_quarterly_candidates_taiwan.csv`
 - 台股公司 quarterly segment weights / segment mix changes / product mix / portfolio mix
 - AI server / data server / PC 拆分
-- `AI_Compute_Infra`、`PC_Consumer`、`Smartphone`、`Network_Infra`、`Memory` 等 cycle 的公司權重來源
+- `AI_Server_Rack`、`AI_Foundry_Packaging`、`AI_Network_Infra`、`PC_Consumer`、`Smartphone`、`Network_Infra`、`Memory` 等 cycle 的公司權重來源
 
 ## 標準流程
 
@@ -53,7 +53,7 @@ python skills/skill-company-revenue-segment-weights/scripts/run_company_revenue_
 
 每次更新前必須先確認：
 
-- `AI_Compute_Infra` 是 AI/data center exposure proxy，不代表成分公司只做 AI server。
+- `AI_Server_Rack` 是 AI/data center exposure proxy 的一個子分類；`AI_Foundry_Packaging` 與 `AI_Network_Infra` 分別承接 AI 先進製程/封裝與 AI 網通基礎設施，三者不得再混用成舊的 `AI_Compute_Infra`。
 - 同一家公司可能同時有 AI server、data center、PC、手機、消費、車用、電源、網通或其他營收。
 - AI server / data server / PC 拆分依賴 investor conference、法說會、年報、MOPS 或公司 IR 揭露；若公司缺漏分項、口徑不同或只給合併分類，權重只能標示為加權研究推估。
 - 若 MD evidence 只出現 qualitative language（例如 AI demand strong）但沒有 segment percentage，不得推導精確權重。
