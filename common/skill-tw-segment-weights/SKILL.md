@@ -20,7 +20,7 @@ description: >-
 使用者要求更新、重建、稽核或解讀以下資料時使用本技能：
 
 - `data/tw_company_segment_weights.csv`
-- `output/tw_company_segment_weights_quarterly_candidates.csv`
+- `output/tw_segment_weights_quarterly_candidates.csv`
 - 台股公司 quarterly segment weights / segment mix changes / product mix / portfolio mix
 - AI server / data server / PC 拆分
 - `AI_Compute_Infra`、`PC_Consumer`、`Smartphone`、`Network_Infra`、`Memory` 等 cycle 的公司權重來源
@@ -43,7 +43,7 @@ python ../skills/common/skill-tw-segment-weights/scripts/run_tw_segment_weights.
 6. 確認 MD 不應缺漏、過短或含 `TODO:OCR`；若資料品質不足，必須在 QA 報告標示，不可靜默更新權重。
 7. 以每個可用季度 MD 為 evidence，抽取包含 revenue/sales/portfolio/product/platform/application mix 與百分比的候選 segment weight lines，不只抽最新季度。
 8. 產出：
-   - `output/tw_company_segment_weights_quarterly_candidates.csv`：每家公司每季度的 segment weight candidate history，並包含可比 segment hint 的 previous period、previous weight、QoQ pctpt change，以及可回溯到原始 Markdown 的 `source_md` / `md_file` / `line_no`。
+   - `output/tw_segment_weights_quarterly_candidates.csv`：每家公司每季度的 segment weight candidate history，並包含可比 segment hint 的 previous period、previous weight、QoQ pctpt change，以及可回溯到原始 Markdown 的 `source_md` / `md_file` / `line_no`。
    - `output/tw_segment_weight_candidates.csv`：legacy flat evidence queue，保留供快速 review。
    - `output/tw_segment_weights_qa.md`：列出完整公司 universe、MD coverage、source-period staleness、以及每家公司有哪些季度有候選 evidence。
 9. 研究員依 Markdown evidence 審核季度候選值後，才可決定是否更新 latest active snapshot `data/tw_company_segment_weights.csv`，或建立正式歷史檔 `data/tw_company_segment_weights_quarterly.csv`。

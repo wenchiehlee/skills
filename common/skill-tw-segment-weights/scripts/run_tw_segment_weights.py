@@ -645,7 +645,7 @@ def main() -> int:
     candidates = extract_candidates(md_records)
 
     out_csv = root / "output" / "tw_segment_weight_candidates.csv"
-    out_quarterly_csv = root / "output" / "tw_company_segment_weights_quarterly_candidates.csv"
+    out_quarterly_csv = root / "output" / "tw_segment_weights_quarterly_candidates.csv"
     out_md = root / "output" / "tw_segment_weights_qa.md"
     write_candidates(out_csv, candidates)
     quarterly_rows = write_quarterly_history(out_quarterly_csv, candidates, universe_df)
