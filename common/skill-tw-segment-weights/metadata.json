@@ -1,9 +1,0 @@
-{
-  "name": "skill-tw-segment-weights",
-  "description": "更新與稽核 biztrends.TW 台股公司 segment weights，確認 InvestorConference/MOPS/IR 最新材料與 Markdown 轉檔完整，從季度 MD evidence 抽取公司 segment weight 候選值，並在更新 tw_company_segment_weights.csv 前產出資料解讀 QA。",
-  "category": "financial-strategy",
-  "version": "1.1.0",
-  "maintainer": "wenchiehlee",
-  "source": "biztrends.TW",
-  "updated_at": "2026-07-19"
-}

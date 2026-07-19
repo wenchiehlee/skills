@@ -1,0 +1,9 @@
+{
+  "name": "skill-company-revenue-segment-weights",
+  "description": "更新與稽核 company revenue segment weights evidence、quarterly candidates、QA report 與 active snapshot；目前支援 biztrends.TW 台股 InvestorConference/MOPS/IR Markdown evidence，並在更新 tw_company_segment_weights.csv 前產出資料解讀 QA。",
+  "category": "financial-strategy",
+  "version": "1.2.0",
+  "maintainer": "wenchiehlee",
+  "source": "skills",
+  "updated_at": "2026-07-19"
+}

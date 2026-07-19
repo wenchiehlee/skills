@@ -43,6 +43,46 @@ def latest_month_and_count(csv_path: Path, month_col: str) -> tuple[str, int]:
     return latest, int((months == latest).sum())
 
 
+def segment_weight_summary(root: Path) -> tuple[int, int, str]:
+    path = root / "data" / "tw_company_segment_weights.csv"
+    if not path.is_file():
+        raise SystemExit(f"Segment weights file is required but missing: {path.relative_to(root)}")
+    df = pd.read_csv(path)
+    required = {"stock_code", "segment_name", "weight_pct"}
+    missing = sorted(required - set(df.columns))
+    if missing:
+        raise SystemExit(f"{path.relative_to(root)} missing required columns: {', '.join(missing)}")
+    valid = df.dropna(subset=["stock_code", "segment_name", "weight_pct"]).copy()
+    if valid.empty:
+        raise SystemExit(f"{path.relative_to(root)} has no usable segment weight rows")
+    source_period = ""
+    if "source_period" in valid.columns:
+        source_periods = valid["source_period"].dropna().astype(str)
+        if not source_periods.empty:
+            source_period = source_periods.max()
+    return int(valid["stock_code"].astype(str).nunique()), int(len(valid)), source_period
+
+
+def built_segment_weight_summary(root: Path) -> tuple[int, int]:
+    mapping_path = root / "data" / "company_cycle_mapping.csv"
+    major_path = root / "data" / "company_major_cycle_weights.csv"
+    for path in (mapping_path, major_path):
+        if not path.is_file():
+            raise SystemExit(f"Segment weight audit output missing after build: {path.relative_to(root)}")
+
+    mapping = pd.read_csv(mapping_path)
+    if "segment_weight_override" not in mapping.columns:
+        raise SystemExit(f"{mapping_path.relative_to(root)} missing required column: segment_weight_override")
+    override_count = int((mapping["segment_weight_override"].fillna("").astype(str) == "Y").sum())
+    if override_count == 0:
+        raise SystemExit("No segment_weight_override=Y rows found after build; segment weights were not applied")
+
+    major = pd.read_csv(major_path)
+    if major.empty:
+        raise SystemExit(f"{major_path.relative_to(root)} is empty; segment weight cycle allocation was not written")
+    return override_count, int(len(major))
+
+
 def run(cmd: list[str], root: Path, env: dict[str, str] | None = None) -> None:
     print("$ " + " ".join(cmd), flush=True)
     subprocess.run(cmd, cwd=root, env=env, check=True)
@@ -249,7 +289,7 @@ def replace_or_insert_section(content: str, start: str, end: str, section: str, 
 def update_readme(root: Path, raw_latest: str, raw_count: int) -> None:
     readme_path = root / "README.md"
     content = readme_path.read_text(encoding="utf-8")
-    command_line = "產出指令：`python ../skills/common/skill-tw-cycle-index/scripts/run_tw_cycle_index.py`"
+    command_line = "產出指令：`python ../skills/common/skill-company-cycle-index/scripts/run_company_cycle_index.py`"
     content = content.replace("產出指令：`python scripts/plot_tw_cycle_index.py`", command_line)
 
     import datetime
@@ -289,7 +329,22 @@ def main() -> int:
     print(f"Raw revenue: {raw_path}")
     print(f"Raw latest month: {raw_latest} ({raw_count} rows)")
 
+    segment_company_count, segment_row_count, segment_latest_period = segment_weight_summary(root)
+    suffix = f", latest source period: {segment_latest_period}" if segment_latest_period else ""
+    print(
+        "Segment weights: "
+        f"data/tw_company_segment_weights.csv "
+        f"({segment_company_count} companies, {segment_row_count} rows{suffix})"
+    )
+
     run(["python3", "scripts/build_tw_cycle_index.py"], root)
+
+    override_count, major_weight_rows = built_segment_weight_summary(root)
+    print(
+        "Segment weight audit: "
+        f"company_cycle_mapping.csv segment_weight_override=Y companies: {override_count}; "
+        f"company_major_cycle_weights.csv rows: {major_weight_rows}"
+    )
 
     derived_files = [
         root / "data" / "tw_cycle_intensity_index.csv",

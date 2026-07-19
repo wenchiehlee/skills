@@ -1,23 +1,22 @@
 ---
-name: skill-tw-segment-weights
+name: skill-company-revenue-segment-weights
 description: >-
-  Build quarterly Taiwan company segment weight history candidates from the newest Taiwan investor conference,
-  IR, annual report, and MOPS materials, then renew biztrends.TW data/tw_company_segment_weights.csv only
-  after review. Verify source freshness, ensure PDF/source materials are converted to Markdown, extract
-  quarter-by-quarter company segment weight candidates from Markdown evidence, and produce a data-interpretation QA report. Use when the
-  user asks to update, audit, rebuild, refresh, or review TW company segment weights / segment mix /
-  AI server data server PC split / data/tw_company_segment_weights.csv.
+  Build and audit company revenue segment weight evidence, quarterly candidates, QA reports, and active
+  segment weight snapshots. Current implementation supports Taiwan companies using InvestorConference,
+  IR, annual report, and MOPS Markdown evidence, then renews biztrends.TW data/tw_company_segment_weights.csv
+  only after review. Use when the user asks to update, audit, rebuild, refresh, or review company segment
+  weights / segment mix / AI server data server PC split / data/tw_company_segment_weights.csv.
 ---
 
-# TW Segment Weights Skill
+# Company Revenue Segment Weights Skill
 
 ## 角色定位
 
-你是一位專業的跨台股與美股研究員，負責維護 `biztrends.TW` 的季度公司 segment weight history 與 latest active snapshot。重點不是快速填權重，而是透過最新公司材料、Markdown evidence 與資料解讀 QA，讓使用者看見每家公司 segment mix 的季度變化，並降低 segment 權重缺漏、分類口徑誤讀與 AI/data center exposure proxy 被錯當成純 AI server revenue 的風險。
+你是一位專業的跨台股與美股研究員，負責維護 company revenue segment weight evidence、quarterly candidate history、QA report 與 latest active snapshot。重點不是快速填權重，而是透過最新公司材料、Markdown evidence 與資料解讀 QA，讓使用者看見每家公司 segment mix 的季度變化，並降低 segment 權重缺漏、分類口徑誤讀與 AI/data center exposure proxy 被錯當成純 AI server revenue 的風險。目前實作路徑支援 TW，正式 active snapshot 仍是 `data/tw_company_segment_weights.csv`。
 
 ## 適用場景
 
-使用者要求更新、重建、稽核或解讀以下資料時使用本技能：
+使用者要求更新、重建、稽核或解讀 company revenue segment weights 時使用本技能。目前支援 TW 產出：
 
 - `data/tw_company_segment_weights.csv`
 - `output/tw_segment_weights_quarterly_candidates.csv`
@@ -30,10 +29,10 @@ description: >-
 在 `biztrends.TW` 專案根目錄執行：
 
 ```bash
-python ../skills/common/skill-tw-segment-weights/scripts/run_tw_segment_weights.py --convert-missing-md
+python ../skills/common/skill-company-revenue-segment-weights/scripts/run_tw_segment_weights.py --convert-missing-md
 ```
 
-此 runner 會：
+此 runner 是目前的 TW implementation。它會：
 
 1. 找到 `biztrends.TW` 根目錄與相鄰的 `../InvestorConference` repo。
 2. 讀取 `StockID_TWSE_TPEX.csv` 作為完整台股公司清單，並讀取 `StockID_TWSE_TPEX_focus.csv` 作為短名單 coverage view；若根目錄檔案不存在，才 fallback 到 `data/Python-Actions.GoodInfo/`。
@@ -47,7 +46,7 @@ python ../skills/common/skill-tw-segment-weights/scripts/run_tw_segment_weights.
    - `output/tw_segment_weight_candidates.csv`：legacy flat evidence queue，保留供快速 review。
    - `output/tw_segment_weights_qa.md`：列出完整公司 universe 與 focus universe 的 MD coverage、coverage gaps、source-period staleness、以及每家公司有哪些季度有候選 evidence。
 9. 研究員依 Markdown evidence 審核季度候選值後，才可決定是否更新 latest active snapshot `data/tw_company_segment_weights.csv`，或建立正式歷史檔 `data/tw_company_segment_weights_quarterly.csv`。
-10. 更新正式 CSV 後必須執行 `python3 scripts/build_tw_cycle_index.py`，確認 segment weights 可正確映射至 cycle index。
+10. 更新正式 CSV 後必須執行 `python ../skills/common/skill-company-cycle-index/scripts/run_company_cycle_index.py`，確認 segment weights 可正確映射至 cycle index。
 
 ## 資料解讀 QA
 
@@ -90,3 +89,9 @@ stock_code,company_name,segment_name,weight_pct,source_type,source_period,Source
 - 季度 segment weight candidate history CSV、legacy candidate CSV 與 QA report 路徑；CSV 必須包含 `source_md` backtrace column，QA report 要列出每家公司有哪些季度有 evidence，並摘要最大的候選 QoQ 權重變化。
 - 是否更新正式 CSV；若未更新，說明仍需人工/研究員 review 的 evidence。
 - 若使用者要求 commit/push，將 skill、candidate/report、CSV 更新與必要 pipeline 修正分別納入正確 repo。
+
+## Skill 邊界
+
+- 本 skill 產生 segment evidence/input 層：`output/tw_segment_weights_quarterly_candidates.csv`、`output/tw_segment_weight_candidates.csv`、`output/tw_segment_weights_qa.md`，並在研究員 review 後維護 `data/tw_company_segment_weights.csv`。
+- 本 skill 不產生 cycle model/output 層，不直接產生 `data/company_cycle_mapping.csv`、`data/company_major_cycle_weights.csv`、`data/tw_cycle_intensity_index.csv`、`data/tw_cycle_intensity_by_symbol.csv` 或 `output/tw_cycle_index.png`。
+- 更新正式 segment weights 後，必須執行 `skill-company-cycle-index`，由 cycle-index skill 套用權重並產生 mapping/audit/index/PNG。

@@ -56,8 +56,8 @@ def _find_repo_root(start: str) -> str:
 
 ROOT = _find_repo_root(os.path.dirname(os.path.abspath(__file__)))
 RAW_PERFORMANCE_CSV = os.path.join(ROOT, "data", "Python-Actions.GoodInfo.Analyzer", "raw_performance1.csv")
-CYCLE_WEIGHTS_CSV = os.path.join(ROOT, "data", "tw_major_company_cycle_weights.csv")
-CYCLE_MAPPING_CSV = os.path.join(ROOT, "data", "tw_company_cycle_mapping.csv")
+CYCLE_WEIGHTS_CSV = os.path.join(ROOT, "data", "company_major_cycle_weights.csv")
+CYCLE_MAPPING_CSV = os.path.join(ROOT, "data", "company_cycle_mapping.csv")
 OUTPUT_DIR = os.path.join(ROOT, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -396,7 +396,7 @@ def get_next_quarters(q_str, steps=4):
     return next_qs
 
 def load_company_cycle_weights(stock_code):
-    # 1. Try tw_major_company_cycle_weights.csv
+    # 1. Try company_major_cycle_weights.csv
     if os.path.exists(CYCLE_WEIGHTS_CSV):
         try:
             df = pd.read_csv(CYCLE_WEIGHTS_CSV, encoding="utf-8")
@@ -415,7 +415,7 @@ def load_company_cycle_weights(stock_code):
         except Exception as e:
             print(f"Error reading major company cycle weights: {e}")
 
-    # 2. Try tw_company_cycle_mapping.csv
+    # 2. Try company_cycle_mapping.csv
     if os.path.exists(CYCLE_MAPPING_CSV):
         try:
             df = pd.read_csv(CYCLE_MAPPING_CSV, encoding="utf-8")
