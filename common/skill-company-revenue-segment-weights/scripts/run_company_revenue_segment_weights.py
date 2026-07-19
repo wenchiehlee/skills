@@ -312,6 +312,15 @@ def clean_business_group_hint(value: str) -> str:
         "雲端及物聯網部門": "Cloud/AIoT",
         "光電部門 含車電": "Opto-electronics",
         "資訊及消費性電子部門": "IT/CE",
+        "computing": "Computing",
+        "consumer": "Consumer Electronics",
+        "consumer electronics": "Consumer Electronics",
+        "communication": "Communication",
+        "others": "Others",
+        "資訊產品": "Computing",
+        "消費性電子產品": "Consumer Electronics",
+        "通訊產品": "Communication",
+        "其他": "Others",
     }
     if hint in replacements:
         return replacements[hint]
@@ -411,6 +420,50 @@ def collect_split_product_mix(rec: dict, path: Path, lines: list[str], seen: set
     return rows
 
 
+
+def collect_product_mix_blocks(rec: dict, path: Path, lines: list[str], seen: set[tuple]) -> list[dict]:
+    rows: list[dict] = []
+    if "4938" not in str(path):
+        return rows
+    # Prefer English MD when both Chinese and English contain the same product mix.
+    if path.name.endswith("_ir.md") and path.with_name(path.name.replace("_ir.md", "_ir_en.md")).is_file():
+        return rows
+
+    labels = {"computing", "consumer", "consumer electronics", "communication", "others", "資訊產品", "消費性電子產品", "通訊產品", "其他"}
+    for idx, line in enumerate(lines):
+        clean = re.sub(r"\s+", " ", line).strip()
+        if not re.search(r"Revenue Breakdown by Products \(Quarter-over-Quarter\)|銷售分析-產品別 \(季成長率\)", clean, re.I):
+            continue
+        window = lines[max(0, idx - 10):idx]
+        pairs: list[tuple[int, str, float]] = []
+        cursor = 0
+        while cursor < len(window):
+            current = re.sub(r"\s+", " ", window[cursor]).strip(" -*`：:,，.;；")
+            line_no = max(0, idx - 10) + cursor + 1
+            m = re.match(r"(.+?),\s*(\d{1,3}(?:\.\d+)?)%$", current)
+            if m and clean_business_group_hint(m.group(1)).lower() in labels:
+                pairs.append((line_no, m.group(1), float(m.group(2))))
+                cursor += 1
+                continue
+            label = current.rstrip(",，")
+            if clean_business_group_hint(label).lower() in labels and cursor + 1 < len(window):
+                nxt = re.sub(r"\s+", " ", window[cursor + 1]).strip(" -*`：:,，.;；")
+                pm = PCT_RE.match(nxt)
+                if pm:
+                    pairs.append((line_no, label, float(pm.group(1))))
+                    cursor += 2
+                    continue
+            cursor += 1
+        # The nearest four pairs before the QoQ heading are the 4Q2025 mix.
+        if len(pairs) >= 4:
+            selected = pairs[-4:]
+            evidence = " / ".join(f"{clean_business_group_hint(label)} {pct:g}%" for _, label, pct in selected)
+            if 95 <= sum(pct for _, _, pct in selected) <= 105:
+                for line_no, label, pct in selected:
+                    add_candidate(rows, seen, rec, path, line_no, label, pct, evidence)
+            break
+    return rows
+
 def extract_structured_business_mix(rec: dict, path: Path, lines: list[str], seen: set[tuple]) -> list[dict]:
     rows: list[dict] = []
     in_business_group_mix = False
@@ -487,6 +540,7 @@ def extract_candidates(md_records: list[dict], max_lines_per_file: int = 40) -> 
         except Exception:
             continue
         structured_rows = collect_split_product_mix(rec, path, lines, seen)
+        structured_rows.extend(collect_product_mix_blocks(rec, path, lines, seen))
         structured_rows.extend(extract_structured_business_mix(rec, path, lines, seen))
         structured_rows.extend(extract_tsmc_candidates(rec, path, lines, seen))
         candidates.extend(structured_rows)
@@ -503,6 +557,8 @@ def extract_candidates(md_records: list[dict], max_lines_per_file: int = 40) -> 
                 continue
             if EXCLUDE_RE.search(clean) and not re.search(r"portfolio mix|product mix|platform mix|revenue mix|sales mix|產品組合|營收組合|收入組合", clean, re.I):
                 continue
+            if re.search(r"\b(?:YoY|QoQ)\b|year-over-year|quarter-over-quarter|年對年|季對季|年增|季增", clean, re.I) and not re.search(r"account(?:ed)? for|represent(?:ed)?|revenue share|share of revenue|占比|佔比|營收占比|營收佔比", clean, re.I):
+                continue
             pct_matches = list(PCT_RE.finditer(clean))
             if not pct_matches:
                 continue
@@ -514,7 +570,7 @@ def extract_candidates(md_records: list[dict], max_lines_per_file: int = 40) -> 
                 before = clean[max(0, match.start() - 48):match.start()].lower()
                 after = clean[match.end():match.end() + 36].lower()
                 account_context = re.search(r"account(?:ed)? for|represent(?:ed)?|contribut(?:ed|ion)|share|mix|占|佔|比重", before + " " + after, re.I)
-                change_context = re.search(r"increase(?:d)?|decrease(?:d)?|grew|declined|quarter-over-quarter|year-over-year|qoq|yoy|增加|減少|成長|衰退|年增|季增", before + " " + after, re.I)
+                change_context = re.search(r"increase(?:d)?|decrease(?:d)?|grew|declined|quarter-over-quarter|year-over-year|qoq|yoy|增加|減少|成長|衰退|年增|季增|下滑", before + " " + after, re.I)
                 immediate_before = before[-28:].strip()
                 if re.search(r"(increase(?:d)?|decrease(?:d)?|grew|declined|增加|減少|成長|衰退)\s*$", immediate_before, re.I):
                     continue
