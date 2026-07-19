@@ -2,8 +2,8 @@
   "name": "skill-tw-cycle-index",
   "description": "重建 biztrends.TW 台灣 canonical cycle index，確認最新 GoodInfo Analyzer 月營收已進入 derived CSV，用最新資料生成 tw_cycle_index.png，並以跨台股與美股研究員角色產出深度洞察分析。",
   "category": "financial-strategy",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "maintainer": "wenchiehlee",
   "source": "biztrends.TW",
-  "updated_at": "2026-07-18"
+  "updated_at": "2026-07-19"
 }

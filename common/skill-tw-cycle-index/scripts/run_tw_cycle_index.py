@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import argparse
 import os
 import subprocess
 from pathlib import Path
@@ -275,6 +276,11 @@ def update_readme(root: Path, raw_latest: str, raw_count: int) -> None:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Rebuild TW cycle index from newest revenue data, plot PNG, and update README insights."
+    )
+    parser.parse_args()
+
     root = find_project_root()
     print(f"Project root: {root}")
 
