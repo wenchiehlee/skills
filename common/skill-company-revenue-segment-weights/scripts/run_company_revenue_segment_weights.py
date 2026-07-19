@@ -753,6 +753,17 @@ def normalize_segment_hint(value: str) -> str:
     return value[:80]
 
 
+def period_granularity(period: str) -> str:
+    p = str(period).upper().strip()
+    if re.match(r"20\d{2}-Q[1-4]", p):
+        return "quarter"
+    if re.match(r"20\d{2}-FY", p):
+        return "fiscal_year"
+    if re.match(r"20\d{2}-\d{2}", p):
+        return "month"
+    return "other"
+
+
 def dedupe_quarterly_candidates(rows: list[dict]) -> list[dict]:
     grouped: dict[tuple[str, str, str], list[dict]] = {}
     for row in rows:
@@ -782,10 +793,14 @@ def enrich_quarterly_rows(rows: list[dict], universe_df: pd.DataFrame) -> list[d
     company_name = dict(zip(universe_df["stock_code"].astype(str), universe_df["company_name"].astype(str)))
     deduped_rows = dedupe_quarterly_candidates(rows)
     ordered = sorted(deduped_rows, key=lambda r: (r["stock_code"], normalize_segment_hint(r["segment_hint"]), period_rank(r["source_period"]), r["line_no"]))
-    previous_by_key: dict[tuple[str, str], dict] = {}
+    previous_by_key: dict[tuple[str, str, str], dict] = {}
     enriched: list[dict] = []
     for row in ordered:
-        key = (str(row.get("stock_code", "")), normalize_segment_hint(str(row.get("segment_hint", ""))))
+        key = (
+            str(row.get("stock_code", "")),
+            normalize_segment_hint(str(row.get("segment_hint", ""))),
+            period_granularity(str(row.get("source_period", ""))),
+        )
         previous = previous_by_key.get(key)
         current_weight = row.get("weight_pct_candidate", "")
         out = {**row}
@@ -866,7 +881,7 @@ def seed_active_df_candidates(rows: list[dict], df: pd.DataFrame) -> list[dict]:
     for _, r in active_df.iterrows():
         stock = str(r["stock_code"])
         period = str(r.get("source_period", ""))
-        segment = str(r.get("segment_name", ""))
+        segment = clean_business_group_hint(str(r.get("segment_name", "")))
         try:
             pct = float(r.get("weight_pct", 0))
         except (TypeError, ValueError):
