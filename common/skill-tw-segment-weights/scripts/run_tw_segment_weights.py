@@ -268,16 +268,104 @@ def segment_hint_from_line(line: str, pct_start: int) -> str:
     return canonical_segment_hint((words[-1] if words else prefix)[-120:])
 
 
+
+def clean_business_group_hint(value: str) -> str:
+    hint = re.sub(r"\s+", " ", str(value).strip(" -*`:_：,，.;；"))
+    replacements = {
+        "system": "System",
+        "systems": "System",
+        "system bg": "System",
+        "systems business unit": "System",
+        "open platform": "Open Platform",
+        "open platforms": "Open Platform",
+        "open platform bg": "Open Platform",
+        "infrastructure": "Infrastructure",
+        "infrastructure bg": "Infrastructure",
+        "infrastructure solutions bg": "Infrastructure",
+        "isg": "Infrastructure",
+        "isg server enterprise": "Infrastructure",
+        "aiot": "AIoT",
+        "iot": "AIoT",
+    }
+    normalized = re.sub(r"[^0-9a-zA-Z ]+", "", hint).lower().strip()
+    return replacements.get(normalized, hint)
+
+
+def add_candidate(rows: list[dict], seen: set[tuple], rec: dict, path: Path, line_no: int, hint: str, pct: float, evidence: str) -> bool:
+    hint = clean_business_group_hint(hint)
+    invalid_hints = {
+        "asia", "asia pacific", "europe", "americas", "america", "eurp",
+        "the quarter 1 breakdown", "revenue share ~",
+    }
+    hint_l = hint.lower().strip()
+    invalid_pattern = re.search(r"asia|america|europe|monitor|market share|client|bad debt|graphics card revenue", hint_l)
+    if not hint or hint_l in invalid_hints or invalid_pattern or len(hint) > 80:
+        return False
+    key = (rec["stock_code"], rec["period"], str(path), line_no, hint, round(float(pct), 4))
+    if key in seen:
+        return False
+    seen.add(key)
+    rows.append({
+        "stock_code": rec["stock_code"],
+        "source_period": rec["period"],
+        "source_md": str(path),
+        "md_file": str(path),
+        "line_no": line_no,
+        "segment_hint": hint,
+        "weight_pct_candidate": float(pct),
+        "evidence": evidence[:500],
+        "review_status": "candidate_needs_review",
+    })
+    return True
+
+
+def extract_structured_business_mix(rec: dict, path: Path, lines: list[str], seen: set[tuple]) -> list[dict]:
+    rows: list[dict] = []
+    in_business_group_mix = False
+    for line_no, line in enumerate(lines, start=1):
+        clean = re.sub(r"\s+", " ", line).strip()
+        if re.search(r"business group mix|事業群占比|事業群佔比", clean, re.I):
+            in_business_group_mix = True
+            continue
+        if in_business_group_mix and re.search(r"regional revenue mix|地區營收|region", clean, re.I):
+            in_business_group_mix = False
+        if in_business_group_mix:
+            m = re.search(r"\*?\s*\*\*([^*:：]+)\*\*\s*[:：]\s*\*\*(\d{1,3}(?:\.\d+)?)%\*\*", clean)
+            if m:
+                add_candidate(rows, seen, rec, path, line_no, m.group(1), float(m.group(2)), clean)
+                continue
+
+        if not re.search(r"revenue mix|revenue breakdown|營收.*(組合|分佈|分布)", clean, re.I):
+            continue
+        if re.search(r"by region|breakdown by region|regional|地區|asia|europe|america", clean, re.I) and not re.search(r"business (segment|group|unit)|事業群", clean, re.I):
+            continue
+
+        business_clean = re.split(r"our breakdown by region|the yearly breakdown by region|in terms of breakdown by region|breaking revenue down by region", clean, maxsplit=1, flags=re.I)[0]
+        patterns = [
+            r"(?:the\s+)?(Systems? business unit|System BG|Systems?|Open Platforms?|Open Platform BG|Infrastructure BG|Infrastructure|AIoT|IoT)\s+(?:accounted for|was|were)?\s*(\d{1,3}(?:\.\d+)?)%",
+            r"(?:the\s+)?(Systems? business unit|System BG|Systems?|Open Platforms?|Open Platform BG|Infrastructure BG|Infrastructure|AIoT|IoT)\s*,\s*(\d{1,3}(?:\.\d+)?)%",
+        ]
+        for pattern in patterns:
+            for m in re.finditer(pattern, business_clean, re.I):
+                add_candidate(rows, seen, rec, path, line_no, m.group(1), float(m.group(2)), clean)
+    return rows
+
 def extract_candidates(md_records: list[dict], max_lines_per_file: int = 40) -> list[dict]:
     candidates: list[dict] = []
+    seen: set[tuple] = set()
     for rec in md_records:
         path = Path(rec["path"])
         try:
             lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
         except Exception:
             continue
-        count = 0
+        structured_rows = extract_structured_business_mix(rec, path, lines, seen)
+        candidates.extend(structured_rows)
+        count = len(structured_rows)
+        structured_line_numbers = {int(row["line_no"]) for row in structured_rows}
         for line_no, line in enumerate(lines, start=1):
+            if line_no in structured_line_numbers:
+                continue
             clean = re.sub(r"\s+", " ", line).strip()
             platform_start = re.search(r"moving on to revenue contribution by platform", clean, re.I)
             if platform_start:
@@ -312,17 +400,8 @@ def extract_candidates(md_records: list[dict], max_lines_per_file: int = 40) -> 
                     hint = segment_hint_from_table(table_cells, pct_index)
                 else:
                     hint = segment_hint_from_line(clean, match.start())
-                candidates.append({
-                    "stock_code": rec["stock_code"],
-                    "source_period": rec["period"],
-                    "md_file": str(path),
-                    "line_no": line_no,
-                    "segment_hint": hint,
-                    "weight_pct_candidate": pct,
-                    "evidence": clean[:500],
-                    "review_status": "candidate_needs_review",
-                })
-                count += 1
+                if add_candidate(candidates, seen, rec, path, line_no, hint, pct, clean):
+                    count += 1
                 if count >= max_lines_per_file:
                     break
             if count >= max_lines_per_file:
@@ -332,7 +411,7 @@ def extract_candidates(md_records: list[dict], max_lines_per_file: int = 40) -> 
 
 def write_candidates(path: Path, rows: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    fields = ["stock_code", "source_period", "md_file", "line_no", "segment_hint", "weight_pct_candidate", "evidence", "review_status"]
+    fields = ["stock_code", "source_period", "source_md", "md_file", "line_no", "segment_hint", "weight_pct_candidate", "evidence", "review_status"]
     with path.open("w", encoding="utf-8-sig", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
@@ -378,6 +457,7 @@ def write_quarterly_history(path: Path, rows: list[dict], universe_df: pd.DataFr
         "source_period",
         "segment_hint",
         "weight_pct_candidate",
+        "source_md",
         "previous_source_period",
         "previous_weight_pct_candidate",
         "qoq_change_pctpt",
@@ -506,6 +586,7 @@ def write_report(path: Path, *, root: Path, ic_root: Path, universe_df: pd.DataF
         "",
         f"- Candidate evidence rows: `{len(candidates)}`",
         f"- Quarterly history candidate CSV: `{quarterly_history_path.relative_to(root)}`",
+        "- Backtrace columns: `source_md`, `md_file`, `line_no`",
         "",
     ]
     if q_summary:
