@@ -830,6 +830,30 @@ def extract_hon_hai_candidates(rec: dict, path: Path, lines: list[str], seen: se
     return rows
 
 
+
+def extract_novatek_candidates(rec: dict, path: Path, lines: list[str], seen: set[tuple]) -> list[dict]:
+    rows: list[dict] = []
+    if str(rec.get("stock_code", "")) != "3034":
+        return rows
+
+    for line_no, line in enumerate(lines, start=1):
+        clean = re.sub(r"\s+", " ", line).strip()
+        if not re.search(r"revenue breakdown .*3 key business group|small medium-sized driver|SoC business|large-sized driver", clean, re.I):
+            continue
+        patterns = [
+            ("Small/Medium-sized Driver", r"small medium-sized driver .*? with (\d{1,3}(?:\.\d+)?)% of revenue"),
+            ("SoC", r"SoC business .*? accounting for (\d{1,3}(?:\.\d+)?)%"),
+            ("Large-sized Driver", r"large-sized driver\b.*?came down to (\d{1,3}(?:\.\d+)?)%"),
+        ]
+        for segment, pattern in patterns:
+            match = re.search(pattern, clean, re.I)
+            if match:
+                evidence = f"Novatek 3 key business group revenue breakdown: {segment} {float(match.group(1)):g}%"
+                add_candidate(rows, seen, rec, path, line_no, segment, float(match.group(1)), evidence)
+        if rows:
+            break
+    return rows
+
 def extract_tsmc_candidates(rec: dict, path: Path, lines: list[str], seen: set[tuple]) -> list[dict]:
     rows: list[dict] = []
     if str(rec.get("stock_code", "")) != "2330":
@@ -879,6 +903,7 @@ def extract_candidates(md_records: list[dict], max_lines_per_file: int = 40) -> 
         structured_rows.extend(extract_structured_business_mix(rec, path, lines, seen))
         structured_rows.extend(extract_delta_candidates(rec, path, lines, seen))
         structured_rows.extend(extract_hon_hai_candidates(rec, path, lines, seen))
+        structured_rows.extend(extract_novatek_candidates(rec, path, lines, seen))
         structured_rows.extend(extract_tsmc_candidates(rec, path, lines, seen))
         candidates.extend(structured_rows)
         if str(rec.get("stock_code", "")) == "2317" and "transcript" in path.name.lower():
