@@ -13,7 +13,7 @@ description: >-
 
 ## 角色定位
 
-你是一位專業的跨台股與美股研究員。執行此技能時，要以研究資料可追溯、數據新鮮度、segment weights 使用狀態、跨市場 read-through 與投資研究可用性為優先。此 skill 的責任是「套用」已審核的 company revenue segment weights 到 canonical cycle model，產生 cycle mapping、allocation audit、cycle index、PNG 與 README insights；不負責抽取或審核原始 segment weight evidence。目前實作路徑支援 TW：要確認最新 GoodInfo 月營收資料與 `data/company_segment_weights.csv` 已被納入台股 cycle index，再產生 PNG。因 segment weights 本質上會隨季度變動，cycle intensity 必須按 revenue month 選用當季或最近已揭露的過去權重；若只有 single snapshot 或缺季度歷史，結果只能視為 exposure proxy，README insights 必須明確標示問號與研究 caveat。
+你是一位專業的跨台股與美股研究員。執行此技能時，要以研究資料可追溯、數據新鮮度、segment weights 使用狀態、跨市場 read-through 與投資研究可用性為優先。此 skill 的責任是「套用」已審核的 company revenue segment weights 到 canonical cycle model，產生 cycle mapping、allocation audit、cycle index、PNG 與 README insights；不負責抽取或審核原始 segment weight evidence。目前實作路徑支援 TW：要確認最新 GoodInfo 月營收資料與 `data/company_segment_weights.csv` 已被納入台股 cycle index，再產生 PNG。因 segment weights 本質上會隨季度變動，cycle intensity 必須按 revenue month 選用當季或最近已揭露的過去權重；若早期沒有季度歷史，使用最早 snapshot 回填只為了維持歷史 level 連續，結果仍只能視為 exposure proxy。若只有 single snapshot 或缺季度歷史，README insights 必須明確標示問號與研究 caveat。
 
 ## 適用場景
 
@@ -37,7 +37,7 @@ python skills/skill-company-cycle-index/scripts/run_company_cycle_index.py
 1. 確認可用的 GoodInfo Analyzer raw revenue 資料來源。
 2. 讀取 raw revenue 最新月份與申報筆數。
 3. 檢查 `data/company_segment_weights.csv` 存在、欄位完整且有可用 `market=Taiwan` rows，並回報台灣 weighted company 數、segment row 數與最新 `source_period`。
-4. 執行 `python3 scripts/build_company_cycle_index_taiwan.py`，重建 cycle index CSV；builder 會透過 `load_segment_weights()` 讀取 `data/company_segment_weights.csv`，按 `stock_code + source_period` 保留季度/年度/月度權重，再用 `data/segment_to_cycle_mapping.csv` 將公司分項營收權重分配到 canonical cycles。月營收 allocation 不可使用未來權重；若該月沒有當季或過去可得權重，會回到公司原 canonical cycle，並在 `segment_source_periods` / `yoy_data_quality` 標示可比性風險。
+4. 執行 `python3 scripts/build_company_cycle_index_taiwan.py`，重建 cycle index CSV；builder 會透過 `load_segment_weights()` 讀取 `data/company_segment_weights.csv`，按 `stock_code + source_period` 保留季度/年度/月度權重，再用 `data/segment_to_cycle_mapping.csv` 將公司分項營收權重分配到 canonical cycles。月營收 allocation 優先使用當季或最近過去可得權重；若早期月份沒有過去可得權重，為避免 100% fallback cycle 切換成 segment weights 造成假斷崖，會使用最早可得 snapshot 作為歷史 proxy。README 必須把 single snapshot proxy 風險寫成 caveat，並用 `segment_source_periods` / `yoy_data_quality` 標示可比性。
 5. 確認 `company_cycle_mapping.csv` 的 `segment_weight_override=Y` 與 `output/company_cycle_major_weights.csv` 有輸出，確保 segment weights 真的進入 cycle allocation，而不是只使用單一公司 cycle 分類。
 6. 確認 `company_cycle_intensity_taiwan.csv` 與 `company_cycle_intensity_by_symbol_taiwan.csv` 的最新月份。
 7. 若 derived CSV 最新月份落後 raw revenue 最新月份，直接失敗，避免用舊資料產圖。
