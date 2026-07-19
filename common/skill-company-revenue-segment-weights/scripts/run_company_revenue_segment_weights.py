@@ -78,6 +78,18 @@ def investor_conference_root(root: Path) -> Path:
     raise SystemExit("Cannot find InvestorConference repo/data directory. Set INVESTOR_CONFERENCE_ROOT.")
 
 
+def mops_root(root: Path) -> Path | None:
+    env_root = os.environ.get("MOPS_ROOT")
+    candidates = []
+    if env_root:
+        candidates.append(Path(env_root))
+    candidates.extend([root.parent / "MOPS", root / "data" / "MOPS"])
+    for candidate in candidates:
+        if candidate.is_dir():
+            return candidate.resolve()
+    return None
+
+
 def period_rank(period: str) -> tuple[int, int, int]:
     p = str(period).upper().strip()
     m = re.match(r"(20\d{2})-Q([1-4])", p)
@@ -98,6 +110,17 @@ def infer_period(path: Path) -> str:
     if not m:
         return ""
     return f"{m.group('year')}-Q{m.group('quarter')}"
+
+
+def infer_mops_period(path: Path) -> str:
+    m = re.match(r"(?P<year>20\d{2})(?P<quarter>0[1-4])_\d{4}_(?:AI1|AI3)", path.name, re.I)
+    if not m:
+        return ""
+    year = int(m.group("year"))
+    quarter = int(m.group("quarter"))
+    if quarter == 4:
+        return f"{year}-FY"
+    return f"{year}-Q{quarter}"
 
 
 def load_stock_list(root: Path, filename: str, *, required: bool = True) -> tuple[pd.DataFrame, Path | None]:
@@ -219,6 +242,125 @@ def scan_md_sources(ic_root: Path, stocks: set[str], convert_missing: bool) -> t
             if PERIOD_RE.search(md.name):
                 md_records.append({"stock_code": stock, "period": infer_period(md), "path": str(md)})
     return md_records, md_issues
+
+
+
+def scan_mops_sources(mops: Path | None, stocks: set[str]) -> list[dict]:
+    if mops is None:
+        return []
+    downloads = mops / "downloads"
+    if not downloads.is_dir():
+        downloads = mops
+    records_by_key: dict[tuple[str, str], Path] = {}
+    for stock in sorted(stocks):
+        stock_dir = downloads / stock
+        if not stock_dir.is_dir():
+            continue
+        for md in sorted(stock_dir.glob("*.md")):
+            period = infer_mops_period(md)
+            if not period:
+                continue
+            key = (stock, period)
+            previous = records_by_key.get(key)
+            # Prefer AI1 consolidated financial reports over AI3 standalone annual reports for company mix.
+            if previous is None or ("_AI1" in md.name and "_AI1" not in previous.name):
+                records_by_key[key] = md
+    return [
+        {"stock_code": stock, "period": period, "path": str(path)}
+        for (stock, period), path in sorted(records_by_key.items(), key=lambda item: (item[0][0], period_rank(item[0][1])))
+    ]
+
+
+def parse_financial_report_product_mix(rec: dict, path: Path, lines: list[str], seen: set[tuple]) -> list[dict]:
+    rows: list[dict] = []
+    if not re.search(r"_(?:AI1|AI3)\.md$", path.name, re.I):
+        return rows
+
+    start = None
+    for idx, line in enumerate(lines):
+        clean = re.sub(r"\s+", " ", line).strip()
+        if "收入之細分" in clean:
+            start = idx
+            break
+    if start is None:
+        return rows
+
+    end = min(len(lines), start + 80)
+    product_start = None
+    total_amount = None
+    total_line_no = start + 1
+    for idx in range(start, end):
+        clean = re.sub(r"\s+", " ", lines[idx]).strip()
+        amounts = [int(x.replace(",", "")) for x in re.findall(r"(?<!\d)(\d{1,3}(?:,\d{3}){1,})(?!\d)", clean)]
+        if "主要產品" in clean:
+            product_start = idx
+            if amounts:
+                total_amount = amounts[0]
+                total_line_no = idx + 1
+            break
+
+    if product_start is None:
+        return rows
+
+    product_rows: list[tuple[int, str, int, str]] = []
+    for idx in range(product_start + 1, min(len(lines), product_start + 20)):
+        clean = re.sub(r"\s+", " ", lines[idx]).strip()
+        if not clean:
+            continue
+        if re.search(r"合約|部門資訊|主要地區|員工|董事|〜|---|Page", clean):
+            break
+        amounts = [int(x.replace(",", "")) for x in re.findall(r"(?<!\d)(\d{1,3}(?:,\d{3}){1,})(?!\d)", clean)]
+        if not amounts:
+            continue
+        label = re.sub(r"\|", " ", clean)
+        label = re.sub(r"\$|\d{1,3}(?:,\d{3})+", " ", label)
+        label = re.sub(r"\s+", " ", label).strip(" ：:.-")
+        if not label or label in {"主要產品"}:
+            continue
+        product_rows.append((idx + 1, label, amounts[0], clean))
+
+    if total_amount is None and product_rows:
+        total_amount = sum(amount for _, _, amount, _ in product_rows)
+    if not total_amount or total_amount <= 0:
+        return rows
+
+    # Avoid treating geography rows as product mix if OCR/table structure is broken.
+    valid_labels = {"電子產品", "其他產品", "其他", "5C 電子產品", "電腦產品", "勞務收入", "資料中心產品"}
+    for line_no, label, amount, evidence in product_rows:
+        cleaned_label = clean_business_group_hint(label)
+        if re.search(r"\d", cleaned_label) or len(cleaned_label) > 40:
+            continue
+        if cleaned_label not in valid_labels and not cleaned_label.endswith("收入"):
+            continue
+        pct = round(amount / total_amount * 100, 1)
+        source_type = "official_annual_report" if str(rec.get("period", "")).endswith("FY") else "mops_financial_report"
+        period = rec.get("period", "")
+        out_rec = {**rec, "period": period}
+        evidence_text = (
+            f"{source_type} 收入之細分/主要產品：{cleaned_label} {amount} / "
+            f"總收入 {total_amount} = {pct:.1f}%；財報僅揭露 broad product mix，未拆 AI server/notebook。"
+        )
+        add_candidate(rows, seen, out_rec, path, line_no, cleaned_label, pct, evidence_text)
+
+    if not rows:
+        return []
+    total_pct = sum(float(row["weight_pct_candidate"]) for row in rows)
+    if abs(total_pct - 100.0) > 1.0:
+        return []
+    return rows
+
+
+def extract_mops_candidates(mops_records: list[dict]) -> list[dict]:
+    rows: list[dict] = []
+    seen: set[tuple] = set()
+    for rec in mops_records:
+        path = Path(rec["path"])
+        try:
+            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+        except Exception:
+            continue
+        rows.extend(parse_financial_report_product_mix(rec, path, lines, seen))
+    return rows
 
 
 def segment_hint_from_table(cells: list[str], pct_index: int) -> str:
@@ -988,6 +1130,7 @@ def main() -> int:
 
     root = find_project_root()
     ic_root = investor_conference_root(root)
+    mops = mops_root(root)
     weights_path = root / "data" / "company_segment_weights.csv"
     universe_df, universe_path = load_company_universe(root)
     focus_df, focus_path = load_focus_universe(root)
@@ -1004,7 +1147,10 @@ def main() -> int:
     weight_issues, _ = weight_quality(df[df["stock_code"].isin(stocks)])
     health = read_health(root)
     md_records, md_issues = scan_md_sources(ic_root, stocks, args.convert_missing_md)
-    candidates = extract_candidates(md_records)
+    mops_records = scan_mops_sources(mops, stocks)
+    ir_candidates = extract_candidates(md_records)
+    mops_candidates = extract_mops_candidates(mops_records)
+    candidates = ir_candidates + mops_candidates
 
     out_csv = root / "output" / "company_segment_weight_candidates_taiwan.csv"
     out_quarterly_csv = root / "output" / "company_segment_weights_quarterly_candidates_taiwan.csv"
@@ -1015,47 +1161,16 @@ def main() -> int:
 
     print(f"Project root: {root}")
     print(f"InvestorConference root: {ic_root}")
+    print(f"MOPS root: {mops if mops else 'n/a'}")
     print(f"Company universe: {len(universe_df)} stocks -> {universe_path}")
     print(f"Focus universe: {len(focus_df)} stocks -> {focus_path if focus_path else 'n/a'}")
     print(f"Scan scope: {len(stocks)} stocks")
     print(f"Current weights: {len(df)} rows / {df['stock_code'].nunique()} stocks")
     print(f"Scanned MD records: {len(md_records)}")
+    print(f"Scanned MOPS financial report records: {len(mops_records)}")
     print(f"MD issues: {len(md_issues)}")
     print(f"Weight sum issues: {len(weight_issues)}")
-    print(f"Candidate rows: {len(candidates)} -> {out_csv}")
-    print(f"Quarterly history candidates: {out_quarterly_csv}")
-    print(f"QA report: {out_md}")
-
-    if args.strict and (md_issues or weight_issues):
-        return 1
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())rse_df["stock_code"].dropna().astype(str).unique())
-
-    weight_issues, _ = weight_quality(df[df["stock_code"].isin(stocks)])
-    health = read_health(root)
-    md_records, md_issues = scan_md_sources(ic_root, stocks, args.convert_missing_md)
-    candidates = extract_candidates(md_records)
-
-    out_csv = root / "output" / "company_segment_weight_candidates_taiwan.csv"
-    out_quarterly_csv = root / "output" / "company_segment_weights_quarterly_candidates_taiwan.csv"
-    out_md = root / "output" / "company_segment_weights_qa_taiwan.md"
-    write_candidates(out_csv, candidates)
-    quarterly_rows = write_quarterly_history(out_quarterly_csv, candidates, universe_df, df)
-    write_report(out_md, root=root, ic_root=ic_root, universe_df=universe_df, universe_path=universe_path, focus_df=focus_df, focus_path=focus_path, scan_stocks=stocks, df=df, health=health, weight_issues=weight_issues, md_records=md_records, md_issues=md_issues, candidates=candidates, quarterly_rows=quarterly_rows, quarterly_history_path=out_quarterly_csv)
-
-    print(f"Project root: {root}")
-    print(f"InvestorConference root: {ic_root}")
-    print(f"Company universe: {len(universe_df)} stocks -> {universe_path}")
-    print(f"Focus universe: {len(focus_df)} stocks -> {focus_path if focus_path else 'n/a'}")
-    print(f"Scan scope: {len(stocks)} stocks")
-    print(f"Current weights: {len(df)} rows / {df['stock_code'].nunique()} stocks")
-    print(f"Scanned MD records: {len(md_records)}")
-    print(f"MD issues: {len(md_issues)}")
-    print(f"Weight sum issues: {len(weight_issues)}")
-    print(f"Candidate rows: {len(candidates)} -> {out_csv}")
+    print(f"Candidate rows: {len(candidates)} ({len(ir_candidates)} IR + {len(mops_candidates)} MOPS financial report) -> {out_csv}")
     print(f"Quarterly history candidates: {out_quarterly_csv}")
     print(f"QA report: {out_md}")
 
