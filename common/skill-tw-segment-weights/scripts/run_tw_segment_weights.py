@@ -100,10 +100,10 @@ def infer_period(path: Path) -> str:
     return f"{m.group('year')}-Q{m.group('quarter')}"
 
 
-def load_company_universe(root: Path) -> tuple[pd.DataFrame, Path]:
+def load_stock_list(root: Path, filename: str, *, required: bool = True) -> tuple[pd.DataFrame, Path | None]:
     candidates = [
-        root / "StockID_TWSE_TPEX.csv",
-        root / "data" / "Python-Actions.GoodInfo" / "StockID_TWSE_TPEX.csv",
+        root / filename,
+        root / "data" / "Python-Actions.GoodInfo" / filename,
     ]
     for path in candidates:
         if not path.is_file():
@@ -118,7 +118,19 @@ def load_company_universe(root: Path) -> tuple[pd.DataFrame, Path]:
         if df.empty:
             raise SystemExit(f"{path} did not contain any valid 4-digit TW stock IDs")
         return df, path
-    raise SystemExit("Cannot find StockID_TWSE_TPEX.csv in repo root or data/Python-Actions.GoodInfo/.")
+    if required:
+        raise SystemExit(f"Cannot find {filename} in repo root or data/Python-Actions.GoodInfo/.")
+    return pd.DataFrame(columns=["stock_code", "company_name"]), None
+
+
+def load_company_universe(root: Path) -> tuple[pd.DataFrame, Path]:
+    df, path = load_stock_list(root, "StockID_TWSE_TPEX.csv", required=True)
+    assert path is not None
+    return df, path
+
+
+def load_focus_universe(root: Path) -> tuple[pd.DataFrame, Path | None]:
+    return load_stock_list(root, "StockID_TWSE_TPEX_focus.csv", required=False)
 
 
 def load_weights(path: Path) -> pd.DataFrame:
@@ -506,15 +518,18 @@ def current_csv_period_by_stock(df: pd.DataFrame) -> dict[str, str]:
     return result
 
 
-def write_report(path: Path, *, root: Path, ic_root: Path, universe_df: pd.DataFrame, universe_path: Path, scan_stocks: set[str], df: pd.DataFrame, health: dict, weight_issues: list[str], md_records: list[dict], md_issues: list[dict], candidates: list[dict], quarterly_rows: list[dict], quarterly_history_path: Path) -> None:
+def write_report(path: Path, *, root: Path, ic_root: Path, universe_df: pd.DataFrame, universe_path: Path, focus_df: pd.DataFrame, focus_path: Path | None, scan_stocks: set[str], df: pd.DataFrame, health: dict, weight_issues: list[str], md_records: list[dict], md_issues: list[dict], candidates: list[dict], quarterly_rows: list[dict], quarterly_history_path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     current_periods = current_csv_period_by_stock(df)
     latest_md = latest_md_period_by_stock(md_records)
     universe_stocks = set(universe_df["stock_code"].astype(str))
+    focus_stocks = set(focus_df["stock_code"].astype(str))
     weighted_stocks = set(df["stock_code"].astype(str))
     md_stocks = {rec["stock_code"] for rec in md_records}
     missing_weight_stocks = sorted(universe_stocks - weighted_stocks)
     missing_md_stocks = sorted(universe_stocks - md_stocks)
+    focus_missing_weight_stocks = sorted(focus_stocks - weighted_stocks)
+    focus_missing_md_stocks = sorted(focus_stocks - md_stocks)
     stale = []
     for stock, md_period in latest_md.items():
         csv_period = current_periods.get(stock, "")
@@ -533,13 +548,19 @@ def write_report(path: Path, *, root: Path, ic_root: Path, universe_df: pd.DataF
         "",
         "## Company Universe",
         "",
-        f"- Universe source: `{universe_path}`",
-        f"- Universe stocks: `{len(universe_df)}`",
+        f"- Full universe source: `{universe_path}`",
+        f"- Full universe stocks: `{len(universe_df)}`",
+        f"- Focus universe source: `{focus_path if focus_path else 'n/a'}`",
+        f"- Focus universe stocks: `{len(focus_df)}`",
         f"- Scan scope: `{len(scan_stocks)}` stocks" + (" (limited by --stock)" if len(scan_stocks) != len(universe_df) else ""),
-        f"- Stocks with current segment weights: `{len(weighted_stocks)}`",
-        f"- Segment-weight coverage: `{len(weighted_stocks) / len(universe_df) * 100:.1f}%`",
-        f"- Stocks with InvestorConference quarterly MD records: `{len(md_stocks)}`",
-        f"- InvestorConference MD coverage: `{len(md_stocks & universe_stocks) / len(universe_df) * 100:.1f}%`",
+        f"- Full universe stocks with current segment weights: `{len(weighted_stocks & universe_stocks)}`",
+        f"- Full universe segment-weight coverage: `{len(weighted_stocks & universe_stocks) / len(universe_df) * 100:.1f}%`",
+        f"- Full universe stocks with InvestorConference quarterly MD records: `{len(md_stocks & universe_stocks)}`",
+        f"- Full universe InvestorConference MD coverage: `{len(md_stocks & universe_stocks) / len(universe_df) * 100:.1f}%`",
+        f"- Focus stocks with current segment weights: `{len(weighted_stocks & focus_stocks)}`",
+        f"- Focus segment-weight coverage: `{len(weighted_stocks & focus_stocks) / len(focus_df) * 100:.1f}%`" if len(focus_df) else "- Focus segment-weight coverage: `n/a`",
+        f"- Focus stocks with InvestorConference quarterly MD records: `{len(md_stocks & focus_stocks)}`",
+        f"- Focus InvestorConference MD coverage: `{len(md_stocks & focus_stocks) / len(focus_df) * 100:.1f}%`" if len(focus_df) else "- Focus InvestorConference MD coverage: `n/a`",
         "",
         "## Current CSV",
         "",
@@ -570,6 +591,15 @@ def write_report(path: Path, *, root: Path, ic_root: Path, universe_df: pd.DataF
         sample = missing_md_stocks[:80]
         lines.append("- Sample: " + ", ".join(f"`{stock}`" for stock in sample))
         lines.append("")
+    if len(focus_df):
+        lines += ["## Focus Universe Coverage Gaps", "", f"- Stocks in StockID_TWSE_TPEX_focus.csv without current segment weights: `{len(focus_missing_weight_stocks)}`", ""]
+        if focus_missing_weight_stocks:
+            lines.append("- Sample: " + ", ".join(f"`{stock}`" for stock in focus_missing_weight_stocks[:80]))
+            lines.append("")
+        lines += [f"- Stocks in StockID_TWSE_TPEX_focus.csv without InvestorConference MD records: `{len(focus_missing_md_stocks)}`", ""]
+        if focus_missing_md_stocks:
+            lines.append("- Sample: " + ", ".join(f"`{stock}`" for stock in focus_missing_md_stocks[:80]))
+            lines.append("")
     if md_issues:
         lines += ["| Stock | Issue | Path | Detail |", "|---|---|---|---|"]
         for item in md_issues[:80]:
@@ -633,6 +663,7 @@ def main() -> int:
     ic_root = investor_conference_root(root)
     weights_path = root / "data" / "tw_company_segment_weights.csv"
     universe_df, universe_path = load_company_universe(root)
+    focus_df, focus_path = load_focus_universe(root)
     df = load_weights(weights_path)
     if args.stock:
         stocks = set(args.stock)
@@ -649,11 +680,12 @@ def main() -> int:
     out_md = root / "output" / "tw_segment_weights_qa.md"
     write_candidates(out_csv, candidates)
     quarterly_rows = write_quarterly_history(out_quarterly_csv, candidates, universe_df)
-    write_report(out_md, root=root, ic_root=ic_root, universe_df=universe_df, universe_path=universe_path, scan_stocks=stocks, df=df, health=health, weight_issues=weight_issues, md_records=md_records, md_issues=md_issues, candidates=candidates, quarterly_rows=quarterly_rows, quarterly_history_path=out_quarterly_csv)
+    write_report(out_md, root=root, ic_root=ic_root, universe_df=universe_df, universe_path=universe_path, focus_df=focus_df, focus_path=focus_path, scan_stocks=stocks, df=df, health=health, weight_issues=weight_issues, md_records=md_records, md_issues=md_issues, candidates=candidates, quarterly_rows=quarterly_rows, quarterly_history_path=out_quarterly_csv)
 
     print(f"Project root: {root}")
     print(f"InvestorConference root: {ic_root}")
     print(f"Company universe: {len(universe_df)} stocks -> {universe_path}")
+    print(f"Focus universe: {len(focus_df)} stocks -> {focus_path if focus_path else 'n/a'}")
     print(f"Scan scope: {len(stocks)} stocks")
     print(f"Current weights: {len(df)} rows / {df['stock_code'].nunique()} stocks")
     print(f"Scanned MD records: {len(md_records)}")

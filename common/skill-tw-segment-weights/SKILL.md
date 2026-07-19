@@ -36,8 +36,8 @@ python ../skills/common/skill-tw-segment-weights/scripts/run_tw_segment_weights.
 此 runner 會：
 
 1. 找到 `biztrends.TW` 根目錄與相鄰的 `../InvestorConference` repo。
-2. 讀取 `StockID_TWSE_TPEX.csv` 作為完整台股公司清單；若根目錄檔案不存在，才 fallback 到 `data/Python-Actions.GoodInfo/StockID_TWSE_TPEX.csv`。
-3. 讀取 `data/tw_company_segment_weights.csv`，檢查欄位、active 權重加總、source period、confidence、process timestamp，並回報相對於完整公司清單的 segment-weight coverage。
+2. 讀取 `StockID_TWSE_TPEX.csv` 作為完整台股公司清單，並讀取 `StockID_TWSE_TPEX_focus.csv` 作為短名單 coverage view；若根目錄檔案不存在，才 fallback 到 `data/Python-Actions.GoodInfo/`。
+3. 讀取 `data/tw_company_segment_weights.csv`，檢查欄位、active 權重加總、source period、confidence、process timestamp，並分別回報相對於完整公司清單與 focus 短名單的 segment-weight coverage。
 4. 讀取 `data/InvestorConference/investor_conference_health_summary.csv`，確認 InvestorConference ingestion 與 MD 完整率。
 5. 掃描 `../InvestorConference/data/{stock}/` 下的 PDF/MD；若加上 `--convert-missing-md`，會用 PyMuPDF 將缺 MD 的 PDF 轉成同名 `.md`。
 6. 確認 MD 不應缺漏、過短或含 `TODO:OCR`；若資料品質不足，必須在 QA 報告標示，不可靜默更新權重。
@@ -45,7 +45,7 @@ python ../skills/common/skill-tw-segment-weights/scripts/run_tw_segment_weights.
 8. 產出：
    - `output/tw_segment_weights_quarterly_candidates.csv`：每家公司每季度的 segment weight candidate history，並包含可比 segment hint 的 previous period、previous weight、QoQ pctpt change，以及可回溯到原始 Markdown 的 `source_md` / `md_file` / `line_no`。
    - `output/tw_segment_weight_candidates.csv`：legacy flat evidence queue，保留供快速 review。
-   - `output/tw_segment_weights_qa.md`：列出完整公司 universe、MD coverage、source-period staleness、以及每家公司有哪些季度有候選 evidence。
+   - `output/tw_segment_weights_qa.md`：列出完整公司 universe 與 focus universe 的 MD coverage、coverage gaps、source-period staleness、以及每家公司有哪些季度有候選 evidence。
 9. 研究員依 Markdown evidence 審核季度候選值後，才可決定是否更新 latest active snapshot `data/tw_company_segment_weights.csv`，或建立正式歷史檔 `data/tw_company_segment_weights_quarterly.csv`。
 10. 更新正式 CSV 後必須執行 `python3 scripts/build_tw_cycle_index.py`，確認 segment weights 可正確映射至 cycle index。
 
@@ -57,7 +57,7 @@ python ../skills/common/skill-tw-segment-weights/scripts/run_tw_segment_weights.
 - 同一家公司可能同時有 AI server、data center、PC、手機、消費、車用、電源、網通或其他營收。
 - AI server / data server / PC 拆分依賴 investor conference、法說會、年報、MOPS 或公司 IR 揭露；若公司缺漏分項、口徑不同或只給合併分類，權重只能標示為加權研究推估。
 - 若 MD evidence 只出現 qualitative language（例如 AI demand strong）但沒有 segment percentage，不得推導精確權重。
-- `StockID_TWSE_TPEX.csv` 是完整公司 universe；不得只用現有 `tw_company_segment_weights.csv` 的 18 家公司當全體清單。
+- `StockID_TWSE_TPEX.csv` 是完整公司 universe；`StockID_TWSE_TPEX_focus.csv` 是短名單 coverage view；不得只用現有 `tw_company_segment_weights.csv` 的 18 家公司當全體清單。
 - 必須能看出同一家公司不同季度的 segment weight 變化；quarterly candidates 應揭露 previous period、previous weight、QoQ pctpt change 與 `source_md`。若某季度缺 MD 或缺百分比 evidence，需標示 coverage gap，不得沿用前季假裝該季已揭露。
 - 若 latest active snapshot 的 source period 比相鄰 InvestorConference 最新季度落後，需標示 stale candidate 或 explain why official source has not updated.
 - 若 segment weights 加總不是 100%，不得更新正式 CSV。
@@ -83,7 +83,7 @@ stock_code,company_name,segment_name,weight_pct,source_type,source_period,Source
 
 完成後回報：
 
-- `StockID_TWSE_TPEX.csv` 的完整公司數、segment-weight coverage、InvestorConference MD coverage。
+- `StockID_TWSE_TPEX.csv` 與 `StockID_TWSE_TPEX_focus.csv` 的公司數、segment-weight coverage、InvestorConference MD coverage 與 missing lists。
 - `tw_company_segment_weights.csv` 的 row count、stock count、最新/最舊 source_period。
 - InvestorConference health summary 的 process timestamp 與 MD complete rate。
 - 缺 MD、短 MD、TODO:OCR 或資料品質問題數量。
