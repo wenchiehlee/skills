@@ -295,7 +295,7 @@ def parse_financial_report_product_mix(rec: dict, path: Path, lines: list[str], 
         if "主要產品" in clean:
             product_start = idx
             if amounts:
-                total_amount = amounts[0]
+                total_amount = amounts[-1]
                 total_line_no = idx + 1
             break
 
@@ -325,13 +325,17 @@ def parse_financial_report_product_mix(rec: dict, path: Path, lines: list[str], 
         return rows
 
     # Avoid treating geography rows as product mix if OCR/table structure is broken.
-    valid_labels = {"電子產品", "其他產品", "其他", "5C 電子產品", "電腦產品", "勞務收入", "資料中心產品"}
+    valid_labels = {
+        "電子產品", "其他產品", "其他", "5C 電子產品", "電腦產品", "勞務收入", "資料中心產品",
+        "Computer Products", "Service Revenue", "Others", "5C Electronics", "Data Center Products",
+    }
     for line_no, label, amount, evidence in product_rows:
         cleaned_label = clean_business_group_hint(label)
         if re.search(r"\d", cleaned_label) or len(cleaned_label) > 40:
             continue
         if cleaned_label not in valid_labels and not cleaned_label.endswith("收入"):
             continue
+        segment_label = canonical_mops_product_label(cleaned_label)
         pct = round(amount / total_amount * 100, 1)
         source_type = "official_annual_report" if str(rec.get("period", "")).endswith("FY") else "mops_financial_report"
         period = rec.get("period", "")
@@ -340,7 +344,7 @@ def parse_financial_report_product_mix(rec: dict, path: Path, lines: list[str], 
             f"{source_type} 收入之細分/主要產品：{cleaned_label} {amount} / "
             f"總收入 {total_amount} = {pct:.1f}%；財報僅揭露 broad product mix，未拆 AI server/notebook。"
         )
-        add_candidate(rows, seen, out_rec, path, line_no, cleaned_label, pct, evidence_text)
+        add_candidate(rows, seen, out_rec, path, line_no, segment_label, pct, evidence_text)
 
     if not rows:
         return []
@@ -466,9 +470,25 @@ def clean_business_group_hint(value: str) -> str:
     }
     if hint in replacements:
         return replacements[hint]
+    compact_hint = re.sub(r"\s+", "", hint)
+    if compact_hint in replacements:
+        return replacements[compact_hint]
     normalized = re.sub(r"[^0-9a-zA-Z ]+", " ", hint).lower().strip()
     normalized = re.sub(r"\s+", " ", normalized)
     return replacements.get(normalized, hint)
+
+
+def canonical_mops_product_label(label: str) -> str:
+    cleaned = clean_business_group_hint(label)
+    replacements = {
+        "電腦產品": "Computer Products",
+        "勞務收入": "Service Revenue",
+        "其他": "Others",
+        "其他產品": "Others",
+        "5C 電子產品": "5C Electronics",
+        "資料中心產品": "Data Center Products",
+    }
+    return replacements.get(cleaned, cleaned)
 
 
 def add_candidate(rows: list[dict], seen: set[tuple], rec: dict, path: Path, line_no: int, hint: str, pct: float, evidence: str) -> bool:
@@ -1052,11 +1072,20 @@ def align_quarterly_rows_to_canonical_segments(rows: list[dict], df: pd.DataFram
 def seed_active_df_candidates(rows: list[dict], df: pd.DataFrame) -> list[dict]:
     combined = list(rows)
     existing_keys = {(str(r.get("stock_code", "")), str(r.get("source_period", "")), normalize_segment_hint(str(r.get("segment_hint", "")))) for r in rows}
-    
+    periods_with_candidate_evidence = {
+        (str(r.get("stock_code", "")), str(r.get("source_period", "")))
+        for r in rows
+        if str(r.get("review_status", "")) != "missing_canonical_segment_review"
+    }
+
     active_df = df[df["status"].fillna("active").str.lower().eq("active")].copy()
     for _, r in active_df.iterrows():
         stock = str(r["stock_code"])
         period = str(r.get("source_period", ""))
+        if period_granularity(period) not in {"quarter", "fiscal_year"}:
+            continue
+        if (stock, period) in periods_with_candidate_evidence:
+            continue
         segment = clean_business_group_hint(str(r.get("segment_name", "")))
         try:
             pct = float(r.get("weight_pct", 0))
