@@ -638,6 +638,52 @@ def extract_structured_business_mix(rec: dict, path: Path, lines: list[str], see
                 add_candidate(rows, seen, rec, path, line_no, m.group(1), float(m.group(2)), clean)
     return rows
 
+
+def extract_delta_candidates(rec: dict, path: Path, lines: list[str], seen: set[tuple]) -> list[dict]:
+    rows: list[dict] = []
+    if str(rec.get("stock_code", "")) != "2308" or not path.name.lower().endswith("_ir_en.md"):
+        return rows
+
+    segment_order = ["Power Electronics", "Mobility", "Automation", "Infrastructure"]
+    for idx, line in enumerate(lines):
+        clean = re.sub(r"\s+", " ", line).strip()
+        if not re.search(r"Performance by Segment|主要部門表現", clean, re.I):
+            continue
+
+        start = max(0, idx - 80)
+        window = [(line_no, re.sub(r"\s+", " ", value).strip()) for line_no, value in enumerate(lines[start:idx], start=start + 1)]
+        period_entries: list[tuple[str, int]] = []
+        for line_no, value in window:
+            for qm in re.finditer(r"\b([1-4])Q(\d{2})\b", value, re.I):
+                period_entries.append((f"20{qm.group(2)}-Q{qm.group(1)}", line_no))
+        if len(period_entries) < 2:
+            continue
+        periods = period_entries[-3:]
+
+        pct_entries: list[tuple[int, float]] = []
+        for line_no, value in window:
+            if re.fullmatch(r"(?:\d{1,3}(?:\.\d+)?%\s*)+", value):
+                pct_entries.extend((line_no, float(match.group(1))) for match in PCT_RE.finditer(value))
+        required = len(segment_order) * len(periods)
+        if len(pct_entries) < required:
+            continue
+        pct_entries = pct_entries[-required:]
+
+        matrix = [pct_entries[i:i + len(periods)] for i in range(0, required, len(periods))]
+        for col, (period, _) in enumerate(periods):
+            rec_for_period = {**rec, "period": period}
+            selected = [(segment, matrix[row_idx][col]) for row_idx, segment in enumerate(segment_order)]
+            total = sum(pct for _, (_, pct) in selected)
+            if not 95 <= total <= 105:
+                continue
+            evidence = "Delta official IR Performance by Segment Sales%: " + " / ".join(
+                f"{segment} {pct:g}%" for segment, (_, pct) in selected
+            )
+            for segment, (line_no, pct) in selected:
+                add_candidate(rows, seen, rec_for_period, path, line_no, segment, pct, evidence)
+        break
+    return rows
+
 def extract_hon_hai_candidates(rec: dict, path: Path, lines: list[str], seen: set[tuple]) -> list[dict]:
     rows: list[dict] = []
     if str(rec.get("stock_code", "")) != "2317" or not path.name.lower().endswith("_ir_en.md"):
@@ -811,6 +857,7 @@ def extract_candidates(md_records: list[dict], max_lines_per_file: int = 40) -> 
         structured_rows = collect_split_product_mix(rec, path, lines, seen)
         structured_rows.extend(collect_product_mix_blocks(rec, path, lines, seen))
         structured_rows.extend(extract_structured_business_mix(rec, path, lines, seen))
+        structured_rows.extend(extract_delta_candidates(rec, path, lines, seen))
         structured_rows.extend(extract_hon_hai_candidates(rec, path, lines, seen))
         structured_rows.extend(extract_tsmc_candidates(rec, path, lines, seen))
         candidates.extend(structured_rows)
