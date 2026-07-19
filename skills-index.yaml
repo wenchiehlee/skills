@@ -67,7 +67,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
   updated_at: '2026-07-16'
-  revised_at: '2026-07-18'
+  revised_at: '2026-07-19'
 - name: skill-investorconference-ingest
   group: common
   path: common/skill-investorconference-ingest
@@ -101,7 +101,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/FamilyHealthyCheck
   updated_at: '2026-07-17'
-  revised_at: '2026-07-18'
+  revised_at: '2026-07-19'
 - name: skill-market-cost-distribution
   group: common
   path: common/skill-market-cost-distribution
