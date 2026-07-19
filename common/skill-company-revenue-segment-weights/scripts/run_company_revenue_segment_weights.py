@@ -621,6 +621,36 @@ def align_quarterly_rows_to_canonical_segments(rows: list[dict], df: pd.DataFram
     return sorted(aligned, key=lambda r: (r["stock_code"], period_rank(r["source_period"]), normalize_segment_hint(r["segment_hint"]), str(r.get("line_no", ""))))
 
 
+def seed_active_df_candidates(rows: list[dict], df: pd.DataFrame) -> list[dict]:
+    combined = list(rows)
+    existing_keys = {(str(r.get("stock_code", "")), str(r.get("source_period", "")), normalize_segment_hint(str(r.get("segment_hint", "")))) for r in rows}
+    
+    active_df = df[df["status"].fillna("active").str.lower().eq("active")].copy()
+    for _, r in active_df.iterrows():
+        stock = str(r["stock_code"])
+        period = str(r.get("source_period", ""))
+        segment = str(r.get("segment_name", ""))
+        try:
+            pct = float(r.get("weight_pct", 0))
+        except (TypeError, ValueError):
+            continue
+        key = (stock, period, normalize_segment_hint(segment))
+        if key not in existing_keys:
+            combined.append({
+                "stock_code": stock,
+                "source_period": period,
+                "source_md": str(r.get("Source (link)", "")),
+                "md_file": str(r.get("Source (link)", "")),
+                "line_no": 1,
+                "segment_hint": segment,
+                "weight_pct_candidate": pct,
+                "evidence": str(r.get("note", "Official active snapshot")),
+                "review_status": "active_csv_snapshot",
+            })
+            existing_keys.add(key)
+    return combined
+
+
 def write_quarterly_history(path: Path, rows: list[dict], universe_df: pd.DataFrame, df: pd.DataFrame) -> list[dict]:
     path.parent.mkdir(parents=True, exist_ok=True)
     fields = [
@@ -640,7 +670,8 @@ def write_quarterly_history(path: Path, rows: list[dict], universe_df: pd.DataFr
         "evidence",
         "review_status",
     ]
-    enriched = align_quarterly_rows_to_canonical_segments(enrich_quarterly_rows(rows, universe_df), df)
+    all_rows = seed_active_df_candidates(rows, df)
+    enriched = align_quarterly_rows_to_canonical_segments(enrich_quarterly_rows(all_rows, universe_df), df)
     with path.open("w", encoding="utf-8-sig", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
