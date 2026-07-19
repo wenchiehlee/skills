@@ -178,7 +178,7 @@ skills:
   maintainer: wenchiehlee
   source: biztrends.TW
   updated_at: '2026-07-19'
-  revised_at: '2026-07-18'
+  revised_at: '2026-07-19'
 - name: skill-tw-segment-weights
   group: common
   path: common/skill-tw-segment-weights

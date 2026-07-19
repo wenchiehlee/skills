@@ -35,7 +35,7 @@
 | [skill-taiex-report](common/skill-taiex-report) | common | financial-strategy | 1.0.0 | 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖） | 2026-07-18 |
 | [skill-taiex-sync](common/skill-taiex-sync) | common | financial-data | 1.0.0 | 更新本地資料目錄索引，生成批次處理所需的投資標的清單 | 2026-07-18 |
 | [skill-taiex-viz](common/skill-taiex-viz) | common | financial-accounting | 1.0.0 | 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖 | 2026-07-18 |
-| [skill-tw-cycle-index](common/skill-tw-cycle-index) | common | financial-strategy | 1.1.1 | 重建 biztrends.TW 台灣 canonical cycle index，確認最新 GoodInfo Analyzer 月營收已進入 derived CSV，用最新資料生成 tw_cycle_index.png，並以跨台股與美股研究員角色產出深度洞察分析。 | 2026-07-18 |
+| [skill-tw-cycle-index](common/skill-tw-cycle-index) | common | financial-strategy | 1.1.1 | 重建 biztrends.TW 台灣 canonical cycle index，確認最新 GoodInfo Analyzer 月營收已進入 derived CSV，用最新資料生成 tw_cycle_index.png，並以跨台股與美股研究員角色產出深度洞察分析。 | 2026-07-19 |
 | [skill-tw-segment-weights](common/skill-tw-segment-weights) | common | financial-strategy | 1.1.0 | 更新與稽核 biztrends.TW 台股公司 segment weights，確認 InvestorConference/MOPS/IR 最新材料與 Markdown 轉檔完整，從季度 MD evidence 抽取公司 segment weight 候選值，並在更新 tw_company_segment_weights.csv 前產出資料解讀 QA。 | 2026-07-19 |
 
 最後產生日期：2026-07-19
