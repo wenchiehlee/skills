@@ -287,19 +287,36 @@ def clean_business_group_hint(value: str) -> str:
         "system": "System",
         "systems": "System",
         "system bg": "System",
+        "system business group": "System",
         "systems business unit": "System",
         "open platform": "Open Platform",
         "open platforms": "Open Platform",
         "open platform bg": "Open Platform",
+        "open platform business group": "Open Platform",
         "infrastructure": "Infrastructure",
         "infrastructure bg": "Infrastructure",
         "infrastructure solutions bg": "Infrastructure",
+        "infrastructure solutions business group": "Infrastructure",
         "isg": "Infrastructure",
         "isg server enterprise": "Infrastructure",
         "aiot": "AIoT",
+        "aiot business group": "AIoT",
         "iot": "AIoT",
+        "cloud aiot": "Cloud/AIoT",
+        "cloudaiot": "Cloud/AIoT",
+        "optoelectronics": "Opto-electronics",
+        "opto electronics": "Opto-electronics",
+        "information technology consumer electronics itce": "IT/CE",
+        "information technology consumer electronics": "IT/CE",
+        "itce": "IT/CE",
+        "雲端及物聯網部門": "Cloud/AIoT",
+        "光電部門 含車電": "Opto-electronics",
+        "資訊及消費性電子部門": "IT/CE",
     }
-    normalized = re.sub(r"[^0-9a-zA-Z ]+", "", hint).lower().strip()
+    if hint in replacements:
+        return replacements[hint]
+    normalized = re.sub(r"[^0-9a-zA-Z ]+", " ", hint).lower().strip()
+    normalized = re.sub(r"\s+", " ", normalized)
     return replacements.get(normalized, hint)
 
 
@@ -310,7 +327,11 @@ def add_candidate(rows: list[dict], seen: set[tuple], rec: dict, path: Path, lin
         "the quarter 1 breakdown", "revenue share ~",
     }
     hint_l = hint.lower().strip()
-    invalid_pattern = re.search(r"asia|america|europe|monitor|market share|client|bad debt|graphics card revenue", hint_l)
+    invalid_pattern = re.search(
+        r"asia|america|europe|monitor|market share|client|bad debt|graphics card revenue|"
+        r"ai momentum|the percentage|i think|could reach|share has a chance|optimistic",
+        hint_l,
+    )
     if not hint or hint_l in invalid_hints or invalid_pattern or len(hint) > 80:
         return False
     key = (rec["stock_code"], rec["period"], str(path), line_no, hint, round(float(pct), 4))
@@ -329,6 +350,63 @@ def add_candidate(rows: list[dict], seen: set[tuple], rec: dict, path: Path, lin
         "review_status": "candidate_needs_review",
     })
     return True
+
+
+def header_product_mix_period(line: str) -> str:
+    m = re.search(r"([1-4])Q(20\d{2}|\d{2})", line, re.I)
+    if not m:
+        return ""
+    year = m.group(2)
+    if len(year) == 2:
+        year = "20" + year
+    return f"{year}-Q{m.group(1)}"
+
+
+def collect_split_product_mix(rec: dict, path: Path, lines: list[str], seen: set[tuple]) -> list[dict]:
+    rows: list[dict] = []
+    for idx, line in enumerate(lines):
+        clean = re.sub(r"\s+", " ", line).strip()
+        if not re.search(r"product mix|營收[占佔]比", clean, re.I):
+            continue
+        header_period = header_product_mix_period(clean)
+        if header_period and header_period != rec.get("period"):
+            continue
+
+        pct_items: list[tuple[int, float]] = []
+        for prev_idx in range(max(0, idx - 8), idx):
+            prev = re.sub(r"\s+", " ", lines[prev_idx]).strip()
+            if PCT_RE.fullmatch(prev):
+                pct_items.append((prev_idx + 1, float(prev.rstrip("%"))))
+        if len(pct_items) < 2:
+            continue
+
+        labels: list[str] = []
+        cursor = idx + 1
+        while cursor < min(len(lines), idx + 24):
+            candidate = re.sub(r"\s+", " ", lines[cursor]).strip(" -*`：:,，.;；")
+            if not candidate:
+                cursor += 1
+                continue
+            if cursor != idx + 1 and re.search(r"[1-4]Q\d{2,4}.*(?:product mix|營收[占佔]比)|## Page|Profitable Revenue", candidate, re.I):
+                if labels:
+                    break
+            if candidate == "Information Technology &" and cursor + 1 < len(lines):
+                nxt = re.sub(r"\s+", " ", lines[cursor + 1]).strip(" -*`：:,，.;；")
+                candidate = f"{candidate} {nxt}"
+                cursor += 1
+            normalized = clean_business_group_hint(candidate)
+            if normalized in {"Cloud/AIoT", "Opto-electronics", "IT/CE"}:
+                labels.append(normalized)
+                if len(labels) >= len(pct_items):
+                    break
+            cursor += 1
+
+        if len(labels) < len(pct_items):
+            continue
+        evidence = " / ".join(f"{label} {pct:g}%" for label, (_, pct) in zip(labels, pct_items))
+        for label, (pct_line_no, pct) in zip(labels, pct_items):
+            add_candidate(rows, seen, rec, path, pct_line_no, label, pct, evidence)
+    return rows
 
 
 def extract_structured_business_mix(rec: dict, path: Path, lines: list[str], seen: set[tuple]) -> list[dict]:
@@ -371,7 +449,8 @@ def extract_candidates(md_records: list[dict], max_lines_per_file: int = 40) -> 
             lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
         except Exception:
             continue
-        structured_rows = extract_structured_business_mix(rec, path, lines, seen)
+        structured_rows = collect_split_product_mix(rec, path, lines, seen)
+        structured_rows.extend(extract_structured_business_mix(rec, path, lines, seen))
         candidates.extend(structured_rows)
         count = len(structured_rows)
         structured_line_numbers = {int(row["line_no"]) for row in structured_rows}
@@ -431,6 +510,7 @@ def write_candidates(path: Path, rows: list[dict]) -> None:
 
 
 def normalize_segment_hint(value: str) -> str:
+    value = clean_business_group_hint(value)
     value = re.sub(r"\s+", " ", str(value).strip().lower())
     value = re.sub(r"[^0-9a-zA-Z\u4e00-\u9fff ]+", "", value)
     return value[:80]
@@ -487,7 +567,61 @@ def enrich_quarterly_rows(rows: list[dict], universe_df: pd.DataFrame) -> list[d
     return sorted(enriched, key=lambda r: (r["stock_code"], period_rank(r["source_period"]), r["segment_hint"], r["line_no"]))
 
 
-def write_quarterly_history(path: Path, rows: list[dict], universe_df: pd.DataFrame) -> list[dict]:
+def canonical_segments_by_stock(df: pd.DataFrame) -> dict[str, list[str]]:
+    active = df[df["status"].fillna("active").str.lower().eq("active")].copy()
+    result: dict[str, list[str]] = {}
+    for stock, group in active.groupby("stock_code"):
+        segments: list[str] = []
+        seen: set[str] = set()
+        for value in group["segment_name"].astype(str):
+            segment = clean_business_group_hint(value)
+            key = normalize_segment_hint(segment)
+            if segment and key not in seen:
+                segments.append(segment)
+                seen.add(key)
+        if segments:
+            result[str(stock)] = segments
+    return result
+
+
+def align_quarterly_rows_to_canonical_segments(rows: list[dict], df: pd.DataFrame) -> list[dict]:
+    canonical = canonical_segments_by_stock(df)
+    by_stock_period: dict[tuple[str, str], dict[str, dict]] = {}
+    for row in rows:
+        stock = str(row.get("stock_code", ""))
+        period = str(row.get("source_period", ""))
+        key = normalize_segment_hint(str(row.get("segment_hint", "")))
+        by_stock_period.setdefault((stock, period), {})[key] = row
+
+    aligned = list(rows)
+    for (stock, period), present in sorted(by_stock_period.items(), key=lambda item: (item[0][0], period_rank(item[0][1]))):
+        if stock not in canonical:
+            continue
+        for segment in canonical[stock]:
+            segment_key = normalize_segment_hint(segment)
+            if segment_key in present:
+                continue
+            aligned.append({
+                "stock_code": stock,
+                "company_name": present[next(iter(present))].get("company_name", "") if present else "",
+                "source_period": period,
+                "segment_hint": segment,
+                "weight_pct_candidate": "",
+                "source_md": "",
+                "previous_source_period": "",
+                "previous_weight_pct_candidate": "",
+                "qoq_change_pctpt": "",
+                "candidate_evidence_rows": 0,
+                "candidate_weight_values": "",
+                "md_file": "",
+                "line_no": "",
+                "evidence": "Canonical segment from current active CSV; no explicit candidate found in this quarter.",
+                "review_status": "missing_canonical_segment_review",
+            })
+    return sorted(aligned, key=lambda r: (r["stock_code"], period_rank(r["source_period"]), normalize_segment_hint(r["segment_hint"]), str(r.get("line_no", ""))))
+
+
+def write_quarterly_history(path: Path, rows: list[dict], universe_df: pd.DataFrame, df: pd.DataFrame) -> list[dict]:
     path.parent.mkdir(parents=True, exist_ok=True)
     fields = [
         "stock_code",
@@ -506,7 +640,7 @@ def write_quarterly_history(path: Path, rows: list[dict], universe_df: pd.DataFr
         "evidence",
         "review_status",
     ]
-    enriched = enrich_quarterly_rows(rows, universe_df)
+    enriched = align_quarterly_rows_to_canonical_segments(enrich_quarterly_rows(rows, universe_df), df)
     with path.open("w", encoding="utf-8-sig", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
@@ -746,7 +880,7 @@ def main() -> int:
     out_quarterly_csv = root / "output" / "tw_segment_weights_quarterly_candidates.csv"
     out_md = root / "output" / "tw_segment_weights_qa.md"
     write_candidates(out_csv, candidates)
-    quarterly_rows = write_quarterly_history(out_quarterly_csv, candidates, universe_df)
+    quarterly_rows = write_quarterly_history(out_quarterly_csv, candidates, universe_df, df)
     write_report(out_md, root=root, ic_root=ic_root, universe_df=universe_df, universe_path=universe_path, focus_df=focus_df, focus_path=focus_path, scan_stocks=stocks, df=df, health=health, weight_issues=weight_issues, md_records=md_records, md_issues=md_issues, candidates=candidates, quarterly_rows=quarterly_rows, quarterly_history_path=out_quarterly_csv)
 
     print(f"Project root: {root}")
