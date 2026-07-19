@@ -436,9 +436,35 @@ def normalize_segment_hint(value: str) -> str:
     return value[:80]
 
 
+def dedupe_quarterly_candidates(rows: list[dict]) -> list[dict]:
+    grouped: dict[tuple[str, str, str], list[dict]] = {}
+    for row in rows:
+        key = (
+            str(row.get("stock_code", "")),
+            str(row.get("source_period", "")),
+            normalize_segment_hint(str(row.get("segment_hint", ""))),
+        )
+        grouped.setdefault(key, []).append(row)
+
+    deduped: list[dict] = []
+    for key in sorted(grouped, key=lambda k: (k[0], period_rank(k[1]), k[2])):
+        group = sorted(grouped[key], key=lambda r: (str(r.get("source_md", "")), int(r.get("line_no") or 0)))
+        chosen = {**group[0]}
+        values = sorted({str(r.get("weight_pct_candidate", "")) for r in group})
+        chosen["candidate_evidence_rows"] = len(group)
+        chosen["candidate_weight_values"] = ";".join(values)
+        if len(group) > 1:
+            suffix = "duplicate_weight_conflict" if len(values) > 1 else "duplicate_evidence"
+            base_status = str(chosen.get("review_status", "")).strip()
+            chosen["review_status"] = f"{base_status};{suffix}" if base_status else suffix
+        deduped.append(chosen)
+    return deduped
+
+
 def enrich_quarterly_rows(rows: list[dict], universe_df: pd.DataFrame) -> list[dict]:
     company_name = dict(zip(universe_df["stock_code"].astype(str), universe_df["company_name"].astype(str)))
-    ordered = sorted(rows, key=lambda r: (r["stock_code"], normalize_segment_hint(r["segment_hint"]), period_rank(r["source_period"]), r["line_no"]))
+    deduped_rows = dedupe_quarterly_candidates(rows)
+    ordered = sorted(deduped_rows, key=lambda r: (r["stock_code"], normalize_segment_hint(r["segment_hint"]), period_rank(r["source_period"]), r["line_no"]))
     previous_by_key: dict[tuple[str, str], dict] = {}
     enriched: list[dict] = []
     for row in ordered:
@@ -473,6 +499,8 @@ def write_quarterly_history(path: Path, rows: list[dict], universe_df: pd.DataFr
         "previous_source_period",
         "previous_weight_pct_candidate",
         "qoq_change_pctpt",
+        "candidate_evidence_rows",
+        "candidate_weight_values",
         "md_file",
         "line_no",
         "evidence",
@@ -494,6 +522,36 @@ def quarterly_candidate_summary(rows: list[dict]) -> dict[str, dict[str, int]]:
         summary.setdefault(stock, {})
         summary[stock][period] = summary[stock].get(period, 0) + 1
     return summary
+
+
+def quarterly_segment_sets(rows: list[dict]) -> dict[str, dict[str, list[str]]]:
+    result: dict[str, dict[str, set[str]]] = {}
+    display: dict[tuple[str, str, str], str] = {}
+    for row in rows:
+        stock = str(row.get("stock_code", ""))
+        period = str(row.get("source_period", ""))
+        normalized = normalize_segment_hint(str(row.get("segment_hint", "")))
+        if not stock or not period or not normalized:
+            continue
+        result.setdefault(stock, {}).setdefault(period, set()).add(normalized)
+        display.setdefault((stock, period, normalized), str(row.get("segment_hint", "")))
+
+    out: dict[str, dict[str, list[str]]] = {}
+    for stock, periods in result.items():
+        out[stock] = {}
+        for period, normalized_segments in periods.items():
+            out[stock][period] = sorted(display[(stock, period, segment)] for segment in normalized_segments)
+    return out
+
+
+def segment_count_review(rows: list[dict]) -> list[tuple[str, dict[str, list[str]]]]:
+    segment_sets = quarterly_segment_sets(rows)
+    review: list[tuple[str, dict[str, list[str]]]] = []
+    for stock, periods in sorted(segment_sets.items()):
+        counts = {len(segments) for segments in periods.values()}
+        if len(counts) > 1:
+            review.append((stock, periods))
+    return review
 
 
 def latest_md_period_by_stock(md_records: list[dict]) -> dict[str, str]:
@@ -535,7 +593,8 @@ def write_report(path: Path, *, root: Path, ic_root: Path, universe_df: pd.DataF
         csv_period = current_periods.get(stock, "")
         if csv_period and period_rank(md_period) > period_rank(csv_period):
             stale.append((stock, csv_period, md_period))
-    q_summary = quarterly_candidate_summary(candidates)
+    q_summary = quarterly_candidate_summary(quarterly_rows)
+    segment_count_issues = segment_count_review(quarterly_rows)
     delta_rows = [r for r in quarterly_rows if r.get("qoq_change_pctpt") not in ("", None)]
     largest_deltas = sorted(delta_rows, key=lambda r: abs(float(r["qoq_change_pctpt"])), reverse=True)[:20]
 
@@ -614,17 +673,25 @@ def write_report(path: Path, *, root: Path, ic_root: Path, universe_df: pd.DataF
     lines += [
         "## Quarterly Segment Weight Changes",
         "",
-        f"- Candidate evidence rows: `{len(candidates)}`",
+        f"- Raw candidate evidence rows: `{len(candidates)}`",
+        f"- Deduped quarterly segment rows: `{len(quarterly_rows)}`",
         f"- Quarterly history candidate CSV: `{quarterly_history_path.relative_to(root)}`",
         "- Backtrace columns: `source_md`, `md_file`, `line_no`",
         "",
     ]
     if q_summary:
-        lines += ["| Stock | Quarters with candidate evidence | Candidate rows |", "|---|---|---:|"]
+        lines += ["| Stock | Quarters with candidate evidence | Unique segment rows |", "|---|---|---:|"]
         for stock in sorted(q_summary):
             quarters = sorted(q_summary[stock], key=period_rank)
             quarter_text = ", ".join(f"`{q}` ({q_summary[stock][q]})" for q in quarters)
             lines.append(f"| `{stock}` | {quarter_text} | `{sum(q_summary[stock].values())}` |")
+        lines.append("")
+    if segment_count_issues:
+        lines += ["### Segment Count / Taxonomy Review", "", "| Stock | Quarter segment counts | Review note |", "|---|---|---|"]
+        for stock, periods in segment_count_issues[:40]:
+            quarters = sorted(periods, key=period_rank)
+            quarter_text = ", ".join(f"`{q}` ({len(periods[q])}: {', '.join(periods[q])})" for q in quarters)
+            lines.append(f"| `{stock}` | {quarter_text} | Segment count changed across quarters; verify whether this is disclosure taxonomy change or extraction miss. |")
         lines.append("")
     if largest_deltas:
         lines += ["### Largest Candidate Quarter Changes", "", "| Stock | Period | Segment hint | Weight | Previous period | Previous weight | Change pctpt |", "|---|---:|---|---:|---:|---:|---:|"]
