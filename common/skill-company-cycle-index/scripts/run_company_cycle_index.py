@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 import subprocess
 from pathlib import Path
 
@@ -87,7 +88,11 @@ def built_segment_weight_summary(root: Path) -> tuple[int, int]:
 
 def run(cmd: list[str], root: Path, env: dict[str, str] | None = None) -> None:
     print("$ " + " ".join(cmd), flush=True)
-    subprocess.run(cmd, cwd=root, env=env, check=True)
+    full_env = dict(os.environ)
+    full_env['PYTHONIOENCODING'] = 'utf-8'
+    if env:
+        full_env.update(env)
+    subprocess.run(cmd, cwd=root, env=full_env, check=True)
 
 
 def fmt_num(value: float) -> str:
@@ -368,7 +373,7 @@ def main() -> int:
         f"({segment_company_count} companies, {segment_row_count} rows{suffix})"
     )
 
-    run(["python3", "scripts/build_company_cycle_index_taiwan.py"], root)
+    run([sys.executable, "scripts/build_company_cycle_index_taiwan.py"], root)
 
     override_count, major_weight_rows = built_segment_weight_summary(root)
     print(
@@ -391,7 +396,7 @@ def main() -> int:
 
     env = os.environ.copy()
     env["CI"] = "1"
-    run(["python3", "scripts/plot_company_cycle_index_taiwan.py"], root, env=env)
+    run([sys.executable, "scripts/plot_company_cycle_index_taiwan.py"], root, env=env)
 
     png_path = root / "output" / "company_cycle_index_taiwan.png"
     if not png_path.is_file():
