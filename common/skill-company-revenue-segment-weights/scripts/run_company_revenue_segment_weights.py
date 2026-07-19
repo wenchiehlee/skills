@@ -638,6 +638,132 @@ def extract_structured_business_mix(rec: dict, path: Path, lines: list[str], see
                 add_candidate(rows, seen, rec, path, line_no, m.group(1), float(m.group(2)), clean)
     return rows
 
+def extract_hon_hai_candidates(rec: dict, path: Path, lines: list[str], seen: set[tuple]) -> list[dict]:
+    rows: list[dict] = []
+    if str(rec.get("stock_code", "")) != "2317" or not path.name.lower().endswith("_ir_en.md"):
+        return rows
+
+    pdf_path = path.with_suffix(".pdf")
+    if not pdf_path.is_file():
+        return rows
+
+    manual_2021 = {
+        "2317_2021_q2_ir_en.md": [("2021-Q2", 8, [("Smart Consumer Electronics", 53.0), ("Cloud and Networking", 22.0), ("Computing Products", 19.0), ("Components and Other Products", 6.0)])],
+        "2317_2021_q3_ir_en.md": [("2021-Q3", 8, [("Smart Consumer Electronics", 50.0), ("Cloud and Networking", 23.0), ("Computing Products", 21.0), ("Components and Other Products", 6.0)])],
+        "2317_2021_q4_ir_en.md": [
+            ("2021-Q4", 9, [("Smart Consumer Electronics", 60.0), ("Cloud and Networking", 19.0), ("Computing Products", 16.0), ("Components and Other Products", 5.0)]),
+            ("2021-FY", 10, [("Smart Consumer Electronics", 54.0), ("Cloud and Networking", 21.0), ("Computing Products", 19.0), ("Components and Other Products", 6.0)]),
+        ],
+    }
+    if path.name in manual_2021:
+        for period, page_no, data in manual_2021[path.name]:
+            rec_for_period = {**rec, "period": period}
+            for segment, pct in data:
+                evidence = f"Hon Hai official results PDF page {page_no}: {period} Performance Review portfolio mix; {segment} {pct:g}%."
+                add_candidate(rows, seen, rec_for_period, path, page_no, segment, pct, evidence)
+        return rows
+    try:
+        import pymupdf  # type: ignore
+    except Exception:
+        return rows
+
+    def review_period(title: str) -> str:
+        title = re.sub(r"\s+", " ", title).strip()
+        m = re.search(r"([1-4])Q\s*(\d{2})\s+Performance Review", title, re.I)
+        if m:
+            return f"20{m.group(2)}-Q{m.group(1)}"
+        m = re.search(r"FY\s*(\d{2})\s+Performance Review", title, re.I)
+        if m:
+            return f"20{m.group(1)}-FY"
+        m = re.search(r"\b(20\d{2})\s+Performance Review", title, re.I)
+        if m:
+            return f"{m.group(1)}-FY"
+        return ""
+
+    labels = [
+        ("Cloud and Networking", re.compile(r"^Cloud and", re.I)),
+        ("Smart Consumer Electronics", re.compile(r"^Smart(?: Consumer)?", re.I)),
+        ("Computing Products", re.compile(r"^Computing", re.I)),
+        ("Components and Other Products", re.compile(r"^Components", re.I)),
+    ]
+
+    try:
+        doc = pymupdf.open(str(pdf_path))
+    except Exception:
+        return rows
+
+    for page_index, page in enumerate(doc, start=1):
+        page_text = page.get_text("text")
+        if "Performance Review" not in page_text:
+            continue
+        period = review_period(page_text)
+        if not period:
+            continue
+
+        spans: list[tuple[float, float, str]] = []
+        for block in page.get_text("dict").get("blocks", []):
+            for line in block.get("lines", []):
+                for span in line.get("spans", []):
+                    text = re.sub(r"\s+", " ", span.get("text", "")).strip()
+                    if not text:
+                        continue
+                    x0, y0, _x1, _y1 = span.get("bbox", [0, 0, 0, 0])
+                    spans.append((float(x0), float(y0), text))
+
+        title_y_values = [y for _x, y, text in spans if "Performance Review" in text]
+        if not title_y_values:
+            continue
+        title_y = min(title_y_values)
+
+        anchors: dict[str, tuple[float, float]] = {}
+        for segment, pattern in labels:
+            matches = [(x, y) for x, y, text in spans if y >= title_y - 10 and pattern.search(text)]
+            if matches:
+                anchors[segment] = min(matches, key=lambda item: abs(item[1] - title_y))
+        if len(anchors) < 4:
+            continue
+
+        pct_points: list[tuple[float, float, float]] = []
+        for idx, (x, y, text) in enumerate(spans):
+            if not re.fullmatch(r"\d{1,3}(?:\.\d+)?", text):
+                continue
+            if not (title_y - 80 <= y <= title_y + 260):
+                continue
+            has_pct = any(abs(px - x) < 45 and abs(py - y) < 18 and pt == "%" for px, py, pt in spans)
+            if has_pct:
+                value = float(text)
+                if 0 < value <= 100:
+                    pct_points.append((x, y, value))
+
+        # Keep only the row of four portfolio percentages nearest to the product labels.
+        if len(pct_points) < 4:
+            continue
+        anchor_y = sum(y for _x, y in anchors.values()) / len(anchors)
+        pct_points = sorted(pct_points, key=lambda item: (abs(item[1] - anchor_y), item[1], item[0]))[:4]
+        pct_points = sorted(pct_points, key=lambda item: item[0])
+
+        used: set[int] = set()
+        page_rows: list[dict] = []
+        for segment, (anchor_x, _anchor_y) in sorted(anchors.items(), key=lambda item: item[1][0]):
+            nearest_idx = min(
+                (i for i in range(len(pct_points)) if i not in used),
+                key=lambda i: abs(pct_points[i][0] - anchor_x),
+            )
+            used.add(nearest_idx)
+            _x, _y, pct = pct_points[nearest_idx]
+            evidence = (
+                f"Hon Hai official results PDF page {page_index}: {period} Performance Review portfolio mix; "
+                f"{segment} {pct:g}%."
+            )
+            rec_for_period = {**rec, "period": period}
+            add_candidate(page_rows, seen, rec_for_period, path, page_index, segment, pct, evidence)
+
+        if page_rows and abs(sum(float(row["weight_pct_candidate"]) for row in page_rows) - 100.0) <= 1.0:
+            rows.extend(page_rows)
+    doc.close()
+    return rows
+
+
 def extract_tsmc_candidates(rec: dict, path: Path, lines: list[str], seen: set[tuple]) -> list[dict]:
     rows: list[dict] = []
     if str(rec.get("stock_code", "")) != "2330":
@@ -685,8 +811,11 @@ def extract_candidates(md_records: list[dict], max_lines_per_file: int = 40) -> 
         structured_rows = collect_split_product_mix(rec, path, lines, seen)
         structured_rows.extend(collect_product_mix_blocks(rec, path, lines, seen))
         structured_rows.extend(extract_structured_business_mix(rec, path, lines, seen))
+        structured_rows.extend(extract_hon_hai_candidates(rec, path, lines, seen))
         structured_rows.extend(extract_tsmc_candidates(rec, path, lines, seen))
         candidates.extend(structured_rows)
+        if str(rec.get("stock_code", "")) == "2317" and "transcript" in path.name.lower():
+            continue
         count = len(structured_rows)
         structured_line_numbers = {int(row["line_no"]) for row in structured_rows}
         for line_no, line in enumerate(lines, start=1):
