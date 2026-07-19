@@ -20,7 +20,7 @@ def find_project_root() -> Path:
         candidates.append(Path(env_root))
     candidates.extend([Path.cwd(), *Path.cwd().parents])
     for candidate in candidates:
-        if (candidate / "scripts" / "build_tw_cycle_index.py").is_file() and (candidate / "scripts" / "plot_tw_cycle_index.py").is_file():
+        if (candidate / "scripts" / "build_company_cycle_index_taiwan.py").is_file() and (candidate / "scripts" / "plot_company_cycle_index_taiwan.py").is_file():
             return candidate.resolve()
     raise SystemExit("Cannot find biztrends.TW root. Run from the repo root or set BIZTRENDS_TW_ROOT.")
 
@@ -290,7 +290,7 @@ def update_readme(root: Path, raw_latest: str, raw_count: int) -> None:
     readme_path = root / "README.md"
     content = readme_path.read_text(encoding="utf-8")
     command_line = "產出指令：`python ../skills/common/skill-company-cycle-index/scripts/run_company_cycle_index.py`"
-    content = content.replace("產出指令：`python scripts/plot_tw_cycle_index.py`", command_line)
+    content = content.replace("產出指令：`python scripts/plot_company_cycle_index_taiwan.py`", command_line)
 
     import datetime
     now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))
@@ -337,7 +337,7 @@ def main() -> int:
         f"({segment_company_count} companies, {segment_row_count} rows{suffix})"
     )
 
-    run(["python3", "scripts/build_tw_cycle_index.py"], root)
+    run(["python3", "scripts/build_company_cycle_index_taiwan.py"], root)
 
     override_count, major_weight_rows = built_segment_weight_summary(root)
     print(
@@ -360,7 +360,7 @@ def main() -> int:
 
     env = os.environ.copy()
     env["CI"] = "1"
-    run(["python3", "scripts/plot_tw_cycle_index.py"], root, env=env)
+    run(["python3", "scripts/plot_company_cycle_index_taiwan.py"], root, env=env)
 
     png_path = root / "output" / "company_cycle_index_taiwan.png"
     if not png_path.is_file():

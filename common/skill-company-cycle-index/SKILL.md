@@ -37,11 +37,11 @@ python ../skills/common/skill-company-cycle-index/scripts/run_company_cycle_inde
 1. 確認可用的 GoodInfo Analyzer raw revenue 資料來源。
 2. 讀取 raw revenue 最新月份與申報筆數。
 3. 檢查 `data/company_segment_weights.csv` 存在、欄位完整且有可用 rows，並回報使用的 weighted company 數、segment row 數與最新 `source_period`。
-4. 執行 `python3 scripts/build_tw_cycle_index.py`，重建 cycle index CSV；builder 會透過 `load_segment_weights()` 讀取 `data/company_segment_weights.csv`，再用 `data/segment_to_cycle_mapping.csv` 將公司分項營收權重分配到 canonical cycles。
+4. 執行 `python3 scripts/build_company_cycle_index_taiwan.py`，重建 cycle index CSV；builder 會透過 `load_segment_weights()` 讀取 `data/company_segment_weights.csv`，再用 `data/segment_to_cycle_mapping.csv` 將公司分項營收權重分配到 canonical cycles。
 5. 確認 `company_cycle_mapping.csv` 的 `segment_weight_override=Y` 與 `data/company_major_cycle_weights.csv` 有輸出，確保 segment weights 真的進入 cycle allocation，而不是只使用單一公司 cycle 分類。
 6. 確認 `company_cycle_intensity_taiwan.csv` 與 `company_cycle_intensity_by_symbol_taiwan.csv` 的最新月份。
 7. 若 derived CSV 最新月份落後 raw revenue 最新月份，直接失敗，避免用舊資料產圖。
-8. 執行 `CI=1 python3 scripts/plot_tw_cycle_index.py`，產生 `output/company_cycle_index_taiwan.png`。
+8. 執行 `CI=1 python3 scripts/plot_company_cycle_index_taiwan.py`，產生 `output/company_cycle_index_taiwan.png`。
 9. 驗證 PNG 存在且可讀，並輸出檔案尺寸。
 10. 以專業研究員角度解讀目標 PNG，必要時回讀 `data/company_cycle_intensity_taiwan.csv`、`data/company_cycle_intensity_by_symbol_taiwan.csv`、`data/company_major_cycle_weights.csv` 支撐判斷。
 11. 更新 `README.md` 的台灣 cycle index 區塊，將產出指令改為 skill runner，並寫入 timestamp 與深度洞察分析。
@@ -67,8 +67,8 @@ python ../skills/common/skill-company-cycle-index/scripts/run_company_cycle_inde
 只有在 runner 需要除錯時，才改用手動命令：
 
 ```bash
-python3 scripts/build_tw_cycle_index.py
-CI=1 python3 scripts/plot_tw_cycle_index.py
+python3 scripts/build_company_cycle_index_taiwan.py
+CI=1 python3 scripts/plot_company_cycle_index_taiwan.py
 ```
 
 手動執行後仍要檢查：
