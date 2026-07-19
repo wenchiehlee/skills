@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-07-18'
+generated_at: '2026-07-19'
 skills:
 - name: skill-all-models-benchmark
   group: common
@@ -167,3 +167,15 @@ skills:
   source: biztrends.TW
   updated_at: '2026-07-18'
   revised_at: '2026-07-18'
+- name: skill-tw-segment-weights
+  group: common
+  path: common/skill-tw-segment-weights
+  version: 1.0.0
+  description: 更新與稽核 biztrends.TW 台股公司 segment weights，確認 InvestorConference/MOPS/IR
+    最新材料與 Markdown 轉檔完整，從季度 MD evidence 抽取公司 segment weight 候選值，並在更新 tw_company_segment_weights.csv
+    前產出資料解讀 QA。
+  category: financial-strategy
+  maintainer: wenchiehlee
+  source: biztrends.TW
+  updated_at: '2026-07-19'
+  revised_at: '2026-07-19'
