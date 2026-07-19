@@ -32,7 +32,7 @@ biztrends.TW/scripts/generate_quarterly_predict.py
 季度三線提取：Revenue / Expense / Profit
     Expense = Revenue − Operating Profit         ← 會計恆等式
     ↓
-產業週期權重載入 (company_major_cycle_weights.csv)
+產業週期權重載入 (company_cycle_major_weights.csv)
     支援動態歷史權重插值 (Solution A: True-of-Source)
     ↓
 逐段拆解：segment_revenue[c] = total_revenue × w_c(t)
@@ -180,7 +180,7 @@ python scripts/generate_quarterly_predict.py
 | 檔案 | 內容 |
 |:---|:---|
 | `Python-Actions.GoodInfo.Analyzer/raw_performance1.csv` | 季度損益原始數據（revenue / profit） |
-| `company_major_cycle_weights.csv` | 各公司主要產業週期權重（附期間） |
+| `company_cycle_major_weights.csv` | 各公司主要產業週期權重（附期間） |
 | `company_cycle_mapping.csv` | 公司代號 → canonical_cycle 映射 |
 | `company_platform_revenue.csv`（選用） | 台積電各平台比例（真實揭露數據） |
 

@@ -29,7 +29,7 @@ description: >-
 在 `biztrends.TW` 專案根目錄執行：
 
 ```bash
-python ../skills/common/skill-company-revenue-segment-weights/scripts/run_company_revenue_segment_weights.py --convert-missing-md
+python skills/skill-company-revenue-segment-weights/scripts/run_company_revenue_segment_weights.py --convert-missing-md
 ```
 
 此 runner 是目前的 TW implementation。它會：
@@ -46,7 +46,7 @@ python ../skills/common/skill-company-revenue-segment-weights/scripts/run_compan
    - `output/company_segment_weight_candidates_taiwan.csv`：legacy flat evidence queue，保留供快速 review。
    - `output/company_segment_weights_qa_taiwan.md`：列出完整公司 universe 與 focus universe 的 MD coverage、coverage gaps、source-period staleness、以及每家公司有哪些季度有候選 evidence。
 9. 研究員依 Markdown evidence 審核季度候選值後，才可決定是否更新 latest active snapshot `data/company_segment_weights.csv`，或建立正式歷史檔 `data/company_segment_weights_quarterly.csv`。
-10. 更新正式 CSV 後必須執行 `python ../skills/common/skill-company-cycle-index/scripts/run_company_cycle_index.py`，確認 segment weights 可正確映射至 cycle index。
+10. 更新正式 CSV 後必須執行 `python skills/skill-company-cycle-index/scripts/run_company_cycle_index.py`，確認 segment weights 可正確映射至 cycle index。
 
 ## 資料解讀 QA
 
@@ -57,7 +57,7 @@ python ../skills/common/skill-company-revenue-segment-weights/scripts/run_compan
 - AI server / data server / PC 拆分依賴 investor conference、法說會、年報、MOPS 或公司 IR 揭露；若公司缺漏分項、口徑不同或只給合併分類，權重只能標示為加權研究推估。
 - 若 MD evidence 只出現 qualitative language（例如 AI demand strong）但沒有 segment percentage，不得推導精確權重。
 - `StockID_TWSE_TPEX.csv` 是完整公司 universe；`StockID_TWSE_TPEX_focus.csv` 是短名單 coverage view；不得只用現有 `company_segment_weights.csv` 的 18 家公司當全體清單。
-- 必須能看出同一家公司不同季度的 segment weight 變化；quarterly candidates 應揭露 previous period、previous weight、QoQ pctpt change 與 `source_md`。若某季度缺 MD 或缺百分比 evidence，需標示 coverage gap，不得沿用前季假裝該季已揭露。
+- 必須能看出同一家公司不同季度的 segment weight 變化；quarterly candidates 應揭露 previous period、previous weight、QoQ pctpt change 與 `source_md`。若某季度缺 MD 或缺百分比 evidence，需標示 coverage gap，不得沿用前季假裝該季已揭露。若正式 `data/company_segment_weights.csv` 只保留 single snapshot，後續 cycle intensity 只能是 exposure proxy，不能視為完整 product-mix adjusted YoY。
 - 若 latest active snapshot 的 source period 比相鄰 InvestorConference 最新季度落後，需標示 stale candidate 或 explain why official source has not updated.
 - 若 segment weights 加總不是 100%，不得更新正式 CSV。
 - 若公司只有部分 segment 可得，剩餘比例必須有明確 `Others` / `Other Products` / `Unallocated` evidence 或保守註記。
@@ -73,7 +73,7 @@ market,stock_code,company_name,segment_name,weight_pct,source_type,source_period
 更新時：
 
 - `source_type` 優先使用 `official_ir`、`official_annual_report`、`official_monthly_sales`、`mops_financial_report`；二級來源只能用於 cross-check，不可單獨覆蓋官方分項。
-- `source_period` 必須是具體季度或年度，例如 `2026-Q1`、`2025-Q4`、`2025-FY`。
+- `source_period` 必須是具體季度、年度或月度，例如 `2026-Q1`、`2025-Q4`、`2025-FY`、`2025-11`；同一家公司可保留多個 `source_period` 的正式 rows，讓 cycle-index skill 能按月營收所屬期間選用當季或最近過去權重。
 - `confidence` 必須反映證據品質：官方清楚給百分比為 `high`；需要從表格營收自行計算為 `medium`；只有低解析 OCR 或合併口徑為 `low`。
 - `note` 必須說明來源與計算方式，例如「公司 2026 Q1 法說 product mix；AI/data center exposure proxy，非純 AI server」。
 - `process_timestamp` 使用執行當下 CST。
@@ -93,7 +93,7 @@ market,stock_code,company_name,segment_name,weight_pct,source_type,source_period
 ## Skill 邊界
 
 - 本 skill 產生 TW segment evidence/input 層：`output/company_segment_weights_quarterly_candidates_taiwan.csv`、`output/company_segment_weight_candidates_taiwan.csv`、`output/company_segment_weights_qa_taiwan.md`，並在研究員 review 後維護 `data/company_segment_weights.csv` 的 Taiwan rows。
-- 本 skill 不產生 cycle model/output 層，不直接產生 `data/company_cycle_mapping.csv`、`data/company_major_cycle_weights.csv`、`data/company_cycle_intensity_taiwan.csv`、`data/company_cycle_intensity_by_symbol_taiwan.csv` 或 `output/company_cycle_index_taiwan.png`。
+- 本 skill 不產生 cycle model/output 層，不直接產生 `output/company_cycle_mapping.csv`、`output/company_cycle_major_weights.csv`、`output/company_cycle_intensity_taiwan.csv`、`output/company_cycle_intensity_by_symbol_taiwan.csv` 或 `output/company_cycle_index_taiwan.png`。
 - 更新正式 segment weights 後，必須執行 `skill-company-cycle-index`，由 cycle-index skill 套用權重並產生 mapping/audit/index/PNG。
 
 - United_States rows 則由 `scripts/build_company_cycle_index_united_states.py` 以 ConceptStocks quarterly segment revenue 計算最新季度 mix 後寫入 `data/company_segment_weights.csv`，source 欄位必須可回溯到原始 segment revenue 或 TSM platform fallback。
