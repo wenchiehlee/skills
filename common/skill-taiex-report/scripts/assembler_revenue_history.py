@@ -38,7 +38,7 @@ DATA_DIR = os.path.join(ROOT, "data")
 SEG_CSV = os.path.join(DATA_DIR, "ConceptStocks", "raw_conceptstock_company_quarterly_segments.csv")
 INC_CSV = os.path.join(DATA_DIR, "ConceptStocks", "raw_conceptstock_company_income.csv")
 TW_REV_CSV = os.path.join(DATA_DIR, "Python-Actions.GoodInfo.Analyzer", "raw_revenue.csv")
-TW_SEG_WEIGHTS_CSV = os.path.join(DATA_DIR, "tw_company_segment_weights.csv")
+TW_SEG_WEIGHTS_CSV = os.path.join(DATA_DIR, "company_segment_weights.csv")
 OUTPUT_DIR = os.path.join(ROOT, "output", "visuals")
 
 def get_history_data(symbol, target_period=None):

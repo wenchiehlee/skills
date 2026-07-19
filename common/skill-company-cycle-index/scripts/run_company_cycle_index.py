@@ -44,7 +44,7 @@ def latest_month_and_count(csv_path: Path, month_col: str) -> tuple[str, int]:
 
 
 def segment_weight_summary(root: Path) -> tuple[int, int, str]:
-    path = root / "data" / "tw_company_segment_weights.csv"
+    path = root / "data" / "company_segment_weights.csv"
     if not path.is_file():
         raise SystemExit(f"Segment weights file is required but missing: {path.relative_to(root)}")
     df = pd.read_csv(path)
@@ -106,8 +106,8 @@ def previous_month(month: str) -> str:
 
 
 def build_insights(root: Path, raw_latest: str, raw_count: int) -> str:
-    index_path = root / "data" / "tw_cycle_intensity_index.csv"
-    by_symbol_path = root / "data" / "tw_cycle_intensity_by_symbol.csv"
+    index_path = root / "data" / "company_cycle_intensity_taiwan.csv"
+    by_symbol_path = root / "data" / "company_cycle_intensity_by_symbol_taiwan.csv"
     df = pd.read_csv(index_path)
     by_symbol = pd.read_csv(by_symbol_path)
     df["month_dt"] = pd.to_datetime(df["month"], format="%Y/%m")
@@ -258,7 +258,7 @@ def build_insights(root: Path, raw_latest: str, raw_count: int) -> str:
     lines = [
         "### 台灣 Cycle Index 深度觀察",
         "",
-        f"資料新鮮度：GoodInfo Analyzer raw revenue 最新月份為 `{raw_latest}`，共 `{raw_count}` 筆；derived cycle CSV 最新月份為 `{latest_month}`。以下分析使用 `data/tw_cycle_intensity_index.csv` 的 `{plot_start}` ~ `{latest_month}` 近 60 個月 YoY 序列，並以 `data/tw_cycle_intensity_by_symbol.csv` 驗證最新月份貢獻結構。",
+        f"資料新鮮度：GoodInfo Analyzer raw revenue 最新月份為 `{raw_latest}`，共 `{raw_count}` 筆；derived cycle CSV 最新月份為 `{latest_month}`。以下分析使用 `data/company_cycle_intensity_taiwan.csv` 的 `{plot_start}` ~ `{latest_month}` 近 60 個月 YoY 序列，並以 `data/company_cycle_intensity_by_symbol_taiwan.csv` 驗證最新月份貢獻結構。",
         "",
         f"**策略主軸**：最新月份總 cycle revenue 約 `{fmt_num(latest_total)}` 億元，YoY 領先為 {compact_cycle_list(leadership)}，相對落後為 {compact_cycle_list(laggards)}。這代表目前台灣電子供應鏈的景氣主線仍偏向 AI infrastructure 與資料中心相關資本支出，而不是單純的終端消費電子復甦；但 `AI_Compute_Infra` 是依公司揭露資料與權重建立的 AI/data center exposure proxy，不代表成分公司只聚焦 AI server；AI server / data server / PC 的拆分需要用分項揭露覆蓋率檢查其穩定性。{regime}",
         "",
@@ -298,18 +298,18 @@ def update_readme(root: Path, raw_latest: str, raw_count: int) -> None:
     generated = f"產生時間：{timestamp}"
     content = replace_or_insert_section(
         content,
-        "<!-- tw_cycle_index_generated -->",
-        "<!-- /tw_cycle_index_generated -->",
+        "<!-- company_cycle_index_taiwan_generated -->",
+        "<!-- /company_cycle_index_taiwan_generated -->",
         generated,
         command_line,
     )
     insights = build_insights(root, raw_latest, raw_count)
     content = replace_or_insert_section(
         content,
-        "<!-- tw_cycle_index_insights_start -->",
-        "<!-- tw_cycle_index_insights_end -->",
+        "<!-- company_cycle_index_taiwan_insights_start -->",
+        "<!-- company_cycle_index_taiwan_insights_end -->",
         insights,
-        "<!-- /tw_cycle_index_generated -->",
+        "<!-- /company_cycle_index_taiwan_generated -->",
     )
     readme_path.write_text(content, encoding="utf-8", newline="")
     print(f"README.md TW cycle insights updated -> {timestamp}")
@@ -333,7 +333,7 @@ def main() -> int:
     suffix = f", latest source period: {segment_latest_period}" if segment_latest_period else ""
     print(
         "Segment weights: "
-        f"data/tw_company_segment_weights.csv "
+        f"data/company_segment_weights.csv "
         f"({segment_company_count} companies, {segment_row_count} rows{suffix})"
     )
 
@@ -347,8 +347,8 @@ def main() -> int:
     )
 
     derived_files = [
-        root / "data" / "tw_cycle_intensity_index.csv",
-        root / "data" / "tw_cycle_intensity_by_symbol.csv",
+        root / "data" / "company_cycle_intensity_taiwan.csv",
+        root / "data" / "company_cycle_intensity_by_symbol_taiwan.csv",
     ]
     for path in derived_files:
         latest, count = latest_month_and_count(path, "month")
@@ -362,7 +362,7 @@ def main() -> int:
     env["CI"] = "1"
     run(["python3", "scripts/plot_tw_cycle_index.py"], root, env=env)
 
-    png_path = root / "output" / "tw_cycle_index.png"
+    png_path = root / "output" / "company_cycle_index_taiwan.png"
     if not png_path.is_file():
         raise SystemExit(f"PNG not generated: {png_path}")
     with Image.open(png_path) as im:

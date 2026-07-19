@@ -462,9 +462,9 @@ def get_historical_and_future_weights(stock_code, quarters_list, future_quarters
         except Exception as e:
             print(f"Error loading major weights period: {e}")
             
-    if str(stock_code) == "2330" and os.path.exists(os.path.join(ROOT, "data", "tsm_platform_revenue.csv")):
+    if str(stock_code) == "2330" and os.path.exists(os.path.join(ROOT, "data", "company_platform_revenue.csv")):
         try:
-            df_tsm = pd.read_csv(os.path.join(ROOT, "data", "tsm_platform_revenue.csv"), encoding="utf-8")
+            df_tsm = pd.read_csv(os.path.join(ROOT, "data", "company_platform_revenue.csv"), encoding="utf-8")
             for _, row in df_tsm.iterrows():
                 p = str(row["period"]).strip()
                 m = re.match(r"(\d{4})-Q(\d)", p)

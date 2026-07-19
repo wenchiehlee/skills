@@ -61,7 +61,7 @@ def find_project_root() -> Path:
         candidates.append(Path(env_root))
     candidates.extend([Path.cwd(), *Path.cwd().parents])
     for candidate in candidates:
-        if (candidate / "data" / "tw_company_segment_weights.csv").is_file():
+        if (candidate / "data" / "company_segment_weights.csv").is_file():
             return candidate.resolve()
     raise SystemExit("Cannot find biztrends.TW root. Run from repo root or set BIZTRENDS_TW_ROOT.")
 
@@ -836,7 +836,7 @@ def write_report(path: Path, *, root: Path, ic_root: Path, universe_df: pd.DataF
                 f"`{row['previous_weight_pct_candidate']}` | `{row['qoq_change_pctpt']}` |"
             )
         lines.append("")
-    lines += ["Legacy candidate CSV: `output/tw_segment_weight_candidates.csv`", ""]
+    lines += ["Legacy candidate CSV: `output/company_segment_weight_candidates_taiwan.csv`", ""]
     lines += [
         "## Interpretation Guardrails",
         "",
@@ -862,7 +862,7 @@ def main() -> int:
 
     root = find_project_root()
     ic_root = investor_conference_root(root)
-    weights_path = root / "data" / "tw_company_segment_weights.csv"
+    weights_path = root / "data" / "company_segment_weights.csv"
     universe_df, universe_path = load_company_universe(root)
     focus_df, focus_path = load_focus_universe(root)
     df = load_weights(weights_path)
@@ -876,9 +876,9 @@ def main() -> int:
     md_records, md_issues = scan_md_sources(ic_root, stocks, args.convert_missing_md)
     candidates = extract_candidates(md_records)
 
-    out_csv = root / "output" / "tw_segment_weight_candidates.csv"
-    out_quarterly_csv = root / "output" / "tw_segment_weights_quarterly_candidates.csv"
-    out_md = root / "output" / "tw_segment_weights_qa.md"
+    out_csv = root / "output" / "company_segment_weight_candidates_taiwan.csv"
+    out_quarterly_csv = root / "output" / "company_segment_weights_quarterly_candidates_taiwan.csv"
+    out_md = root / "output" / "company_segment_weights_qa_taiwan.md"
     write_candidates(out_csv, candidates)
     quarterly_rows = write_quarterly_history(out_quarterly_csv, candidates, universe_df, df)
     write_report(out_md, root=root, ic_root=ic_root, universe_df=universe_df, universe_path=universe_path, focus_df=focus_df, focus_path=focus_path, scan_stocks=stocks, df=df, health=health, weight_issues=weight_issues, md_records=md_records, md_issues=md_issues, candidates=candidates, quarterly_rows=quarterly_rows, quarterly_history_path=out_quarterly_csv)

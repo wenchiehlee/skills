@@ -1,6 +1,6 @@
 {
   "name": "skill-company-cycle-index",
-  "description": "套用已審核的 company revenue segment weights 到 canonical cycle model；目前支援 biztrends.TW 台灣 cycle index，確認最新 GoodInfo 月營收與 segment weights 已進入 derived CSV，用最新資料生成 tw_cycle_index.png 並產出跨台股與美股深度洞察。",
+  "description": "套用已審核的 company revenue segment weights 到 canonical cycle model；目前支援 biztrends.TW 台灣 cycle index，確認最新 GoodInfo 月營收與 segment weights 已進入 derived CSV，用最新資料生成 company_cycle_index_taiwan.png 並產出跨台股與美股深度洞察。",
   "category": "financial-strategy",
   "version": "1.2.0",
   "maintainer": "wenchiehlee",

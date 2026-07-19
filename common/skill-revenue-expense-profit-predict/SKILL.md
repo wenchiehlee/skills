@@ -182,7 +182,7 @@ python scripts/generate_quarterly_predict.py
 | `Python-Actions.GoodInfo.Analyzer/raw_performance1.csv` | 季度損益原始數據（revenue / profit） |
 | `company_major_cycle_weights.csv` | 各公司主要產業週期權重（附期間） |
 | `company_cycle_mapping.csv` | 公司代號 → canonical_cycle 映射 |
-| `tsm_platform_revenue.csv`（選用） | 台積電各平台比例（真實揭露數據） |
+| `company_platform_revenue.csv`（選用） | 台積電各平台比例（真實揭露數據） |
 
 ---
 

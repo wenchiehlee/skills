@@ -49,12 +49,12 @@ except ImportError:
 DATA_DIR = os.path.join(ROOT, "data")
 RAW_TW_PERF = os.path.join(DATA_DIR, "Python-Actions.GoodInfo.Analyzer", "raw_performance1.csv")
 RAW_FACTSET = os.path.join(DATA_DIR, "GoogleSearch.Factset", "raw_factset_detailed_report.csv")
-RAW_TW_SEGMENTS = os.path.join(DATA_DIR, "tw_company_segment_weights.csv")
+RAW_TW_SEGMENTS = os.path.join(DATA_DIR, "company_segment_weights.csv")
 RAW_CAPEX = os.path.join(DATA_DIR, "raw_csp_capex_guidance.csv")
 RAW_US_INCOME = os.path.join(DATA_DIR, "ConceptStocks", "raw_conceptstock_company_income.csv")
 RAW_US_SEGMENTS = os.path.join(DATA_DIR, "ConceptStocks", "raw_conceptstock_company_quarterly_segments.csv")
 RAW_CYCLE_MAP = os.path.join(DATA_DIR, "company_cycle_mapping.csv")
-RAW_CYCLE_INDEX = os.path.join(DATA_DIR, "tw_cycle_intensity_index.csv")
+RAW_CYCLE_INDEX = os.path.join(DATA_DIR, "company_cycle_intensity_taiwan.csv")
 RAW_REVENUE_TW = os.path.join(DATA_DIR, "Python-Actions.GoodInfo.Analyzer", "raw_revenue.csv")
 RAW_EARNINGS_SUPP = os.path.join(DATA_DIR, "earnings_supplements.csv")
 EARNINGS_CSV = os.path.join(DATA_DIR, "raw_event_upcoming_earnings.csv")
@@ -483,7 +483,7 @@ DATA_SOURCE_MAP = {
         "performance": {"file": "data/Python-Actions.GoodInfo.Analyzer/raw_performance1.csv", "repo": "wenchiehlee-investment/Python-Actions.GoodInfo.Analyzer"},
         "revenue": {"file": "data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv", "repo": "wenchiehlee-investment/Python-Actions.GoodInfo.Analyzer"},
         "factset": {"file": "data/GoogleSearch.Factset/raw_factset_detailed_report.csv", "repo": "wenchiehlee-investment/GoogleSearch.Factset"},
-        "segments": {"file": "data/tw_company_segment_weights.csv", "repo": "wenchiehlee-investment/Python-Actions.GoodInfo.Analyzer"},
+        "segments": {"file": "data/company_segment_weights.csv", "repo": "wenchiehlee-investment/Python-Actions.GoodInfo.Analyzer"},
     },
     "US": {
         "income": {"file": "data/ConceptStocks/raw_conceptstock_company_income.csv", "repo": "wenchiehlee-investment/ConceptStocks"},
