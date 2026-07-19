@@ -865,7 +865,11 @@ def main() -> int:
     weights_path = root / "data" / "company_segment_weights.csv"
     universe_df, universe_path = load_company_universe(root)
     focus_df, focus_path = load_focus_universe(root)
-    df = load_weights(weights_path)
+    df_all = load_weights(weights_path)
+    if "market" in df_all.columns:
+        df = df_all[df_all["market"].fillna("Taiwan").eq("Taiwan")].copy()
+    else:
+        df = df_all.copy()
     if args.stock:
         stocks = set(args.stock)
     else:

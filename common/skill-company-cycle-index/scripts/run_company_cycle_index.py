@@ -53,8 +53,10 @@ def segment_weight_summary(root: Path) -> tuple[int, int, str]:
     if missing:
         raise SystemExit(f"{path.relative_to(root)} missing required columns: {', '.join(missing)}")
     valid = df.dropna(subset=["stock_code", "segment_name", "weight_pct"]).copy()
+    if "market" in valid.columns:
+        valid = valid[valid["market"].fillna("Taiwan").eq("Taiwan")].copy()
     if valid.empty:
-        raise SystemExit(f"{path.relative_to(root)} has no usable segment weight rows")
+        raise SystemExit(f"{path.relative_to(root)} has no usable Taiwan segment weight rows")
     source_period = ""
     if "source_period" in valid.columns:
         source_periods = valid["source_period"].dropna().astype(str)
@@ -332,7 +334,7 @@ def main() -> int:
     segment_company_count, segment_row_count, segment_latest_period = segment_weight_summary(root)
     suffix = f", latest source period: {segment_latest_period}" if segment_latest_period else ""
     print(
-        "Segment weights: "
+        "Taiwan segment weights: "
         f"data/company_segment_weights.csv "
         f"({segment_company_count} companies, {segment_row_count} rows{suffix})"
     )

@@ -12,11 +12,11 @@ description: >-
 
 ## 角色定位
 
-你是一位專業的跨台股與美股研究員，負責維護 company revenue segment weight evidence、quarterly candidate history、QA report 與 latest active snapshot。重點不是快速填權重，而是透過最新公司材料、Markdown evidence 與資料解讀 QA，讓使用者看見每家公司 segment mix 的季度變化，並降低 segment 權重缺漏、分類口徑誤讀與 AI/data center exposure proxy 被錯當成純 AI server revenue 的風險。目前實作路徑支援 TW，正式 active snapshot 仍是 `data/company_segment_weights.csv`。
+你是一位專業的跨台股與美股研究員，負責維護 company revenue segment weight evidence、quarterly candidate history、QA report 與 latest active snapshot。重點不是快速填權重，而是透過最新公司材料、Markdown evidence 與資料解讀 QA，讓使用者看見每家公司 segment mix 的季度變化，並降低 segment 權重缺漏、分類口徑誤讀與 AI/data center exposure proxy 被錯當成純 AI server revenue 的風險。正式 active snapshot 是跨市場 `data/company_segment_weights.csv`；目前本 skill 的 evidence/QA runner 支援 TW，US active rows 由 `scripts/build_company_cycle_index_united_states.py` 根據 ConceptStocks quarterly segment revenue 轉換。
 
 ## 適用場景
 
-使用者要求更新、重建、稽核或解讀 company revenue segment weights 時使用本技能。目前支援 TW 產出：
+使用者要求更新、重建、稽核或解讀 company revenue segment weights 時使用本技能。目前本 runner 支援 TW evidence 產出；正式 CSV 可同時包含 Taiwan 與 United_States rows：
 
 - `data/company_segment_weights.csv`
 - `output/company_segment_weights_quarterly_candidates_taiwan.csv`
@@ -36,7 +36,7 @@ python ../skills/common/skill-company-revenue-segment-weights/scripts/run_compan
 
 1. 找到 `biztrends.TW` 根目錄與相鄰的 `../InvestorConference` repo。
 2. 讀取 `StockID_TWSE_TPEX.csv` 作為完整台股公司清單，並讀取 `StockID_TWSE_TPEX_focus.csv` 作為短名單 coverage view；若根目錄檔案不存在，才 fallback 到 `data/Python-Actions.GoodInfo/`。
-3. 讀取 `data/company_segment_weights.csv`，檢查欄位、active 權重加總、source period、confidence、process timestamp，並分別回報相對於完整公司清單與 focus 短名單的 segment-weight coverage。
+3. 讀取 `data/company_segment_weights.csv`，但 TW QA 僅檢查 `market=Taiwan` rows 的欄位、active 權重加總、source period、confidence、process timestamp，並分別回報相對於完整公司清單與 focus 短名單的 segment-weight coverage。
 4. 讀取 `data/InvestorConference/investor_conference_health_summary.csv`，確認 InvestorConference ingestion 與 MD 完整率。
 5. 掃描 `../InvestorConference/data/{stock}/` 下的 PDF/MD；若加上 `--convert-missing-md`，會用 PyMuPDF 將缺 MD 的 PDF 轉成同名 `.md`。
 6. 確認 MD 不應缺漏、過短或含 `TODO:OCR`；若資料品質不足，必須在 QA 報告標示，不可靜默更新權重。
@@ -67,7 +67,7 @@ python ../skills/common/skill-company-revenue-segment-weights/scripts/run_compan
 `data/company_segment_weights.csv` 欄位必須維持：
 
 ```text
-stock_code,company_name,segment_name,weight_pct,source_type,source_period,Source (link),confidence,note,status,process_timestamp
+market,stock_code,company_name,segment_name,weight_pct,source_type,source_period,Source (link),confidence,note,status,process_timestamp
 ```
 
 更新時：
@@ -83,7 +83,7 @@ stock_code,company_name,segment_name,weight_pct,source_type,source_period,Source
 完成後回報：
 
 - `StockID_TWSE_TPEX.csv` 與 `StockID_TWSE_TPEX_focus.csv` 的公司數、segment-weight coverage、InvestorConference MD coverage 與 missing lists。
-- `company_segment_weights.csv` 的 row count、stock count、最新/最舊 source_period。
+- `company_segment_weights.csv` 的 Taiwan row count、stock count、最新/最舊 source_period；若同時更新 US rows，也回報 United_States row count、stock count 與 source periods。
 - InvestorConference health summary 的 process timestamp 與 MD complete rate。
 - 缺 MD、短 MD、TODO:OCR 或資料品質問題數量。
 - 季度 segment weight candidate history CSV、legacy candidate CSV 與 QA report 路徑；CSV 必須包含 `source_md` backtrace column，QA report 要列出每家公司有哪些季度有 evidence，並摘要最大的候選 QoQ 權重變化。
@@ -92,6 +92,8 @@ stock_code,company_name,segment_name,weight_pct,source_type,source_period,Source
 
 ## Skill 邊界
 
-- 本 skill 產生 segment evidence/input 層：`output/company_segment_weights_quarterly_candidates_taiwan.csv`、`output/company_segment_weight_candidates_taiwan.csv`、`output/company_segment_weights_qa_taiwan.md`，並在研究員 review 後維護 `data/company_segment_weights.csv`。
+- 本 skill 產生 TW segment evidence/input 層：`output/company_segment_weights_quarterly_candidates_taiwan.csv`、`output/company_segment_weight_candidates_taiwan.csv`、`output/company_segment_weights_qa_taiwan.md`，並在研究員 review 後維護 `data/company_segment_weights.csv` 的 Taiwan rows。
 - 本 skill 不產生 cycle model/output 層，不直接產生 `data/company_cycle_mapping.csv`、`data/company_major_cycle_weights.csv`、`data/company_cycle_intensity_taiwan.csv`、`data/company_cycle_intensity_by_symbol_taiwan.csv` 或 `output/company_cycle_index_taiwan.png`。
 - 更新正式 segment weights 後，必須執行 `skill-company-cycle-index`，由 cycle-index skill 套用權重並產生 mapping/audit/index/PNG。
+
+- United_States rows 則由 `scripts/build_company_cycle_index_united_states.py` 以 ConceptStocks quarterly segment revenue 計算最新季度 mix 後寫入 `data/company_segment_weights.csv`，source 欄位必須可回溯到原始 segment revenue 或 TSM platform fallback。

@@ -36,7 +36,7 @@ python ../skills/common/skill-company-cycle-index/scripts/run_company_cycle_inde
 
 1. 確認可用的 GoodInfo Analyzer raw revenue 資料來源。
 2. 讀取 raw revenue 最新月份與申報筆數。
-3. 檢查 `data/company_segment_weights.csv` 存在、欄位完整且有可用 rows，並回報使用的 weighted company 數、segment row 數與最新 `source_period`。
+3. 檢查 `data/company_segment_weights.csv` 存在、欄位完整且有可用 `market=Taiwan` rows，並回報台灣 weighted company 數、segment row 數與最新 `source_period`。
 4. 執行 `python3 scripts/build_company_cycle_index_taiwan.py`，重建 cycle index CSV；builder 會透過 `load_segment_weights()` 讀取 `data/company_segment_weights.csv`，再用 `data/segment_to_cycle_mapping.csv` 將公司分項營收權重分配到 canonical cycles。
 5. 確認 `company_cycle_mapping.csv` 的 `segment_weight_override=Y` 與 `data/company_major_cycle_weights.csv` 有輸出，確保 segment weights 真的進入 cycle allocation，而不是只使用單一公司 cycle 分類。
 6. 確認 `company_cycle_intensity_taiwan.csv` 與 `company_cycle_intensity_by_symbol_taiwan.csv` 的最新月份。
@@ -82,7 +82,7 @@ python3 -c "import pandas as pd; [print(f, pd.read_csv(f)['month'].max()) for f 
 完成後回報：
 
 - raw revenue 最新月份與申報筆數
-- `data/company_segment_weights.csv` weighted company 數、segment row 數與最新 `source_period`
+- `data/company_segment_weights.csv` 中 Taiwan weighted company 數、segment row 數與最新 `source_period`
 - `company_cycle_mapping.csv` 中 `segment_weight_override=Y` 公司數，以及 `data/company_major_cycle_weights.csv` row 數
 - 兩個 derived CSV 的最新月份
 - PNG 路徑與尺寸
