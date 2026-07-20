@@ -79,7 +79,8 @@ US segment candidate HTML (`output/company_segment_weights_quarterly_candidates_
 
 - Quarter 欄顯示 fiscal period，不使用 calendar quarter。
 - 同一 `symbol / fiscal_year / quarter / segment_name` 以 repo 內 `data/ConceptStocks` row 優先，避免 sibling repo 舊 row 與本 repo 新 row double count。
-- ORCL 的 broad `Cloud` / `Cloud services and license support` 與 `Cloud Applications` / `Oracle Cloud Infrastructure` 不可在同一 period 同時計入 revenue mix；若 broad row 存在，子拆分只作回溯 evidence，不納入 bar 或 total segment revenue。
+- ORCL 必須先做跨期 segment taxonomy 正規化：`Cloud services and license support` 併入 `Cloud`，`Cloud license and on-premise license` 併入 `Software`，讓 2025 前後的 segment mix 可以用同一組名稱比較。
+- ORCL 的 broad `Cloud` 與 `Cloud Applications` / `Oracle Cloud Infrastructure` 不可在同一 period 同時計入 revenue mix；若 broad row 存在，子拆分只作回溯 evidence，不納入 bar 或 total segment revenue。
 - 若某公司歷史上是多 segment disclosure，但某一 fiscal period 只剩單一 segment row，必須視為 incomplete extraction，不能把該單一 segment 正規化成 100% mix；例如 HPE 2026-Q1 / 2026-Q2 只有 `Networking` row 時，不應輸出成完整 company segment mix。
 - `Evidence rows / source backtrace` 必須保留 source CSV，方便回查是哪一份 ConceptStocks CSV。
 

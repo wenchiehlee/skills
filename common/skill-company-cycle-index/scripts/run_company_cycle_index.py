@@ -14,6 +14,12 @@ import pandas as pd
 from PIL import Image
 
 
+ORCL_SEGMENT_ALIASES = {
+    "Cloud services and license support": "Cloud",
+    "Cloud license and on-premise license": "Software",
+}
+
+
 def find_project_root() -> Path:
     env_root = os.environ.get("BIZTRENDS_TW_ROOT")
     candidates = []
@@ -111,6 +117,8 @@ def conceptstocks_segment_summary(root: Path) -> tuple[str, int, str]:
     data = data.sort_values(["source_preference", "source_csv"]).drop_duplicates(
         subset=["symbol", "fiscal_year", "quarter", "segment_name"], keep="first"
     )
+    orcl_mask = data["symbol"].astype(str).eq("ORCL")
+    data.loc[orcl_mask, "segment_name"] = data.loc[orcl_mask, "segment_name"].astype(str).replace(ORCL_SEGMENT_ALIASES)
 
     subcomponent_mask = data["segment_name"].astype(str).isin(["Cloud Applications", "Oracle Cloud Infrastructure"])
     broad_cloud = data["segment_name"].astype(str).isin(["Cloud", "Cloud services and license support"])
