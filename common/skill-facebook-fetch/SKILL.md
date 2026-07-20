@@ -69,21 +69,34 @@ payload["page"]["title"] or urlsplit(url).path.strip("/") or "Facebook Page"`）
 當該次抓取因登入態 HTML 結構不同等原因，未能解析出頁面標題（`page.title` 為 `null`）時，
 會退回使用「URL path slug」當資料夾名。若 `data/fetch_urls.txt` 該列沒有指定 `page_name`
 （Tab 分隔的第二欄），且既有資料夾原本是用中文頁面標題建立的，就會產生**新的重複資料夾**，
-新貼文因此「沒有跟原本的 group 分在一起」（例如 `yutinghaosfinance` 與既有的
-`游庭皓的財經皓角` 分成兩個資料夾）。
+新貼文因此「沒有跟原本的 group 分在一起」。
+
+實測（2026-07-20 那次 cookie 更新後手動觸發的 daily_fetch）顯示這**不是零星個案，而是系統性**：
+當次執行對幾乎所有英文 slug 網址的標題解析都失敗（`page.title: null`），導致
+`FinGuider`、`ForexStrategist`、`GreenHornFans`、`MarketingDataScienceTMR`、`stocksardine`、
+`raikk6`、`dextermchang`、`intleconobserve`、`yutinghaosfinance` 全部另外產生了 slug 資料夾，
+和既有的中文標題資料夾（`FinGuider 美股資訊網`、`李其展的外匯交易致勝兵法`、`綠角財經筆記`、
+`行銷資料科學`、`股魚`、`美股探路客`、`大會計師 張明輝`、`IEObserve 國際經濟觀察`、
+`游庭皓的財經皓角`）並存。
 
 更嚴重的情況：`data/fetch_urls.txt` 中多筆 `profile.php?id=...` 網址若都沒有指定
 `page_name`，一旦標題解析失敗，會全部退回相同的 `profile.php`（URL slug 不含 query
 string），導致**不同 Facebook 個人檔案的貼文被混進同一個資料夾**。
 
-**處置（暫時）：**
-- 為 `data/fetch_urls.txt` 中每一列都補上明確的 `page_name`（Tab 分隔第二欄），
-  尤其是所有 `profile.php?id=...` 的列，避免退回邏輯產生碰撞。
-- 若已產生重複/混雜資料夾，需人工比對 `latest_fetch_summary.json` 的 `requested_url`
-  欄位確認實際來源，再合併或搬移貼文檔案。
-- 根本修復方向（尚未實作）：`fetch_facebook_posts.py` 的 fallback 應改用「先掃描既有
+**判斷是否發生碰撞：** 對可疑的 slug 資料夾執行
+`grep -l "requested_url.*<url>" data/*/latest_fetch_summary.json`，
+若同一個 `requested_url` 命中兩個以上的資料夾，就是碰撞，需人工合併。
+
+**處置（已對 2026-07-20 這次全部合併完成）：**
+- `data/fetch_urls.txt` 現在每一列都已補上正確的正式 `page_name`（不是 slug），
+  這樣即使未來標題解析再次失敗，也會直接寫回正確的資料夾，不會再產生新的碰撞。
+- 合併既有重複/混雜資料夾的做法：比對 `latest_fetch_summary.json` 的 `requested_url`
+  找出真正的來源資料夾，用 `post_id` 去重後把 slug 資料夾的 `.md` 搬進正式資料夾，
+  重建 `index.md`，刪除清空後的 slug 資料夾，最後跑 `python scripts/rebuild_readme.py`。
+- 根本修復方向（尚未實作於程式碼）：`fetch_facebook_posts.py` 的 fallback 應改用「先掃描既有
   `data/*/latest_fetch_summary.json` 找出 `requested_url` 相符的資料夾」，找不到才退回
   slug；且 slug fallback 應納入 query string（如 `id=` 值）以避免多個 `profile.php` 碰撞。
+  在此修復落地前，`data/fetch_urls.txt` 每列都要有正確的 `page_name` 作為主要防線。
 
 ### 4. 「Trigger sync to biztrends.TW」步驟 403 失敗（已修復）
 該步驟使用 `gh workflow run sync-to-biztrends.yml` 觸發另一個 workflow，
