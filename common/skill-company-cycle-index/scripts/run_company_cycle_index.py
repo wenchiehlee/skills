@@ -44,7 +44,7 @@ def latest_month_and_count(csv_path: Path, month_col: str) -> tuple[str, int]:
     return latest, int((months == latest).sum())
 
 
-def segment_weight_summary(root: Path) -> tuple[int, int, str]:
+def segment_weight_summary(root: Path, market: str) -> tuple[int, int, str]:
     path = root / "data" / "company_segment_weights.csv"
     if not path.is_file():
         raise SystemExit(f"Segment weights file is required but missing: {path.relative_to(root)}")
@@ -55,15 +55,77 @@ def segment_weight_summary(root: Path) -> tuple[int, int, str]:
         raise SystemExit(f"{path.relative_to(root)} missing required columns: {', '.join(missing)}")
     valid = df.dropna(subset=["stock_code", "segment_name", "weight_pct"]).copy()
     if "market" in valid.columns:
-        valid = valid[valid["market"].fillna("Taiwan").eq("Taiwan")].copy()
+        valid = valid[valid["market"].fillna("Taiwan").eq(market)].copy()
     if valid.empty:
-        raise SystemExit(f"{path.relative_to(root)} has no usable Taiwan segment weight rows")
+        raise SystemExit(f"{path.relative_to(root)} has no usable {market} segment weight rows")
     source_period = ""
     if "source_period" in valid.columns:
         source_periods = valid["source_period"].dropna().astype(str)
         if not source_periods.empty:
             source_period = source_periods.max()
     return int(valid["stock_code"].astype(str).nunique()), int(len(valid)), source_period
+
+
+def latest_quarter_and_count(csv_path: Path) -> tuple[str, int]:
+    df = pd.read_csv(csv_path)
+    required = {"period", "cal_year", "cal_quarter"}
+    missing = sorted(required - set(df.columns))
+    if missing:
+        raise SystemExit(f"{csv_path} missing required columns: {', '.join(missing)}")
+    ordered = df.assign(
+        _year=pd.to_numeric(df["cal_year"], errors="coerce"),
+        _quarter=pd.to_numeric(df["cal_quarter"].astype(str).str.extract(r"Q([1-4])")[0], errors="coerce"),
+    ).dropna(subset=["_year", "_quarter"])
+    if ordered.empty:
+        raise SystemExit(f"{csv_path} has no usable quarter rows")
+    latest_row = ordered.sort_values(["_year", "_quarter"]).iloc[-1]
+    latest = str(latest_row["period"])
+    return latest, int((df["period"].astype(str) == latest).sum())
+
+
+def conceptstocks_segment_summary(root: Path) -> tuple[str, int, str]:
+    local = root / "data" / "ConceptStocks" / "raw_conceptstock_company_quarterly_segments.csv"
+    sibling = root.parent / "ConceptStocks" / "raw_conceptstock_company_quarterly_segments.csv"
+    paths = [path for path in (sibling, local) if path.is_file()]
+    if not paths:
+        raise SystemExit(f"Cannot find US segment source at {sibling} or {local}")
+    frames = []
+    sources: list[str] = []
+    for path in paths:
+        df = pd.read_csv(path)
+        df["source_preference"] = 0 if path == local else 1
+        try:
+            df["source_csv"] = str(path.resolve().relative_to(root))
+        except ValueError:
+            df["source_csv"] = str(path.resolve())
+        sources.append(str(df["source_csv"].iloc[0]) if not df.empty else str(path))
+        frames.append(df)
+    if not frames:
+        return "", 0, ", ".join(sources)
+    data = pd.concat(frames, ignore_index=True)
+    required = {"symbol", "fiscal_year", "quarter", "segment_name"}
+    missing = sorted(required - set(data.columns))
+    if missing:
+        raise SystemExit(f"US segment source missing required columns: {', '.join(missing)}")
+    data["source_period"] = data["fiscal_year"].astype(str) + "-" + data["quarter"].astype(str).str.upper()
+    data = data.sort_values(["source_preference", "source_csv"]).drop_duplicates(
+        subset=["symbol", "fiscal_year", "quarter", "segment_name"], keep="first"
+    )
+
+    subcomponent_mask = data["segment_name"].astype(str).isin(["Cloud Applications", "Oracle Cloud Infrastructure"])
+    broad_cloud = data["segment_name"].astype(str).isin(["Cloud", "Cloud services and license support"])
+    broad_keys = set(map(tuple, data[data["symbol"].eq("ORCL") & broad_cloud][["symbol", "source_period"]].to_records(index=False)))
+    if broad_keys:
+        row_keys = list(map(tuple, data[["symbol", "source_period"]].to_records(index=False)))
+        data = data[~(data["symbol"].eq("ORCL") & subcomponent_mask & pd.Series(row_keys, index=data.index).isin(broad_keys))].copy()
+
+    def sort_key(period: str) -> tuple[int, int]:
+        year, quarter = str(period).split("-Q", 1)
+        return int(year), int(quarter)
+
+    periods = data["source_period"].dropna().astype(str)
+    latest = max(periods, key=sort_key) if not periods.empty else ""
+    return latest, int(len(data)), ", ".join(dict.fromkeys(sources))
 
 
 def built_segment_weight_summary(root: Path) -> tuple[int, int]:
@@ -161,7 +223,7 @@ def build_insights(root: Path, raw_latest: str, raw_count: int) -> str:
     latest_with_prior["mom_yoy_change"] = latest_with_prior["yoy_pct"] - latest_with_prior["prior_yoy_pct"]
     accelerating = latest_with_prior.dropna(subset=["mom_yoy_change"]).sort_values("mom_yoy_change", ascending=False).head(3)
 
-    ai_row = latest[latest["canonical_cycle"] == "AI_Compute_Infra"]
+    ai_row = latest[latest["canonical_cycle"] == "AI_Server_Rack"]
     memory_row = latest[latest["canonical_cycle"] == "Memory"]
     network_row = latest[latest["canonical_cycle"] == "Network_Infra"]
     pc_row = latest[latest["canonical_cycle"] == "PC_Consumer"]
@@ -218,7 +280,7 @@ def build_insights(root: Path, raw_latest: str, raw_count: int) -> str:
 
     def interpretation_qa_summary() -> str:
         return (
-            "本次解讀已先把 `AI_Compute_Infra` 視為加權 exposure proxy，而不是純 AI server 營收；"
+            "本次解讀已先把 `AI_Server_Rack` 視為加權 exposure proxy，而不是純 AI server 營收；"
             + segment_snapshot_note
             + " 同時檢查 YoY 極端值、YoY 月變化、Top contributors 集中度、`Other` 占比與 `yoy_data_quality`，"
             "用來降低因公司分項揭露缺漏、混合營收、single snapshot 或分類權重假設造成的資料誤讀。"
@@ -261,16 +323,16 @@ def build_insights(root: Path, raw_latest: str, raw_count: int) -> str:
             notes.extend(quality_notes)
         if not notes:
             return "未偵測到明顯異常值；仍需逐月確認 raw revenue、cycle mapping 與 segment source period 是否有分類或申報口徑變動，並回查 AI server / data server / PC 拆分所依賴的 investor conference、法說會或年報揭露是否完整。"
-        return "；".join(notes) + "。這些訊號應先視為需要查證的研究提醒，優先回看原始月營收、季度 segment 權重、一次性出貨或低基期，而不是直接外推成長趨勢；`AI_Compute_Infra` 應視為 AI/data center exposure proxy，不代表成分公司只做 AI server；若只有 single snapshot 而缺季度權重，cycle intensity 可用於方向性觀察，但 product-mix adjusted YoY 必須打問號；AI server / data server / PC 拆分也需回查 investor conference、法說會或年報揭露，因部分公司可能缺漏分項、揭露口徑不同，或同時包含 PC、手機、消費與其他業務。"
+        return "；".join(notes) + "。這些訊號應先視為需要查證的研究提醒，優先回看原始月營收、季度 segment 權重、一次性出貨或低基期，而不是直接外推成長趨勢；`AI_Server_Rack` 應視為 AI/data center exposure proxy，不代表成分公司只做 AI server；若只有 single snapshot 而缺季度權重，cycle intensity 可用於方向性觀察，但 product-mix adjusted YoY 必須打問號；AI server / data server / PC 拆分也需回查 investor conference、法說會或年報揭露，因部分公司可能缺漏分項、揭露口徑不同，或同時包含 PC、手機、消費與其他業務。"
 
-    ai_text = cycle_value("AI_Compute_Infra")
+    ai_text = cycle_value("AI_Server_Rack")
     memory_text = cycle_value("Memory")
     network_text = cycle_value("Network_Infra")
     pc_text = cycle_value("PC_Consumer")
     smartphone_text = cycle_value("Smartphone")
     software_text = cycle_value("Software_SaaS")
 
-    ai_concentration = top3_share("AI_Compute_Infra")
+    ai_concentration = top3_share("AI_Server_Rack")
     memory_concentration = top3_share("Memory")
     network_concentration = top3_share("Network_Infra")
 
@@ -296,19 +358,19 @@ def build_insights(root: Path, raw_latest: str, raw_count: int) -> str:
         "",
         f"資料新鮮度：GoodInfo Analyzer raw revenue 最新月份為 `{raw_latest}`，共 `{raw_count}` 筆；derived cycle CSV 最新月份為 `{latest_month}`。以下分析使用 `output/company_cycle_intensity_taiwan.csv` 的 `{plot_start}` ~ `{latest_month}` 近 60 個月 YoY 序列，並以 `output/company_cycle_intensity_by_symbol_taiwan.csv` 驗證最新月份貢獻結構。",
         "",
-        f"**策略主軸**：最新月份總 cycle revenue 約 `{fmt_num(latest_total)}` 億元，YoY 領先為 {compact_cycle_list(leadership)}，相對落後為 {compact_cycle_list(laggards)}。這代表目前台灣電子供應鏈的景氣主線仍偏向 AI infrastructure 與資料中心相關資本支出，而不是單純的終端消費電子復甦；但 `AI_Compute_Infra` 是依公司揭露資料與權重建立的 AI/data center exposure proxy，不代表成分公司只聚焦 AI server；AI server / data server / PC 的拆分需要用分項揭露覆蓋率檢查其穩定性。{regime}",
+        f"**策略主軸**：最新月份總 cycle revenue 約 `{fmt_num(latest_total)}` 億元，YoY 領先為 {compact_cycle_list(leadership)}，相對落後為 {compact_cycle_list(laggards)}。這代表目前台灣電子供應鏈的景氣主線仍偏向 AI infrastructure 與資料中心相關資本支出，而不是單純的終端消費電子復甦；但 `AI_Server_Rack` 是依公司揭露資料與權重建立的 AI/data center exposure proxy，不代表成分公司只聚焦 AI server；AI server / data server / PC 的拆分需要用分項揭露覆蓋率檢查其穩定性。{regime}",
         "",
         f"**週期輪動**：{ai_text}、{network_text}、{memory_text} 同步位於高成長區，顯示 AI/data center demand 從 compute 擴張到 networking、memory/storage 的 read-through 正在成立；{pc_text} 與 {smartphone_text} 同步轉強，較像 AI PC、邊緣裝置與一般補庫存的第二層擴散，但仍需區分低基期反彈與真正需求上修。{software_read}",
         "",
-        f"**結構與集中度**：AI_Compute_Infra 的主要貢獻為 {ai_concentration}；Memory 為 {memory_concentration}；Network_Infra 為 {network_concentration}。因此指數解讀不能只看總 YoY，還要看成長是否由少數大型權值股貢獻；若 Top3 集中度維持高檔，代表投資結論更偏供應鏈龍頭與關鍵零組件，而不是全面性產業復甦。",
+        f"**結構與集中度**：AI_Server_Rack 的主要貢獻為 {ai_concentration}；Memory 為 {memory_concentration}；Network_Infra 為 {network_concentration}。因此指數解讀不能只看總 YoY，還要看成長是否由少數大型權值股貢獻；若 Top3 集中度維持高檔，代表投資結論更偏供應鏈龍頭與關鍵零組件，而不是全面性產業復甦。",
         "",
-        f"**跨台股與美股 read-through（資料推論）**：目前台股營收訊號對應到美股應優先觀察 CSP AI capex、GPU/ASIC server、HBM/DRAM/NAND、Ethernet/optical networking 與電源散熱鏈。若後續 {compact_accel_list(accelerating)} 持續，代表 AI inference 與 agentic workload 帶來的儲存、記憶體、CPU/GPU 協同需求可能繼續往台灣供應鏈擴散；反之，若 AI_Compute_Infra YoY 高檔但 Memory 或 Network_Infra 斜率先轉弱，需警覺 capex 節奏或庫存週期降溫。",
+        f"**跨台股與美股 read-through（資料推論）**：目前台股營收訊號對應到美股應優先觀察 CSP AI capex、GPU/ASIC server、HBM/DRAM/NAND、Ethernet/optical networking 與電源散熱鏈。若後續 {compact_accel_list(accelerating)} 持續，代表 AI inference 與 agentic workload 帶來的儲存、記憶體、CPU/GPU 協同需求可能繼續往台灣供應鏈擴散；反之，若 AI_Server_Rack YoY 高檔但 Memory 或 Network_Infra 斜率先轉弱，需警覺 capex 節奏或庫存週期降溫。",
         "",
         f"**資料解讀 QA**：{interpretation_qa_summary()}",
         "",
         f"**異常與非預期資料提醒**：{anomaly_summary()}",
         "",
-        "**研究含義**：短線重點是確認 AI infrastructure 是否從龍頭營收擴散到記憶體、網通、ODM、電源散熱與終端裝置。後續追蹤三個訊號：第一，AI_Compute_Infra、Memory、Network_Infra 的 YoY 斜率是否同步維持；第二，PC_Consumer 與 Smartphone 是否能延續兩到三個月而非一次性補庫存；第三，Top3 貢獻是否下降並讓更多公司參與成長。主要風險是高基期、CSP capex 遞延、記憶體價格波動，以及終端需求未跟上 infrastructure build-out。",
+        "**研究含義**：短線重點是確認 AI infrastructure 是否從龍頭營收擴散到記憶體、網通、ODM、電源散熱與終端裝置。後續追蹤三個訊號：第一，AI_Server_Rack、Memory、Network_Infra 的 YoY 斜率是否同步維持；第二，PC_Consumer 與 Smartphone 是否能延續兩到三個月而非一次性補庫存；第三，Top3 貢獻是否下降並讓更多公司參與成長。主要風險是高基期、CSP capex 遞延、記憶體價格波動，以及終端需求未跟上 infrastructure build-out。",
     ]
     return "\n".join(lines)
 
@@ -351,21 +413,23 @@ def update_readme(root: Path, raw_latest: str, raw_count: int) -> None:
     print(f"README.md TW cycle insights updated -> {timestamp}")
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Rebuild TW cycle index from newest revenue data, plot PNG, and update README insights."
+def update_us_readme_command(root: Path) -> None:
+    readme_path = root / "README.md"
+    content = readme_path.read_text(encoding="utf-8")
+    content = content.replace(
+        "產出指令：`python scripts/plot_company_cycle_index_united_states.py`",
+        "產出指令：`python skills/skill-company-cycle-index/scripts/run_company_cycle_index.py --market united_states`",
     )
-    parser.parse_args()
+    readme_path.write_text(content, encoding="utf-8", newline="")
 
-    root = find_project_root()
-    print(f"Project root: {root}")
 
+def run_taiwan(root: Path) -> None:
     raw_path = raw_revenue_path(root)
     raw_latest, raw_count = latest_month_and_count(raw_path, "月別")
     print(f"Raw revenue: {raw_path}")
     print(f"Raw latest month: {raw_latest} ({raw_count} rows)")
 
-    segment_company_count, segment_row_count, segment_latest_period = segment_weight_summary(root)
+    segment_company_count, segment_row_count, segment_latest_period = segment_weight_summary(root, "Taiwan")
     suffix = f", latest source period: {segment_latest_period}" if segment_latest_period else ""
     print(
         "Taiwan segment weights: "
@@ -405,6 +469,63 @@ def main() -> int:
         print(f"PNG: {png_path} {im.format} {im.size} {im.mode}")
 
     update_readme(root, raw_latest, raw_count)
+
+
+def run_united_states(root: Path) -> None:
+    source_latest, source_rows, sources = conceptstocks_segment_summary(root)
+    print(f"US segment sources: {sources}")
+    print(f"US segment source latest fiscal period: {source_latest or 'n/a'} ({source_rows} normalized rows after de-dup/ORCL subcomponent guard)")
+
+    run([sys.executable, "scripts/build_company_cycle_index_united_states.py"], root)
+
+    segment_company_count, segment_row_count, segment_latest_period = segment_weight_summary(root, "United_States")
+    suffix = f", latest source period: {segment_latest_period}" if segment_latest_period else ""
+    print(
+        "United_States segment weights: "
+        f"data/company_segment_weights.csv "
+        f"({segment_company_count} companies, {segment_row_count} rows{suffix})"
+    )
+
+    for path in [
+        root / "output" / "company_cycle_intensity_united_states.csv",
+        root / "output" / "company_cycle_intensity_by_symbol_united_states.csv",
+        root / "output" / "company_cycle_demand_pull_united_states.csv",
+    ]:
+        latest, count = latest_quarter_and_count(path)
+        print(f"{path.relative_to(root)} latest period: {latest} ({count} rows)")
+
+    env = os.environ.copy()
+    env["CI"] = "1"
+    run([sys.executable, "scripts/plot_company_cycle_index_united_states.py"], root, env=env)
+
+    png_path = root / "output" / "company_cycle_index_united_states.png"
+    if not png_path.is_file():
+        raise SystemExit(f"PNG not generated: {png_path}")
+    with Image.open(png_path) as im:
+        print(f"PNG: {png_path} {im.format} {im.size} {im.mode}")
+
+    update_us_readme_command(root)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Rebuild company cycle index from newest market revenue data, plot PNG, and update README metadata."
+    )
+    parser.add_argument(
+        "--market",
+        choices=["taiwan", "united_states", "all"],
+        default="taiwan",
+        help="Market pipeline to run. Default preserves the original Taiwan workflow.",
+    )
+    args = parser.parse_args()
+
+    root = find_project_root()
+    print(f"Project root: {root}")
+
+    if args.market in ("taiwan", "all"):
+        run_taiwan(root)
+    if args.market in ("united_states", "all"):
+        run_united_states(root)
 
     return 0
 
