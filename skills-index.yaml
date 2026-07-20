@@ -48,7 +48,7 @@ skills:
 - name: skill-facebook-fetch
   group: common
   path: common/skill-facebook-fetch
-  version: 1.0.1
+  version: 1.1.0
   description: 管理 Facebook.Fetch 專案的每日粉專/珍藏清單貼文抓取 — 更新過期的 FB_COOKIE、手動觸發並監看 daily_fetch
     workflow、排查已知的資料夾命名衝突與 sync 觸發失敗問題。
   category: financial-data
