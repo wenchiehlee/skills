@@ -19,9 +19,10 @@
 <!-- SKILLS-TABLE:START -->
 | 技能 | 群組 | 分類 | 版本 | 說明 | 修訂日期 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
+| [skill-ai-trend-analytics](common/skill-ai-trend-analytics) | common | basic | 0.1.0 | Build AI trend coverage, validity, issue register, and inference quality-gate outputs from company canonical cycle data. | 2026-07-21 |
 | [skill-all-models-benchmark](common/skill-all-models-benchmark) | common | financial-forecasting | 1.0.0 | 多模型與分析師共識效能評估標準作業程序。 | 2026-07-18 |
-| [skill-company-cycle-index](common/skill-company-cycle-index) | common | financial-strategy | 1.2.0 | 套用已審核的 company revenue segment weights 到 canonical cycle model；目前支援 biztrends.TW 台灣 cycle index，確認最新 GoodInfo 月營收與 segment weights 已進入 derived CSV，用最新資料生成 company_cycle_index_taiwan.png 並產出跨台股與美股深度洞察。 | 2026-07-20 |
-| [skill-company-revenue-segment-weights](common/skill-company-revenue-segment-weights) | common | financial-strategy | 1.3.0 | 更新與稽核 company revenue segment weights evidence、quarterly candidates、QA report 與 active snapshot；目前支援 biztrends.TW 台股 InvestorConference/MOPS/IR Markdown evidence，並在更新 company_segment_weights.csv 前產出資料解讀 QA。 | 2026-07-19 |
+| [skill-company-cycle-index](common/skill-company-cycle-index) | common | financial-strategy | 1.2.0 | 套用已審核的 company revenue segment weights 到 canonical cycle model；目前支援 biztrends.TW 台灣 cycle index，確認最新 GoodInfo 月營收與 segment weights 已進入 derived CSV，用最新資料生成 company_cycle_index_taiwan.png 並產出跨台股與美股深度洞察。 | 2026-07-21 |
+| [skill-company-revenue-segment-weights](common/skill-company-revenue-segment-weights) | common | financial-strategy | 1.3.0 | 更新與稽核 company revenue segment weights evidence、quarterly candidates、QA report 與 active snapshot；目前支援 biztrends.TW 台股 InvestorConference/MOPS/IR Markdown evidence，並在更新 company_segment_weights.csv 前產出資料解讀 QA。 | 2026-07-21 |
 | [skill-download-logo](common/skill-download-logo) | common | basic | 1.0.0 | 指定台灣股票代碼或美股概念股 Ticker，自動下載高解析度公司官方 Logo PNG，並限制在固定大小。 | 2026-07-18 |
 | [skill-facebook-fetch](common/skill-facebook-fetch) | common | financial-data | 1.1.0 | 管理 Facebook.Fetch 專案的每日粉專/珍藏清單貼文抓取 — 更新過期的 FB_COOKIE、手動觸發並監看 daily_fetch workflow、排查已知的資料夾命名衝突與 sync 觸發失敗問題。 | 2026-07-21 |
 | [skill-google-analytics-monitor](common/skill-google-analytics-monitor) | common | analytics | 1.0.0 | 使用 google-analytics-cli 產生 GA4 網站監控 Markdown/README 報告，包含 YAML daily metadata、即時活躍人數、近 7/28 天短期趨勢、近 3 個月流量趨勢、來源/媒介、Top 10 URL、熱門頁面、事件與異常觀察。 | 2026-07-18 |
@@ -40,7 +41,7 @@
 | [skill-taiex-sync](common/skill-taiex-sync) | common | financial-data | 1.0.0 | 更新本地資料目錄索引，生成批次處理所需的投資標的清單 | 2026-07-18 |
 | [skill-taiex-viz](common/skill-taiex-viz) | common | financial-accounting | 1.0.0 | 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖 | 2026-07-18 |
 
-最後產生日期：2026-07-20
+最後產生日期：2026-07-21
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理

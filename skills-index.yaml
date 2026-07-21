@@ -1,6 +1,17 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-07-20'
+generated_at: '2026-07-21'
 skills:
+- name: skill-ai-trend-analytics
+  group: common
+  path: common/skill-ai-trend-analytics
+  version: 0.1.0
+  description: Build AI trend coverage, validity, issue register, and inference quality-gate
+    outputs from company canonical cycle data.
+  category: basic
+  maintainer: ''
+  source: ''
+  updated_at: ''
+  revised_at: '2026-07-21'
 - name: skill-all-models-benchmark
   group: common
   path: common/skill-all-models-benchmark
@@ -22,7 +33,7 @@ skills:
   maintainer: wenchiehlee
   source: skills
   updated_at: '2026-07-19'
-  revised_at: '2026-07-20'
+  revised_at: '2026-07-21'
 - name: skill-company-revenue-segment-weights
   group: common
   path: common/skill-company-revenue-segment-weights
@@ -34,7 +45,7 @@ skills:
   maintainer: wenchiehlee
   source: biztrends.TW
   updated_at: '2026-07-19'
-  revised_at: '2026-07-19'
+  revised_at: '2026-07-21'
 - name: skill-download-logo
   group: common
   path: common/skill-download-logo
