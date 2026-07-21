@@ -1,0 +1,12 @@
+{
+  "name": "skill-uvc-4k-capture",
+  "description": "Enable camera-agnostic 4K UVC capture on Android BaseUnit: setup_uvc.sh advertises 4K frame descriptor, uvc_camera_forward detects camera max MJPEG resolution at runtime and clamps negotiation — Jieli U20 stays at 1080p, Logitech MeetUp unlocks 3840×2160@30fps.",
+  "category": "basic",
+  "version": "1.0.0",
+  "maintainer": "WJLEE",
+  "source": "wj-lee_Barco.github.com/gadget/uvc_camera_forward.c",
+  "updated_at": "2026-07-21",
+  "compatibility": {
+    "copilot-cli": ">=1.0.0"
+  }
+}

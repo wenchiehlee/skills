@@ -262,6 +262,19 @@ skills:
   source: wj-lee_Barco.github.com/gadget/android_baseunit_monitor.py
   updated_at: '2026-07-21'
   revised_at: '2026-07-21'
+- name: skill-uvc-4k-capture
+  group: common
+  path: common/skill-uvc-4k-capture
+  version: 1.0.0
+  description: 'Enable camera-agnostic 4K UVC capture on Android BaseUnit: setup_uvc.sh
+    advertises 4K frame descriptor, uvc_camera_forward detects camera max MJPEG resolution
+    at runtime and clamps negotiation — Jieli U20 stays at 1080p, Logitech MeetUp
+    unlocks 3840×2160@30fps.'
+  category: basic
+  maintainer: WJLEE
+  source: wj-lee_Barco.github.com/gadget/uvc_camera_forward.c
+  updated_at: '2026-07-21'
+  revised_at: '2026-07-21'
 - name: skill-wasapi-capture-debug
   group: common
   path: common/skill-wasapi-capture-debug

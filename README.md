@@ -43,6 +43,7 @@
 | [skill-taiex-viz](common/skill-taiex-viz) | common | financial-accounting | 1.0.0 | 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖 | 2026-07-18 |
 | [skill-usb-gadget-debug](common/skill-usb-gadget-debug) | common | basic | 1.0.1 | Enumerate Windows USB devices via SetupAPI to verify USB composite gadget (VID:046D) enumeration, interface presence, and device node status. | 2026-07-21 |
 | [skill-usb-gadget-monitor](common/skill-usb-gadget-monitor) | common | analytics | 1.0.1 | Real-time Tkinter GUI monitor for USB composite gadget (Wired RoomDock) on Windows — tracks USB device status, UVC stream resolution/fps, UAC2 call state, display topology (single/clone/extend), UC app presence, and HID vendor report exchange. | 2026-07-21 |
+| [skill-uvc-4k-capture](common/skill-uvc-4k-capture) | common | basic | 1.0.0 | Enable camera-agnostic 4K UVC capture on Android BaseUnit: setup_uvc.sh advertises 4K frame descriptor, uvc_camera_forward detects camera max MJPEG resolution at runtime and clamps negotiation — Jieli U20 stays at 1080p, Logitech MeetUp unlocks 3840×2160@30fps. | 2026-07-21 |
 | [skill-wasapi-capture-debug](common/skill-wasapi-capture-debug) | common | basic | 1.0.1 | Enumerate Windows WASAPI capture endpoints via COM IMMDeviceEnumerator to verify UAC2 speakerphone visibility, device state, and active audio sessions. | 2026-07-21 |
 
 最後產生日期：2026-07-21
