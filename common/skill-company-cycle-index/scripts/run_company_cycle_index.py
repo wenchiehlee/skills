@@ -6,12 +6,20 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 import subprocess
 from pathlib import Path
 
 import pandas as pd
 from PIL import Image
+
+
+VALID_MONTH_RE = re.compile(r"^20\d{2}/(0[1-9]|1[0-2])$")
+
+
+def is_valid_month(value: object) -> bool:
+    return bool(VALID_MONTH_RE.match(str(value or "").strip()))
 
 
 ORCL_SEGMENT_ALIASES = {
@@ -46,8 +54,14 @@ def latest_month_and_count(csv_path: Path, month_col: str) -> tuple[str, int]:
     if month_col not in df.columns:
         raise SystemExit(f"{csv_path} missing required column: {month_col}")
     months = df[month_col].astype(str)
-    latest = months.max()
-    return latest, int((months == latest).sum())
+    valid = months[months.map(is_valid_month)]
+    invalid_count = int(len(months) - len(valid))
+    if valid.empty:
+        raise SystemExit(f"{csv_path} has no valid YYYY/MM rows in {month_col}")
+    latest = max(valid, key=lambda value: tuple(map(int, value.split("/"))))
+    if invalid_count:
+        print(f"Ignored invalid {month_col} rows in {csv_path.relative_to(find_project_root())}: {invalid_count}")
+    return latest, int((valid == latest).sum())
 
 
 def segment_weight_summary(root: Path, market: str) -> tuple[int, int, str]:
@@ -262,8 +276,8 @@ def build_insights(root: Path, raw_latest: str, raw_count: int) -> str:
             for _, row in rows.iterrows()
         )
 
-    def top3_share(cycle: str) -> str:
-        cdf = by_latest[by_latest["canonical_cycle"] == cycle].sort_values("revenue_twd_bn", ascending=False)
+    def top3_share(cycle: str, include_symbols: list[str] | None = None) -> str:
+        cdf = by_latest[by_latest["canonical_cycle"] == cycle].sort_values("revenue_twd_bn", ascending=False).reset_index(drop=True)
         if cdf.empty:
             return "n/a"
         total = float(cdf["revenue_twd_bn"].sum())
@@ -274,6 +288,18 @@ def build_insights(root: Path, raw_latest: str, raw_count: int) -> str:
             revenue = float(row["revenue_twd_bn"])
             share = revenue / total * 100
             parts.append(f"{row['symbol']} {fmt_num(revenue)} 億/{share:.1f}%")
+        top3_symbols = set(cdf.head(3)["symbol"].astype(str))
+        for symbol in include_symbols or []:
+            if symbol in top3_symbols:
+                continue
+            match = cdf[cdf["symbol"].astype(str).eq(symbol)]
+            if match.empty:
+                continue
+            row = match.iloc[0]
+            revenue = float(row["revenue_twd_bn"])
+            share = revenue / total * 100
+            rank = int(match.index[0]) + 1
+            parts.append(f"{symbol} {fmt_num(revenue)} 億/{share:.1f}%（rank {rank}，華碩 Infrastructure 18%）")
         share = float(cdf.head(3)["revenue_twd_bn"].sum()) / total * 100
         return f"{'、'.join(parts)}；Top3 {share:.1f}%"
 
@@ -340,7 +366,7 @@ def build_insights(root: Path, raw_latest: str, raw_count: int) -> str:
     smartphone_text = cycle_value("Smartphone")
     software_text = cycle_value("Software_SaaS")
 
-    ai_concentration = top3_share("AI_Server_Rack")
+    ai_concentration = top3_share("AI_Server_Rack", include_symbols=["2357"])
     memory_concentration = top3_share("Memory")
     network_concentration = top3_share("Network_Infra")
 

@@ -20,6 +20,7 @@
 | 技能 | 群組 | 分類 | 版本 | 說明 | 修訂日期 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | [skill-adb-gadget](common/skill-adb-gadget) | common | basic | 1.0.1 | PowerShell module for managing dual ADB transports (USB + Ethernet) on an embedded Android device that exposes a USB composite gadget — handles state detection, Ethernet bootstrapping, safe reboot/recovery, gadget mount, and HID function control. | 2026-07-21 |
+| [skill-ai-trend-analytics](common/skill-ai-trend-analytics) | common | basic | 0.1.0 | Build AI trend coverage, validity, issue register, and inference quality-gate outputs from company canonical cycle data. | 2026-07-21 |
 | [skill-all-models-benchmark](common/skill-all-models-benchmark) | common | financial-forecasting | 1.0.0 | 多模型與分析師共識效能評估標準作業程序。 | 2026-07-18 |
 | [skill-company-cycle-index](common/skill-company-cycle-index) | common | financial-strategy | 1.2.0 | 套用已審核的 company revenue segment weights 到 canonical cycle model；目前支援 biztrends.TW 台灣 cycle index，確認最新 GoodInfo 月營收與 segment weights 已進入 derived CSV，用最新資料生成 company_cycle_index_taiwan.png 並產出跨台股與美股深度洞察。 | 2026-07-20 |
 | [skill-company-revenue-segment-weights](common/skill-company-revenue-segment-weights) | common | financial-strategy | 1.3.0 | 更新與稽核 company revenue segment weights evidence、quarterly candidates、QA report 與 active snapshot；目前支援 biztrends.TW 台股 InvestorConference/MOPS/IR Markdown evidence，並在更新 company_segment_weights.csv 前產出資料解讀 QA。 | 2026-07-19 |

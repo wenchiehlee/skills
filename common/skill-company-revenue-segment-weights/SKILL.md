@@ -3,8 +3,8 @@ name: skill-company-revenue-segment-weights
 description: >-
   Build and audit company revenue segment weight evidence, quarterly candidates, QA reports, and active
   segment weight snapshots. Current implementation supports Taiwan companies using InvestorConference,
-  IR, annual report, and MOPS Markdown evidence, then renews biztrends.TW data/company_segment_weights.csv
-  only after review. Use when the user asks to update, audit, rebuild, refresh, or review company segment
+  IR, annual report, and MOPS Markdown evidence, and documents United States active segment weights derived
+  from ConceptStocks quarterly segment revenue. Use when the user asks to update, audit, rebuild, refresh, or review company segment
   weights / segment mix / AI server data server PC split / data/company_segment_weights.csv.
 ---
 
@@ -12,7 +12,7 @@ description: >-
 
 ## 角色定位
 
-你是一位專業的跨台股與美股研究員，負責維護 company revenue segment weight evidence、quarterly candidate history、QA report 與 latest active snapshot。重點不是快速填權重，而是透過最新公司材料、Markdown evidence 與資料解讀 QA，讓使用者看見每家公司 segment mix 的季度變化，並降低 segment 權重缺漏、分類口徑誤讀與 AI/data center exposure proxy 被錯當成純 AI server revenue 的風險。正式 active snapshot 是跨市場 `data/company_segment_weights.csv`；目前本 skill 的 evidence/QA runner 支援 TW，US active rows 由 `scripts/build_company_cycle_index_united_states.py` 根據 ConceptStocks quarterly segment revenue 轉換。
+你是一位專業的跨台股與美股研究員，負責維護 company revenue segment weight evidence、quarterly candidate history、QA report 與 latest active snapshot。重點不是快速填權重，而是透過最新公司材料、Markdown evidence 與資料解讀 QA，讓使用者看見每家公司 segment mix 的季度變化，並降低 segment 權重缺漏、分類口徑誤讀與 AI/data center exposure proxy 被錯當成純 AI server revenue 的風險。正式 active snapshot 是跨市場 `data/company_segment_weights.csv`；目前本 skill 的 evidence/QA runner 支援 TW，US active rows 由 `skill-company-cycle-index` 的 United_States pipeline 根據 ConceptStocks quarterly segment revenue 轉換與回寫。本 skill 必須把兩者邊界講清楚：TW 是 evidence extraction / QA / review 後維護 active snapshot；US 是使用已結構化 quarterly segment revenue 轉成 active snapshot，原始 segment revenue 的取得與 canonical cycle aggregation 由 cycle-index pipeline 驗證。
 
 ## 適用場景
 
@@ -20,6 +20,7 @@ description: >-
 
 - `data/company_segment_weights.csv`
 - `output/company_segment_weights_quarterly_candidates_taiwan.csv`
+- `data/company_segment_weights.csv` 中 `market=United_States` 的 latest active segment mix rows
 - 台股公司 quarterly segment weights / segment mix changes / product mix / portfolio mix
 - AI server / data server / PC 拆分
 - `AI_Server_Rack`、`AI_Foundry_Packaging`、`AI_Network_Infra`、`PC_Consumer`、`Smartphone`、`Network_Infra`、`Memory` 等 cycle 的公司權重來源
@@ -35,7 +36,7 @@ python skills/skill-company-revenue-segment-weights/scripts/run_company_revenue_
 此 runner 是目前的 TW implementation。它會：
 
 1. 找到 `biztrends.TW` 根目錄、相鄰的 `../InvestorConference` repo，以及可用的 `../MOPS` 財報 MD repo。
-2. 讀取 `StockID_TWSE_TPEX.csv` 作為完整台股公司清單，並讀取 `StockID_TWSE_TPEX_focus.csv` 作為短名單 coverage view；若根目錄檔案不存在，才 fallback 到 `data/Python-Actions.GoodInfo/`。
+2. 讀取 repo root 的 `StockID_TWSE_TPEX.csv` 作為唯一完整台股公司清單，並讀取 repo root 的 `StockID_TWSE_TPEX_focus.csv` 作為短名單 coverage view；不得 fallback 到 `data/Python-Actions.GoodInfo/` 的舊同步 copy。
 3. 讀取 `data/company_segment_weights.csv`，但 TW QA 僅檢查 `market=Taiwan` rows 的欄位、active 權重加總、source period、confidence、process timestamp，並分別回報相對於完整公司清單與 focus 短名單的 segment-weight coverage。
 4. 讀取 `data/InvestorConference/investor_conference_health_summary.csv`，確認 InvestorConference ingestion 與 MD 完整率。
 5. 掃描 `../InvestorConference/data/{stock}/` 下的 PDF/MD；若加上 `--convert-missing-md`，會用 PyMuPDF 將缺 MD 的 PDF 轉成同名 `.md`。
@@ -46,8 +47,10 @@ python skills/skill-company-revenue-segment-weights/scripts/run_company_revenue_
    - `output/company_segment_weights_quarterly_candidates_taiwan.csv`：每家公司每季度的 segment weight candidate history，並包含可比 segment hint 的 previous period、previous weight、QoQ pctpt change，以及可回溯到原始 Markdown 的 `source_md` / `md_file` / `line_no`。
    - `output/company_segment_weight_candidates_taiwan.csv`：legacy flat evidence queue，保留供快速 review。
    - `output/company_segment_weights_qa_taiwan.md`：列出完整公司 universe 與 focus universe 的 MD coverage、coverage gaps、source-period staleness、以及每家公司有哪些季度有候選 evidence。
+   - `output/company_cycle_connection_evidence_taiwan.csv`：串接 `StockID_TWSE_TPEX.csv`、companyinfo concepts、`data/ic.tpex.org.tw/raw_SupplyChainMap.csv` / `raw_SupplyChain_*.csv`、正式 segment weights 與 segment-to-cycle mapping，產生可審核的 chain/cycle connection evidence；此檔只作 review queue，不直接覆蓋正式權重。
 10. 研究員依 Markdown evidence 審核季度/年度候選值後，才可決定是否更新 latest active snapshot `data/company_segment_weights.csv`，或建立正式歷史檔 `data/company_segment_weights_quarterly.csv`。
-11. 更新正式 CSV 後必須執行 `python skills/skill-company-cycle-index/scripts/run_company_cycle_index.py`，確認 segment weights 可正確映射至 cycle index。
+11. 更新正式 Taiwan segment weights 後必須執行 `python skills/skill-company-cycle-index/scripts/run_company_cycle_index.py --market taiwan`，確認 segment weights 可正確映射至 cycle index。
+12. 若使用者 focus US stock segment weights，需確認 `scripts/build_company_cycle_index_united_states.py` 會從 ConceptStocks quarterly segment revenue 計算每個 symbol 最新 calendar quarter mix，並回寫 `data/company_segment_weights.csv` 的 `market=United_States` rows；接著執行 `python skills/skill-company-cycle-index/scripts/run_company_cycle_index.py --market united_states` 驗證 PNG 與 derived CSV。
 
 ## 資料解讀 QA
 
@@ -88,14 +91,13 @@ market,stock_code,company_name,segment_name,weight_pct,source_type,source_period
 - `company_segment_weights.csv` 的 Taiwan row count、stock count、最新/最舊 source_period；若同時更新 US rows，也回報 United_States row count、stock count 與 source periods。
 - InvestorConference health summary 的 process timestamp 與 MD complete rate。
 - 缺 MD、短 MD、TODO:OCR 或資料品質問題數量。
-- 季度 segment weight candidate history CSV、legacy candidate CSV 與 QA report 路徑；CSV 必須包含 `source_md` backtrace column，QA report 要列出每家公司有哪些季度有 evidence，並摘要最大的候選 QoQ 權重變化。
+- 季度 segment weight candidate history CSV、legacy candidate CSV、cycle connection evidence CSV 與 QA report 路徑；CSV 必須包含 `source_md` 或 `source_dataset` backtrace column，QA report 要列出每家公司有哪些季度有 evidence，並摘要最大的候選 QoQ 權重變化。
 - 是否更新正式 CSV；若未更新，說明仍需人工/研究員 review 的 evidence。
 - 若使用者要求 commit/push，將 skill、candidate/report、CSV 更新與必要 pipeline 修正分別納入正確 repo。
 
 ## Skill 邊界
 
-- 本 skill 產生 TW segment evidence/input 層：`output/company_segment_weights_quarterly_candidates_taiwan.csv`、`output/company_segment_weight_candidates_taiwan.csv`、`output/company_segment_weights_qa_taiwan.md`，並在研究員 review 後維護 `data/company_segment_weights.csv` 的 Taiwan rows。
-- 本 skill 不產生 cycle model/output 層，不直接產生 `output/company_cycle_mapping.csv`、`output/company_cycle_major_weights.csv`、`output/company_cycle_intensity_taiwan.csv`、`output/company_cycle_intensity_by_symbol_taiwan.csv` 或 `output/company_cycle_index_taiwan.png`。
+- 本 skill 產生 TW segment evidence/input 層：`output/company_segment_weights_quarterly_candidates_taiwan.csv`、`output/company_segment_weight_candidates_taiwan.csv`、`output/company_segment_weights_qa_taiwan.md`，並在研究員 review 後維護 `data/company_segment_weights.csv` 的 Taiwan rows。若要把 `data/ic.tpex.org.tw/raw_SupplyChainMap.csv` 與 `raw_SupplyChain_*.csv` 接到 canonical cycle，應由本 skill 產生可審核的 `output/company_cycle_connection_evidence_taiwan.csv`，作為 segment/cycle 分類 evidence，而不是在 cycle-index builder 裡加入隱含拆分。
+- 本 skill 不產生 cycle model/output 層，不直接產生 `output/company_cycle_mapping.csv`、`output/company_cycle_major_weights.csv`、`output/company_cycle_intensity_taiwan.csv`、`output/company_cycle_intensity_by_symbol_taiwan.csv`、`output/company_cycle_intensity_united_states.csv` 或任何 `company_cycle_index_*.png`。
+- United_States active rows 的計算來源是 ConceptStocks quarterly segment revenue；由 `skill-company-cycle-index` 的 US pipeline 轉換並寫入 `data/company_segment_weights.csv`，source 欄位必須可回溯到原始 segment revenue 或 TSM platform fallback。本 skill 只負責規範與 QA 這些 rows 的欄位意義，不把 US cycle PNG 視為 segment-evidence 產物。
 - 更新正式 segment weights 後，必須執行 `skill-company-cycle-index`，由 cycle-index skill 套用權重並產生 mapping/audit/index/PNG。
-
-- United_States rows 則由 `scripts/build_company_cycle_index_united_states.py` 以 ConceptStocks quarterly segment revenue 計算最新季度 mix 後寫入 `data/company_segment_weights.csv`，source 欄位必須可回溯到原始 segment revenue 或 TSM platform fallback。
