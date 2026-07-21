@@ -46,6 +46,7 @@ runner 會讀取：
 - `output/ai_trend_coverage_matrix.md`
 - `output/ai_trend_data_issue_register.csv`
 - `output/ai_trend_data_issue_register.md`
+- `output/ai_trend_inference.md`
 
 ## 資料狀態規則
 
@@ -68,7 +69,8 @@ runner 會讀取：
 
 - coverage matrix rows、covered company count、covered canonical cycle count。
 - issue register open issue count 與 P0/P1/P2/P3 分布。
+- inference report 是否已產生，並摘要哪些 cycle 可以支持方向性推論、哪些只能視為 proxy。
 - 哪些 major AI cycles 仍被 fallback/proxy 或 stale data 主導。
 - 是否需要先回到 `skill-company-revenue-segment-weights` 補 evidence，或回到 `skill-company-cycle-index` 重算 cycle performance。
 
-若使用者要求 commit/push，應把 skill、runner 與 generated coverage/issue outputs 一起 commit。
+若使用者要求 commit/push，應把 skill、runner 與 generated coverage/issue/inference outputs 一起 commit。

@@ -15,6 +15,7 @@ import pandas as pd
 
 GUIDELINE = "chats/AI_Trend_Analytics_Data_Refinement_Guideline.md"
 MAPPING = "output/company_canonical_cycle_mapping.csv"
+PERFORMANCE = "output/company_canonical_cycle_performance.csv"
 PERFORMANCE_DETAILS = "output/company_canonical_cycle_performance_details.csv"
 SEGMENT_WEIGHTS = "data/company_segment_weights.csv"
 SEGMENT_QA = "output/company_segment_weights_qa_taiwan.md"
@@ -25,6 +26,7 @@ OUT_COVERAGE_CSV = "output/ai_trend_coverage_matrix.csv"
 OUT_COVERAGE_MD = "output/ai_trend_coverage_matrix.md"
 OUT_ISSUES_CSV = "output/ai_trend_data_issue_register.csv"
 OUT_ISSUES_MD = "output/ai_trend_data_issue_register.md"
+OUT_INFERENCE_MD = "output/ai_trend_inference.md"
 
 AI_CYCLE_PREFIXES = (
     "AI_",
@@ -303,7 +305,7 @@ def build_coverage(root: Path) -> tuple[pd.DataFrame, list[dict[str, object]]]:
                 "recalculation_required": "Yes",
                 "before_after_result": "",
                 "closed_date": "",
-                "version": "0.1.0",
+                "version": "0.2.0",
             })
             issue_id += 1
 
@@ -385,6 +387,7 @@ def write_outputs(root: Path, coverage: pd.DataFrame, issues: list[dict[str, obj
     issue_df.to_csv(issue_path, index=False, encoding="utf-8-sig", quoting=csv.QUOTE_MINIMAL)
     write_coverage_md(root, coverage)
     write_issue_md(root, issue_df)
+    write_inference_md(root, coverage, issue_df)
 
 
 def write_coverage_md(root: Path, df: pd.DataFrame) -> None:
@@ -454,6 +457,193 @@ def write_issue_md(root: Path, df: pd.DataFrame) -> None:
     (root / OUT_ISSUES_MD).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+
+def fmt_num(value: object, digits: int = 1) -> str:
+    num = to_num(value)
+    if math.isnan(num):
+        return "NA"
+    return f"{num:,.{digits}f}"
+
+
+def fmt_pct(value: object) -> str:
+    num = to_num(value)
+    if math.isnan(num):
+        return "NA"
+    sign = "+" if num >= 0 else ""
+    return f"{sign}{num:.1f}%"
+
+
+def fmt_ppt(value: object) -> str:
+    num = to_num(value)
+    if math.isnan(num):
+        return "NA"
+    sign = "+" if num >= 0 else ""
+    return f"{sign}{num:.1f} ppt"
+
+
+def confidence_from_quality(cov: pd.DataFrame, issues: pd.DataFrame) -> tuple[str, str]:
+    if not issues.empty and (issues["severity"].astype(str) == "P0").any():
+        return "Low", "P0 data conflict exists; inference must be quarantined until reconciled."
+    if cov.empty:
+        return "Low", "No coverage rows support this cycle."
+    status_counts = cov["data_status"].value_counts().to_dict()
+    rows = len(cov)
+    valid_rows = status_counts.get("VALID_DIRECT", 0) + status_counts.get("VALID_DERIVED", 0)
+    proxy_rows = status_counts.get("PROXY", 0) + status_counts.get("MISSING", 0)
+    if valid_rows / rows >= 0.6 and proxy_rows == 0:
+        return "Medium-high", "Most rows are valid or reproducibly derived, with no proxy/missing dominance."
+    if valid_rows / rows >= 0.4:
+        return "Medium", "Valid rows exist, but estimated/proxy rows still limit precision."
+    if proxy_rows / rows >= 0.5:
+        return "Low-medium", "Proxy or missing rows dominate coverage; use directionally only."
+    return "Medium-low", "Evidence is mixed and should be treated as estimated."
+
+
+def cycle_issue_summary(issues: pd.DataFrame) -> str:
+    if issues.empty:
+        return "No open issue registered."
+    parts = []
+    for severity, g in issues.groupby("severity"):
+        parts.append(f"{severity}={len(g)}")
+    top_types = ", ".join(issues["issue_type"].value_counts().head(3).index.astype(str))
+    return f"{'; '.join(parts)}; top issue types: {top_types}."
+
+
+def top_contributors(details: pd.DataFrame, market: str, cycle: str, limit: int = 3) -> str:
+    if details.empty:
+        return "NA"
+    df = details[(details["market_scope"].astype(str).eq(market)) & (details["canonical_cycle"].astype(str).eq(cycle))].copy()
+    if df.empty:
+        return "NA"
+    df["revenue_num"] = df["revenue"].map(to_num)
+    df = df.dropna(subset=["revenue_num"]).sort_values("revenue_num", ascending=False).head(limit)
+    if df.empty:
+        return "NA"
+    return "; ".join(
+        f"{row.stock_code} {row.company_name} {fmt_num(row.revenue_num)} {row.currency_unit}"
+        for row in df.itertuples(index=False)
+    )
+
+
+def scenario_text(yoy: float, gm_change: float, confidence: str) -> tuple[str, str, str]:
+    if math.isnan(yoy):
+        return (
+            "Base: keep this cycle in monitoring mode until comparable revenue data is restored.",
+            "Bull: evidence quality improves and revenue acceleration becomes measurable.",
+            "Bear: missing or proxy data hides deterioration or double counting.",
+        )
+    if yoy >= 30:
+        base = "Base: growth remains positive but decelerates as comparisons get harder."
+        bull = "Bull: backlog/capacity conversion keeps YoY above current-cycle peers."
+        bear = "Bear: order timing, inventory digestion, or customer acceptance delays compress YoY."
+    elif yoy >= 10:
+        base = "Base: cycle continues expanding at a moderate pace."
+        bull = "Bull: upstream demand or customer deployment converts faster than current run-rate."
+        bear = "Bear: growth falls back toward company-wide baseline if AI-specific evidence weakens."
+    elif yoy >= 0:
+        base = "Base: cycle is stable but not yet a strong acceleration signal."
+        bull = "Bull: leading indicators improve and revenue growth broadens across companies."
+        bear = "Bear: weak proxy coverage reveals that current growth is not AI-specific."
+    else:
+        base = "Base: cycle remains under pressure until revenue direction improves."
+        bull = "Bull: decline is a base/timing effect and reverses in the next 1-4 quarters."
+        bear = "Bear: weakness confirms inventory correction, pricing pressure, or demand slowdown."
+    if gm_change < -2:
+        bear += " Gross-margin deterioration is an additional warning."
+    if confidence.startswith("Low"):
+        base += " Confidence is constrained by coverage issues."
+    return base, bull, bear
+
+
+def write_inference_md(root: Path, coverage: pd.DataFrame, issues: pd.DataFrame) -> None:
+    perf = read_csv(root, PERFORMANCE)
+    details = read_csv(root, PERFORMANCE_DETAILS)
+    if perf.empty:
+        lines = [
+            "# AI Trend Inference",
+            "",
+            f"Generated: {now_cst()}",
+            "",
+            f"Cannot build inference because `{PERFORMANCE}` is missing or empty.",
+        ]
+        (root / OUT_INFERENCE_MD).write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return
+
+    for col in ["revenue", "revenue_yoy_pct", "operating_profit_yoy_pct", "gross_margin_change_ppt"]:
+        if col not in perf.columns:
+            perf[col] = ""
+    lines = [
+        "# AI Trend Inference",
+        "",
+        f"Generated: {now_cst()}",
+        "",
+        "This report is generated by `skill-ai-trend-analytics`. It is intentionally constrained by the coverage matrix and issue register; low-quality evidence is not promoted into high-confidence conclusions.",
+        "",
+        "## Quality Gate",
+        "",
+        f"- Coverage rows: `{len(coverage)}`",
+        f"- Open issues: `{len(issues)}`",
+    ]
+    if not issues.empty and "severity" in issues.columns:
+        severity_text = ", ".join(f"{sev}={count}" for sev, count in issues["severity"].value_counts().sort_index().items())
+        lines.append(f"- Issue severity: `{severity_text}`")
+    lines.extend([
+        "- Any cycle with P0 issues is treated as quarantined for high-confidence inference.",
+        "- Company-wide margin attribution remains an estimate unless segment-level profit is disclosed.",
+        "",
+        "## Cycle Inference",
+        "",
+    ])
+
+    perf = perf[perf["canonical_cycle"].astype(str).str.startswith(AI_CYCLE_PREFIXES)].copy()
+    perf["sort_revenue"] = perf["revenue"].map(to_num)
+    perf = perf.sort_values(["market_scope", "sort_revenue"], ascending=[True, False])
+    for _, row in perf.iterrows():
+        market = str(row.get("market_scope", ""))
+        cycle = str(row.get("canonical_cycle", ""))
+        cov = coverage[(coverage["market_scope"].astype(str).eq(market)) & (coverage["canonical_cycle"].astype(str).eq(cycle))].copy()
+        if not issues.empty:
+            cyc_issues = issues[(issues["canonical_cycle"].astype(str).eq(cycle)) & (issues["company_or_market"].astype(str).str.startswith(f"{market}:"))].copy()
+        else:
+            cyc_issues = pd.DataFrame()
+        confidence, confidence_reason = confidence_from_quality(cov, cyc_issues)
+        yoy = to_num(row.get("revenue_yoy_pct", ""))
+        gm_change = to_num(row.get("gross_margin_change_ppt", ""))
+        base, bull, bear = scenario_text(yoy, gm_change, confidence)
+        status_mix = "NA" if cov.empty else ", ".join(f"{k}={v}" for k, v in cov["data_status"].value_counts().sort_index().items())
+        top = top_contributors(details, market, cycle)
+        issue_summary = cycle_issue_summary(cyc_issues)
+        period = str(row.get("period_range", ""))
+        unit = str(row.get("currency_unit", ""))
+
+        lines.extend([
+            f"### {market} / `{cycle}`",
+            "",
+            f"**Observed facts:** Period `{period}` revenue is `{fmt_num(row.get('revenue'))}` {unit}; YoY is `{fmt_pct(row.get('revenue_yoy_pct'))}`; operating profit YoY is `{fmt_pct(row.get('operating_profit_yoy_pct'))}`; gross margin change is `{fmt_ppt(row.get('gross_margin_change_ppt'))}`.",
+            "",
+            f"**Derived indicators:** Coverage status mix is `{status_mix}`. Top contributors: {top}.",
+            "",
+            f"**Causal interpretation:** `{cycle}` is mapped to `{infer_trend_domain(cycle)}`. Treat the revenue/profit signal as company-cycle attribution, not pure AI end-demand, unless source rows are `VALID_DIRECT` or `VALID_DERIVED`.",
+            "",
+            "**Alternative explanations:** Timing of revenue recognition, fiscal/calendar period mismatch, single-snapshot segment weights, fallback supply-chain mapping, customer concentration, product mix changes, or non-AI revenue inside the same company segment may explain part of the move.",
+            "",
+            "**Timeline:** Nowcast to near term, normally current quarter through next 1-4 quarters. Do not extend beyond this horizon without leading indicators such as backlog, capex, RPO, order or utilization data.",
+            "",
+            f"**Scenario forecast:** {base} {bull} {bear}",
+            "",
+            "**Confirmation indicators:** direct segment revenue, backlog/bookings, customer deployment acceptance, upstream component shipments, inventory normalization, and repeated multi-quarter breadth across companies.",
+            "",
+            "**Invalidation indicators:** duplicate source conflicts, weight sums outside 100%, missing latest performance, sudden segment taxonomy changes, top-contributor concentration, inventory build, order pushout, or gross-margin deterioration.",
+            "",
+            f"**Confidence:** `{confidence}`. {confidence_reason}",
+            "",
+            f"**Main missing data:** {issue_summary}",
+            "",
+        ])
+
+    (root / OUT_INFERENCE_MD).write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def main() -> None:
     root = root_dir()
     for rel in [GUIDELINE, MAPPING, PERFORMANCE_DETAILS]:
@@ -469,7 +659,7 @@ def main() -> None:
         print("Issue severity counts:")
         for severity, count in issue_df["severity"].value_counts().sort_index().items():
             print(f"  {severity}: {count}")
-    print(f"Markdown outputs: {OUT_COVERAGE_MD}, {OUT_ISSUES_MD}")
+    print(f"Markdown outputs: {OUT_COVERAGE_MD}, {OUT_ISSUES_MD}, {OUT_INFERENCE_MD}")
 
 
 if __name__ == "__main__":
