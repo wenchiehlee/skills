@@ -177,12 +177,53 @@ def freshness_lookup(root: Path) -> dict[str, str]:
     return out
 
 
-def has_duplicate_conflicts(root: Path) -> set[str]:
+def parse_candidate_values(value: object) -> list[float]:
+    text = str(value or "").replace("/", ";")
+    values = []
+    for part in text.split(";"):
+        part = part.strip()
+        if not part or part.lower() == "nan":
+            continue
+        try:
+            values.append(float(part))
+        except ValueError:
+            continue
+    return values
+
+
+def material_duplicate_conflicts(root: Path, threshold_pctpt: float = 1.0) -> dict[tuple[str, str], float]:
     q = read_csv(root, TW_QUARTERLY_CANDIDATES)
-    if q.empty or "review_status" not in q.columns or "stock_code" not in q.columns:
-        return set()
+    required = {"review_status", "stock_code", "source_period", "candidate_weight_values"}
+    if q.empty or not required.issubset(q.columns):
+        return {}
     mask = q["review_status"].astype(str).str.contains("duplicate_weight_conflict", na=False)
-    return set(q.loc[mask, "stock_code"].astype(str))
+    conflicts: dict[tuple[str, str], float] = {}
+    for _, row in q.loc[mask].iterrows():
+        values = parse_candidate_values(row.get("candidate_weight_values", ""))
+        if len(values) < 2:
+            continue
+        spread = max(values) - min(values)
+        if spread > threshold_pctpt:
+            key = (str(row.get("stock_code", "")), str(row.get("source_period", "")))
+            conflicts[key] = max(conflicts.get(key, 0.0), spread)
+    return conflicts
+
+
+def performance_impact(perf: pd.DataFrame, key_cols: list[str]) -> dict[tuple[str, str, str, str], dict[str, float]]:
+    if perf.empty or "revenue" not in perf.columns:
+        return {}
+    data = perf.copy()
+    data["revenue_num"] = data["revenue"].map(to_num)
+    totals = data.groupby(["market_scope", "canonical_cycle"])["revenue_num"].sum().to_dict()
+    impact: dict[tuple[str, str, str, str], dict[str, float]] = {}
+    for _, row in data.iterrows():
+        key = tuple(str(row.get(col, "")) for col in key_cols)
+        market_cycle = (str(row.get("market_scope", "")), str(row.get("canonical_cycle", "")))
+        revenue = to_num(row.get("revenue", ""))
+        total = float(totals.get(market_cycle, 0.0) or 0.0)
+        share = revenue / total * 100 if total and not math.isnan(revenue) else math.nan
+        impact[key] = {"revenue": revenue, "cycle_revenue": total, "cycle_revenue_share_pct": share}
+    return impact
 
 
 def build_coverage(root: Path) -> tuple[pd.DataFrame, list[dict[str, object]]]:
@@ -190,7 +231,7 @@ def build_coverage(root: Path) -> tuple[pd.DataFrame, list[dict[str, object]]]:
     perf = read_csv(root, PERFORMANCE_DETAILS)
     _, seg_context = load_segment_context(root)
     fresh = freshness_lookup(root)
-    conflict_stocks = has_duplicate_conflicts(root)
+    material_conflicts = material_duplicate_conflicts(root)
     issues: list[dict[str, object]] = []
 
     if mapping.empty:
@@ -205,6 +246,7 @@ def build_coverage(root: Path) -> tuple[pd.DataFrame, list[dict[str, object]]]:
         if col not in perf.columns:
             perf[col] = ""
     perf_keys = set(map(tuple, perf[key_cols].astype(str).to_records(index=False)))
+    perf_impact = performance_impact(perf, key_cols)
 
     rows = []
     issue_id = 1
@@ -220,6 +262,9 @@ def build_coverage(root: Path) -> tuple[pd.DataFrame, list[dict[str, object]]]:
 
         key = (market, stock, cycle, segment)
         has_perf = key in perf_keys
+        impact = perf_impact.get(key, {})
+        revenue_impact = impact.get("revenue", math.nan)
+        cycle_revenue_share = impact.get("cycle_revenue_share_pct", math.nan)
         seg = seg_context.get((market, stock), {})
         status = initial_status(row)
         issue_flags: list[str] = []
@@ -249,11 +294,13 @@ def build_coverage(root: Path) -> tuple[pd.DataFrame, list[dict[str, object]]]:
             known_limitations.append("active exclusive segment weights do not sum to 100% in at least one period")
             next_actions.append("fix active segment weights before using for financial attribution")
 
-        if stock in conflict_stocks:
+        row_period = str(row.get("source_period", "") or latest_perf_period(perf, key_cols, key))
+        conflict_spread = material_conflicts.get((stock, row_period))
+        if conflict_spread is not None:
             status = worse(status, "CONFLICTING")
             issue_flags.append("duplicate_weight_conflict")
-            known_limitations.append("quarterly candidate evidence contains conflicting segment weights")
-            next_actions.append("reconcile conflicting evidence before high-confidence inference")
+            known_limitations.append(f"same-period candidate evidence contains material segment weight conflict up to {conflict_spread:.1f}ppt")
+            next_actions.append("reconcile same-period conflicting evidence before high-confidence inference")
 
         if "raw_performance1.csv" in str(row.get("note", "")) and fresh.get("data/Python-Actions.GoodInfo.Analyzer/raw_performance1.csv") == "stale":
             status = worse(status, "STALE")
@@ -274,6 +321,8 @@ def build_coverage(root: Path) -> tuple[pd.DataFrame, list[dict[str, object]]]:
             "source_tier": source_tier(str(row.get("source_type", "")), source_file),
             "source_file": source_file,
             "latest_period": row.get("source_period", "") or latest_perf_period(perf, key_cols, key),
+            "attributed_revenue": "" if math.isnan(revenue_impact) else round(revenue_impact, 4),
+            "cycle_revenue_share_pct": "" if math.isnan(cycle_revenue_share) else round(cycle_revenue_share, 4),
             "historical_depth": seg.get("source_period_count", ""),
             "confidence": row.get("confidence", ""),
             "known_limitation": "; ".join(dict.fromkeys(known_limitations)),
@@ -285,7 +334,10 @@ def build_coverage(root: Path) -> tuple[pd.DataFrame, list[dict[str, object]]]:
         })
 
         for flag in dict.fromkeys(issue_flags):
-            severity = issue_severity(flag)
+            severity = issue_severity(flag, cycle_revenue_share)
+            evidence_text = "; ".join(dict.fromkeys(known_limitations)) or flag
+            if flag == "fallback_mapping" and not math.isnan(cycle_revenue_share):
+                evidence_text = f"{evidence_text}; attributed revenue share of cycle {cycle_revenue_share:.1f}%"
             issues.append({
                 "issue_id": f"AI-TREND-{issue_id:04d}",
                 "company_or_market": f"{market}:{stock} {row.get('company_name', '')}",
@@ -293,7 +345,7 @@ def build_coverage(root: Path) -> tuple[pd.DataFrame, list[dict[str, object]]]:
                 "metric_or_row": segment,
                 "period": row.get("source_period", "") or latest_perf_period(perf, key_cols, key),
                 "issue_type": flag,
-                "evidence": "; ".join(dict.fromkeys(known_limitations)) or flag,
+                "evidence": evidence_text,
                 "severity": severity,
                 "trend_impact": f"{cycle} revenue/profit attribution confidence may be distorted",
                 "suspected_cause": suspected_cause(flag),
@@ -305,7 +357,7 @@ def build_coverage(root: Path) -> tuple[pd.DataFrame, list[dict[str, object]]]:
                 "recalculation_required": "Yes",
                 "before_after_result": "",
                 "closed_date": "",
-                "version": "0.2.0",
+                "version": "0.2.1",
             })
             issue_id += 1
 
@@ -331,11 +383,15 @@ def infer_trend_domain(cycle: str) -> str:
     return "company_financial_realization"
 
 
-def issue_severity(flag: str) -> str:
+def issue_severity(flag: str, cycle_revenue_share_pct: float = math.nan) -> str:
     if flag in {"segment_weight_sum_invalid", "duplicate_weight_conflict"}:
         return "P0"
-    if flag in {"missing_performance", "fallback_mapping"}:
+    if flag == "missing_performance":
         return "P1"
+    if flag == "fallback_mapping":
+        if not math.isnan(cycle_revenue_share_pct) and cycle_revenue_share_pct >= 5.0:
+            return "P1"
+        return "P2"
     if flag in {"single_snapshot_weight", "stale_performance_source"}:
         return "P2"
     return "P3"

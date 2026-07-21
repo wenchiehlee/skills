@@ -63,6 +63,13 @@ runner 會讀取：
 
 若同一 row 同時有多個問題，`data_status` 採最保守狀態，issue register 保留所有問題。
 
+## Issue 優先順序
+
+- `P0`：segment weight 加總錯誤，或同一公司/同一期間/同一 segment 有大於 1ppt 的實質衝突。
+- `P1`：缺 performance，或 fallback mapping 對該 market/canonical cycle attributed revenue 占比達 5% 以上。
+- `P2`：非重大 fallback mapping、single snapshot segment weight、stale performance source。
+- `P3`：其他低風險資料註記。
+
 ## 輸出回報
 
 完成後回報：
