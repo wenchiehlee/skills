@@ -1,0 +1,12 @@
+{
+  "name": "skill-usb-gadget-debug",
+  "description": "Enumerate Windows USB devices via SetupAPI to verify USB composite gadget (VID:046D) enumeration, interface presence, and device node status.",
+  "category": "basic",
+  "version": "1.0.1",
+  "maintainer": "WJLEE",
+  "source": "wj-lee_Barco.github.com/gadget/debug_usb.py",
+  "updated_at": "2026-07-21",
+  "compatibility": {
+    "copilot-cli": ">=1.0.0"
+  }
+}

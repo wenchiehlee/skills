@@ -1,0 +1,12 @@
+{
+  "name": "skill-wasapi-capture-debug",
+  "description": "Enumerate Windows WASAPI capture endpoints via COM IMMDeviceEnumerator to verify UAC2 speakerphone visibility, device state, and active audio sessions.",
+  "category": "basic",
+  "version": "1.0.1",
+  "maintainer": "WJLEE",
+  "source": "wj-lee_Barco.github.com/gadget/debug_wasapi.py",
+  "updated_at": "2026-07-21",
+  "compatibility": {
+    "copilot-cli": ">=1.0.0"
+  }
+}

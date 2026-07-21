@@ -1,6 +1,19 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-07-20'
+generated_at: '2026-07-21'
 skills:
+- name: skill-adb-gadget
+  group: common
+  path: common/skill-adb-gadget
+  version: 1.0.1
+  description: PowerShell module for managing dual ADB transports (USB + Ethernet)
+    on an embedded Android device that exposes a USB composite gadget — handles state
+    detection, Ethernet bootstrapping, safe reboot/recovery, gadget mount, and HID
+    function control.
+  category: basic
+  maintainer: WJLEE
+  source: wj-lee_Barco.github.com/gadget/skills/Android BaseUnit-adb
+  updated_at: '2026-07-21'
+  revised_at: '2026-07-21'
 - name: skill-all-models-benchmark
   group: common
   path: common/skill-all-models-benchmark
@@ -48,9 +61,9 @@ skills:
 - name: skill-facebook-fetch
   group: common
   path: common/skill-facebook-fetch
-  version: 1.0.1
-  description: 管理 Facebook.Fetch 專案的每日粉專/珍藏清單貼文抓取 — 更新過期的 FB_COOKIE、手動觸發並監看 daily_fetch
-    workflow、排查已知的資料夾命名衝突與 sync 觸發失敗問題。
+  version: 1.2.0
+  description: 管理 Facebook.Fetch 專案的每日粉專/珍藏清單貼文抓取 — 本機執行與 GitHub Actions 共用同一支 run_daily_fetch.py，更新過期的
+    FB_COOKIE、手動觸發並監看 daily_fetch workflow、排查已知的資料夾命名衝突與 sync 觸發失敗問題。
   category: financial-data
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/Facebook.Fetch
@@ -214,3 +227,38 @@ skills:
   source: TAIEX.TW
   updated_at: '2026-07-07'
   revised_at: '2026-07-18'
+- name: skill-usb-gadget-debug
+  group: common
+  path: common/skill-usb-gadget-debug
+  version: 1.0.1
+  description: Enumerate Windows USB devices via SetupAPI to verify USB composite
+    gadget (VID:046D) enumeration, interface presence, and device node status.
+  category: basic
+  maintainer: WJLEE
+  source: wj-lee_Barco.github.com/gadget/debug_usb.py
+  updated_at: '2026-07-21'
+  revised_at: '2026-07-21'
+- name: skill-usb-gadget-monitor
+  group: common
+  path: common/skill-usb-gadget-monitor
+  version: 1.0.1
+  description: Real-time Tkinter GUI monitor for USB composite gadget (Wired RoomDock)
+    on Windows — tracks USB device status, UVC stream resolution/fps, UAC2 call state,
+    display topology (single/clone/extend), UC app presence, and HID vendor report
+    exchange.
+  category: analytics
+  maintainer: WJLEE
+  source: wj-lee_Barco.github.com/gadget/android_baseunit_monitor.py
+  updated_at: '2026-07-21'
+  revised_at: '2026-07-21'
+- name: skill-wasapi-capture-debug
+  group: common
+  path: common/skill-wasapi-capture-debug
+  version: 1.0.1
+  description: Enumerate Windows WASAPI capture endpoints via COM IMMDeviceEnumerator
+    to verify UAC2 speakerphone visibility, device state, and active audio sessions.
+  category: basic
+  maintainer: WJLEE
+  source: wj-lee_Barco.github.com/gadget/debug_wasapi.py
+  updated_at: '2026-07-21'
+  revised_at: '2026-07-21'

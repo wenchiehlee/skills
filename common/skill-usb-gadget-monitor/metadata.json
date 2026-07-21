@@ -1,0 +1,12 @@
+{
+  "name": "skill-usb-gadget-monitor",
+  "description": "Real-time Tkinter GUI monitor for USB composite gadget (Wired RoomDock) on Windows — tracks USB device status, UVC stream resolution/fps, UAC2 call state, display topology (single/clone/extend), UC app presence, and HID vendor report exchange.",
+  "category": "analytics",
+  "version": "1.0.1",
+  "maintainer": "WJLEE",
+  "source": "wj-lee_Barco.github.com/gadget/android_baseunit_monitor.py",
+  "updated_at": "2026-07-21",
+  "compatibility": {
+    "copilot-cli": ">=1.0.0"
+  }
+}
