@@ -17,7 +17,7 @@ skills:
 - name: skill-ai-trend-analytics
   group: common
   path: common/skill-ai-trend-analytics
-  version: 0.1.0
+  version: 0.2.0
   description: Build AI trend coverage, validity, issue register, and inference quality-gate
     outputs from company canonical cycle data.
   category: basic
