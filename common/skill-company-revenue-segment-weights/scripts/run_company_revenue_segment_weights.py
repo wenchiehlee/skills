@@ -124,11 +124,8 @@ def infer_mops_period(path: Path) -> str:
 
 
 def load_stock_list(root: Path, filename: str, *, required: bool = True) -> tuple[pd.DataFrame, Path | None]:
-    candidates = [
-        root / filename,
-        root / "data" / "Python-Actions.GoodInfo" / filename,
-    ]
-    for path in candidates:
+    path = root / filename
+    for path in [path]:
         if not path.is_file():
             continue
         df = pd.read_csv(path, encoding="utf-8-sig", dtype=str)
@@ -142,7 +139,7 @@ def load_stock_list(root: Path, filename: str, *, required: bool = True) -> tupl
             raise SystemExit(f"{path} did not contain any valid 4-digit TW stock IDs")
         return df, path
     if required:
-        raise SystemExit(f"Cannot find {filename} in repo root or data/Python-Actions.GoodInfo/.")
+        raise SystemExit(f"Cannot find {filename} in repo root.")
     return pd.DataFrame(columns=["stock_code", "company_name"]), None
 
 
@@ -168,13 +165,284 @@ def load_weights(path: Path) -> pd.DataFrame:
 
 def weight_quality(df: pd.DataFrame) -> tuple[list[str], pd.DataFrame]:
     active = df[df["status"].fillna("active").str.lower().eq("active")].copy()
-    sums = active.groupby(["stock_code", "company_name"], as_index=False)["weight_pct"].sum()
+    active["source_period"] = active["source_period"].fillna("").astype(str)
+    sums = active.groupby(["stock_code", "company_name", "source_period"], as_index=False)["weight_pct"].sum()
     issues = []
     for _, row in sums.iterrows():
         total = float(row["weight_pct"])
         if abs(total - 100.0) > 0.2:
-            issues.append(f"{row['stock_code']} {row['company_name']} active weights sum {total:.1f}%")
+            period = row.get("source_period", "")
+            period_text = f" {period}" if period else ""
+            issues.append(f"{row['stock_code']} {row['company_name']}{period_text} active weights sum {total:.1f}%")
     return issues, sums
+
+
+SEGMENT_SCOPE_BY_COMPANY = {
+    "2308": "Delta",
+    "2317": "Foxconn",
+    "2330": "TSMC",
+    "2324": "Compal",
+    "2382": "Quanta",
+    "4938": "Pegatron",
+    "2454": "MediaTek",
+    "2347": "Synnex",
+    "2356": "Inventec",
+    "2357": "Asus",
+    "3231": "Wistron",
+    "6669": "Wiwynn",
+    "2376": "Gigabyte",
+    "2345": "Accton",
+    "8299": "Phison",
+    "2408": "Nanya",
+    "3665": "Bizlink",
+    "2480": "Datapro",
+}
+
+CONCEPT_TO_CYCLE = {
+    "nVidia概念": "AI_Server_Rack",
+    "OpenAI概念": "AI_Server_Rack",
+    "HPE概念": "AI_Server_Rack",
+    "Broadcom概念": "AI_Network_Infra",
+    "TSMC概念": "AI_Foundry_Packaging",
+    "Micron概念": "Memory",
+    "SanDisk概念": "Memory",
+    "Qualcomm概念": "Smartphone",
+    "Apple概念": "Smartphone",
+    "Dell概念": "PC_Consumer",
+    "Lenovo概念": "PC_Consumer",
+    "HPQ概念": "PC_Consumer",
+    "AMD概念": "PC_Consumer",
+    "Google概念": "Cloud_AI_Compute",
+    "Amazon概念": "Cloud_AI_Compute",
+    "Microsoft概念": "Software_SaaS",
+    "Oracle概念": "Software_SaaS",
+}
+
+BROAD_SEGMENT_RE = re.compile(
+    r"computer|computing|component|system|infrastructure|server|network|communication|"
+    r"電子產品|電腦|通訊|網路|系統|基礎設施|零組件",
+    re.I,
+)
+
+
+def normalize_stock_code(value: object) -> str:
+    text = str(value).strip()
+    m = re.match(r"^(\d{4})(?:\.0)?$", text)
+    return m.group(1) if m else text
+
+
+def load_company_concepts(root: Path) -> dict[str, dict]:
+    paths = [
+        root / "data" / "Python-Actions.GoodInfo.CompanyInfo" / "raw_companyinfo.csv",
+        root / "data" / "Python-Actions.GoodInfo.Analyzer" / "raw_companyinfo.csv",
+    ]
+    for path in paths:
+        if path.is_file():
+            df = pd.read_csv(path, encoding="utf-8-sig", dtype=str).fillna("")
+            if "代號" not in df.columns:
+                continue
+            result = {}
+            for _, row in df.iterrows():
+                code = normalize_stock_code(row.get("代號", ""))
+                if code:
+                    result[code] = row.to_dict() | {"source_path": str(path)}
+            return result
+    return {}
+
+
+def load_supplychain_evidence(root: Path) -> dict[str, list[dict]]:
+    source_dir = root / "data" / "ic.tpex.org.tw"
+    rows_by_stock: dict[str, list[dict]] = {}
+    map_path = source_dir / "raw_SupplyChainMap.csv"
+    if map_path.is_file():
+        df = pd.read_csv(map_path, encoding="utf-8-sig", dtype=str).fillna("")
+        for _, row in df.iterrows():
+            code = normalize_stock_code(row.get("代號", ""))
+            if not code:
+                continue
+            rows_by_stock.setdefault(code, []).append({
+                "source_dataset": str(map_path.relative_to(root)),
+                "chain_code": row.get("產業鏈代碼", ""),
+                "chain_name": row.get("產業鏈名稱", ""),
+                "position": row.get("位置", ""),
+                "subcategory": row.get("子分類", ""),
+                "upstream_companies": row.get("上游公司", ""),
+                "downstream_companies": row.get("下游公司", ""),
+            })
+    for path in sorted(source_dir.glob("raw_SupplyChain_*.csv")):
+        if path.name == "raw_SupplyChainMap.csv":
+            continue
+        chain_code = path.stem.replace("raw_SupplyChain_", "")
+        try:
+            df = pd.read_csv(path, encoding="utf-8-sig", dtype=str).fillna("")
+        except Exception:
+            continue
+        if "代號" not in df.columns:
+            continue
+        for _, row in df.iterrows():
+            code = normalize_stock_code(row.get("代號", ""))
+            if not code:
+                continue
+            item = {
+                "source_dataset": str(path.relative_to(root)),
+                "chain_code": chain_code,
+                "chain_name": "",
+                "position": row.get("位置", ""),
+                "subcategory": row.get("子分類", ""),
+                "upstream_companies": "",
+                "downstream_companies": "",
+            }
+            existing = rows_by_stock.setdefault(code, [])
+            dedupe_key = (item["chain_code"], item["position"], item["subcategory"], item["source_dataset"])
+            if dedupe_key not in {(r["chain_code"], r["position"], r["subcategory"], r["source_dataset"]) for r in existing}:
+                existing.append(item)
+    return rows_by_stock
+
+
+def load_segment_cycle_mapping(root: Path) -> dict[tuple[str, str], list[dict]]:
+    path = root / "data" / "segment_to_cycle_mapping.csv"
+    if not path.is_file():
+        return {}
+    df = pd.read_csv(path, encoding="utf-8-sig", dtype=str).fillna("")
+    mapping: dict[tuple[str, str], list[dict]] = {}
+    for _, row in df.iterrows():
+        if row.get("market", "Taiwan") != "Taiwan":
+            continue
+        key = (row.get("company_scope", "").strip(), row.get("segment_name", "").strip())
+        if not key[0] or not key[1]:
+            continue
+        mapping.setdefault(key, []).append({
+            "canonical_cycle": row.get("canonical_cycle", "").strip(),
+            "weight_pct": row.get("weight_pct", ""),
+            "source_path": str(path.relative_to(root)),
+        })
+    return mapping
+
+
+def concept_tags_for_company(row: dict | None) -> list[str]:
+    if not row:
+        return []
+    tags = []
+    for column in CONCEPT_TO_CYCLE:
+        if str(row.get(column, "")).strip() == "1":
+            tags.append(column)
+    return tags
+
+
+def suggest_cycle_from_connection(chain: dict, concept_tags: list[str]) -> tuple[str, str, str]:
+    text = " ".join(str(chain.get(k, "")) for k in ["chain_code", "chain_name", "position", "subcategory", "upstream_companies", "downstream_companies"])
+    concept_cycles = [CONCEPT_TO_CYCLE[t] for t in concept_tags if t in CONCEPT_TO_CYCLE]
+    if re.search(r"記憶體|DRAM|NAND|Flash|美光|SK海力士", text):
+        return "Memory", "medium", "memory supply-chain evidence"
+    if re.search(r"通信網路|網路設備|交換器|路由器|光通訊|網路卡", text):
+        return "AI_Network_Infra", "medium", "network infrastructure supply-chain evidence"
+    if re.search(r"晶圓|半導體|IC/晶圓製造|IC設計|IP設計|封裝|測試|生產製程|導線架", text):
+        return "AI_Foundry_Packaging", "medium", "semiconductor/foundry/packaging chain evidence"
+    if re.search(r"自然語言處理|資料處理|資料分析|雲端平台|軟體服務|應用/系統軟體", text):
+        return "Cloud_AI_Compute", "low", "AI cloud/software/data-service chain evidence; not AI server rack"
+    if "人工智慧" in text or "5300" in text or re.search(r"運算設備|伺服器|電源供應器|散熱|液冷|機殼|機櫃|整櫃|工業電腦", text):
+        return "AI_Server_Rack", "medium", "AI server/rack hardware supply-chain evidence"
+    if re.search(r"手機|無線通訊設備|Apple|蘋果|高通|Qualcomm", text):
+        return "Smartphone", "medium", "mobile/smartphone supply-chain evidence"
+    if re.search(r"筆記型電腦|桌上型電腦|主機板|電腦及週邊", text):
+        return "PC_Consumer", "low", "broad PC/peripheral supply-chain evidence"
+    if concept_cycles:
+        return concept_cycles[0], "low", "company concept tag evidence without specific supply-chain split"
+    return "Other", "none", "no cycle-specific supply-chain or concept signal"
+
+
+def latest_active_weight_rows(df: pd.DataFrame) -> dict[str, list[dict]]:
+    active = df[df["status"].fillna("active").str.lower().eq("active")].copy()
+    rows_by_stock: dict[str, list[dict]] = {}
+    for stock, group in active.groupby("stock_code"):
+        periods = [str(p) for p in group["source_period"].fillna("").unique()]
+        latest = max(periods, key=period_rank) if periods else ""
+        latest_group = group[group["source_period"].fillna("").astype(str).eq(latest)] if latest else group
+        rows_by_stock[str(stock)] = latest_group.to_dict("records")
+    return rows_by_stock
+
+
+def mapped_cycles_for_segment(mapping: dict[tuple[str, str], list[dict]], stock: str, segment: str) -> str:
+    scope = SEGMENT_SCOPE_BY_COMPANY.get(stock, "")
+    items = mapping.get((scope, segment), [])
+    if not items:
+        return ""
+    return "; ".join(f"{item['canonical_cycle']}:{item['weight_pct']}%" for item in items if item.get("canonical_cycle"))
+
+
+def decide_connection_action(segment_name: str, current_cycles: str, suggested_cycle: str, confidence: str) -> str:
+    if suggested_cycle in {"", "Other"} or confidence == "none":
+        return "keep_no_cycle_action"
+    if suggested_cycle and suggested_cycle in current_cycles:
+        return "keep_evidence_supports_current_mapping"
+    normalized_segment = segment_name.strip().lower()
+    if re.search(r"other|others|service|unallocated|rounding|其他|勞務|服務|調整", normalized_segment):
+        return "keep_context_evidence_only"
+    if segment_name and BROAD_SEGMENT_RE.search(segment_name):
+        return "split_proxy_review"
+    if not current_cycles:
+        return "mapping_review_needed"
+    return "keep_context_evidence_only"
+
+
+def write_connection_evidence(path: Path, *, root: Path, universe_df: pd.DataFrame, df: pd.DataFrame) -> list[dict]:
+    concepts = load_company_concepts(root)
+    supplychains = load_supplychain_evidence(root)
+    segment_mapping = load_segment_cycle_mapping(root)
+    latest_weights = latest_active_weight_rows(df)
+    fields = [
+        "market", "stock_code", "company_name", "source_dataset", "chain_code", "chain_name", "position",
+        "subcategory", "upstream_companies", "downstream_companies", "concept_tags", "segment_name",
+        "current_segment_weight_pct", "current_segment_source_period", "current_mapped_cycle", "suggested_cycle",
+        "confidence", "evidence_reason", "action",
+    ]
+    rows: list[dict] = []
+    for _, urow in universe_df.iterrows():
+        stock = str(urow["stock_code"]).strip()
+        company = str(urow["company_name"]).strip()
+        concept_tags = concept_tags_for_company(concepts.get(stock))
+        chains = supplychains.get(stock, []) or [{
+            "source_dataset": "", "chain_code": "", "chain_name": "", "position": "", "subcategory": "",
+            "upstream_companies": "", "downstream_companies": "",
+        }]
+        weight_rows = latest_weights.get(stock) or [{
+            "segment_name": "", "weight_pct": "", "source_period": "",
+        }]
+        for chain in chains:
+            suggested, confidence, reason = suggest_cycle_from_connection(chain, concept_tags)
+            for seg in weight_rows:
+                segment_name = str(seg.get("segment_name", "")).strip()
+                current_cycles = mapped_cycles_for_segment(segment_mapping, stock, segment_name) if segment_name else ""
+                action = decide_connection_action(segment_name, current_cycles, suggested, confidence)
+                if action == "keep_no_cycle_action" and not chain.get("source_dataset"):
+                    continue
+                rows.append({
+                    "market": "Taiwan",
+                    "stock_code": stock,
+                    "company_name": company,
+                    "source_dataset": chain.get("source_dataset", ""),
+                    "chain_code": chain.get("chain_code", ""),
+                    "chain_name": chain.get("chain_name", ""),
+                    "position": chain.get("position", ""),
+                    "subcategory": chain.get("subcategory", ""),
+                    "upstream_companies": chain.get("upstream_companies", ""),
+                    "downstream_companies": chain.get("downstream_companies", ""),
+                    "concept_tags": ";".join(concept_tags),
+                    "segment_name": segment_name,
+                    "current_segment_weight_pct": seg.get("weight_pct", ""),
+                    "current_segment_source_period": seg.get("source_period", ""),
+                    "current_mapped_cycle": current_cycles,
+                    "suggested_cycle": suggested,
+                    "confidence": confidence,
+                    "evidence_reason": reason,
+                    "action": action,
+                })
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8-sig", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(rows)
+    return rows
 
 
 def read_health(root: Path) -> dict[str, str]:
@@ -354,6 +622,86 @@ def parse_financial_report_product_mix(rec: dict, path: Path, lines: list[str], 
     return rows
 
 
+
+def parse_advantech_segment_mix(rec: dict, path: Path, lines: list[str], seen: set[tuple]) -> list[dict]:
+    """Extract 2395 Advantech business-group revenue mix from MOPS financial reports."""
+    rows: list[dict] = []
+    if str(rec.get("stock_code", "")) != "2395" or not re.search(r"_(?:AI1|AI3)\.md$", path.name, re.I):
+        return rows
+
+    current_labels = [
+        "Intelligent Systems (iSystem)",
+        "Embedded (Embedded)",
+        "IoT Automation (iAutomation)",
+        "Intelligent Service (iService)",
+        "AS+ and Others",
+    ]
+    legacy_labels = [
+        "Industrial IoT (IIoT)",
+        "Embedded IoT (EIoT)",
+        "Applied Computing (ACG)",
+        "ESG / ICVG",
+        "Service IoT (SIoT)",
+        "AS+ and Others",
+    ]
+
+    def extract_amounts(block: str) -> list[int]:
+        compact = block.replace("|", " ")
+        compact = re.sub(r"(?<=[\d,])\s+(?=[\d,])", "", compact)
+        compact = re.sub(r"(?<=\d)\s+(?=,)", "", compact)
+        compact = re.sub(r"(?<=,)\s+(?=\d)", "", compact)
+        return [int(value.replace(",", "")) for value in re.findall(r"\d{1,3}(?:,\d{3})+", compact)]
+
+    start = None
+    for idx in range(len(lines)):
+        window = " ".join(re.sub(r"\s+", " ", value).strip() for value in lines[idx:idx + 4])
+        if "收入" in window and "細分" in window:
+            start = idx
+            break
+    if start is None:
+        start = 0
+
+    revenue_line = None
+    amounts: list[int] = []
+    for idx in range(start, min(len(lines), start + 320)):
+        if "部門收入" not in lines[idx]:
+            continue
+        block = "\n".join(lines[idx:min(len(lines), idx + 36)])
+        block_amounts = extract_amounts(block)
+        if len(block_amounts) >= 6:
+            current_values = block_amounts[:6]
+            current_total = current_values[5]
+            if current_total > 0 and abs(sum(current_values[:5]) - current_total) <= max(2, current_total * 0.01):
+                amounts = current_values
+                revenue_line = idx + 1
+                labels = current_labels
+                break
+        if len(block_amounts) >= 7:
+            legacy_values = block_amounts[:7]
+            legacy_total = legacy_values[6]
+            if legacy_total > 0 and abs(sum(legacy_values[:6]) - legacy_total) <= max(2, legacy_total * 0.01):
+                amounts = legacy_values
+                revenue_line = idx + 1
+                labels = legacy_labels
+                break
+    if revenue_line is None or not amounts:
+        return rows
+
+    total = amounts[-1]
+    segment_amounts = amounts[:-1]
+    if total <= 0 or abs(sum(segment_amounts) - total) > max(2, total * 0.01):
+        return rows
+
+    evidence = (
+        f"Advantech MOPS financial report business-group revenue split: "
+        + " / ".join(f"{label} {amount:,}" for label, amount in zip(labels, segment_amounts))
+        + f" / total {total:,}; converted to weights."
+    )
+    for label, amount in zip(labels, segment_amounts):
+        pct = round(amount / total * 100, 1)
+        add_candidate(rows, seen, rec, path, revenue_line, label, pct, evidence)
+    return rows
+
 def extract_mops_candidates(mops_records: list[dict]) -> list[dict]:
     rows: list[dict] = []
     seen: set[tuple] = set()
@@ -364,6 +712,7 @@ def extract_mops_candidates(mops_records: list[dict]) -> list[dict]:
         except Exception:
             continue
         rows.extend(parse_financial_report_product_mix(rec, path, lines, seen))
+        rows.extend(parse_advantech_segment_mix(rec, path, lines, seen))
     return rows
 
 
@@ -854,6 +1203,38 @@ def extract_novatek_candidates(rec: dict, path: Path, lines: list[str], seen: se
             break
     return rows
 
+
+def extract_advantech_ir_candidates(rec: dict, path: Path, lines: list[str], seen: set[tuple]) -> list[dict]:
+    rows: list[dict] = []
+    if str(rec.get("stock_code", "")) != "2395" or "_ir" not in path.name.lower():
+        return rows
+
+    content = "\n".join(lines)
+    if "Performance By Sector" not in content:
+        return rows
+
+    label_patterns = [
+        ("IoT Automation (iAutomation)", r"IoT\s+Automation\s*\n\s*\(iAutomation\)"),
+        ("Intelligent Systems (iSystem)", r"Intelligent\s+Systems\s*\n\s*\(iSystems?\)"),
+        ("Embedded (Embedded)", r"Embedded\s*\n\s*\(Embedded\)"),
+        ("Intelligent Service (iService)", r"Intelligent\s+Service\s*\n\s*\(iService\)"),
+        ("AS+ and Others", r"Advantech\s+Service\+\s*\n\s*/Others\s*\n\s*\(AS\+\)"),
+    ]
+
+    for label, pattern in label_patterns:
+        match = re.search(pattern + r"\s*\n\s*(\d{1,3}(?:,\d{3})*)\s*\n\s*(\d{1,3}(?:\.\d+)?)%", content, re.I)
+        if not match:
+            continue
+        line_no = content[:match.start()].count("\n") + 1
+        revenue = match.group(1)
+        pct = float(match.group(2))
+        evidence = f"Advantech official IR 1Q26 Performance By Sector: {label} revenue US${revenue}mn, Rev.% {pct:g}%."
+        add_candidate(rows, seen, rec, path, line_no, label, pct, evidence)
+
+    if rows and abs(sum(float(row["weight_pct_candidate"]) for row in rows) - 100.0) <= 1.0:
+        return rows
+    return []
+
 def extract_tsmc_candidates(rec: dict, path: Path, lines: list[str], seen: set[tuple]) -> list[dict]:
     rows: list[dict] = []
     if str(rec.get("stock_code", "")) != "2330":
@@ -904,6 +1285,7 @@ def extract_candidates(md_records: list[dict], max_lines_per_file: int = 40) -> 
         structured_rows.extend(extract_delta_candidates(rec, path, lines, seen))
         structured_rows.extend(extract_hon_hai_candidates(rec, path, lines, seen))
         structured_rows.extend(extract_novatek_candidates(rec, path, lines, seen))
+        structured_rows.extend(extract_advantech_ir_candidates(rec, path, lines, seen))
         structured_rows.extend(extract_tsmc_candidates(rec, path, lines, seen))
         candidates.extend(structured_rows)
         if str(rec.get("stock_code", "")) == "2317" and "transcript" in path.name.lower():
@@ -1094,6 +1476,19 @@ def align_quarterly_rows_to_canonical_segments(rows: list[dict], df: pd.DataFram
     return sorted(aligned, key=lambda r: (r["stock_code"], period_rank(r["source_period"]), normalize_segment_hint(r["segment_hint"]), str(r.get("line_no", ""))))
 
 
+def normalize_backtrace_source(source: str) -> str:
+    source = str(source or "")
+    if not source.lower().endswith(".pdf"):
+        return source
+    candidates = [str(Path(source).with_suffix(".md"))]
+    if "/app/projects/InvestorConference/" in source and "/app/projects/InvestorConference/data/" not in source:
+        candidates.append(source.replace("/app/projects/InvestorConference/", "/app/projects/InvestorConference/data/").rsplit(".", 1)[0] + ".md")
+    for candidate in candidates:
+        if Path(candidate).exists():
+            return candidate
+    return source
+
+
 def seed_active_df_candidates(rows: list[dict], df: pd.DataFrame) -> list[dict]:
     combined = list(rows)
     existing_keys = {(str(r.get("stock_code", "")), str(r.get("source_period", "")), normalize_segment_hint(str(r.get("segment_hint", "")))) for r in rows}
@@ -1112,6 +1507,7 @@ def seed_active_df_candidates(rows: list[dict], df: pd.DataFrame) -> list[dict]:
         if (stock, period) in periods_with_candidate_evidence:
             continue
         segment = clean_business_group_hint(str(r.get("segment_name", "")))
+        source = normalize_backtrace_source(str(r.get("Source (link)", "")))
         try:
             pct = float(r.get("weight_pct", 0))
         except (TypeError, ValueError):
@@ -1121,8 +1517,8 @@ def seed_active_df_candidates(rows: list[dict], df: pd.DataFrame) -> list[dict]:
             combined.append({
                 "stock_code": stock,
                 "source_period": period,
-                "source_md": str(r.get("Source (link)", "")),
-                "md_file": str(r.get("Source (link)", "")),
+                "source_md": source,
+                "md_file": source,
                 "line_no": 1,
                 "segment_hint": segment,
                 "weight_pct_candidate": pct,
@@ -1223,7 +1619,7 @@ def current_csv_period_by_stock(df: pd.DataFrame) -> dict[str, str]:
     return result
 
 
-def write_report(path: Path, *, root: Path, ic_root: Path, universe_df: pd.DataFrame, universe_path: Path, focus_df: pd.DataFrame, focus_path: Path | None, scan_stocks: set[str], df: pd.DataFrame, health: dict, weight_issues: list[str], md_records: list[dict], md_issues: list[dict], candidates: list[dict], quarterly_rows: list[dict], quarterly_history_path: Path) -> None:
+def write_report(path: Path, *, root: Path, ic_root: Path, universe_df: pd.DataFrame, universe_path: Path, focus_df: pd.DataFrame, focus_path: Path | None, scan_stocks: set[str], df: pd.DataFrame, health: dict, weight_issues: list[str], md_records: list[dict], md_issues: list[dict], candidates: list[dict], quarterly_rows: list[dict], quarterly_history_path: Path, connection_evidence_path: Path, connection_evidence_rows: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     current_periods = current_csv_period_by_stock(df)
     latest_md = latest_md_period_by_stock(md_records)
@@ -1359,6 +1755,39 @@ def write_report(path: Path, *, root: Path, ic_root: Path, universe_df: pd.DataF
         "- Official CSV updates require weights to sum to 100% per stock and a source/evidence note for every segment.",
         "",
     ]
+    review_rows = [r for r in connection_evidence_rows if str(r.get("action", "")).endswith("review") or "review" in str(r.get("action", ""))]
+    if review_rows:
+        deduped: dict[tuple[str, str, str, str], dict] = {}
+        confidence_rank = {"high": 3, "medium": 2, "low": 1, "none": 0, "": 0}
+        for row in review_rows:
+            key = (
+                str(row.get("stock_code", "")),
+                str(row.get("segment_name", "")),
+                str(row.get("current_mapped_cycle", "")),
+                str(row.get("suggested_cycle", "")),
+            )
+            previous = deduped.get(key)
+            if previous is None or confidence_rank.get(str(row.get("confidence", "")), 0) > confidence_rank.get(str(previous.get("confidence", "")), 0):
+                deduped[key] = row
+        review_summary = sorted(
+            deduped.values(),
+            key=lambda r: (str(r.get("stock_code", "")), str(r.get("segment_name", "")), str(r.get("suggested_cycle", ""))),
+        )
+        lines += [
+            "## Cycle Connection Evidence Review Queue",
+            "",
+            f"Raw rows requiring review: `{len(review_rows)}`; deduped stock/segment/cycle pairs: `{len(review_summary)}`",
+            "",
+        ]
+        lines += ["| Stock | Segment | Current cycle | Suggested cycle | Confidence | Action | Evidence |", "|---|---|---|---|---|---|---|"]
+        for row in review_summary[:40]:
+            lines.append(
+                f"| `{row.get('stock_code', '')}` | {str(row.get('segment_name', ''))[:60]} | "
+                f"{str(row.get('current_mapped_cycle', ''))[:80]} | `{row.get('suggested_cycle', '')}` | "
+                f"`{row.get('confidence', '')}` | `{row.get('action', '')}` | {str(row.get('evidence_reason', ''))[:100]} |"
+            )
+        lines.append("")
+
     if weight_issues:
         lines += ["## Weight Sum Issues", ""]
         lines += [f"- {issue}" for issue in weight_issues]
@@ -1400,9 +1829,11 @@ def main() -> int:
     out_csv = root / "output" / "company_segment_weight_candidates_taiwan.csv"
     out_quarterly_csv = root / "output" / "company_segment_weights_quarterly_candidates_taiwan.csv"
     out_md = root / "output" / "company_segment_weights_qa_taiwan.md"
+    out_connection_csv = root / "output" / "company_cycle_connection_evidence_taiwan.csv"
     write_candidates(out_csv, candidates)
     quarterly_rows = write_quarterly_history(out_quarterly_csv, candidates, universe_df, df)
-    write_report(out_md, root=root, ic_root=ic_root, universe_df=universe_df, universe_path=universe_path, focus_df=focus_df, focus_path=focus_path, scan_stocks=stocks, df=df, health=health, weight_issues=weight_issues, md_records=md_records, md_issues=md_issues, candidates=candidates, quarterly_rows=quarterly_rows, quarterly_history_path=out_quarterly_csv)
+    connection_rows = write_connection_evidence(out_connection_csv, root=root, universe_df=universe_df, df=df)
+    write_report(out_md, root=root, ic_root=ic_root, universe_df=universe_df, universe_path=universe_path, focus_df=focus_df, focus_path=focus_path, scan_stocks=stocks, df=df, health=health, weight_issues=weight_issues, md_records=md_records, md_issues=md_issues, candidates=candidates, quarterly_rows=quarterly_rows, quarterly_history_path=out_quarterly_csv, connection_evidence_path=out_connection_csv, connection_evidence_rows=connection_rows)
 
     print(f"Project root: {root}")
     print(f"InvestorConference root: {ic_root}")
@@ -1417,6 +1848,7 @@ def main() -> int:
     print(f"Weight sum issues: {len(weight_issues)}")
     print(f"Candidate rows: {len(candidates)} ({len(ir_candidates)} IR + {len(mops_candidates)} MOPS financial report) -> {out_csv}")
     print(f"Quarterly history candidates: {out_quarterly_csv}")
+    print(f"Cycle connection evidence: {len(connection_rows)} rows -> {out_connection_csv}")
     print(f"QA report: {out_md}")
 
     if args.strict and (md_issues or weight_issues):
