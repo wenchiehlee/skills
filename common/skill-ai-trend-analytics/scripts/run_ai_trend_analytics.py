@@ -246,6 +246,7 @@ def build_coverage(root: Path) -> tuple[pd.DataFrame, list[dict[str, object]]]:
         if col not in perf.columns:
             perf[col] = ""
     perf_keys = set(map(tuple, perf[key_cols].astype(str).to_records(index=False)))
+    perf_stock_cycle_keys = set(map(tuple, perf[["market_scope", "stock_code", "canonical_cycle"]].astype(str).to_records(index=False)))
     perf_impact = performance_impact(perf, key_cols)
 
     rows = []
@@ -258,6 +259,12 @@ def build_coverage(root: Path) -> tuple[pd.DataFrame, list[dict[str, object]]]:
         if cycle == "Other":
             continue
         if not cycle.startswith(AI_CYCLE_PREFIXES):
+            continue
+        if (
+            str(row.get("source_type", "")) == "cycle_mapping_only"
+            and not str(row.get("source_period", ""))
+            and (market, stock, cycle) in perf_stock_cycle_keys
+        ):
             continue
 
         key = (market, stock, cycle, segment)
@@ -357,7 +364,7 @@ def build_coverage(root: Path) -> tuple[pd.DataFrame, list[dict[str, object]]]:
                 "recalculation_required": "Yes",
                 "before_after_result": "",
                 "closed_date": "",
-                "version": "0.2.1",
+                "version": "0.2.2",
             })
             issue_id += 1
 

@@ -70,6 +70,8 @@ runner 會讀取：
 - `P2`：非重大 fallback mapping、single snapshot segment weight、stale performance source。
 - `P3`：其他低風險資料註記。
 
+若 `cycle_mapping_only` row 只是歷史 segment name 或 alias，且同一公司/同一 canonical cycle 已有正式 performance row，應排除該 alias row，避免把 superseded mapping 誤判為 `missing_performance`。
+
 ## 輸出回報
 
 完成後回報：

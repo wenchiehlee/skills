@@ -51,7 +51,8 @@ python skills/skill-company-cycle-index/scripts/run_company_cycle_index.py --mar
 2. 讀取 raw revenue 最新月份與申報筆數。
 3. 檢查 `data/company_segment_weights.csv` 存在、欄位完整且有可用 `market=Taiwan` rows，並回報台灣 weighted company 數、segment row 數與最新 `source_period`。
 4. 執行 `python3 scripts/build_company_cycle_index_taiwan.py`，重建 cycle index CSV；builder 會透過 `load_segment_weights()` 讀取 `data/company_segment_weights.csv`，按 `stock_code + source_period` 保留季度/年度/月度權重，再用 `data/segment_to_cycle_mapping.csv` 將公司分項營收權重分配到 canonical cycles。月營收 allocation 優先使用當季或最近過去可得權重；若早期月份沒有過去可得權重，為避免 100% fallback cycle 切換成 segment weights 造成假斷崖，會使用最早可得 snapshot 作為歷史 proxy。README 必須把 single snapshot proxy 風險寫成 caveat，並用 `segment_source_periods` / `yoy_data_quality` 標示可比性。
-5. 確認 `company_cycle_mapping.csv` 的 `segment_weight_override=Y` 與 `output/company_cycle_major_weights.csv` 有輸出，確保 segment weights 真的進入 cycle allocation，而不是只使用單一公司 cycle 分類。
+5. 接著執行 `python3 scripts/build_company_canonical_cycle_mapping.py` 與 `python3 scripts/build_company_cycle_performance.py`，確保 `output/company_canonical_cycle_mapping.csv`、`output/company_canonical_cycle_performance*.csv/md` 與最新 cycle mapping 一致，避免 AI trend analytics 讀到舊 canonical input。
+6. 確認 `company_cycle_mapping.csv` 的 `segment_weight_override=Y` 與 `output/company_cycle_major_weights.csv` 有輸出，確保 segment weights 真的進入 cycle allocation，而不是只使用單一公司 cycle 分類。
 6. 確認 `company_cycle_intensity_taiwan.csv` 與 `company_cycle_intensity_by_symbol_taiwan.csv` 的最新月份。
 7. 若 derived CSV 最新月份落後 raw revenue 最新月份，直接失敗，避免用舊資料產圖。
 8. 執行 `CI=1 python3 scripts/plot_company_cycle_index_taiwan.py`，產生 `output/company_cycle_index_taiwan.png`。
@@ -106,6 +107,8 @@ US segment candidate HTML (`output/company_segment_weights_quarterly_candidates_
 
 ```bash
 python3 scripts/build_company_cycle_index_taiwan.py
+python3 scripts/build_company_canonical_cycle_mapping.py
+python3 scripts/build_company_cycle_performance.py
 CI=1 python3 scripts/plot_company_cycle_index_taiwan.py
 
 python3 scripts/build_company_cycle_index_united_states.py

@@ -472,6 +472,8 @@ def run_taiwan(root: Path) -> None:
     )
 
     run([sys.executable, "scripts/build_company_cycle_index_taiwan.py"], root)
+    run([sys.executable, "scripts/build_company_canonical_cycle_mapping.py"], root)
+    run([sys.executable, "scripts/build_company_cycle_performance.py"], root)
 
     override_count, major_weight_rows = built_segment_weight_summary(root)
     print(

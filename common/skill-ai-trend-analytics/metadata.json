@@ -1,5 +1,5 @@
 {
   "name": "skill-ai-trend-analytics",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Build AI trend coverage, validity, issue register, and inference quality-gate outputs from company canonical cycle data."
 }
