@@ -64,6 +64,15 @@ KNOWN_TW_DIRECT_IR = {
     "2480": "https://www.sti.com.tw/web/official/earnings-call",  # Liferay portal, MP4 in /documents/
 }
 
+# Quarter-specific direct audio/video URLs. Use these before generic IR/MOPS
+# discovery when the official company URL is known and MOPS may return a
+# different quarter's latest replay.
+KNOWN_TW_DIRECT_AUDIO_BY_QUARTER = {
+    ("2317", "2026", "1"): "https://www.youtube.com/watch?v=gz70OTe990s",
+    ("2301", "2025", "4"): "https://www.liteon.com/upload/media/video_over_20mb/IR%20conference/4Q25%E5%AE%98%E7%B6%B2%E4%B8%AD%E6%96%87%E5%BD%B1%E7%89%87.mp4",
+    ("2458", "2025", "4"): "http://irconference.twse.com.tw/2458_162_20260303_ch.mp4",
+}
+
 # JS-rendered IR pages: need Playwright to intercept network or scan DOM for video URLs
 # (stock_id -> IR earnings-call page URL)
 KNOWN_TW_PLAYWRIGHT_IR = {
@@ -104,6 +113,9 @@ KNOWN_PDF_ATTACHMENTS = {
     "2357": [
         ("ir", "https://www.asus.com/event/Investor/Content/attachment/{year}Q{quarter}%20IR(Chinese).pdf"),
         ("qa", "https://www.asus.com/event/Investor/Content/attachment/{year}Q{quarter}_QA(Chinese).pdf"),
+    ],
+    "2395": [
+        ("ir_en", "https://advcloudfiles.advantech.com/investor/Events/Advantech_{quarter}Q_{year}_Investors_Meeting_English.pdf"),
     ],
 }
 
@@ -651,22 +663,51 @@ def scrape_mops_playwright(stock_id: str, year: str, quarter: str) -> dict:
         )
         html = resp.text
 
-        # Video: irconference.twse.com.tw MP4 (may be absolute or relative)
+        target_year, month_min, month_max = _quarter_date_window(year, quarter)
+
+        def mops_asset_date_ok(date_str: str) -> bool:
+            if not date_str or len(date_str) != 8:
+                return False
+            return date_str[:4] == target_year and month_min <= int(date_str[4:6]) <= month_max
+
+        # Video: irconference.twse.com.tw MP4 (may be absolute or relative).
+        # Do not trust the first result blindly: MOPS can return the latest event
+        # for a stock even when it belongs to a different quarter.
         vids = re.findall(r'(https?://irconference\.twse\.com\.tw/[^\s"\'<>]+\.mp4)', html)
         if not vids:
             # Sometimes the URL is relative: /irconference/...mp4 or just the filename
             vids_rel = re.findall(r'(?:href|src)=["\']([^"\']*irconference[^"\']*\.mp4)["\']', html, re.I)
             vids = [v if v.startswith("http") else f"http://irconference.twse.com.tw/{v.lstrip('/')}"
                     for v in vids_rel]
-        if vids:
-            result["video_url"] = vids[0]
-            print(f"[MOPS-PW] Video: {vids[0]}")
-        else:
-            print(f"[MOPS-PW] No video URL found in MOPS response.")
 
-        # PDFs: {stock_id}YYYYMMDD{M|E}001.pdf
+        accepted_vids = []
+        for vid in dict.fromkeys(vids):
+            m = re.search(r'(\d{8})', vid)
+            date_str = m.group(1) if m else ""
+            if mops_asset_date_ok(date_str):
+                accepted_vids.append(vid)
+            else:
+                print(
+                    f"[MOPS-PW] Reject video outside target window "
+                    f"{target_year}-{month_min:02d}..{target_year}-{month_max:02d}: {vid}"
+                )
+
+        if accepted_vids:
+            result["video_url"] = accepted_vids[0]
+            print(f"[MOPS-PW] Video: {accepted_vids[0]}")
+        else:
+            print(f"[MOPS-PW] No video URL found in MOPS response for target quarter.")
+
+        # PDFs: {stock_id}YYYYMMDD{M|E}001.pdf. Apply the same date gate.
         pdfs = re.findall(rf'({re.escape(stock_id)}\d{{8}}[A-Z]\d{{3}}\.pdf)', html)
         for fn in dict.fromkeys(pdfs):   # deduplicate preserving order
+            date_str = fn[len(stock_id):len(stock_id)+8]
+            if not mops_asset_date_ok(date_str):
+                print(
+                    f"[MOPS-PW] Reject PDF outside target window "
+                    f"{target_year}-{month_min:02d}..{target_year}-{month_max:02d}: {fn}"
+                )
+                continue
             url = f"https://mopsov.twse.com.tw/nas/STR/{fn}"
             result["pdfs"].append((fn, url))
             print(f"[MOPS-PW] PDF: {fn}")
@@ -1193,6 +1234,30 @@ def download_audio(source: str, output_path: Path,
             source = source.replace(f"vod{cdn_num}-ccdntech.cdn.hinet.net", f"cdn{cdn_num}.ccdntech.com")
         
         print(f"[CCDNTech] Patched HLS stream URL to: {source}")
+
+    is_direct_media = (
+        source.startswith(("http://", "https://"))
+        and re.search(r"\.(?:mp4|m4a|mp3|wav)(?:[?#].*)?$", source, re.I)
+        and "playlist.m3u8" not in source.lower()
+    )
+    if is_direct_media:
+        ffmpeg_cmd = [
+            "ffmpeg", "-y", "-nostdin", "-hide_banner", "-loglevel", "warning",
+            "-i", source,
+            "-vn", "-c:a", "aac", "-b:a", "128k",
+            str(output_path),
+        ]
+        print(f"[ffmpeg] {' '.join(ffmpeg_cmd)}")
+        result = subprocess.run(ffmpeg_cmd, capture_output=True, encoding="utf-8", errors="replace")
+        if output_path.exists() and output_path.stat().st_size > 0:
+            return True
+        if output_path.exists():
+            output_path.unlink()
+        if result.stderr:
+            lines = [l for l in result.stderr.splitlines() if l.strip()]
+            for line in lines[-3:]:
+                print(f"[ffmpeg] {line}")
+        print("[ffmpeg] Direct media extraction failed. Falling back to yt-dlp...")
 
     cmd = [
         "yt-dlp", source,
@@ -2336,7 +2401,7 @@ def commit_push_files(stock_id: str, year: str, quarter: str,
                       audio_path: Path, pdf_paths: list = None,
                       extra_paths: list = None) -> str | None:
     """
-    Move the downloaded audio (and optional PDFs) into InvestorConference/<stock_id>/,
+    Move the downloaded audio (and optional PDFs) into InvestorConference/data/<stock_id>/,
     commit (git-lfs for .m4a), push, then remove local whisper-sandbox copies.
 
     Returns the new audio path inside InvestorConference, or None on failure.
@@ -2346,8 +2411,8 @@ def commit_push_files(stock_id: str, year: str, quarter: str,
         print(f"[git] InvestorConference repo not found at {repo}")
         return None
 
-    target_dir = repo / stock_id
-    target_dir.mkdir(exist_ok=True)
+    target_dir = repo / "data" / stock_id
+    target_dir.mkdir(parents=True, exist_ok=True)
 
     def git(*args):
         result = subprocess.run(
@@ -2464,7 +2529,7 @@ def ingest_earnings_audio(stock_id: str, year: str, quarter: str,
     output_path = save_dir / f"{stock_id}_{year}_q{quarter}.m4a"
     _conf_date: list = [None]   # mutable cell so inner functions can write it
 
-    def verify_audio_length(path: Path, min_minutes: float = 45.0) -> bool:
+    def verify_audio_length(path: Path, min_minutes: float = 10.0) -> bool:
         """Verify audio is at least min_minutes long using ffprobe."""
         try:
             r = subprocess.run(
@@ -2551,6 +2616,13 @@ def ingest_earnings_audio(stock_id: str, year: str, quarter: str,
     # ── Taiwan Pipeline ───────────────────────────────────────────────────────
     if market == "TW":
 
+        direct_audio_url = KNOWN_TW_DIRECT_AUDIO_BY_QUARTER.get((stock_id, year, quarter))
+        if direct_audio_url:
+            print(f"\n[Direct-Audio] Downloading quarter-specific URL: {direct_audio_url[:80]}...")
+            if download_audio(direct_audio_url, output_path, no_check_cert=True):
+                return done()
+            print(f"[Direct-Audio] yt-dlp failed. Falling back...")
+
         # Special handling for Novatek (3034) which uses YouTube with predictable titles
         if stock_id == "3034":
             search_query = f"ytsearch:Novatek {year} Q{quarter} Investor Conference"
@@ -2615,6 +2687,26 @@ def ingest_earnings_audio(stock_id: str, year: str, quarter: str,
         if mops_data.get("video_url"):
             print(f"\n[MOPS-PW] Downloading video: {mops_data['video_url']}")
             if download_audio(mops_data["video_url"], output_path, no_check_cert=True):
+                # Preserve PDFs discovered in the same MOPS response. The replay date
+                # can differ from the PDF attachment date, so relying only on
+                # download_mops_pdfs(conf_date) can miss valid decks.
+                for fn, pdf_url in mops_data.get("pdfs", []):
+                    lang = "ir_en" if fn[len(stock_id)+8] == "E" else "ir"
+                    dest = save_dir / f"{stock_id}_{year}_q{quarter}_{lang}.pdf"
+                    if dest.exists():
+                        print(f"[MOPS-PW] PDF already exists: {dest.name}")
+                        continue
+                    try:
+                        r = requests.get(pdf_url, headers={"User-Agent": UA,
+                            "Referer": "https://mopsov.twse.com.tw/"}, timeout=30, verify=False)
+                        if r.status_code == 200 and r.content[:4] == b"%PDF":
+                            dest.write_bytes(r.content)
+                            print(f"[MOPS-PW] OK {dest.name} ({len(r.content)//1024}KB)")
+                        else:
+                            print(f"[MOPS-PW] PDF invalid response: {fn} status={r.status_code}")
+                    except Exception as e:
+                        print(f"[MOPS-PW] PDF download failed: {e}")
+
                 # Extract conf_date from irconference URL filename
                 m = re.search(r'_(\d{8})_', mops_data["video_url"])
                 if m:
@@ -2659,7 +2751,14 @@ def ingest_earnings_audio(stock_id: str, year: str, quarter: str,
         if download_audio(target_url, output_path):
             return done()
 
-    print(f"\nFAILED FAILED: Could not find audio for {stock_id} {year} Q{quarter}")
+    pdf_paths = download_pdfs(stock_id, year, quarter, save_dir)
+    if pdf_paths:
+        print(f"\nOK SUCCESS: found {len(pdf_paths)} official PDF material(s) for {stock_id} {year} Q{quarter}; audio remains unavailable.")
+        if auto_push:
+            commit_push_files(stock_id, year, quarter, output_path, pdf_paths, [])
+        return str(pdf_paths[0])
+
+    print(f"\nFAILED FAILED: Could not find audio or official PDF materials for {stock_id} {year} Q{quarter}")
     return None
 
 

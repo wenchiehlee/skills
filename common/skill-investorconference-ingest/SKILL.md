@@ -1,6 +1,6 @@
 ---
 name: skill-investorconference-ingest
-version: 1.2.6
+version: 1.2.7
 description: 投資人說明會（法說會）智慧影音與簡報下載與管理 Ingest 模組（支援美股與台股）
 ---
 
