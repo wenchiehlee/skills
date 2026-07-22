@@ -200,6 +200,17 @@ skills:
   source: ''
   updated_at: ''
   revised_at: '2026-07-18'
+- name: skill-stock-universe-onboarding
+  group: common
+  path: common/skill-stock-universe-onboarding
+  version: 1.0.0
+  description: Add stocks or tickers to upstream ConceptStocks and TAIEX monitor/focus
+    source lists without editing generated downstream outputs.
+  category: financial-data
+  maintainer: wenchiehlee
+  source: biztrends.TW / ConceptStocks / Selenium-Actions.Auction
+  updated_at: '2026-07-22'
+  revised_at: '2026-07-22'
 - name: skill-taiex-compare
   group: common
   path: common/skill-taiex-compare
