@@ -3,38 +3,45 @@
 This TODO tracks the next improvements needed to move `conference-digest` from
 company-guidance comparison toward fuller market-expectation analysis.
 
-## Current coverage
+## Current Yahoo.Finance repo coverage
 
-`data/Yahoo.Finance/raw_yahoo_finance_consensus_history.csv` is usable as a
-repo-synced market consensus source for:
+`../Yahoo.Finance` currently has more than one consensus file. Treat them as
+different layers, not one generic market-consensus source.
 
-| Need | Current support | Source fields |
+| File | Useful for digest | Important fields / notes |
 | :--- | :--- | :--- |
-| Current-quarter revenue consensus | Supported | `revenue_0q_avg` |
-| Current-quarter EPS consensus | Supported | `earnings_0q_avg` |
-| Next-quarter revenue context | Supported, partial | `revenue_1q_avg` |
-| Next-quarter EPS context | Supported, partial | `earnings_1q_avg` |
-| Current-year revenue/EPS consensus | Supported | `revenue_0y_avg`, `earnings_0y_avg` |
-| Next-year revenue/EPS consensus | Supported | `revenue_1y_avg`, `earnings_1y_avg` |
+| `data/reports/raw_yahoo_finance_consensus_history.csv` | Historical revenue/EPS consensus snapshots reconstructed from Wayback | `earnings_0q_avg`, `earnings_1q_avg`, `earnings_0y_avg`, `earnings_1y_avg`, `revenue_0q_avg`, `revenue_1q_avg`, `revenue_0y_avg`, `revenue_1y_avg`; use latest `forecast_asof_date <= event_date` |
+| `data/reports/raw_yahoo_finance_consensus_daily.csv` | Daily accumulated revenue/EPS and revision signal history | EPS/revenue yearly fields plus `eps_trend_*`, `eps_beat_count_4q`, `eps_surprise_avg_4q_pct`; currently lighter than `summary_latest` and does not retain quarter revenue columns |
+| `data/reports/raw_yahoo_finance_summary_latest.csv` | Latest snapshot and cross-check context | Current Yahoo revenue/EPS consensus, EPS revision counts, last earnings surprise, FactSet cross-check, target-price context |
+| `data/reports/raw_yahoo_finance.csv` | Long-format raw Yahoo analyst table | Includes mean/high/low/count style metrics for revenue/EPS and analyst target prices; useful to derive dispersion if normalized |
+| `data/reports/raw_factset_detailed_report.csv` | FactSet annual EPS/revenue consensus and dispersion | Has analyst count, target price, annual EPS/revenue high/low/avg/median by year; no gross margin, operating margin, CapEx or segment fields observed |
+| `data/reports/raw_yahoo_finance_daily_price.csv` | Pre/post event price reaction and valuation context input | Daily OHLCV for TW/US/macro symbols, about 10-year retention |
+| `data/reports/raw_yahoo_finance_intraday_60m.csv` | Intraday event-window reaction where available | 60-minute OHLCV, roughly last 2-3 years depending on symbol |
 
-Usage rule: select the latest row where `forecast_asof_date <= event_date`.
-If the selected row is more than 45 days before the event, lower confidence.
+Usage rule for non-lookahead consensus: select the latest row where
+`forecast_asof_date <= event_date`. If the selected row is more than 45 days
+before the event, lower confidence. For post-call estimate revision, compare the
+last row before the event with the first reliable row after the event.
 
-## Known gaps
+## Revised gap assessment
 
-Yahoo consensus history is not enough for a full conference-digest expectation
-framework. Keep these fields as `NA` unless another source is explicitly
-available:
+Yahoo.Finance repo already covers some items that were previously listed as
+fully missing. Keep the distinction below:
 
-| Gap | Why Yahoo consensus is insufficient | Needed data |
-| :--- | :--- | :--- |
-| Gross margin beat/miss | No gross margin consensus field | FactSet/Bloomberg/Visible Alpha/Koyfin/Tikr, broker models, or an internal consensus table |
-| Operating margin beat/miss | No operating margin consensus field | Same as above |
-| CapEx surprise | No CapEx consensus field | Broker models, company prior guidance, capex tracker, supply-chain capacity data |
-| Segment/platform surprise | No segment-level forecast | Analyst models, company historical segment mix, customer/supply-chain read-through |
-| Market-implied expectation | Consensus does not show what price already discounts | Pre-event price, valuation, volume, options implied move, peer moves, news sentiment |
-| Estimate revision path | Need before/after time series around the event | Consensus snapshots before and after event date |
-| Individual analyst dispersion | Yahoo file only stores averages | Analyst-level estimates, high/low/median/count/stdev |
+| Need | Current status | Available source | Remaining gap |
+| :--- | :--- | :--- | :--- |
+| Revenue beat/miss | Supported | Yahoo consensus history / raw Yahoo / FactSet annual revenue | Quarter mapping and stale-date lint still needed |
+| EPS beat/miss | Supported | Yahoo consensus history / raw Yahoo / FactSet annual EPS | EPS quality adjustment still requires company filings |
+| Next-quarter revenue/EPS context | Supported, partial | Yahoo consensus history / summary latest | Needs automated cutoff and revision-window extraction |
+| Annual analyst dispersion | Partly supported | FactSet high/low/avg/median and analyst count; raw Yahoo high/low/count | Mostly annual, not model-line or segment-level |
+| Estimate revision path | Partly supported | `raw_yahoo_finance_consensus_daily.csv`, `summary_latest` history from append pipeline | Needs before/after event extractor and stable field set including quarter revenue |
+| Market-implied expectation / price reaction | Partly supported | Daily price and 60m intraday price files | Needs event-window script, peer/market adjustment, valuation and options-implied move |
+| Target-price context | Partly supported | Yahoo target price and FactSet target price | Target price is not the same as event-implied expectation |
+| Gross margin beat/miss | Missing | None observed in Yahoo.Finance repo | Need FactSet/Bloomberg/Visible Alpha/Koyfin/Tikr, broker models, or internal consensus table |
+| Operating margin beat/miss | Missing | None observed | Same as above |
+| CapEx surprise | Missing | None observed | Need broker models, prior company guidance, capex tracker, supply-chain capacity data |
+| Segment/platform surprise | Missing in Yahoo.Finance repo | ConceptStocks may have company segment metadata, but not analyst segment forecast | Need analyst models, historical segment mix, customer/supply-chain read-through |
+| Individual analyst-level estimates | Missing | Current files store aggregates only | Need analyst-level rows or source report parsing with contributor identity |
 
 ## Proposed data additions
 
@@ -43,10 +50,10 @@ Add a repo-local expectation data layer under one of these locations:
 | Path | Purpose |
 | :--- | :--- |
 | `data/Yahoo.Finance/raw_yahoo_finance_consensus_history.csv` | Source-synced revenue/EPS consensus history |
-| `data/market_expectations/event_price_reactions.csv` | Pre/post event stock returns, volume, valuation and implied move |
+| `data/market_expectations/event_price_reactions.csv` | Derived from Yahoo daily/intraday price: pre/post event returns, volume, market/peer-adjusted reaction and valuation context |
 | `data/market_expectations/company_guidance_history.csv` | Normalized prior company guidance ranges and midpoint deltas |
 | `data/market_expectations/model_line_consensus.csv` | Gross margin, operating margin, CapEx, FCF and segment consensus |
-| `data/market_expectations/estimate_revisions.csv` | Before/after EPS and revenue consensus revisions |
+| `data/market_expectations/estimate_revisions.csv` | Derived from Yahoo consensus daily/history: before/after EPS and revenue consensus revisions |
 | `definitions/market_expectations_definition.md` | Column definitions for the new expectation layer |
 
 ## Proposed scripts
