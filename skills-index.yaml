@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-07-22'
+generated_at: '2026-07-23'
 skills:
 - name: skill-adb-gadget
   group: common
@@ -107,7 +107,8 @@ skills:
   group: common
   path: common/skill-investorconference-digest
   version: 2.4.4
-  description: 法說會/earnings call 與財報結果 digest SOP；支援 FIN/GT/IR/Q&A、Celine 財報結果、公司財報文件、Yahoo consensus、預期差、模型修正路徑與美股對台股 read-through。
+  description: 法說會/earnings call 與財報結果 digest SOP；支援 FIN/GT/IR/Q&A、Celine 財報結果、公司財報文件、Yahoo
+    consensus、預期差、模型修正路徑與美股對台股 read-through。
   category: basic
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
@@ -117,7 +118,8 @@ skills:
   group: common
   path: common/skill-investorconference-ingest
   version: 1.2.8
-  description: 投資人說明會/財報事件材料蒐集 Ingest 模組；法說會抓音檔、IR、逐字稿，財報事件抓 Celine 財報結果、earnings release、financial tables、SEC filing，並避免對純財報事件產生 FIN/GT。
+  description: 投資人說明會/財報事件材料蒐集 Ingest 模組；法說會抓音檔、IR、逐字稿，財報事件抓 Celine 財報結果、earnings
+    release、financial tables、SEC filing，並避免對純財報事件產生 FIN/GT。
   category: financial-data
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
