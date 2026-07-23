@@ -156,6 +156,19 @@ KNOWN_US_STOCKS = {
     "AMD":  ("AMD",        "超微"),
     "QCOM": ("Qualcomm",   "高通"),
     "DELL": ("Dell Technologies", "戴爾科技"),
+    "GOOGL": ("Alphabet Inc.", ""),
+}
+
+# Calendar-year US companies where stale Yahoo/CSV FY labels should be sanity-checked
+# against the earnings announcement month. Unknown tickers keep CSV/FY labels until
+# a company IR or SEC source confirms the quarter.
+KNOWN_US_CALENDAR_YEAR_EARNINGS = {
+    "AMD",
+    "AMZN",
+    "GOOGL",
+    "INTC",
+    "META",
+    "TSM",
 }
 
 # Fiscal year start month for US stocks whose fiscal year ≠ calendar year.
@@ -1431,6 +1444,23 @@ def expected_quarter(date_str: str) -> tuple[str | None, str | None]:
     return str(y), "3"
 
 
+def expected_us_calendar_earnings_quarter(date_str: str) -> tuple[str | None, str | None]:
+    """Return (year, quarter) for US calendar-year earnings announcement dates."""
+    if not date_str:
+        return None, None
+    try:
+        y, mo = int(date_str[:4]), int(date_str[5:7])
+    except (ValueError, IndexError):
+        return None, None
+    if 1 <= mo <= 3:
+        return str(y - 1), "4"
+    if 4 <= mo <= 6:
+        return str(y), "1"
+    if 7 <= mo <= 9:
+        return str(y), "2"
+    return str(y), "3"
+
+
 def _csv_row_yq(ev_name: str, remarks: str, date_str: str) -> tuple[str | None, str | None]:
     """Return (year, quarter) for a CSV event row.
 
@@ -1567,11 +1597,14 @@ def update_readme() -> None:
     audio_pat  = re.compile(rf'^({_TICKER})_(\d{{4}})_q(\d)\.(mp3|m4a|wav|mp4)$', re.I)
     pdf_cn_pat = re.compile(rf'^({_TICKER})_(\d{{4}})_q(\d)_ir\.pdf$', re.I)
     pdf_en_pat = re.compile(rf'^({_TICKER})_(\d{{4}})_q(\d)_ir_en\.pdf$', re.I)
-    report_cn_pat = re.compile(rf'^({_TICKER})_(\d{{4}})_q(\d)_report\.pdf$', re.I)
-    report_en_pat = re.compile(rf'^({_TICKER})_(\d{{4}})_q(\d)_report_en\.pdf$', re.I)
-    financial_tables_pat = re.compile(rf'^({_TICKER})_(\d{{4}})_q(\d)_financial_tables\.pdf$', re.I)
-    performance_review_pat = re.compile(rf'^({_TICKER})_(\d{{4}})_q(\d)_performance_review\.pdf$', re.I)
-    transcript_pdf_pat = re.compile(rf'^({_TICKER})_(\d{{4}})_q(\d)_transcript\.pdf$', re.I)
+    report_cn_pat = re.compile(rf'^({_TICKER})_(\d{{4}})_q(\d)_report\.(pdf|md)$', re.I)
+    report_en_pat = re.compile(rf'^({_TICKER})_(\d{{4}})_q(\d)_report_en\.(pdf|md)$', re.I)
+    earnings_release_pat = re.compile(rf'^({_TICKER})_(\d{{4}})_q(\d)_earnings_release\.(pdf|md)$', re.I)
+    financial_tables_pat = re.compile(rf'^({_TICKER})_(\d{{4}})_q(\d)_financial_tables\.(pdf|md)$', re.I)
+    performance_review_pat = re.compile(rf'^({_TICKER})_(\d{{4}})_q(\d)_performance_review\.(pdf|md)$', re.I)
+    sec_8k_pat = re.compile(rf'^({_TICKER})_(\d{{4}})_q(\d)_8k\.md$', re.I)
+    sec_10q_pat = re.compile(rf'^({_TICKER})_(\d{{4}})_q(\d)_10q\.md$', re.I)
+    transcript_pdf_pat = re.compile(rf'^({_TICKER})_(\d{{4}})_q(\d)_transcript\.(pdf|md)$', re.I)
 
     entries = {}  # key=(stock_id, year, quarter) -> dict
 
@@ -1625,10 +1658,14 @@ def update_readme() -> None:
             if m4:
                 _, year, qnum = m4.groups()[:3]
                 _entry(stock_id, year, qnum)["report_cn"] = f"data/{stock_id}/{f.name}"
-            m5 = report_en_pat.match(f.name)
+            m5_primary = report_en_pat.match(f.name) or earnings_release_pat.match(f.name)
+            m5_secondary = sec_8k_pat.match(f.name) or sec_10q_pat.match(f.name)
+            m5 = m5_primary or m5_secondary
             if m5:
                 _, year, qnum = m5.groups()[:3]
-                _entry(stock_id, year, qnum)["report_en"] = f"data/{stock_id}/{f.name}"
+                e = _entry(stock_id, year, qnum)
+                if m5_primary or not e.get("report_en"):
+                    e["report_en"] = f"data/{stock_id}/{f.name}"
             m6 = financial_tables_pat.match(f.name)
             if m6:
                 _, year, qnum = m6.groups()[:3]
@@ -1708,6 +1745,8 @@ def update_readme() -> None:
             return "-"
         res = f"[{label}]({pdf_val})"
         if not pdf_val.startswith("https://"):
+            if pdf_val.lower().endswith(".md"):
+                return res
             local_md = repo / pdf_val.replace(".pdf", ".md")
             if local_md.exists():
                 res += f" ([MD]({pdf_val.replace('.pdf', '.md')}))"
@@ -1800,9 +1839,23 @@ def update_readme() -> None:
         m = re.search(r'[（(](\w+)[）)]', ev_name)
         sid = m.group(1) if m else None
 
-        # Prefer explicit year/quarter from CSV over date-based heuristic.
-        # e.g. "2026 Q1" in 備註 overrides the Jan-Apr -> prev-year-Q4 rule.
+        # Prefer explicit year/quarter from CSV, but guard against stale/misclassified
+        # US earnings-calendar rows. Calendar-year US companies such as Alphabet can
+        # be mislabeled as FY Q1 even when the July event is the Q2 result.
         exp_year, exp_q = _csv_row_yq(ev_name, remarks, date)
+        if ev_class == "財報公告" and sid and not str(sid).isdigit():
+            date_year, date_q = expected_us_calendar_earnings_quarter(date)
+            if (
+                sid.upper() in KNOWN_US_CALENDAR_YEAR_EARNINGS
+                and date_year and date_q
+                and (exp_year, exp_q) != (date_year, date_q)
+            ):
+                print(
+                    f"[README] WARNING: {sid} CSV quarter {exp_year} Q{exp_q} "
+                    f"conflicts with event date {date} -> {date_year} Q{date_q}; "
+                    "using date-based calendar quarter."
+                )
+                exp_year, exp_q = date_year, date_q
 
         # Check if this is an invited/forum investor conference rather than the regular quarterly earnings call.
         # Heuristic: If the event date is > 50 days after the quarter ends, it is an invited/forum conference.
@@ -1853,11 +1906,13 @@ def update_readme() -> None:
             key = (sid, exp_year, exp_q)
             for r in rows:
                 if (r["stock_id"], r["year"], r["quarter"]) == key:
-                    # For financial reports, we check if we have the report PDF ingested.
+                    # For financial reports, match event evidence to avoid a duplicate
+                    # local-only row. If call materials also exist, a separate call row
+                    # is added below.
                     if ev_type == "財報":
                         if r.get("report_cn") or r.get("report_en"):
                             ingested = r
-                            # Do NOT add to matched_keys since the audio/IR PDF should be staged separately.
+                            matched_keys.add(key)
                             break
                     else:
                         ingested = r
@@ -1869,7 +1924,7 @@ def update_readme() -> None:
             sid_up = sid.upper()
             if sid_up in KNOWN_US_STOCKS:
                 en, chi = KNOWN_US_STOCKS[sid_up]
-                display_name = f"{sid_up} {en} {chi}"
+                display_name = f"{sid_up} {en}" + (f" {chi}" if chi else "")
             else:
                 chi = tw_company_names.get(sid) or KNOWN_TW_STOCKS.get(sid, ("", ""))[1]
                 if not chi:
@@ -1971,19 +2026,32 @@ def update_readme() -> None:
         gt_name = f"{sid}_{r['year']}_q{r['quarter']}_GT.srt"
         has_srt = (repo / sid / fin_name).exists() or (repo / sid / gt_name).exists()
 
-        if not (has_audio or has_ir_cn or has_ir_en or has_srt):
+        has_financial_report = has_local_report_cn or has_local_report_en or bool(r.get("financial_tables_en"))
+        if not (has_audio or has_ir_cn or has_ir_en or has_srt or has_financial_report):
             continue
 
         if sid_up in KNOWN_US_STOCKS:
             en, chi = KNOWN_US_STOCKS[sid_up]
-            display = f"{sid_up} {en} {chi}"
+            display = f"{sid_up} {en}" + (f" {chi}" if chi else "")
         else:
             chi = tw_company_names.get(sid) or KNOWN_TW_STOCKS.get(sid, ("", ""))[1]
             display = f"{sid} {chi}".strip()
-        audio  = _webcast_cell(r)
-        fin, gt = _call_transcript_cells(r)
-
-        pdf_cn, pdf_en = _format_ir_cells(sid, r["pdf_cn"], r["pdf_en"])
+        if has_financial_report and not (has_audio or has_ir_cn or has_ir_en or has_srt):
+            audio = "-"
+            fin = "-"
+            gt = "-"
+            pdf_cn, pdf_en = _format_ir_cells(sid, r.get("report_cn"), r.get("report_en"))
+            if r.get("financial_tables_en"):
+                tables = _format_pdf_cell(r.get("financial_tables_en"), "Tables")
+                pdf_en = tables if pdf_en == "-" else f"{pdf_en} / {tables}"
+            row_type = "財報"
+            digest_cell = "-"
+        else:
+            audio  = _webcast_cell(r)
+            fin, gt = _call_transcript_cells(r)
+            pdf_cn, pdf_en = _format_ir_cells(sid, r["pdf_cn"], r["pdf_en"])
+            row_type = "法說會"
+            digest_cell = _digest_cell(sid, r['year'], r['quarter'])
         # Compute quarter string (with fiscal year for US stocks)
         fy_year, fy_q = calendar_to_fiscal(sid, r['year'], r['quarter'])
         qstr_r = f"{r['year']} Q{r['quarter']}"
@@ -1997,13 +2065,13 @@ def update_readme() -> None:
             "name":    display,
             "quarter": qstr_r,
             "date":    date_val,
-            "type":    "法說會", # Default for ingested only
+            "type":    row_type,
             "audio":   audio,
             "fin":     fin,
             "gt":      gt,
             "pdf_cn":  pdf_cn,
             "pdf_en":  pdf_en,
-            "digest":  _digest_cell(sid, r['year'], r['quarter']),
+            "digest":  digest_cell,
             "mops":    _get_mops_link(sid),
         })
 

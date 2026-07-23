@@ -1,7 +1,7 @@
 ---
 name: skill-investorconference-ingest
-version: 1.2.8
-description: 投資人說明會/財報事件材料蒐集 Ingest 模組（支援台股與美股）；法說會抓音檔、IR、逐字稿，財報事件抓 Celine 財報結果、earnings release、financial tables、SEC filing，並避免對純財報事件產生 FIN/GT。
+version: 1.2.9
+description: 投資人說明會/財報事件材料蒐集 Ingest 模組（支援台股與美股）；法說會抓音檔、IR、逐字稿，財報事件抓 Skills 財報結果、earnings release、financial tables、SEC filing，並避免對純財報事件產生 FIN/GT。
 ---
 
 # InvestorConference Ingest 技能說明
@@ -158,20 +158,28 @@ python skills/skill-investorconference-ingest/scripts/audit_audio_metadata.py \
 
 | 材料 | 建議檔名 | 用途 |
 | :--- | :--- | :--- |
-| Celine 財報結果 | `{ID}_{Year}_q{N}_celine_result.md` / `.json` | 已整理的財報實績、共識 beat/miss、重點摘要；若可得應優先落檔 |
+| Skills 財報結果 | `{ID}_{Year}_q{N}_skills_result.md` / `.json` | 已整理的財報實績、共識 beat/miss、重點摘要；若可得應優先落檔 |
 | Earnings release / report | `{ID}_{Year}_q{N}_report_en.pdf/md` 或 `_report.md` | 公司正式財務結果第一來源 |
 | Financial tables | `{ID}_{Year}_q{N}_financial_tables.pdf/md` | GAAP/non-GAAP、現金流、資產負債表、reconciliation |
 | Supplemental / performance deck | `{ID}_{Year}_q{N}_performance_review.pdf/md` 或 `_ir_en.md` | segment、guidance、KPI 補充 |
 | SEC filing | `{ID}_{Year}_q{N}_10q.md` 或 metadata link | 美股 10-Q/10-K 交叉驗證 |
 | Consensus snapshot | repo-synced `data/Yahoo.Finance/raw_yahoo_finance_consensus_history.csv` | revenue/EPS consensus cutoff 比較 |
 
-Celine 使用規則：
+Skills 使用規則：
 
-1. Celine 是財報結果輔助來源，不是公司一級來源；財務硬數字仍需以公司 release、financial tables 或 SEC filing 驗證。
-2. 若 Celine 與公司文件衝突，以公司文件為準，並在 sidecar/issue 記錄 mismatch。
-3. 若 README 只有 Yahoo Finance financials 連結，應先嘗試用 Celine 取得該 ticker/季度財報結果，再補公司 IR/SEC 官方文件。
-4. Celine 回傳資料若含個別欄位來源、時間戳或更新時間，必須保存；若只有摘要，digest 信心不得標高於中。
+1. Skills workflow 是財報結果輔助流程，不是公司一級來源；財務硬數字仍需以公司 release、financial tables 或 SEC filing 驗證。
+2. 若 Skills workflow 與公司文件衝突，以公司文件為準，並在 sidecar/issue 記錄 mismatch。
+3. 若 README 只有 Yahoo Finance financials 連結，應先嘗試用 Skills 財報流程取得該 ticker/季度財報結果，再補公司 IR/SEC 官方文件。
+4. Skills workflow 回傳資料若含個別欄位來源、時間戳或更新時間，必須保存；若只有摘要，digest 信心不得標高於中。
 5. 財報事件可產出 digest，但欄位應標為 `earnings_result_digest`；音檔、FIN、GT 維持 `-`，直到官方 call audio/transcript 存在。
+
+Repo 邊界與落檔規則：
+
+* `InvestorConference` 保存 event-level evidence：某一個 `{Ticker}_{Year}_q{N}` 財報/法說事件的官方 release、financial tables、SEC filing 摘錄、webcast/transcript 與 digest 證據台帳。
+* `../ConceptStocks`、`../Yahoo.Finance` 或其他資料倉庫保存 normalized company/market data、概念分類、共識時間序列或 discovery metadata；不得把這些資料當成本 repo 的一級財報文件。
+* 若 `raw_event_upcoming_earnings.csv`、Yahoo 或 ConceptStocks 的季度標籤與公司 IR/SEC filing 衝突，季度與日期以公司 IR/SEC filing 為準，並在 ingest log 或 sidecar 記錄 mismatch。
+* 已知 US calendar-year 公司財報公告需要用公告月份做 sanity check；未知 ticker 或特殊 FY 公司不得自動覆蓋 CSV/FY 標籤，需等公司 IR/SEC 確認。規則：1-3 月通常為前一年 Q4，4-6 月為當年 Q1，7-9 月為當年 Q2，10-12 月為當年 Q3；Apple、QCOM、Dell、NVIDIA 等特殊會計年度公司需保留 `QxFYyyyy` 標籤。
+* 每個 official source snapshot 建議附 `{ID}_{Year}_q{N}_sources.json`，包含 `source_url`、`source_type`、`retrieved_at`、`accession`（若為 SEC）、`sha256` 與 `notes`。
 
 ## 🇺🇸 美股材料蒐集規則
 

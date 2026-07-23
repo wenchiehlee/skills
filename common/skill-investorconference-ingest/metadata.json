@@ -1,8 +1,7 @@
 {
   "name": "skill-investorconference-ingest",
-  "description": "投資人說明會/財報事件材料蒐集 Ingest 模組；法說會抓音檔、IR、逐字稿，財報事件抓 Celine 財報結果、earnings release、financial tables、SEC filing，並避免對純財報事件產生 FIN/GT。",
-  "category": "financial-data",
-  "version": "1.2.8",
+  "description": "投資人說明會/財報事件材料蒐集 Ingest 模組；法說會抓音檔、IR、逐字稿，財報事件抓 Skills 財報結果、earnings release、financial tables、SEC filing，並避免對純財報事件產生 FIN/GT。",
+  "version": "1.2.9",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee-money/InvestorConference",
@@ -17,7 +16,7 @@
     "gemini-speech",
     "audio-pipeline",
     "financial-results",
-    "celine",
+    "skills-workflow",
     "earnings-release",
     "financial-tables"
   ]

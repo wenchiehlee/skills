@@ -1,7 +1,7 @@
 ---
 name: conference-digest
-version: 2.4.4
-description: 法說會/earnings call 與財報結果 digest。當使用者要求分析台股/美股法說會、從 FIN/GT/IR/Q&A 修正 GT，或針對 README 類型=財報 的事件使用 Celine/公司財報文件/Yahoo consensus 產出 earnings-result digest 時使用；找出預期差、模型修正路徑、管理層可信度、股價影響因素，並在美股案例列出台股 read-through。
+version: 2.4.5
+description: 法說會/earnings call 與財報結果 digest。當使用者要求分析台股/美股法說會、從 FIN/GT/IR/Q&A 修正 GT，或針對 README 類型=財報 的事件使用 Skills/公司財報文件/Yahoo consensus 產出 earnings-result digest 時使用；找出預期差、模型修正路徑、管理層可信度、股價影響因素，並在美股案例列出台股 read-through。
 ---
 
 # 法說會重點萃取與投資影響分析 SOP (Investor Conference Digest SOP)
@@ -35,7 +35,7 @@ description: 法說會/earnings call 與財報結果 digest。當使用者要求
 * 「摘要 2357 2026 Q1 法說會」
 * 「digest 2357」
 * 「分析 GOOGL 財報結果」或 README 中 `類型=財報` 的事件
-* 直接提供法說會逐字稿、字幕、簡報、Q&A 檔案、earnings release、financial tables 或 Celine 財報結果
+* 直接提供法說會逐字稿、字幕、簡報、Q&A 檔案、earnings release、financial tables 或 Skills 財報結果
 
 ### 2.2 必要參數
 
@@ -97,22 +97,29 @@ description: 法說會/earnings call 與財報結果 digest。當使用者要求
 5. 若簡報、Q&A 與字幕資訊矛盾，必須在報告中標示，並視嚴重度建立資料品質 issue。
 6. 法人提問只能代表「市場疑慮」，除非管理層確認，不可寫成公司事實。
 
-### 3.1.1 財報事件與 Celine 財報結果
+### 3.1.1 財報事件與 Skills 財報結果
 
 若 README 事件 `類型=財報`，不得要求音檔、FIN 或 GT 作為 digest 前置條件。此時 digest 類型為 `earnings_result_digest`，資料來源優先級為：
 
 1. 公司正式 earnings release/report、financial tables、supplemental/performance deck、SEC filing。
-2. Celine 財報結果檔：`{StockID}_{Year}_q{N}_celine_result.md` 或 `.json`。
+2. Skills 財報結果檔：`{StockID}_{Year}_q{N}_skills_result.md` 或 `.json`。
 3. repo-synced Yahoo Finance consensus history，僅用於 revenue/EPS consensus 比較。
 4. Yahoo Finance financials 或其他二級資料，只能作補充或 discovery。
 
-Celine 使用規則：
+Skills 使用規則：
 
-* Celine 可用來快速取得財報實績、beat/miss 初判與結果摘要，但不可取代公司正式文件。
-* Celine 欄位必須與公司文件交叉驗證；無法驗證的欄位標示 `Celine-only`，信心最高為中。
-* 若 Celine 缺資料，digest 應明確標示 `Celine unavailable`，不要改走法說會 FIN/GT 流程。
+* Skills workflow 可用來快速取得財報實績、beat/miss 初判與結果摘要，但不可取代公司正式文件。
+* Skills workflow 欄位必須與公司文件交叉驗證；無法驗證的欄位標示 `Skills-only`，信心最高為中。
+* 若 Skills workflow 缺資料，digest 應明確標示 `Skills workflow unavailable`，不要改走法說會 FIN/GT 流程。
 * 財報 digest 不輸出 Q&A 壓力地圖、管理層回答品質或 GT 證據台帳，除非同一季度另有 earnings call transcript/audio。
 * 財報 digest 應聚焦 earnings surprise、guidance delta、EPS 品質、segment/platform surprise、CapEx/FCF、market read-through 與後續需要補抓的 call material。
+
+Repo 邊界與來源判定：
+
+* `InvestorConference` 中的 US 財報文件是 event evidence，不是 full financial database；digest 只引用與該季度事件直接相關的 official source snapshot。
+* `../ConceptStocks`、`../Yahoo.Finance` 與 Yahoo Finance 頁面可作公司 metadata、共識資料或 discovery source；除非欄位本身來自公司/SEC 且保留來源，否則不得覆蓋公司 IR、SEC 8-K/10-Q 或正式 financial tables。
+* 若 CSV/ConceptStocks/Yahoo 季度標籤與 Alphabet IR、SEC EDGAR、公司 earnings release 等一級來源衝突，digest 必須採用一級來源並在資料品質段落記錄 root cause。
+* 對已知 US calendar-year 財報事件，digest 應檢查公告日與季度是否合理；未知 ticker 或特殊 FY 公司需保留 `QxFYyyyy` 或標示待一級來源確認。例如 `2026-07-22` 的 Alphabet 財報應為 `2026 Q2`，不是 Yahoo/CSV 可能殘留的 `FY2026 Q1`。
 
 ### 3.2.1 市場共識資料來源：Yahoo.Finance consensus history
 
@@ -317,16 +324,16 @@ US digest 必須額外檢查：
 
 ### 5.0 財報結果 digest 架構
 
-適用於 README `類型=財報`，例如 `GOOGL Alphabet Inc. | 2026 Q1 | 財報 | 2026-07-22`。
+適用於 README `類型=財報`，例如 `GOOGL Alphabet Inc. | 2026 Q2 | 財報 | 2026-07-22`。
 
 1. 財報結果摘要：revenue/EPS、GAAP/non-GAAP、主要 beat/miss、guidance 變化、信心與缺口。
-2. Surprise Matrix：本季實績 vs Yahoo consensus/Celine/company guidance；Yahoo 只支援 revenue/EPS，其餘填 `NA`。
+2. Surprise Matrix：本季實績 vs Yahoo consensus/Skills workflow/company guidance；Yahoo 只支援 revenue/EPS，其餘填 `NA`。
 3. EPS 品質與現金流：稅率、股數、回購、一次性項目、FCF 與營業現金流。
 4. Segment / platform read-through：廣告、Cloud、AI capex、硬體或其他公司專屬 segment 對模型的影響。
 5. Guidance delta：下一季/全年財測與市場共識差異；資料不足時標 `NA`。
 6. 台股供應鏈/市場 read-through：US ticker 預設輸出，並區分 direct supply、supply-chain exposure、sentiment/valuation。
-7. 待補材料：是否仍需 earnings call transcript/audio、10-Q、financial tables 或 Celine 欄位補強。
-8. 證據台帳：公司文件、Celine、Yahoo consensus 與其他來源分開標示來源層級與信心。
+7. 待補材料：是否仍需 earnings call transcript/audio、10-Q、financial tables 或 Skills workflow 欄位補強。
+8. 證據台帳：公司文件、Skills workflow、Yahoo consensus 與其他來源分開標示來源層級與信心。
 
 ### 5.1 法說會 / earnings call digest 架構
 
