@@ -1,12 +1,12 @@
 {
   "name": "skill-investorconference-ingest",
-  "description": "投資人說明會（法說會）影音、簡報、第三方逐字稿與 metadata 材料蒐集/同步 Ingest 模組；支援台股與美股 earnings-call 材料（earnings release、financial tables、performance review、Yahoo/AlphaSpread transcript），GT 生成由 digest skill 負責",
+  "description": "投資人說明會/財報事件材料蒐集 Ingest 模組；法說會抓音檔、IR、逐字稿，財報事件抓 Celine 財報結果、earnings release、financial tables、SEC filing，並避免對純財報事件產生 FIN/GT。",
   "category": "financial-data",
-  "version": "1.2.6",
+  "version": "1.2.8",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee-money/InvestorConference",
-  "updated_at": "2026-07-16",
+  "updated_at": "2026-07-23",
   "license": "MIT",
   "tags": [
     "investor-conference",
@@ -15,6 +15,10 @@
     "webcast",
     "whisper",
     "gemini-speech",
-    "audio-pipeline"
+    "audio-pipeline",
+    "financial-results",
+    "celine",
+    "earnings-release",
+    "financial-tables"
   ]
 }

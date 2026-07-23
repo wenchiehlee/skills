@@ -1,11 +1,11 @@
 {
   "name": "skill-investorconference-digest",
-  "description": "法說會/earnings call 重點萃取、GT 字幕生成/校正與投資影響分析 SOP — 支援 TW/US market templates、US earnings-call source discovery/lint、Yahoo/AlphaSpread/AlphaMemo 等逐字稿、GT metadata/review level 驗證，以及美股對台股供應鏈/市場 read-through；digest 報告輸出至 data/reports/conference-digests/",
-  "version": "1.5.2",
+  "description": "法說會/earnings call 與財報結果 digest SOP；支援 FIN/GT/IR/Q&A、Celine 財報結果、公司財報文件、Yahoo consensus、預期差、模型修正路徑與美股對台股 read-through。",
+  "version": "2.4.4",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee-money/InvestorConference",
-  "updated_at": "2026-07-15",
+  "updated_at": "2026-07-23",
   "license": "MIT",
   "tags": [
     "investor-conference",
@@ -16,6 +16,9 @@
     "surprise-analysis",
     "qa-pressure-map",
     "management-credibility",
-    "data-reports"
+    "data-reports",
+    "earnings-result",
+    "celine",
+    "market-expectations"
   ]
 }

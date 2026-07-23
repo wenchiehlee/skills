@@ -1,7 +1,7 @@
 ---
 name: skill-investorconference-ingest
-version: 1.2.7
-description: 投資人說明會（法說會）智慧影音與簡報下載與管理 Ingest 模組（支援美股與台股）
+version: 1.2.8
+description: 投資人說明會/財報事件材料蒐集 Ingest 模組（支援台股與美股）；法說會抓音檔、IR、逐字稿，財報事件抓 Celine 財報結果、earnings release、financial tables、SEC filing，並避免對純財報事件產生 FIN/GT。
 ---
 
 # InvestorConference Ingest 技能說明
@@ -150,9 +150,32 @@ python skills/skill-investorconference-ingest/scripts/audit_audio_metadata.py \
 * Mac-mini FIN 只能在音檔通過 checksum gate 後生成。
 
 
+## 財報事件材料蒐集規則
+
+當 README `類型` 為 `財報` 時，Ingest 不得把該事件當成法說會處理；除非同一事件另有正式 earnings call / webcast replay，否則不得產生音檔、FIN.srt 或 GT.srt。財報事件的責任是取得「結果」與可稽核財務文件，供 digest 做 earnings-result 分析。
+
+財報事件優先材料：
+
+| 材料 | 建議檔名 | 用途 |
+| :--- | :--- | :--- |
+| Celine 財報結果 | `{ID}_{Year}_q{N}_celine_result.md` / `.json` | 已整理的財報實績、共識 beat/miss、重點摘要；若可得應優先落檔 |
+| Earnings release / report | `{ID}_{Year}_q{N}_report_en.pdf/md` 或 `_report.md` | 公司正式財務結果第一來源 |
+| Financial tables | `{ID}_{Year}_q{N}_financial_tables.pdf/md` | GAAP/non-GAAP、現金流、資產負債表、reconciliation |
+| Supplemental / performance deck | `{ID}_{Year}_q{N}_performance_review.pdf/md` 或 `_ir_en.md` | segment、guidance、KPI 補充 |
+| SEC filing | `{ID}_{Year}_q{N}_10q.md` 或 metadata link | 美股 10-Q/10-K 交叉驗證 |
+| Consensus snapshot | repo-synced `data/Yahoo.Finance/raw_yahoo_finance_consensus_history.csv` | revenue/EPS consensus cutoff 比較 |
+
+Celine 使用規則：
+
+1. Celine 是財報結果輔助來源，不是公司一級來源；財務硬數字仍需以公司 release、financial tables 或 SEC filing 驗證。
+2. 若 Celine 與公司文件衝突，以公司文件為準，並在 sidecar/issue 記錄 mismatch。
+3. 若 README 只有 Yahoo Finance financials 連結，應先嘗試用 Celine 取得該 ticker/季度財報結果，再補公司 IR/SEC 官方文件。
+4. Celine 回傳資料若含個別欄位來源、時間戳或更新時間，必須保存；若只有摘要，digest 信心不得標高於中。
+5. 財報事件可產出 digest，但欄位應標為 `earnings_result_digest`；音檔、FIN、GT 維持 `-`，直到官方 call audio/transcript 存在。
+
 ## 🇺🇸 美股材料蒐集規則
 
-當 `stock_id` 為英文字母 ticker（如 `DELL`, `QCOM`）或 metadata 顯示為美股時，Ingest 仍只負責材料蒐集，不負責投資分析或 GT 判定。應盡量落檔或記錄以下來源：
+當 `stock_id` 為英文字母 ticker（如 `DELL`, `QCOM`, `GOOGL`）或 metadata 顯示為美股時，Ingest 仍只負責材料蒐集，不負責投資分析或 GT 判定。應盡量落檔或記錄以下來源：
 
 | 材料 | 建議檔名 | 用途 |
 | :--- | :--- | :--- |
