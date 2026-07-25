@@ -7,7 +7,7 @@ description: 使用自建在 Mac-mini 上的 OCR API 服務，將 PDF 或圖片�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.2.0（詳見 `metadata.json`） |
+| 版本 | 1.3.0（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/FamilyHealthyCheck |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mac-mini-ocr`） |
 | 維護者 | wenchiehlee |
@@ -27,7 +27,8 @@ mac-mini-ocr/
     ├── ocr_client.py      # 連線與 API 傳送客戶端腳本 (支援 CLI 與模組導入)
     ├── pdf_fallback.py    # Mac-mini 離線時的本地非 OCR PDF→Markdown 退援轉換
     ├── refine_todo_ocr.py # 補轉錄 Markdown 中標記 TODO:OCR 的頁面
-    └── convert_ir_pdfs.py # 批次處理法說會簡報 PDF 轉錄工具
+    ├── convert_ir_pdfs.py # 批次處理法說會簡報 PDF 轉錄工具
+    └── heic_convert.py    # HEIC 圖片（手機拍攝文件）轉 PNG 後送 OCR 轉錄
 ```
 
 ## ⚙️ 前置環境配置
@@ -37,6 +38,11 @@ mac-mini-ocr/
 在專案中執行以下命令安裝必備套件：
 ```bash
 pip install requests python-dotenv pypdf PyMuPDF
+```
+
+若需轉錄 HEIC 圖片（如 iPhone 拍攝的政府文件、稅務資料照片），額外安裝：
+```bash
+pip install pillow-heif
 ```
 
 （`pypdf` 供離線退援模式使用；若只用線上 OCR 可省略。）
@@ -107,6 +113,27 @@ python scripts/refine_todo_ocr.py output.md --pdf path/to/report.pdf
 *   補轉錄完成後，標記會被替換為 `<!-- OCR:done source="..." page=N date="..." -->`，OCR 結果直接取代該頁內容。
 *   Mac-mini OCR API 若回傳 detector/debug 標記或 `save results` 區塊，client 會在寫檔前清理，只保留可讀 Markdown。
 *   注意：對純掃描 PDF（如掃描的健檢報告）只能先產生整頁 TODO:OCR 標記的骨架；表格與版面資訊仍需等 OCR 補轉錄後才可用。
+
+### 📸 方式 E：HEIC 圖片轉錄
+
+手機（尤其 iPhone）拍攝留存的政府文件、單據常以 HEIC 格式儲存，OCR API 只吃 PDF/JPG/PNG，需先轉檔。`heic_convert.py` 會把 HEIC 轉成暫存 PNG 後再送 OCR：
+
+```bash
+# 單一檔案，輸出至 stdout
+python scripts/heic_convert.py path/to/photo.heic > output.md
+```
+
+批次處理整個資料夾時，可自行寫一段迴圈呼叫模組函式：
+```python
+from pathlib import Path
+from scripts.heic_convert import transcribe_heic_to_markdown
+
+for heic_path in sorted(Path("Images").glob("*.HEIC")):
+    md_path = heic_path.with_suffix(".md")
+    md_path.write_text(transcribe_heic_to_markdown(heic_path), encoding="utf-8")
+```
+
+若原始影像與其他轉寫內容有差異，一律以 HEIC 原始影像的 OCR 結果為準。
 
 ## 🛡️ 穩健性設計與異常處理 (Robust Design)
 *   **超時控制**：由於 PDF 的轉錄需要較長時間，請求的讀取超時（timeout）設為 `900` 秒，防止大型檔案傳輸中斷。

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-self_update.py — mac-mini-ocr 技能自我更新工具
+self_update.py — tw-land-geo-signal 技能自我更新工具
 
 以 skills 登錄庫（wenchiehlee/skills）作為唯一可信來源，
-比較本地 metadata.json 與登錄庫中 common/skill-mac-mini-ocr 的版本，
+比較本地 metadata.json 與登錄庫中 common/skill-tw-land-geo-signal 的版本，
 若登錄庫版本較新，則下載並覆寫本地技能檔案。
 
 使用方式（在技能資料夾內執行）：
@@ -12,7 +12,7 @@ self_update.py — mac-mini-ocr 技能自我更新工具
     python self_update.py
 
 注意：
-- 部署後的資料夾名稱可能是 mac-mini-ocr（不含 skill- 前綴），
+- 部署後的資料夾名稱可能是 tw-land-geo-signal（不含 skill- 前綴），
   因此遠端子路徑採用固定值，而非由資料夾名稱推導。
 - 僅在遠端版本嚴格大於本地版本時才會覆寫檔案。
 """
@@ -22,7 +22,6 @@ import sys
 import urllib.request
 from pathlib import Path
 
-# Fix Windows console encoding for Chinese characters
 if platform.system() == "Windows":
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -31,18 +30,19 @@ if platform.system() == "Windows":
         pass
 
 REMOTE_REPO = "wenchiehlee/skills"
-SKILL_SUBPATH = "common/skill-mac-mini-ocr"
+SKILL_SUBPATH = "common/skill-tw-land-geo-signal"
 
 # 登錄庫中此技能的全部檔案（新增檔案時需同步維護此清單）
 FILES = [
     "SKILL.md",
     "metadata.json",
     "self_update.py",
-    "scripts/ocr_client.py",
-    "scripts/pdf_fallback.py",
-    "scripts/refine_todo_ocr.py",
-    "scripts/convert_ir_pdfs.py",
-    "scripts/heic_convert.py",
+    "scripts/fetch_tyupgis_layers.py",
+    "scripts/build_city_signal.py",
+    "scripts/easymap_snapshot.py",
+    "examples/targets.example.json",
+    "examples/layers.example.json",
+    "examples/stations.example.json",
 ]
 
 

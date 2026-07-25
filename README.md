@@ -31,7 +31,7 @@
 | [skill-investorconference-digest](common/skill-investorconference-digest) | common | basic | 2.4.5 | 法說會/earnings call 與財報結果 digest SOP；支援 FIN/GT/IR/Q&A、Skills 財報結果、公司財報文件、Yahoo consensus、預期差、模型修正路徑與美股對台股 read-through。 | 2026-07-23 |
 | [skill-investorconference-ingest](common/skill-investorconference-ingest) | common | basic | 1.2.9 | 投資人說明會/財報事件材料蒐集 Ingest 模組；法說會抓音檔、IR、逐字稿，財報事件抓 Skills 財報結果、earnings release、financial tables、SEC filing，並避免對純財報事件產生 FIN/GT。 | 2026-07-23 |
 | [skill-investorconference-ir-pdf-md](common/skill-investorconference-ir-pdf-md) | common | financial-data | 1.0.0 | Fetch InvestorConference official IR PDFs through ingest, then convert them to Markdown using the repo-local Mac-mini OCR hybrid pipeline with auditable TODO/OCR markers. | 2026-07-19 |
-| [skill-mac-mini-ocr](common/skill-mac-mini-ocr) | common | document | 1.2.0 | 使用自建在 Mac-mini 上的 OCR API 服務（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-07-19 |
+| [skill-mac-mini-ocr](common/skill-mac-mini-ocr) | common | document | 1.3.0 | 使用自建在 Mac-mini 上的 OCR API 服務（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-07-19 |
 | [skill-market-cost-distribution](common/skill-market-cost-distribution) | common | financial-forecasting | 1.0.1 | 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。 | 2026-07-18 |
 | [skill-mops-financialreport-pdf-md](common/skill-mops-financialreport-pdf-md) | common | financial-data | 1.0.0 | Download Taiwan MOPS quarterly financial-report PDFs, then convert same-stem Markdown sidecars with skill-mac-mini-ocr hybrid PDF/OCR workflow. | 2026-07-19 |
 | [skill-pptx-to-md](common/skill-pptx-to-md) | common | document | 1.0.0 | 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。 | 2026-07-18 |
@@ -43,12 +43,13 @@
 | [skill-taiex-report](common/skill-taiex-report) | common | financial-strategy | 1.0.0 | 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖） | 2026-07-19 |
 | [skill-taiex-sync](common/skill-taiex-sync) | common | financial-data | 1.0.0 | 更新本地資料目錄索引，生成批次處理所需的投資標的清單 | 2026-07-18 |
 | [skill-taiex-viz](common/skill-taiex-viz) | common | financial-accounting | 1.0.0 | 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖 | 2026-07-18 |
+| [skill-tw-land-geo-signal](common/skill-tw-land-geo-signal) | common | geo-data | 1.0.0 | 查詢桃園市 TY_UPGIS 圖層（甲乙工/容移/都市設計審議等案件位置）與內政部 easymap 地號官方地圖，彙整地號周邊指定半徑的城市信號 CSV 與疊圖 PNG，供土地資產分析使用。 | 2026-07-25 |
 | [skill-usb-gadget-debug](common/skill-usb-gadget-debug) | common | basic | 1.0.1 | Enumerate Windows USB devices via SetupAPI to verify USB composite gadget (VID:046D) enumeration, interface presence, and device node status. | 2026-07-21 |
 | [skill-usb-gadget-monitor](common/skill-usb-gadget-monitor) | common | analytics | 1.0.1 | Real-time Tkinter GUI monitor for USB composite gadget (Wired RoomDock) on Windows — tracks USB device status, UVC stream resolution/fps, UAC2 call state, display topology (single/clone/extend), UC app presence, and HID vendor report exchange. | 2026-07-21 |
 | [skill-uvc-4k-capture](common/skill-uvc-4k-capture) | common | basic | 1.0.0 | Enable camera-agnostic 4K UVC capture on Android BaseUnit: setup_uvc.sh advertises 4K frame descriptor, uvc_camera_forward detects camera max MJPEG resolution at runtime and clamps negotiation — Jieli U20 stays at 1080p, Logitech MeetUp unlocks 3840×2160@30fps. | 2026-07-21 |
 | [skill-wasapi-capture-debug](common/skill-wasapi-capture-debug) | common | basic | 1.0.1 | Enumerate Windows WASAPI capture endpoints via COM IMMDeviceEnumerator to verify UAC2 speakerphone visibility, device state, and active audio sessions. | 2026-07-21 |
 
-最後產生日期：2026-07-24
+最後產生日期：2026-07-25
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理

@@ -1,0 +1,4 @@
+[
+  {"target_id": "example-A", "label": "範例地號 A", "lon": 121.5000, "lat": 25.0500},
+  {"target_id": "example-B", "label": "範例地號 B", "lon": 121.5100, "lat": 25.0550}
+]

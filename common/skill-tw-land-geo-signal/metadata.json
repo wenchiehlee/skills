@@ -1,0 +1,19 @@
+{
+  "name": "tw-land-geo-signal",
+  "description": "查詢桃園市 TY_UPGIS 圖層（甲乙工/容移/都市設計審議等案件位置）與內政部 easymap 地號官方地圖，彙整地號周邊指定半徑的城市信號 CSV 與疊圖 PNG，供土地資產分析使用。",
+  "category": "geo-data",
+  "version": "1.0.0",
+  "author": "wenchiehlee-money",
+  "maintainer": "wenchiehlee-money",
+  "source": "https://github.com/wenchiehlee-money/LandAsset",
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-tw-land-geo-signal",
+  "updated_at": "2026-07-25",
+  "license": "MIT",
+  "tags": ["gis", "land", "taiwan", "tyupgis", "easymap", "map", "csv"],
+  "compatibility": {
+    "python": ">=3.10",
+    "requires": ["Pillow"],
+    "system": ["curl"],
+    "env": ["TY_UPGIS_HOST_IP"]
+  }
+}
