@@ -1,0 +1,28 @@
+[
+  {
+    "target_id": "example-A",
+    "_comment": "此為虛構範例，僅示範欄位格式；請勿在此檔案內填入真實地號/門牌等私有資料，實際設定請放在專案內的 data/realty_comps/targets.json（不進 skills 登錄庫）。",
+    "city_code": "A",
+    "asset_code": "A",
+    "district": "中正區",
+    "road_keyword": "測試路",
+    "require_building": true,
+    "require_land": false,
+    "date_from": "2016-01-01",
+    "date_to": "2026-12-31",
+    "house_no": 100,
+    "scopes": [
+      {"label": "測試路 100±200 號", "house_no_diff_max": 200},
+      {"label": "測試路 100±100 號", "house_no_diff_max": 100}
+    ],
+    "building_group_house_nos": [100, 102, 104],
+    "yearly_scope_house_no_diff_max": 200,
+    "valuation": {
+      "date_from": "2021-01-01",
+      "require_parking": true,
+      "floor_min": 5,
+      "floor_max": 6,
+      "size_ping": 40.0
+    }
+  }
+]
