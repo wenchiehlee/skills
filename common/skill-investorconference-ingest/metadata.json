@@ -1,11 +1,11 @@
 {
   "name": "skill-investorconference-ingest",
   "description": "投資人說明會/財報事件材料蒐集 Ingest 模組；法說會抓音檔、IR、逐字稿，財報事件抓 Skills 財報結果、earnings release、financial tables、SEC filing，並避免對純財報事件產生 FIN/GT。",
-  "version": "1.2.9",
+  "version": "1.3.0",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee-money/InvestorConference",
-  "updated_at": "2026-07-23",
+  "updated_at": "2026-07-26",
   "license": "MIT",
   "tags": [
     "investor-conference",

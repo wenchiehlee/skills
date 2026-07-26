@@ -128,13 +128,13 @@ skills:
 - name: skill-investorconference-ingest
   group: common
   path: common/skill-investorconference-ingest
-  version: 1.2.9
+  version: 1.3.0
   description: 投資人說明會/財報事件材料蒐集 Ingest 模組；法說會抓音檔、IR、逐字稿，財報事件抓 Skills 財報結果、earnings
     release、financial tables、SEC filing，並避免對純財報事件產生 FIN/GT。
   category: basic
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
-  updated_at: '2026-07-23'
+  updated_at: '2026-07-26'
   revised_at: '2026-07-23'
 - name: skill-investorconference-ir-pdf-md
   group: common
@@ -148,6 +148,17 @@ skills:
   source: https://github.com/wenchiehlee-money/InvestorConference
   updated_at: '2026-07-19'
   revised_at: '2026-07-19'
+- name: skill-investorconference-upcoming-earnings
+  group: common
+  path: common/skill-investorconference-upcoming-earnings
+  version: 1.0.0
+  description: Regenerate raw_event_upcoming_earnings.csv from InvestorConference's
+    own TW/US watchlists, classifying every event as 財報, 法說會, or 受邀法說.
+  category: financial-data
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee-money/InvestorConference
+  updated_at: '2026-07-26'
+  revised_at: '2026-07-26'
 - name: skill-mac-mini-ocr
   group: common
   path: common/skill-mac-mini-ocr

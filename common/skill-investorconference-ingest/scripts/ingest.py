@@ -1843,7 +1843,7 @@ def update_readme() -> None:
         # US earnings-calendar rows. Calendar-year US companies such as Alphabet can
         # be mislabeled as FY Q1 even when the July event is the Q2 result.
         exp_year, exp_q = _csv_row_yq(ev_name, remarks, date)
-        if ev_class == "財報公告" and sid and not str(sid).isdigit():
+        if ev_class == "財報" and sid and not str(sid).isdigit():
             date_year, date_q = expected_us_calendar_earnings_quarter(date)
             if (
                 sid.upper() in KNOWN_US_CALENDAR_YEAR_EARNINGS
@@ -1860,7 +1860,7 @@ def update_readme() -> None:
         # Check if this is an invited/forum investor conference rather than the regular quarterly earnings call.
         # Heuristic: If the event date is > 50 days after the quarter ends, it is an invited/forum conference.
         is_invited = False
-        if ev_class != "財報公告" and exp_year and exp_q and date:
+        if ev_class not in ("財報", "財報公告") and exp_year and exp_q and date:
             try:
                 ev_dt = _date.fromisoformat(date)
                 y_int = int(exp_year)
