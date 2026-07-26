@@ -25,7 +25,7 @@
 | [skill-company-cycle-index](common/skill-company-cycle-index) | common | financial-strategy | 1.3.1 | 套用已審核或已結構化的 company revenue segment weights 到 canonical cycle model；支援 Taiwan 與 United_States pipeline，US 對齊 canonical_cycle_specification 並用 latest-mix proxy 補齊缺 segment quarters，生成對應 company_cycle_index_*.png 並更新 README。 | 2026-07-21 |
 | [skill-company-revenue-segment-weights](common/skill-company-revenue-segment-weights) | common | financial-strategy | 1.3.0 | 更新與稽核 company revenue segment weights evidence、quarterly candidates、QA report 與 active snapshot；目前支援 biztrends.TW 台股 InvestorConference/MOPS/IR Markdown evidence，並在更新 company_segment_weights.csv 前產出資料解讀 QA。 | 2026-07-21 |
 | [skill-download-logo](common/skill-download-logo) | common | basic | 1.0.0 | 指定台灣股票代碼或美股概念股 Ticker，自動下載高解析度公司官方 Logo PNG，並限制在固定大小。 | 2026-07-18 |
-| [skill-facebook-fetch](common/skill-facebook-fetch) | common | financial-data | 1.2.0 | 管理 Facebook.Fetch 專案的每日粉專/珍藏清單貼文抓取 — 本機執行與 GitHub Actions 共用同一支 run_daily_fetch.py，更新過期的 FB_COOKIE、手動觸發並監看 daily_fetch workflow、排查已知的資料夾命名衝突與 sync 觸發失敗問題。 | 2026-07-25 |
+| [skill-facebook-fetch](common/skill-facebook-fetch) | common | financial-data | 1.2.2 | 管理 Facebook.Fetch 專案的每日粉專/珍藏清單貼文抓取 — 本機執行與 GitHub Actions 共用同一支 run_daily_fetch.py，更新過期的 FB_COOKIE、手動觸發並監看 daily_fetch workflow、排查已知的資料夾命名衝突與 sync 觸發失敗問題。 | 2026-07-26 |
 | [skill-finmind-fetch](common/skill-finmind-fetch) | common | financial-data | 1.0.0 | Fetch Taiwan stock margin and price data from FinMind API and export/merge to stage1 raw CSV. | 2026-07-25 |
 | [skill-google-alert-fetch](common/skill-google-alert-fetch) | common | financial-data | 1.0.0 | 維運 GoogleAlertManager 的 Google Alerts 抓取管線：更新 GoPublic 股票觀察/專注清單 CSV、同步 Google Alert RSS、匯出 fallback RSS、抓取文章、依 focus CSV 更新 README，並排查 fetch/analyze workflows。 | 2026-07-22 |
 | [skill-google-analytics-monitor](common/skill-google-analytics-monitor) | common | analytics | 1.0.0 | 使用 google-analytics-cli 產生 GA4 網站監控 Markdown/README 報告，包含 YAML daily metadata、即時活躍人數、近 7/28 天短期趨勢、近 3 個月流量趨勢、來源/媒介、Top 10 URL、熱門頁面、事件與異常觀察。 | 2026-07-18 |
@@ -51,7 +51,7 @@
 | [skill-uvc-4k-capture](common/skill-uvc-4k-capture) | common | basic | 1.0.0 | Enable camera-agnostic 4K UVC capture on Android BaseUnit: setup_uvc.sh advertises 4K frame descriptor, uvc_camera_forward detects camera max MJPEG resolution at runtime and clamps negotiation — Jieli U20 stays at 1080p, Logitech MeetUp unlocks 3840×2160@30fps. | 2026-07-21 |
 | [skill-wasapi-capture-debug](common/skill-wasapi-capture-debug) | common | basic | 1.0.1 | Enumerate Windows WASAPI capture endpoints via COM IMMDeviceEnumerator to verify UAC2 speakerphone visibility, device state, and active audio sessions. | 2026-07-21 |
 
-最後產生日期：2026-07-25
+最後產生日期：2026-07-26
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理
