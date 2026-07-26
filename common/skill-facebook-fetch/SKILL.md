@@ -9,19 +9,16 @@ description: 管理 Facebook.Fetch 專案的每日粉專/珍藏清單貼文抓�
 更新過期登入 cookie、本機或手動觸發/監看 GitHub Actions workflow，以及排查已知的資料收斂錯誤。
 
 **單一實作、雙重執行路徑：** `.github/workflows/daily_fetch.yml` 本身就是呼叫
-`scripts/run_daily_fetch.py`（見下方「本機執行完整抓取流程」），而不是在 YAML 裡另外重寫一份
-bash 邏輯。因此本技能在本機執行 `run_daily_fetch.py` 得到的 `data/`、`README.md`、
+`skills/skill-facebook-fetch/scripts/run_daily_fetch.py`（見下方「本機執行完整抓取流程」），
+而不是在 YAML 裡另外重寫一份 bash 邏輯。因此本機執行這支腳本得到的 `data/`、`README.md`、
 `raw_facebook_fetch.csv` 結果，跟排程觸發 GitHub Actions 的結果是**同一套程式碼路徑**，
 不會有兩份邏輯各自漂移的問題。
 
-實際抓取邏輯（`fetch_facebook_posts.py`、`fetch_saved_list.py`）與 GitHub Actions
-定義保留在來源 repo 中，本技能不複製核心抓取邏輯，只複製兩支維運/編排腳本讓技能能自包含使用：
-- `scripts/update_fb_cookie.py`（來源 repo `tools/update_fb_cookie.py` 的副本）
-- `scripts/run_daily_fetch.py`（來源 repo `scripts/run_daily_fetch.py` 的副本，
-  YAML workflow 呼叫的正是這支腳本）
-
-若來源 repo 內兩支檔案存在，一律優先使用來源 repo 版本（較新、且是唯一真正被 CI 執行的版本），
-本技能內附的副本僅作為技能自包含的備援。
+**全 repo 只有一份**：`run_daily_fetch.py`、`update_fb_cookie.py` 這兩支腳本的**唯一**副本就放在
+`skills/skill-facebook-fetch/scripts/` 底下——不是 repo 根目錄 `scripts/`、`tools/` 的副本，
+是**這裡就是唯一來源**。`.github/workflows/daily_fetch.yml`、`README.md` 裡所有指令都指向這個
+路徑。（若未來要把這個 skill 搬到 `wenchiehlee/skills` 登錄庫供其他 repo 重用，那份**才**需要
+照登錄庫規則另外維護一份自包含副本 —— 那是獨立維護的技能定義，跟本檔案是兩回事，不算重複。）
 
 ## 前置需求
 
@@ -38,7 +35,7 @@ bash 邏輯。因此本技能在本機執行 `run_daily_fetch.py` 得到的 `dat
 
 | 情境 | 指令 |
 |---|---|
-| 更新過期的 FB_COOKIE / FB_DTSG | 見下方「更新 Cookie 流程」；備援腳本 `<SKILL_DIR>/scripts/update_fb_cookie.py` |
+| 更新過期的 FB_COOKIE / FB_DTSG | 見下方「更新 Cookie 流程」；腳本 `skills/skill-facebook-fetch/scripts/update_fb_cookie.py` |
 | 本機執行完整抓取流程（跟 CI 同一份邏輯） | 見下方「本機執行完整抓取流程」 |
 | 手動觸發 GitHub Actions 抓取 | `gh workflow run daily_fetch.yml` |
 | 監看執行狀態直到完成 | `gh run watch <run-id> --exit-status` |
@@ -47,22 +44,24 @@ bash 邏輯。因此本技能在本機執行 `run_daily_fetch.py` 得到的 `dat
 
 ## 本機執行完整抓取流程
 
-`run_daily_fetch.py` 是 `daily_fetch.yml` 唯一呼叫的實作，涵蓋：重置 new_post_count →
+`skills/skill-facebook-fetch/scripts/run_daily_fetch.py` 是 `daily_fetch.yml` 唯一呼叫的實作，涵蓋：重置 new_post_count →
 抓珍藏清單 → 依 `data/fetch_urls.txt` 逐頁抓取 → 重建 README → 更新
 `raw_facebook_fetch.csv` → 統計新貼文數 →（可選）commit/push →（可選）觸發 sync →
 （可選）cookie 過期時開 issue。預設只做到「更新 CSV / README」，commit、觸發 sync、
 開 issue 都是 opt-in flag，避免本機執行時不小心動到 git 或觸發下游 workflow。
 
 ```bash
+# 在 Facebook.Fetch repo 根目錄執行：
+
 # 只抓資料、更新 README/CSV，不 commit、不觸發任何東西（本機測試用）
-python <SKILL_DIR>/scripts/run_daily_fetch.py --cookie "$FB_COOKIE" --fb-dtsg "$FB_DTSG"
+python skills/skill-facebook-fetch/scripts/run_daily_fetch.py --cookie "$FB_COOKIE" --fb-dtsg "$FB_DTSG"
 
 # 完全比照 CI 行為（commit/push + 觸發 sync + cookie 過期開 issue）
-python <SKILL_DIR>/scripts/run_daily_fetch.py --cookie "$FB_COOKIE" --fb-dtsg "$FB_DTSG" \
+python skills/skill-facebook-fetch/scripts/run_daily_fetch.py --cookie "$FB_COOKIE" --fb-dtsg "$FB_DTSG" \
   --commit --trigger-sync --create-issue
 
 # 回溯抓近 30 天（補資料）
-python <SKILL_DIR>/scripts/run_daily_fetch.py --cookie "$FB_COOKIE" --fb-dtsg "$FB_DTSG" --months-back 1
+python skills/skill-facebook-fetch/scripts/run_daily_fetch.py --cookie "$FB_COOKIE" --fb-dtsg "$FB_DTSG" --months-back 1
 ```
 
 FB_COOKIE / FB_DTSG 省略 `--cookie`/`--fb-dtsg` 時會自動從環境變數或 repo 根目錄的 `.env` 讀取。
@@ -79,13 +78,11 @@ FB_COOKIE / FB_DTSG 省略 `--cookie`/`--fb-dtsg` 時會自動從環境變數或
    （URL-decode `%3A` → `:`）。
 4. 執行（在 `Facebook.Fetch` repo 目錄下）：
    ```bash
-   python <SKILL_DIR>/scripts/update_fb_cookie.py --cookie "<cookie 字串>" --fb-dtsg "<fb_dtsg>"
+   python skills/skill-facebook-fetch/scripts/update_fb_cookie.py --cookie "<cookie 字串>" --fb-dtsg "<fb_dtsg>"
    ```
-   若來源 repo 的 `tools/update_fb_cookie.py` 存在且較新，優先使用該檔案（本技能的副本僅為備援，
-   兩者行為應保持一致）。此腳本會更新 GitHub Secrets `FB_COOKIE`、`FB_DTSG` 並自動觸發
-   `daily_fetch.yml`。
+   此腳本會更新 GitHub Secrets `FB_COOKIE`、`FB_DTSG` 並自動觸發 `daily_fetch.yml`。
    （若不在 Claude Code / MCP 環境，腳本支援 Cookie-Editor 擴充套件匯出 JSON 的備援流程，
-   直接執行 `python <SKILL_DIR>/scripts/update_fb_cookie.py` 不帶參數即可。）
+   直接執行 `python skills/skill-facebook-fetch/scripts/update_fb_cookie.py` 不帶參數即可。）
 
 ## 已知問題與排查
 
