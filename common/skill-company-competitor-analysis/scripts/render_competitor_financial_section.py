@@ -194,6 +194,16 @@ def market_sort_key(market: object) -> int:
     return order.get(str(market), 9)
 
 
+def row_sort_key(item: tuple[tuple[object, object, object, object], dict[object, dict[str, object]]]) -> tuple[object, int, int, str]:
+    stock, _company, rel_type, market = item[0]
+    return (rel_type != "target", CCA.relationship_sort_key(rel_type), market_sort_key(market), str(stock))
+
+
+def my_tw_markdown_period_label(row: dict[str, object]) -> str:
+    label = CCA.markdown_period_label(row)
+    return re.sub(r"^(\d{4})-Q([1-4])$", r"\1Q\2", label)
+
+
 def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: Path, years: int) -> list[dict[str, object]]:
     configure_runner_paths(biztrends_root)
     aliases = build_alias_map(json_dir, biztrends_root)
@@ -248,49 +258,49 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
         ("profit_yoy_pct", "Profit YoY"),
         ("gross_margin_pct", "GM"),
     ]
-    rows_by_group: dict[tuple[str, str], list[dict[str, object]]] = defaultdict(list)
+    unit = "百萬台幣"
+    periods = sorted({my_tw_markdown_period_label(row) for row in rows}, key=CCA.period_sort_key, reverse=True)
+    companies: dict[tuple[object, object, object, object], dict[object, dict[str, object]]] = defaultdict(dict)
+    has_us = False
     for row in rows:
-        market = str(row.get("market") or CCA.market_label_for_unit(row.get("unit")))
-        unit = str(row.get("unit") or "")
-        rows_by_group[(market, unit)].append(row)
+        market = row.get("market") or CCA.market_label_for_unit(row.get("unit"))
+        if market == "US":
+            has_us = True
+        companies[(row.get("stock"), row.get("company"), row.get("relationship_type"), market)][my_tw_markdown_period_label(row)] = row
 
     out = StringIO()
     out.write("### 競爭同業 Revenue/Profit/GM\n\n")
-    for (market, unit), unit_rows in sorted(rows_by_group.items(), key=lambda item: (market_sort_key(item[0][0]), item[0][0], item[0][1])):
-        periods = sorted({CCA.markdown_period_label(row) for row in unit_rows}, key=CCA.period_sort_key, reverse=True)
-        companies: dict[tuple[object, object, object], dict[object, dict[str, object]]] = defaultdict(dict)
-        for row in unit_rows:
-            companies[(row.get("stock"), row.get("company"), row.get("relationship_type"))][CCA.markdown_period_label(row)] = row
-
-        out.write(f"#### {market}\n\n")
-        out.write(f"Unit: `{unit}`\n")
-        if market == "US" and unit == "百萬台幣":
-            out.write(f"FX: `1 USD = {USD_TO_TWD_RATE:g} TWD`\n")
-        out.write("\n<table>\n<thead>\n<tr>")
-        out.write(CCA.html_cell("Stock", header=True))
-        out.write(CCA.html_cell("Company", header=True))
-        out.write(CCA.html_cell("Relationship", header=True))
+    out.write(f"Unit: `{unit}`\n")
+    if has_us:
+        out.write(f"FX: `1 USD = {USD_TO_TWD_RATE:g} TWD`\n")
+    out.write("\n<table>\n<thead>\n<tr>")
+    out.write(CCA.html_cell("Stock", header=True))
+    out.write(CCA.html_cell("Company", header=True))
+    out.write(CCA.html_cell("Market", header=True))
+    out.write(CCA.html_cell("Relationship", header=True))
+    for period in periods:
+        out.write(CCA.html_cell(period, header=True, align="center", colspan=len(metrics)))
+    out.write("</tr>\n<tr>")
+    out.write(CCA.html_cell("", header=True))
+    out.write(CCA.html_cell("", header=True))
+    out.write(CCA.html_cell("", header=True))
+    out.write(CCA.html_cell("", header=True))
+    for _period in periods:
+        for _key, label in metrics:
+            out.write(CCA.html_cell(label, header=True, align="right"))
+    out.write("</tr>\n</thead>\n<tbody>\n")
+    for (stock, company, rel_type, market), values_by_period in sorted(companies.items(), key=row_sort_key):
+        out.write("<tr>")
+        out.write(CCA.html_cell(stock))
+        out.write(CCA.html_cell(company))
+        out.write(CCA.html_cell(market))
+        out.write(CCA.html_cell(CCA.RELATIONSHIP_LABEL_ZH.get(str(rel_type), rel_type)))
         for period in periods:
-            out.write(CCA.html_cell(period, header=True, align="center", colspan=len(metrics)))
-        out.write("</tr>\n<tr>")
-        out.write(CCA.html_cell("", header=True))
-        out.write(CCA.html_cell("", header=True))
-        out.write(CCA.html_cell("", header=True))
-        for _period in periods:
-            for _key, label in metrics:
-                out.write(CCA.html_cell(label, header=True, align="right"))
-        out.write("</tr>\n</thead>\n<tbody>\n")
-        for (stock, company, rel_type), values_by_period in sorted(companies.items(), key=lambda item: (item[0][2] != "target", CCA.relationship_sort_key(item[0][2]), str(item[0][0]))):
-            out.write("<tr>")
-            out.write(CCA.html_cell(stock))
-            out.write(CCA.html_cell(company))
-            out.write(CCA.html_cell(CCA.RELATIONSHIP_LABEL_ZH.get(str(rel_type), rel_type)))
-            for period in periods:
-                row = values_by_period.get(period, {})
-                for key, _label in metrics:
-                    out.write(CCA.html_cell(row.get(key, ""), align="right"))
-            out.write("</tr>\n")
-        out.write("</tbody>\n</table>\n\n")
+            row = values_by_period.get(period, {})
+            for key, _label in metrics:
+                out.write(CCA.html_cell(row.get(key, ""), align="right"))
+        out.write("</tr>\n")
+    out.write("</tbody>\n</table>\n")
     return out.getvalue().strip()
 
 
