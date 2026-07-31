@@ -45,6 +45,12 @@ CCA.read_csv = cca_read_csv_cached
 _ALIAS_CACHE: dict[tuple[str, str], dict[str, str]] = {}
 
 KNOWN_ALIASES = {
+    "光寶科技": "2301",
+    "光寶科": "2301",
+    "Qualcomm": "QCOM",
+    "Broadcom": "AVGO",
+    "Samsung LSI": "005930.KS",
+    "Samsung System LSI": "005930.KS",
     "GlobalFoundries": "GFS",
     "GlobalFoundries Inc.": "GFS",
     "Intel Foundry": "INTC",
@@ -160,10 +166,11 @@ def resolve_competitors(data: dict[str, Any], aliases: dict[str, str]) -> list[t
         if not entities:
             entities = re.findall(r"\[\[([^\]]+)\]\]", str(item.get("text", "")))
         for entity in entities:
-            stock = aliases.get(normalize_alias(str(entity)))
+            entity_text = str(entity).strip()
+            stock = aliases.get(normalize_alias(entity_text)) or entity_text
             if not stock or stock in seen:
                 continue
-            resolved.append((stock, str(entity), rel_type))
+            resolved.append((stock, entity_text, rel_type))
             seen.add(stock)
     return resolved
 
@@ -204,6 +211,19 @@ def my_tw_markdown_period_label(row: dict[str, object]) -> str:
     return re.sub(r"^(\d{4})-Q([1-4])$", r"\1Q\2", label)
 
 
+def market_for_peer_stock(stock: object) -> str:
+    text = str(stock or "")
+    if text.isdigit():
+        return "Taiwan"
+    if text.endswith(".KS"):
+        return "Korea"
+    if text.endswith(".HK"):
+        return "Hong Kong"
+    if re.fullmatch(r"[A-Z.]+", text):
+        return "US"
+    return "Other"
+
+
 def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: Path, years: int) -> list[dict[str, object]]:
     configure_runner_paths(biztrends_root)
     aliases = build_alias_map(json_dir, biztrends_root)
@@ -229,7 +249,24 @@ def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: P
 
     rows: list[dict[str, object]] = []
     for peer_stock, peer in sorted(peers.items(), key=lambda item: (item[1].relationship_type != "target", CCA.relationship_sort_key(item[1].relationship_type), item[0])):
-        for metric_raw in metrics.get(peer_stock, []):
+        peer_metrics = metrics.get(peer_stock, [])
+        if not peer_metrics:
+            rows.append({
+                "stock": peer_stock,
+                "company": peer.company,
+                "relationship_type": peer.relationship_type,
+                "period": "",
+                "market": market_for_peer_stock(peer_stock),
+                "unit": "百萬台幣",
+                "revenue": "",
+                "revenue_yoy_pct": "",
+                "profit": "",
+                "profit_yoy_pct": "",
+                "gross_margin_pct": "",
+                "is_monthly_revenue_only": False,
+            })
+            continue
+        for metric_raw in peer_metrics:
             metric = convert_my_tw_units(metric_raw)
             rows.append({
                 "stock": peer_stock,
@@ -259,14 +296,18 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
         ("gross_margin_pct", "GM"),
     ]
     unit = "百萬台幣"
-    periods = sorted({my_tw_markdown_period_label(row) for row in rows}, key=CCA.period_sort_key, reverse=True)
+    periods = sorted({label for row in rows if (label := my_tw_markdown_period_label(row))}, key=CCA.period_sort_key, reverse=True)
     companies: dict[tuple[object, object, object, object], dict[object, dict[str, object]]] = defaultdict(dict)
     has_us = False
     for row in rows:
         market = row.get("market") or CCA.market_label_for_unit(row.get("unit"))
         if market == "US":
             has_us = True
-        companies[(row.get("stock"), row.get("company"), row.get("relationship_type"), market)][my_tw_markdown_period_label(row)] = row
+        period_label = my_tw_markdown_period_label(row)
+        company_key = (row.get("stock"), row.get("company"), row.get("relationship_type"), market)
+        companies.setdefault(company_key, {})
+        if period_label:
+            companies[company_key][period_label] = row
 
     out = StringIO()
     out.write("### 競爭同業 Revenue/Profit/GM\n\n")
