@@ -47,12 +47,15 @@ _ALIAS_CACHE: dict[tuple[str, str], dict[str, str]] = {}
 KNOWN_ALIASES = {
     "光寶科技": "2301",
     "光寶科": "2301",
+    "HP Inc": "HPQ",
+    "HP Inc.": "HPQ",
     "Qualcomm": "QCOM",
     "Broadcom": "AVGO",
     "Samsung LSI": "005930.KS",
     "Samsung System LSI": "005930.KS",
-    "Lenovo": "LNVGY",
-    "Lenovo Group": "LNVGY",
+    "Lenovo": "0992.HK",
+    "Lenovo Group": "0992.HK",
+    "Lenovo Group Limited": "0992.HK",
     "Lenovo Group ADR": "LNVGY",
     "GlobalFoundries": "GFS",
     "GlobalFoundries Inc.": "GFS",
@@ -70,7 +73,9 @@ KNOWN_ALIASES = {
 }
 
 USD_TO_TWD_RATE = 32.3
+HKD_TO_TWD_RATE = 4.13
 USD_BILLION_TO_TWD_MILLION = USD_TO_TWD_RATE * 1_000.0
+HKD_BILLION_TO_TWD_MILLION = HKD_TO_TWD_RATE * 1_000.0
 
 RELATIONSHIP_BY_ROLE = [
     ("晶圓", "foundry_competitor"),
@@ -160,17 +165,28 @@ def relationship_type(role: str) -> str:
     return "product_peer"
 
 
+def resolve_contextual_alias(entity_text: str, rel_type: str, role: str, aliases: dict[str, str]) -> str:
+    normalized = normalize_alias(entity_text)
+    if normalized == "hp":
+        role_text = str(role or "").casefold()
+        if rel_type == "server_peer" or "server" in role_text or "伺服器" in role_text or "enterprise" in role_text:
+            return "HPE"
+        return "HPQ"
+    return aliases.get(normalized) or entity_text
+
+
 def resolve_competitors(data: dict[str, Any], aliases: dict[str, str]) -> list[tuple[str, str, str]]:
     resolved: list[tuple[str, str, str]] = []
     seen: set[str] = set()
     for item in data.get("relationships", {}).get("competitors", []) or []:
-        rel_type = relationship_type(str(item.get("role", "")))
+        role = str(item.get("role", ""))
+        rel_type = relationship_type(role)
         entities = item.get("entities") or []
         if not entities:
             entities = re.findall(r"\[\[([^\]]+)\]\]", str(item.get("text", "")))
         for entity in entities:
             entity_text = str(entity).strip()
-            stock = aliases.get(normalize_alias(entity_text)) or entity_text
+            stock = resolve_contextual_alias(entity_text, rel_type, role, aliases)
             if not stock or stock in seen:
                 continue
             resolved.append((stock, entity_text, rel_type))
@@ -186,7 +202,12 @@ def convert_my_tw_units(metric: dict[str, object]) -> dict[str, object]:
         multiplier = 100.0
     elif unit == "USD 十億":
         metric["market"] = "US"
+        metric["fx_currency"] = "USD"
         multiplier = USD_BILLION_TO_TWD_MILLION
+    elif unit == "HKD 十億":
+        metric["market"] = "Hong Kong"
+        metric["fx_currency"] = "HKD"
+        multiplier = HKD_BILLION_TO_TWD_MILLION
     else:
         metric["market"] = CCA.market_label_for_unit(unit)
         return metric
@@ -266,6 +287,7 @@ def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: P
                 "profit": "",
                 "profit_yoy_pct": "",
                 "gross_margin_pct": "",
+                "fx_currency": "",
                 "is_monthly_revenue_only": False,
             })
             continue
@@ -276,13 +298,14 @@ def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: P
                 "company": metric.get("company") or peer.company,
                 "relationship_type": peer.relationship_type,
                 "period": metric.get("period"),
-                "market": metric.get("market") or CCA.market_label_for_unit(metric.get("unit")),
+                "market": market_for_peer_stock(peer_stock),
                 "unit": metric.get("unit"),
                 "revenue": CCA.number(metric.get("revenue")),
                 "revenue_yoy_pct": CCA.pct(metric.get("revenue_yoy_pct")),
                 "profit": CCA.number(metric.get("profit")),
                 "profit_yoy_pct": CCA.pct(metric.get("profit_yoy_pct")),
                 "gross_margin_pct": CCA.gm_pct(metric.get("gm")),
+                "fx_currency": metric.get("fx_currency", ""),
                 "is_monthly_revenue_only": bool(metric.get("is_monthly_revenue_only")),
             })
     return rows
@@ -301,11 +324,12 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
     unit = "百萬台幣"
     periods = sorted({label for row in rows if (label := my_tw_markdown_period_label(row))}, key=CCA.period_sort_key, reverse=True)
     companies: dict[tuple[object, object, object, object], dict[object, dict[str, object]]] = defaultdict(dict)
-    has_us = False
+    foreign_fx_currencies: set[str] = set()
     for row in rows:
         market = row.get("market") or CCA.market_label_for_unit(row.get("unit"))
-        if market == "US":
-            has_us = True
+        fx_currency = str(row.get("fx_currency") or "")
+        if str(row.get("unit") or "") == unit and fx_currency:
+            foreign_fx_currencies.add(fx_currency)
         period_label = my_tw_markdown_period_label(row)
         company_key = (row.get("stock"), row.get("company"), row.get("relationship_type"), market)
         companies.setdefault(company_key, {})
@@ -315,8 +339,13 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
     out = StringIO()
     out.write("### 競爭同業 Revenue/Profit/GM\n\n")
     out.write(f"Unit: `{unit}`\n")
-    if has_us:
-        out.write(f"FX: `1 USD = {USD_TO_TWD_RATE:g} TWD`\n")
+    fx_notes = []
+    if "USD" in foreign_fx_currencies:
+        fx_notes.append(f"1 USD = {USD_TO_TWD_RATE:g} TWD")
+    if "HKD" in foreign_fx_currencies:
+        fx_notes.append(f"1 HKD = {HKD_TO_TWD_RATE:g} TWD")
+    if fx_notes:
+        out.write(f"FX: `{'; '.join(fx_notes)}`\n")
     out.write("\n<table>\n<thead>\n<tr>")
     out.write(CCA.html_cell("Stock", header=True))
     out.write(CCA.html_cell("Company", header=True))

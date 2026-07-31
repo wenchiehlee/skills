@@ -29,7 +29,7 @@ AI_RELATED_CYCLES = [
     "Cloud_AI_Compute",
 ]
 
-PC_BRAND_COMPETITORS = {"2357": {"2353", "2376", "2377", "DELL", "HPQ", "LNVGY"}}
+PC_BRAND_COMPETITORS = {"2357": {"2353", "2376", "2377", "DELL", "HPQ", "0992.HK"}}
 IPC_BRAND_COMPETITORS = {
     "2395": {"2397", "2405", "3022", "3088", "3416", "3479", "3515", "6166", "6245", "6414", "6579", "8050", "8234"},
 }
@@ -51,7 +51,8 @@ SUPPLIER_OR_COMPONENT = {"2301", "2330", "2308", "2344", "2408", "2451", "8299",
 US_NAME_OVERRIDES = {
     "DELL": "Dell Technologies Inc.",
     "HPQ": "HP Inc.",
-    "LNVGY": "Lenovo Group Limited",
+    "0992.HK": "Lenovo Group Limited",
+    "LNVGY": "Lenovo Group ADR",
     "HPE": "Hewlett Packard Enterprise",
     "AVGO": "Broadcom Inc.",
     "QCOM": "Qualcomm Inc.",
@@ -471,11 +472,12 @@ def us_quarterly_metrics(symbols: set[str], years: int) -> dict[str, list[dict[s
         gm = to_float(row.get("gross_margin"))
         if gm is not None and abs(gm) <= 1.5:
             gm *= 100.0
+        currency = (row.get("currency") or "USD").strip().upper() or "USD"
         candidate = {
             "period": period_label,
             "fiscal_period": f"{fiscal_year}-{period}",
             "end_date": end_date,
-            "unit": "USD 十億",
+            "unit": f"{currency} 十億",
             "revenue": revenue / 1_000_000_000.0,
             "profit": profit / 1_000_000_000.0 if profit is not None else None,
             "gm": gm,
@@ -575,6 +577,10 @@ def market_label_for_unit(unit: object) -> str:
         return "Taiwan"
     if text.startswith("USD"):
         return "US"
+    if text.startswith("HKD"):
+        return "Hong Kong"
+    if text.startswith("KRW"):
+        return "Korea"
     return text or "Other"
 
 

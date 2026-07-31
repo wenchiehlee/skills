@@ -63,7 +63,7 @@ Read [references/competitor_rules.md](references/competitor_rules.md) before cha
 - For `2330 台積電`, classify dedicated wafer-foundry peers such as `2303` UMC, `GFS` GlobalFoundries, `INTC` Intel Foundry, `0981.HK` SMIC, and `005930.KS` Samsung Foundry as `foundry_competitor` when financial data exists. Do not classify IC design customers, packaging houses, equipment vendors, or materials suppliers as competitors.
 - Exclude `supplier_or_component` and generic `product_peer` from default competitor tables unless the user explicitly asks for broader supply-chain adjacency.
 - For `2357 華碩`, do not classify `2330 台積電` as a competitor. It is a semiconductor/foundry exposure or supplier-chain company, not a PC/server brand competitor.
-- Mark international peers such as `DELL`, `HPQ`, and `LNVGY` as `brand_competitor` when the target is a PC brand and data exists.
+- Mark international peers such as `DELL`, `HPQ`, and `0992.HK` as `brand_competitor` when the target is a PC brand and data exists.
 - For IC design / connectivity chip targets such as `2379` Realtek, mark direct chip competitors such as `2454` MediaTek, `6526` Airoha, `AVGO` Broadcom, and `QCOM` Qualcomm as `chip_competitor` when financial data exists.
 
 ## Output Requirements
