@@ -132,11 +132,36 @@ def month_to_taiwan_quarter(month: str) -> tuple[tuple[int, int], str] | None:
     quarter = (month_num - 1) // 3 + 1
     return (year, quarter), f"{year}Q{quarter}"
 
-def period_key_us(fiscal_year: str, period: str) -> tuple[int, int]:
+def date_to_calendar_quarter(date_text: str) -> tuple[tuple[int, int], str] | None:
+    match = re.fullmatch(r"(\d{4})-(\d{2})-\d{2}", str(date_text or "").strip())
+    if not match:
+        return None
+    year = int(match.group(1))
+    month = int(match.group(2))
+    quarter = (month - 1) // 3 + 1
+    return (year, quarter), f"{year}Q{quarter}"
+
+def period_key_us(fiscal_year: str, period: str, end_date: str = "") -> tuple[int, int]:
+    parsed = date_to_calendar_quarter(end_date)
+    if parsed is not None:
+        return parsed[0]
     match = re.fullmatch(r"Q([1-4])", period.strip())
     if not match or not fiscal_year.isdigit():
         return (0, 0)
     return (int(fiscal_year), int(match.group(1)))
+
+def period_label_us(fiscal_year: str, period: str, end_date: str) -> tuple[tuple[int, int], str]:
+    parsed = date_to_calendar_quarter(end_date)
+    if parsed is not None:
+        return parsed
+    return period_key_us(fiscal_year, period), f"{fiscal_year}-{period}"
+
+def us_income_row_priority(row: dict[str, str]) -> tuple[int, int, str]:
+    source = row.get("source", "").strip().upper()
+    validation = row.get("validation_status", "").strip().upper()
+    source_score = {"SEC": 3, "ALPHAVANTAGE": 2}.get(source, 1)
+    validation_score = 2 if validation == "VALIDATED" else 1 if validation else 0
+    return (source_score, validation_score, row.get("process_timestamp", "").strip())
 
 def segment_period_key(period: str) -> tuple[int, int]:
     text = period.strip()
@@ -435,7 +460,10 @@ def us_quarterly_metrics(symbols: set[str], years: int) -> dict[str, list[dict[s
         symbol = row.get("symbol", "").strip()
         period = row.get("period", "").strip()
         fiscal_year = row.get("fiscal_year", "").strip()
-        key = period_key_us(fiscal_year, period)
+        if not re.fullmatch(r"Q[1-4]", period):
+            continue
+        end_date = row.get("end_date", "").strip()
+        key, period_label = period_label_us(fiscal_year, period, end_date)
         revenue = to_float(row.get("total_revenue"))
         if symbol not in symbols or key == (0, 0) or revenue is None:
             continue
@@ -443,15 +471,21 @@ def us_quarterly_metrics(symbols: set[str], years: int) -> dict[str, list[dict[s
         gm = to_float(row.get("gross_margin"))
         if gm is not None and abs(gm) <= 1.5:
             gm *= 100.0
-        by_stock_period[(symbol, key)] = {
-            "period": f"{fiscal_year}-{period}",
+        candidate = {
+            "period": period_label,
+            "fiscal_period": f"{fiscal_year}-{period}",
+            "end_date": end_date,
             "unit": "USD 十億",
             "revenue": revenue / 1_000_000_000.0,
             "profit": profit / 1_000_000_000.0 if profit is not None else None,
             "gm": gm,
             "company": row.get("company_name", "").strip() or US_NAME_OVERRIDES.get(symbol, ""),
-            "revenue_yoy_pct": to_float(row.get("revenue_yoy_pct")),
+            "revenue_yoy_pct": None,
+            "_row_priority": us_income_row_priority(row),
         }
+        existing = by_stock_period.get((symbol, key))
+        if existing is None or candidate["_row_priority"] > existing.get("_row_priority", (0, 0, "")):
+            by_stock_period[(symbol, key)] = candidate
 
     selected_periods = select_recent_periods([key for stock, key in by_stock_period if stock in symbols], years)
     out: dict[str, list[dict[str, object]]] = defaultdict(list)
@@ -459,8 +493,7 @@ def us_quarterly_metrics(symbols: set[str], years: int) -> dict[str, list[dict[s
         if key not in selected_periods:
             continue
         prior = by_stock_period.get((symbol, (key[0] - 1, key[1])), {})
-        if current.get("revenue_yoy_pct") is None:
-            current["revenue_yoy_pct"] = yoy(current.get("revenue"), prior.get("revenue"))
+        current["revenue_yoy_pct"] = yoy(current.get("revenue"), prior.get("revenue"))
         current["profit_yoy_pct"] = yoy(current.get("profit"), prior.get("profit"))
         out[symbol].append(current)
     return out

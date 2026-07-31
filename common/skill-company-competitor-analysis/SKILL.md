@@ -48,7 +48,7 @@ Use these sources in this order:
 3. `data/ic.tpex.org.tw/raw_SupplyChainMap.csv`: broader supply-chain context and supplier exclusion clues.
 4. `data/Python-Actions.GoodInfo.Analyzer/raw_performance1.csv`: Taiwan quarterly actual financials.
 5. `data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv`: Taiwan monthly revenue fallback for not-yet-reported quarters; fill only Revenue and Revenue YoY.
-6. `data/ConceptStocks/raw_conceptstock_company_income.csv`: US quarterly actual financials.
+6. `data/ConceptStocks/raw_conceptstock_company_income.csv`: US quarterly actual financials; align `Q1`-`Q4` rows by `end_date` calendar quarter, not fiscal-year label.
 7. `output/company_canonical_cycle_performance_details.csv`: latest cycle exposure only for context, not as the primary competitor filter.
 8. `output/company_cycle_major_weights.csv`: latest Taiwan company revenue segment weights rolled up to canonical cycles; use this for AI canonical-cycle exposure context in markdown reports.
 9. `data/company_segment_weights.csv` + `data/cycle_mapping.csv`: latest US active segment weights mapped to canonical or demand AI cycles when US peers are not present in `output/company_cycle_major_weights.csv`.
@@ -77,6 +77,8 @@ For each selected peer, show quarterly data for the most recent requested years.
 - `GM`
 
 If a Taiwan quarter is based only on monthly revenue, label the markdown period header as `YYYYQn（月營收）`, fill `Revenue` and `Revenue YoY`, and leave `Profit`, `Profit YoY`, and `GM` blank. Keep CSV period values machine-readable, for example `2026Q2`.
+
+For US rows, exclude annual `FY` rows from quarterly tables. Use `end_date` to convert fiscal quarters into calendar-quarter labels such as `2025Q4`; for example, a US fiscal `2026-Q1` row ending in December 2025 belongs under `2025Q4`. Prefer SEC rows over AlphaVantage rows when both map to the same company and calendar quarter, then recompute YoY against the selected prior-year same calendar quarter.
 
 For Taiwan rows, use `TWD 億`. For US rows, use `USD 十億`.
 
