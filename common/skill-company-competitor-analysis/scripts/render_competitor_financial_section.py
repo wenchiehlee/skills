@@ -60,6 +60,9 @@ KNOWN_ALIASES = {
     "UMC": "2303",
 }
 
+USD_TO_TWD_RATE = 32.3
+USD_BILLION_TO_TWD_MILLION = USD_TO_TWD_RATE * 1_000.0
+
 RELATIONSHIP_BY_ROLE = [
     ("晶圓", "foundry_competitor"),
     ("foundry", "foundry_competitor"),
@@ -167,20 +170,28 @@ def resolve_competitors(data: dict[str, Any], aliases: dict[str, str]) -> list[t
 
 def convert_my_tw_units(metric: dict[str, object]) -> dict[str, object]:
     metric = dict(metric)
-    if metric.get("unit") != "TWD 億":
+    unit = metric.get("unit")
+    if unit == "TWD 億":
+        metric["market"] = "Taiwan"
+        multiplier = 100.0
+    elif unit == "USD 十億":
+        metric["market"] = "US"
+        multiplier = USD_BILLION_TO_TWD_MILLION
+    else:
+        metric["market"] = CCA.market_label_for_unit(unit)
         return metric
+
     metric["unit"] = "百萬台幣"
     for key in ["revenue", "profit"]:
         value = CCA.to_float(metric.get(key))
         if value is not None:
-            metric[key] = value * 100.0
+            metric[key] = value * multiplier
     return metric
 
 
-def my_tw_market_label_for_unit(unit: object) -> str:
-    if str(unit or "") == "百萬台幣":
-        return "Taiwan"
-    return CCA.market_label_for_unit(unit)
+def market_sort_key(market: object) -> int:
+    order = {"Taiwan": 0, "US": 1, "Other": 2}
+    return order.get(str(market), 9)
 
 
 def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: Path, years: int) -> list[dict[str, object]]:
@@ -215,6 +226,7 @@ def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: P
                 "company": metric.get("company") or peer.company,
                 "relationship_type": peer.relationship_type,
                 "period": metric.get("period"),
+                "market": metric.get("market") or CCA.market_label_for_unit(metric.get("unit")),
                 "unit": metric.get("unit"),
                 "revenue": CCA.number(metric.get("revenue")),
                 "revenue_yoy_pct": CCA.pct(metric.get("revenue_yoy_pct")),
@@ -236,22 +248,25 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
         ("profit_yoy_pct", "Profit YoY"),
         ("gross_margin_pct", "GM"),
     ]
-    rows_by_unit: dict[str, list[dict[str, object]]] = defaultdict(list)
+    rows_by_group: dict[tuple[str, str], list[dict[str, object]]] = defaultdict(list)
     for row in rows:
-        rows_by_unit[str(row.get("unit") or "")].append(row)
+        market = str(row.get("market") or CCA.market_label_for_unit(row.get("unit")))
+        unit = str(row.get("unit") or "")
+        rows_by_group[(market, unit)].append(row)
 
     out = StringIO()
     out.write("### 競爭同業 Revenue/Profit/GM\n\n")
-    for unit, unit_rows in sorted(rows_by_unit.items(), key=lambda item: my_tw_market_label_for_unit(item[0])):
-        market = my_tw_market_label_for_unit(unit)
+    for (market, unit), unit_rows in sorted(rows_by_group.items(), key=lambda item: (market_sort_key(item[0][0]), item[0][0], item[0][1])):
         periods = sorted({CCA.markdown_period_label(row) for row in unit_rows}, key=CCA.period_sort_key, reverse=True)
         companies: dict[tuple[object, object, object], dict[object, dict[str, object]]] = defaultdict(dict)
         for row in unit_rows:
             companies[(row.get("stock"), row.get("company"), row.get("relationship_type"))][CCA.markdown_period_label(row)] = row
 
         out.write(f"#### {market}\n\n")
-        out.write(f"Unit: `{unit}`\n\n")
-        out.write("<table>\n<thead>\n<tr>")
+        out.write(f"Unit: `{unit}`\n")
+        if market == "US" and unit == "百萬台幣":
+            out.write(f"FX: `1 USD = {USD_TO_TWD_RATE:g} TWD`\n")
+        out.write("\n<table>\n<thead>\n<tr>")
         out.write(CCA.html_cell("Stock", header=True))
         out.write(CCA.html_cell("Company", header=True))
         out.write(CCA.html_cell("Relationship", header=True))
