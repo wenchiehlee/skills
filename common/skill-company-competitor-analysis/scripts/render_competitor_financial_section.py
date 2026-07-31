@@ -165,6 +165,24 @@ def resolve_competitors(data: dict[str, Any], aliases: dict[str, str]) -> list[t
     return resolved
 
 
+def convert_my_tw_units(metric: dict[str, object]) -> dict[str, object]:
+    metric = dict(metric)
+    if metric.get("unit") != "TWD 億":
+        return metric
+    metric["unit"] = "百萬台幣"
+    for key in ["revenue", "profit"]:
+        value = CCA.to_float(metric.get(key))
+        if value is not None:
+            metric[key] = value * 100.0
+    return metric
+
+
+def my_tw_market_label_for_unit(unit: object) -> str:
+    if str(unit or "") == "百萬台幣":
+        return "Taiwan"
+    return CCA.market_label_for_unit(unit)
+
+
 def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: Path, years: int) -> list[dict[str, object]]:
     configure_runner_paths(biztrends_root)
     aliases = build_alias_map(json_dir, biztrends_root)
@@ -190,7 +208,8 @@ def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: P
 
     rows: list[dict[str, object]] = []
     for peer_stock, peer in sorted(peers.items(), key=lambda item: (item[1].relationship_type != "target", CCA.relationship_sort_key(item[1].relationship_type), item[0])):
-        for metric in metrics.get(peer_stock, []):
+        for metric_raw in metrics.get(peer_stock, []):
+            metric = convert_my_tw_units(metric_raw)
             rows.append({
                 "stock": peer_stock,
                 "company": metric.get("company") or peer.company,
@@ -223,8 +242,8 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
 
     out = StringIO()
     out.write("### 競爭同業 Revenue/Profit/GM\n\n")
-    for unit, unit_rows in sorted(rows_by_unit.items(), key=lambda item: CCA.market_label_for_unit(item[0])):
-        market = CCA.market_label_for_unit(unit)
+    for unit, unit_rows in sorted(rows_by_unit.items(), key=lambda item: my_tw_market_label_for_unit(item[0])):
+        market = my_tw_market_label_for_unit(unit)
         periods = sorted({CCA.markdown_period_label(row) for row in unit_rows}, key=CCA.period_sort_key, reverse=True)
         companies: dict[tuple[object, object, object], dict[object, dict[str, object]]] = defaultdict(dict)
         for row in unit_rows:
