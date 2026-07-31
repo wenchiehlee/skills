@@ -6,5 +6,10 @@
   "maintainer": "wenchiehlee-money",
   "source": "https://github.com/wenchiehlee-money/My-TW-Coverage",
   "updated_at": "2026-07-31",
-  "dependencies": []
+  "dependencies": [
+    {
+      "name": "skill-company-competitor-analysis",
+      "version": ">=0.1.0"
+    }
+  ]
 }

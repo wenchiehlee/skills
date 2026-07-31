@@ -19,6 +19,7 @@ Use this skill to render canonical enrichment JSON into Markdown for review or p
 - Comparison report: `output/enrichment_all_render_compare.csv`
 - Revenue mix source when available: `../biztrends.TW/data/company_segment_weights.csv`
 - Revenue amount fallback source: `../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv`
+- Competitor financial source: repo-local `skills/skill-company-competitor-analysis` adapter, backed by `../biztrends.TW` financial CSVs
 - Archived/legacy material: `Pilot_Reports/`
 
 Do not use `Pilot_Reports/` as an active render source. Read it only for explicit comparison or migration audits. The intended future state is that `Pilot_Reports/` can be renamed or moved to an archived folder without breaking rendering.
@@ -30,24 +31,26 @@ Run from the My-TW-Coverage repository root.
 Render one ticker:
 
 ```bash
-python3 ../skills/common/skill-my-tw-coverage-render-markdown/scripts/render_enrichment_markdown.py \
+python3 skills/skill-my-tw-coverage-render-markdown/scripts/render_enrichment_markdown.py \
   --json-dir data/enrichment_all \
   --out output/enrichment_all_rendered \
   --compare output/enrichment_all_render_compare.csv \
   --segment-weights ../biztrends.TW/data/company_segment_weights.csv \
   --monthly-revenue ../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv \
+  --biztrends-root ../biztrends.TW \
   --ticker 2330
 ```
 
 Render all canonical JSON files:
 
 ```bash
-python3 ../skills/common/skill-my-tw-coverage-render-markdown/scripts/render_enrichment_markdown.py \
+python3 skills/skill-my-tw-coverage-render-markdown/scripts/render_enrichment_markdown.py \
   --json-dir data/enrichment_all \
   --out output/enrichment_all_rendered \
   --compare output/enrichment_all_render_compare.csv \
   --segment-weights ../biztrends.TW/data/company_segment_weights.csv \
-  --monthly-revenue ../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv
+  --monthly-revenue ../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv \
+  --biztrends-root ../biztrends.TW
 ```
 
 After rendering, inspect key files with `rg` or `sed` before committing:
@@ -67,6 +70,7 @@ git diff -- output/enrichment_all_rendered data/enrichment_all_render_compare.cs
 - If `source_text.financial_md` already has `營收平台佔比`, preserve it and normalize its location after `季度關鍵財務數據`.
 - If `source_text.financial_md` does not have `營收平台佔比`, inject it from `company_segment_weights.csv` for tickers with active rows.
 - In `營收平台佔比` cells, include `percentage (revenue amount)` when a matching period revenue total exists; amounts are 百萬台幣. Prefer financial table revenue totals, then fall back to monthly revenue summed from GoodInfo Analyzer.
+- Insert `### 競爭同業 Revenue/Profit/GM` inside `## 財務概況` when competitors from JSON can be resolved to financial data. Place it after `營收平台佔比` when present, otherwise after `季度關鍵財務數據`.
 - Insert a latest-period `主要平台` sentence under the downstream supply-chain section from `company_segment_weights.csv` for tickers with active rows, unless the source already has `主要平台`.
 - Do not overwrite `Pilot_Reports/`.
 
@@ -83,7 +87,7 @@ Before reporting completion:
 1. Run Python syntax validation on the renderer:
 
 ```bash
-python3 -m py_compile ../skills/common/skill-my-tw-coverage-render-markdown/scripts/render_enrichment_markdown.py
+python3 -m py_compile skills/skill-my-tw-coverage-render-markdown/scripts/render_enrichment_markdown.py
 ```
 
 2. Render a known sample, usually `2330`.

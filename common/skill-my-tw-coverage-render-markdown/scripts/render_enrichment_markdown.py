@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import argparse
 import csv
+import importlib.util
 import json
 import re
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +20,7 @@ WIKILINK_RE = re.compile(r"\[\[([^\]]+)\]\]")
 FINANCIAL_HEADING = "## 財務概況"
 PLATFORM_REVENUE_HEADING = "### 營收平台佔比 (Revenue by Platform %)"
 QUARTERLY_HEADING = "### 季度關鍵財務數據 (近 4 季)"
+COMPETITOR_FINANCIAL_HEADING = "### 競爭同業 Revenue/Profit/GM"
 H3_RE = re.compile(r"(?m)^### .*$")
 
 
@@ -50,6 +53,19 @@ def markdown_table(headers: list[str], rows: list[list[str]]) -> str:
     lines = ["| " + " | ".join(headers) + " |", "|" + "|".join(":---" for _ in headers) + "|"]
     lines.extend("| " + " | ".join(row) + " |" for row in rows)
     return "\n".join(lines)
+
+
+def load_competitor_financial_adapter(coverage_root: Path):
+    adapter_path = coverage_root / "skills/skill-company-competitor-analysis/scripts/render_competitor_financial_section.py"
+    if not adapter_path.is_file():
+        return None
+    spec = importlib.util.spec_from_file_location("my_tw_competitor_financial_section", adapter_path)
+    if spec is None or spec.loader is None:
+        return None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 def collect_segment_weight_rows(path: Path) -> dict[str, list[dict[str, str]]]:
@@ -328,6 +344,40 @@ def add_revenue_amounts_to_platform_table(financial: str, fallback_totals: dict[
     return "\n\n".join(parts).strip()
 
 
+def insert_competitor_financial_section(financial: str, competitor_section: str) -> str:
+    financial = financial.strip()
+    competitor_section = competitor_section.strip()
+    if not financial or not competitor_section:
+        return financial
+
+    heading = ""
+    body = financial
+    if financial.startswith("## "):
+        lines = financial.splitlines()
+        heading = lines[0].rstrip()
+        body = "\n".join(lines[1:]).strip()
+
+    preface, sections = split_h3_sections(body)
+    sections = [(h, section) for h, section in sections if h != COMPETITOR_FINANCIAL_HEADING]
+    if not sections:
+        parts = [part for part in [heading, body, competitor_section] if part]
+        return "\n\n".join(parts).strip()
+
+    reordered: list[str] = []
+    inserted = False
+    preferred_after = PLATFORM_REVENUE_HEADING if any(h == PLATFORM_REVENUE_HEADING for h, _section in sections) else QUARTERLY_HEADING
+    for h, section in sections:
+        reordered.append(section)
+        if h == preferred_after:
+            reordered.append(competitor_section)
+            inserted = True
+    if not inserted:
+        reordered.append(competitor_section)
+
+    parts = [part for part in [heading, preface, "\n\n".join(reordered).strip()] if part]
+    return "\n\n".join(parts).strip()
+
+
 def wikilinks(text: str) -> set[str]:
     return {x.strip() for x in WIKILINK_RE.findall(text) if x.strip()}
 
@@ -487,7 +537,7 @@ def render_competitive_position(data: dict[str, Any]) -> str:
     return "\n".join(lines).strip()
 
 
-def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: dict[str, str] | None = None, segment_weight_summaries: dict[str, str] | None = None, monthly_revenue_totals: dict[str, dict[str, float]] | None = None) -> str:
+def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: dict[str, str] | None = None, segment_weight_summaries: dict[str, str] | None = None, monthly_revenue_totals: dict[str, dict[str, float]] | None = None, competitor_financial_section: str = "") -> str:
     title = data.get("title") or f"{data.get('ticker', '')} - [[{data.get('company_name', '')}]]"
     profile = data.get("profile", {})
     business_summary = data.get("business", {}).get("summary", "").strip()
@@ -498,6 +548,7 @@ def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: 
         financial = insert_platform_revenue_section(financial, segment_weight_tables.get(ticker, ""))
     financial = normalize_financial_section(financial)
     financial = add_revenue_amounts_to_platform_table(financial, (monthly_revenue_totals or {}).get(ticker, {}))
+    financial = insert_competitor_financial_section(financial, competitor_financial_section)
 
     parts: list[str] = [f"# {title}", "", "## 業務簡介"]
     parts.extend(format_metadata(profile))
@@ -543,6 +594,8 @@ def main() -> int:
     parser.add_argument("--compare", default="output/enrichment_all_render_compare.csv")
     parser.add_argument("--segment-weights", default="../biztrends.TW/data/company_segment_weights.csv")
     parser.add_argument("--monthly-revenue", default="../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv")
+    parser.add_argument("--biztrends-root", default="../biztrends.TW")
+    parser.add_argument("--competitor-financial-years", type=int, default=3)
     parser.add_argument("--ticker")
     args = parser.parse_args()
 
@@ -562,6 +615,10 @@ def main() -> int:
     if not monthly_revenue_path.is_absolute():
         monthly_revenue_path = (coverage_root / monthly_revenue_path).resolve()
     monthly_revenue_totals = load_monthly_revenue_totals(monthly_revenue_path)
+    biztrends_root = Path(args.biztrends_root)
+    if not biztrends_root.is_absolute():
+        biztrends_root = (coverage_root / biztrends_root).resolve()
+    competitor_adapter = load_competitor_financial_adapter(coverage_root)
 
     rows = []
     written = 0
@@ -569,7 +626,15 @@ def main() -> int:
         data = json.loads(json_path.read_text(encoding="utf-8"))
         src = original_md_path(coverage_root, data)
         original = src.read_text(encoding="utf-8") if src.exists() else ""
-        rendered = render_markdown(data, "", segment_weight_tables, segment_weight_summaries, monthly_revenue_totals)
+        competitor_financial_section = ""
+        if competitor_adapter is not None:
+            competitor_financial_section = competitor_adapter.render_competitor_financial_section(
+                data,
+                json_dir,
+                biztrends_root,
+                args.competitor_financial_years,
+            )
+        rendered = render_markdown(data, "", segment_weight_tables, segment_weight_summaries, monthly_revenue_totals, competitor_financial_section)
         out_path = out_dir / f"{data['ticker']}_{data['company_name']}.md"
         out_path.write_text(rendered, encoding="utf-8")
         row = compare(original, rendered, data)
