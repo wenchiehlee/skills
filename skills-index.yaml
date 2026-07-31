@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-07-30'
+generated_at: '2026-07-31'
 skills:
 - name: skill-adb-gadget
   group: common
@@ -190,6 +190,17 @@ skills:
   source: https://github.com/wenchiehlee-money/MOPS
   updated_at: '2026-07-19'
   revised_at: '2026-07-19'
+- name: skill-my-tw-coverage-render-markdown
+  group: common
+  path: common/skill-my-tw-coverage-render-markdown
+  version: 1.0.0
+  description: Render My-TW-Coverage canonical enrichment JSON into organized Markdown
+    without using Pilot_Reports as an active source.
+  category: financial-data
+  maintainer: wenchiehlee-money
+  source: https://github.com/wenchiehlee-money/My-TW-Coverage
+  updated_at: '2026-07-31'
+  revised_at: '2026-07-31'
 - name: skill-pptx-to-md
   group: common
   path: common/skill-pptx-to-md
