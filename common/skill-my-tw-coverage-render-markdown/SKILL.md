@@ -17,6 +17,7 @@ Use this skill to render canonical enrichment JSON into Markdown for review or p
 - Canonical enrichment source: `data/enrichment_all/*.json`
 - Rendered output: `output/enrichment_all_rendered/*.md`
 - Comparison report: `output/enrichment_all_render_compare.csv`
+- Revenue mix source when available: `../biztrends.TW/data/company_segment_weights.csv`
 - Archived/legacy material: `Pilot_Reports/`
 
 Do not use `Pilot_Reports/` as an active render source. Read it only for explicit comparison or migration audits. The intended future state is that `Pilot_Reports/` can be renamed or moved to an archived folder without breaking rendering.
@@ -32,6 +33,7 @@ python3 ../skills/common/skill-my-tw-coverage-render-markdown/scripts/render_enr
   --json-dir data/enrichment_all \
   --out output/enrichment_all_rendered \
   --compare output/enrichment_all_render_compare.csv \
+  --segment-weights ../biztrends.TW/data/company_segment_weights.csv \
   --ticker 2330
 ```
 
@@ -41,13 +43,14 @@ Render all canonical JSON files:
 python3 ../skills/common/skill-my-tw-coverage-render-markdown/scripts/render_enrichment_markdown.py \
   --json-dir data/enrichment_all \
   --out output/enrichment_all_rendered \
-  --compare output/enrichment_all_render_compare.csv
+  --compare output/enrichment_all_render_compare.csv \
+  --segment-weights ../biztrends.TW/data/company_segment_weights.csv
 ```
 
 After rendering, inspect key files with `rg` or `sed` before committing:
 
 ```bash
-rg -n "競爭同業|財務概況" output/enrichment_all_rendered/2330_台積電.md
+rg -n "競爭同業|財務概況|營收平台佔比" output/enrichment_all_rendered/2330_台積電.md
 git diff -- output/enrichment_all_rendered data/enrichment_all_render_compare.csv
 ```
 
@@ -58,6 +61,8 @@ git diff -- output/enrichment_all_rendered data/enrichment_all_render_compare.cs
 - Only render competitors that exist in `relationships.competitors`.
 - Preserve explicit roles such as `晶圓代工競爭者`, `主要競爭對手`, `競爭同業`, or other curated labels from JSON.
 - If a relationship array is empty, omit that Markdown subsection instead of fabricating content.
+- If `source_text.financial_md` already has `營收平台佔比`, preserve it and normalize its location after `季度關鍵財務數據`.
+- If `source_text.financial_md` does not have `營收平台佔比`, inject it from `company_segment_weights.csv` for tickers with active rows.
 - Do not overwrite `Pilot_Reports/`.
 
 ## Financial Section Policy
@@ -81,7 +86,7 @@ python3 -m py_compile ../skills/common/skill-my-tw-coverage-render-markdown/scri
 3. Confirm the rendered output comes from JSON and contains expected JSON-backed sections:
 
 ```bash
-rg -n "競爭同業|財務概況" output/enrichment_all_rendered/2330_台積電.md
+rg -n "競爭同業|財務概況|營收平台佔比" output/enrichment_all_rendered/2330_台積電.md
 ```
 
 4. Check git status in both repositories when the shared skill changed:

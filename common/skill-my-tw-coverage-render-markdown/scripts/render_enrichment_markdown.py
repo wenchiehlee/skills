@@ -16,6 +16,141 @@ from typing import Any
 
 WIKILINK_RE = re.compile(r"\[\[([^\]]+)\]\]")
 FINANCIAL_HEADING = "## 財務概況"
+PLATFORM_REVENUE_HEADING = "### 營收平台佔比 (Revenue by Platform %)"
+QUARTERLY_HEADING = "### 季度關鍵財務數據 (近 4 季)"
+H3_RE = re.compile(r"(?m)^### .*$")
+
+
+
+def period_sort_key(period: str) -> tuple[int, int, str]:
+    match = re.match(r"^(\d{4})(?:[-/]?Q([1-4])|-FY)?$", period.strip(), re.IGNORECASE)
+    if not match:
+        return (0, 0, period)
+    year = int(match.group(1))
+    quarter = int(match.group(2) or 5)
+    return (year, quarter, period)
+
+
+def format_pct(value: str) -> str:
+    try:
+        return f"{float(value):.1f}%"
+    except (TypeError, ValueError):
+        return "-"
+
+
+def markdown_table(headers: list[str], rows: list[list[str]]) -> str:
+    lines = ["| " + " | ".join(headers) + " |", "|" + "|".join(":---" for _ in headers) + "|"]
+    lines.extend("| " + " | ".join(row) + " |" for row in rows)
+    return "\n".join(lines)
+
+
+def load_segment_weight_tables(path: Path) -> dict[str, str]:
+    if not path.is_file():
+        return {}
+    by_ticker: dict[str, list[dict[str, str]]] = {}
+    with path.open(encoding="utf-8-sig", newline="") as f:
+        for row in csv.DictReader(f):
+            if str(row.get("status", "")).strip() != "active":
+                continue
+            ticker = str(row.get("stock_code", "")).strip()
+            segment = str(row.get("segment_name", "")).strip()
+            period = str(row.get("source_period", "")).strip()
+            weight = str(row.get("weight_pct", "")).strip()
+            if not ticker or not segment or not period or not weight:
+                continue
+            by_ticker.setdefault(ticker, []).append(row)
+
+    tables: dict[str, str] = {}
+    for ticker, rows in by_ticker.items():
+        latest_period = max((str(r.get("source_period", "")).strip() for r in rows), key=period_sort_key)
+        latest_rows = [r for r in rows if str(r.get("source_period", "")).strip() == latest_period]
+        segments = [str(r.get("segment_name", "")).strip() for r in sorted(latest_rows, key=lambda r: float(r.get("weight_pct") or 0), reverse=True)]
+        periods = sorted({str(r.get("source_period", "")).strip() for r in rows}, key=period_sort_key, reverse=True)
+        value_by_key = {
+            (str(r.get("source_period", "")).strip(), str(r.get("segment_name", "")).strip()): format_pct(str(r.get("weight_pct", "")).strip())
+            for r in rows
+        }
+        table_rows = [[period] + [value_by_key.get((period, segment), "-") for segment in segments] for period in periods]
+        tables[ticker] = PLATFORM_REVENUE_HEADING + "\n" + markdown_table(["期間"] + segments, table_rows)
+    return tables
+
+
+def insert_platform_revenue_section(financial: str, platform_section: str) -> str:
+    financial = financial.strip()
+    platform_section = platform_section.strip()
+    if not financial or not platform_section or PLATFORM_REVENUE_HEADING in financial:
+        return financial
+
+    heading = ""
+    body = financial
+    if financial.startswith("## "):
+        lines = financial.splitlines()
+        heading = lines[0].rstrip()
+        body = "\n".join(lines[1:]).strip()
+
+    preface, sections = split_h3_sections(body)
+    if not sections:
+        parts = [part for part in [heading, body, platform_section] if part]
+        return "\n\n".join(parts).strip()
+
+    reordered: list[str] = []
+    inserted = False
+    for h, section in sections:
+        reordered.append(section)
+        if h == QUARTERLY_HEADING:
+            reordered.append(platform_section)
+            inserted = True
+    if not inserted:
+        reordered.append(platform_section)
+
+    parts = [part for part in [heading, preface, "\n\n".join(reordered).strip()] if part]
+    return "\n\n".join(parts).strip()
+
+
+def split_h3_sections(markdown: str) -> tuple[str, list[tuple[str, str]]]:
+    matches = list(H3_RE.finditer(markdown))
+    if not matches:
+        return markdown.strip(), []
+    preface = markdown[: matches[0].start()].strip()
+    sections: list[tuple[str, str]] = []
+    for idx, match in enumerate(matches):
+        end = matches[idx + 1].start() if idx + 1 < len(matches) else len(markdown)
+        section = markdown[match.start():end].strip()
+        heading = match.group(0).strip()
+        sections.append((heading, section))
+    return preface, sections
+
+
+def normalize_financial_section(financial: str) -> str:
+    financial = financial.strip()
+    if not financial or PLATFORM_REVENUE_HEADING not in financial or QUARTERLY_HEADING not in financial:
+        return financial
+
+    heading = ""
+    body = financial
+    if financial.startswith("## "):
+        lines = financial.splitlines()
+        heading = lines[0].rstrip()
+        body = "\n".join(lines[1:]).strip()
+
+    preface, sections = split_h3_sections(body)
+    platform_sections = [section for h, section in sections if h == PLATFORM_REVENUE_HEADING]
+    if not platform_sections:
+        return financial
+
+    kept = [(h, section) for h, section in sections if h != PLATFORM_REVENUE_HEADING]
+    reordered: list[str] = []
+    inserted = False
+    for h, section in kept:
+        reordered.append(section)
+        if h == QUARTERLY_HEADING:
+            reordered.extend(platform_sections)
+            inserted = True
+    if not inserted:
+        reordered.extend(platform_sections)
+
+    parts = [part for part in [heading, preface, "\n\n".join(reordered).strip()] if part]
+    return "\n\n".join(parts).strip()
 
 
 def wikilinks(text: str) -> set[str]:
@@ -160,11 +295,14 @@ def render_competitive_position(data: dict[str, Any]) -> str:
     return "\n".join(lines).strip()
 
 
-def render_markdown(data: dict[str, Any], original: str) -> str:
+def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: dict[str, str] | None = None) -> str:
     title = data.get("title") or f"{data.get('ticker', '')} - [[{data.get('company_name', '')}]]"
     profile = data.get("profile", {})
     business_summary = data.get("business", {}).get("summary", "").strip()
     financial = str(data.get("source_text", {}).get("financial_md", "")).strip()
+    if segment_weight_tables:
+        financial = insert_platform_revenue_section(financial, segment_weight_tables.get(str(data.get("ticker", "")).strip(), ""))
+    financial = normalize_financial_section(financial)
 
     parts: list[str] = [f"# {title}", "", "## 業務簡介"]
     parts.extend(format_metadata(profile))
@@ -208,6 +346,7 @@ def main() -> int:
     parser.add_argument("--coverage-root", default=".")
     parser.add_argument("--out", default="output/enrichment_all_rendered")
     parser.add_argument("--compare", default="output/enrichment_all_render_compare.csv")
+    parser.add_argument("--segment-weights", default="../biztrends.TW/data/company_segment_weights.csv")
     parser.add_argument("--ticker")
     args = parser.parse_args()
 
@@ -218,13 +357,18 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     compare_path.parent.mkdir(parents=True, exist_ok=True)
 
+    segment_weights_path = Path(args.segment_weights)
+    if not segment_weights_path.is_absolute():
+        segment_weights_path = (coverage_root / segment_weights_path).resolve()
+    segment_weight_tables = load_segment_weight_tables(segment_weights_path)
+
     rows = []
     written = 0
     for json_path in load_json_files(json_dir, args.ticker):
         data = json.loads(json_path.read_text(encoding="utf-8"))
         src = original_md_path(coverage_root, data)
         original = src.read_text(encoding="utf-8") if src.exists() else ""
-        rendered = render_markdown(data, "")
+        rendered = render_markdown(data, "", segment_weight_tables)
         out_path = out_dir / f"{data['ticker']}_{data['company_name']}.md"
         out_path.write_text(rendered, encoding="utf-8")
         row = compare(original, rendered, data)
