@@ -38,13 +38,21 @@ def format_pct(value: str) -> str:
         return "-"
 
 
+def format_approx_pct(value: str) -> str:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return "-"
+    return f"{number:g}%"
+
+
 def markdown_table(headers: list[str], rows: list[list[str]]) -> str:
     lines = ["| " + " | ".join(headers) + " |", "|" + "|".join(":---" for _ in headers) + "|"]
     lines.extend("| " + " | ".join(row) + " |" for row in rows)
     return "\n".join(lines)
 
 
-def load_segment_weight_tables(path: Path) -> dict[str, str]:
+def collect_segment_weight_rows(path: Path) -> dict[str, list[dict[str, str]]]:
     if not path.is_file():
         return {}
     by_ticker: dict[str, list[dict[str, str]]] = {}
@@ -59,12 +67,23 @@ def load_segment_weight_tables(path: Path) -> dict[str, str]:
             if not ticker or not segment or not period or not weight:
                 continue
             by_ticker.setdefault(ticker, []).append(row)
+    return by_ticker
 
+
+def latest_segment_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    latest_period = max((str(r.get("source_period", "")).strip() for r in rows), key=period_sort_key)
+    return [r for r in rows if str(r.get("source_period", "")).strip() == latest_period]
+
+
+def sorted_segment_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    return sorted(rows, key=lambda r: float(r.get("weight_pct") or 0), reverse=True)
+
+
+def load_segment_weight_tables(path: Path) -> dict[str, str]:
     tables: dict[str, str] = {}
-    for ticker, rows in by_ticker.items():
-        latest_period = max((str(r.get("source_period", "")).strip() for r in rows), key=period_sort_key)
-        latest_rows = [r for r in rows if str(r.get("source_period", "")).strip() == latest_period]
-        segments = [str(r.get("segment_name", "")).strip() for r in sorted(latest_rows, key=lambda r: float(r.get("weight_pct") or 0), reverse=True)]
+    for ticker, rows in collect_segment_weight_rows(path).items():
+        latest_rows = latest_segment_rows(rows)
+        segments = [str(r.get("segment_name", "")).strip() for r in sorted_segment_rows(latest_rows)]
         periods = sorted({str(r.get("source_period", "")).strip() for r in rows}, key=period_sort_key, reverse=True)
         value_by_key = {
             (str(r.get("source_period", "")).strip(), str(r.get("segment_name", "")).strip()): format_pct(str(r.get("weight_pct", "")).strip())
@@ -74,6 +93,19 @@ def load_segment_weight_tables(path: Path) -> dict[str, str]:
         tables[ticker] = PLATFORM_REVENUE_HEADING + "\n" + markdown_table(["期間"] + segments, table_rows)
     return tables
 
+
+def load_segment_weight_summaries(path: Path) -> dict[str, str]:
+    summaries: dict[str, str] = {}
+    for ticker, rows in collect_segment_weight_rows(path).items():
+        parts = []
+        for row in sorted_segment_rows(latest_segment_rows(rows)):
+            segment = str(row.get("segment_name", "")).strip()
+            weight = format_approx_pct(str(row.get("weight_pct", "")).strip())
+            if segment and weight != "-":
+                parts.append(f"{segment} (~{weight})")
+        if parts:
+            summaries[ticker] = "- **主要平台:** " + ", ".join(parts) + "."
+    return summaries
 
 def insert_platform_revenue_section(financial: str, platform_section: str) -> str:
     financial = financial.strip()
@@ -153,6 +185,149 @@ def normalize_financial_section(financial: str) -> str:
     return "\n\n".join(parts).strip()
 
 
+
+
+def parse_number(value: str) -> float | None:
+    cleaned = value.strip().replace(",", "")
+    if not cleaned or cleaned == "-":
+        return None
+    try:
+        return float(cleaned)
+    except ValueError:
+        return None
+
+
+def date_to_period(date_text: str) -> str:
+    match = re.match(r"^(\d{4})-(\d{2})-\d{2}$", date_text.strip())
+    if not match:
+        return date_text.strip()
+    year = match.group(1)
+    month = int(match.group(2))
+    if month == 12:
+        return f"{year}-FY"
+    quarter = ((month - 1) // 3) + 1
+    return f"{year}-Q{quarter}"
+
+
+def parse_markdown_row(line: str) -> list[str]:
+    return [cell.strip() for cell in line.strip().strip("|").split("|")]
+
+
+
+
+def month_to_quarter(month_text: str) -> str:
+    match = re.match(r"^(\d{4})/(\d{1,2})$", month_text.strip())
+    if not match:
+        return ""
+    year = match.group(1)
+    month = int(match.group(2))
+    quarter = ((month - 1) // 3) + 1
+    return f"{year}-Q{quarter}"
+
+
+def load_monthly_revenue_totals(path: Path) -> dict[str, dict[str, float]]:
+    if not path.is_file():
+        return {}
+    totals: dict[str, dict[str, float]] = {}
+    month_seen: dict[tuple[str, str], set[str]] = {}
+    with path.open(encoding="utf-8-sig", newline="") as f:
+        for row in csv.DictReader(f):
+            ticker = str(row.get("stock_code", "")).strip()
+            month_text = str(row.get("月別", "")).strip()
+            quarter = month_to_quarter(month_text)
+            if not ticker or not quarter:
+                continue
+            revenue = parse_number(str(row.get("合併營業收入_營收_億", "")).strip())
+            if revenue is None:
+                revenue = parse_number(str(row.get("營業收入_營收_億", "")).strip())
+            if revenue is None:
+                continue
+            revenue_million = revenue * 100.0
+            totals.setdefault(ticker, {})[quarter] = totals.setdefault(ticker, {}).get(quarter, 0.0) + revenue_million
+            year = quarter[:4]
+            totals[ticker][f"{year}-FY"] = totals[ticker].get(f"{year}-FY", 0.0) + revenue_million
+            month_seen.setdefault((ticker, f"{year}-FY"), set()).add(month_text)
+
+    for (ticker, fy_period), months in month_seen.items():
+        if len(months) < 12:
+            totals.get(ticker, {}).pop(fy_period, None)
+    return totals
+
+
+def extract_revenue_totals(financial: str) -> dict[str, float]:
+    totals: dict[str, float] = {}
+    _, sections = split_h3_sections(financial)
+    for heading, section in sections:
+        if "年度關鍵財務數據" not in heading and "季度關鍵財務數據" not in heading:
+            continue
+        table_lines = [line for line in section.splitlines() if line.strip().startswith("|")]
+        if len(table_lines) < 3:
+            continue
+        headers = parse_markdown_row(table_lines[0])
+        for line in table_lines[2:]:
+            cells = parse_markdown_row(line)
+            if not cells or cells[0] != "Revenue":
+                continue
+            for header, value in zip(headers[1:], cells[1:]):
+                number = parse_number(value)
+                if number is not None:
+                    totals[date_to_period(header)] = number
+            break
+    return totals
+
+
+def format_revenue_amount(amount: float) -> str:
+    if abs(amount) >= 100:
+        return f"{amount:,.0f}"
+    return f"{amount:,.1f}"
+
+
+def add_revenue_amounts_to_platform_table(financial: str, fallback_totals: dict[str, float] | None = None) -> str:
+    if PLATFORM_REVENUE_HEADING not in financial:
+        return financial
+    revenue_totals = dict(fallback_totals or {})
+    revenue_totals.update(extract_revenue_totals(financial))
+    if not revenue_totals:
+        return financial
+
+    preface, sections = split_h3_sections(financial)
+    out_sections: list[str] = []
+    pct_re = re.compile(r"^(-?\d+(?:\.\d+)?)%$")
+    for heading, section in sections:
+        if heading != PLATFORM_REVENUE_HEADING:
+            out_sections.append(section)
+            continue
+        lines = section.splitlines()
+        new_lines: list[str] = []
+        for idx, line in enumerate(lines):
+            if idx < 2 or not line.strip().startswith("|"):
+                new_lines.append(line)
+                continue
+            cells = parse_markdown_row(line)
+            if len(cells) < 2:
+                new_lines.append(line)
+                continue
+            period = cells[0]
+            total_revenue = revenue_totals.get(period)
+            if total_revenue is None:
+                new_lines.append(line)
+                continue
+            new_cells = [period]
+            for cell in cells[1:]:
+                match = pct_re.match(cell)
+                if not match:
+                    new_cells.append(cell)
+                    continue
+                pct = float(match.group(1))
+                amount = total_revenue * pct / 100.0
+                new_cells.append(f"{cell} ({format_revenue_amount(amount)})")
+            new_lines.append("| " + " | ".join(new_cells) + " |")
+        out_sections.append("\n".join(new_lines))
+
+    parts = [part for part in [preface, "\n\n".join(out_sections).strip()] if part]
+    return "\n\n".join(parts).strip()
+
+
 def wikilinks(text: str) -> set[str]:
     return {x.strip() for x in WIKILINK_RE.findall(text) if x.strip()}
 
@@ -223,10 +398,25 @@ def unique_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
-def render_supply_chain(data: dict[str, Any]) -> str:
+def insert_platform_summary(supply_chain: str, platform_summary: str) -> str:
+    supply_chain = supply_chain.strip()
+    platform_summary = platform_summary.strip()
+    if not supply_chain or not platform_summary or "主要平台" in supply_chain:
+        return supply_chain
+
+    lines = supply_chain.splitlines()
+    for idx, line in enumerate(lines):
+        if re.match(r"^\*\*下游", line.strip()):
+            lines.insert(idx + 1, platform_summary)
+            return "\n".join(lines).strip()
+
+    return supply_chain + "\n\n**下游應用:**\n" + platform_summary
+
+
+def render_supply_chain(data: dict[str, Any], platform_summary: str = "") -> str:
     source = data.get("source_text", {}).get("supply_chain_md", "").strip()
     if source:
-        return source
+        return insert_platform_summary(source, platform_summary)
     lines: list[str] = []
     labels = [("upstream", "上游"), ("midstream", "中游"), ("downstream", "下游"), ("other", "其他")]
     for key, label in labels:
@@ -234,6 +424,8 @@ def render_supply_chain(data: dict[str, Any]) -> str:
         if not items:
             continue
         lines.append(f"**{label}:**")
+        if key == "downstream" and platform_summary and "主要平台" not in "\n".join(lines):
+            lines.append(platform_summary)
         for item in items:
             line = clean_item_text(item)
             if line:
@@ -295,18 +487,21 @@ def render_competitive_position(data: dict[str, Any]) -> str:
     return "\n".join(lines).strip()
 
 
-def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: dict[str, str] | None = None) -> str:
+def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: dict[str, str] | None = None, segment_weight_summaries: dict[str, str] | None = None, monthly_revenue_totals: dict[str, dict[str, float]] | None = None) -> str:
     title = data.get("title") or f"{data.get('ticker', '')} - [[{data.get('company_name', '')}]]"
     profile = data.get("profile", {})
     business_summary = data.get("business", {}).get("summary", "").strip()
+    ticker = str(data.get("ticker", "")).strip()
+    platform_summary = segment_weight_summaries.get(ticker, "") if segment_weight_summaries else ""
     financial = str(data.get("source_text", {}).get("financial_md", "")).strip()
     if segment_weight_tables:
-        financial = insert_platform_revenue_section(financial, segment_weight_tables.get(str(data.get("ticker", "")).strip(), ""))
+        financial = insert_platform_revenue_section(financial, segment_weight_tables.get(ticker, ""))
     financial = normalize_financial_section(financial)
+    financial = add_revenue_amounts_to_platform_table(financial, (monthly_revenue_totals or {}).get(ticker, {}))
 
     parts: list[str] = [f"# {title}", "", "## 業務簡介"]
     parts.extend(format_metadata(profile))
-    parts.extend(["", business_summary, "", "## 供應鏈位置", render_supply_chain(data), "", "## 主要客戶及供應商", render_relationship_section(data)])
+    parts.extend(["", business_summary, "", "## 供應鏈位置", render_supply_chain(data, platform_summary), "", "## 主要客戶及供應商", render_relationship_section(data)])
     competitive = render_competitive_position(data)
     if competitive:
         parts.extend(["", competitive])
@@ -347,6 +542,7 @@ def main() -> int:
     parser.add_argument("--out", default="output/enrichment_all_rendered")
     parser.add_argument("--compare", default="output/enrichment_all_render_compare.csv")
     parser.add_argument("--segment-weights", default="../biztrends.TW/data/company_segment_weights.csv")
+    parser.add_argument("--monthly-revenue", default="../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv")
     parser.add_argument("--ticker")
     args = parser.parse_args()
 
@@ -361,6 +557,11 @@ def main() -> int:
     if not segment_weights_path.is_absolute():
         segment_weights_path = (coverage_root / segment_weights_path).resolve()
     segment_weight_tables = load_segment_weight_tables(segment_weights_path)
+    segment_weight_summaries = load_segment_weight_summaries(segment_weights_path)
+    monthly_revenue_path = Path(args.monthly_revenue)
+    if not monthly_revenue_path.is_absolute():
+        monthly_revenue_path = (coverage_root / monthly_revenue_path).resolve()
+    monthly_revenue_totals = load_monthly_revenue_totals(monthly_revenue_path)
 
     rows = []
     written = 0
@@ -368,7 +569,7 @@ def main() -> int:
         data = json.loads(json_path.read_text(encoding="utf-8"))
         src = original_md_path(coverage_root, data)
         original = src.read_text(encoding="utf-8") if src.exists() else ""
-        rendered = render_markdown(data, "", segment_weight_tables)
+        rendered = render_markdown(data, "", segment_weight_tables, segment_weight_summaries, monthly_revenue_totals)
         out_path = out_dir / f"{data['ticker']}_{data['company_name']}.md"
         out_path.write_text(rendered, encoding="utf-8")
         row = compare(original, rendered, data)

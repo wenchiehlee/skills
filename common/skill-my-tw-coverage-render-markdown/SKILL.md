@@ -18,6 +18,7 @@ Use this skill to render canonical enrichment JSON into Markdown for review or p
 - Rendered output: `output/enrichment_all_rendered/*.md`
 - Comparison report: `output/enrichment_all_render_compare.csv`
 - Revenue mix source when available: `../biztrends.TW/data/company_segment_weights.csv`
+- Revenue amount fallback source: `../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv`
 - Archived/legacy material: `Pilot_Reports/`
 
 Do not use `Pilot_Reports/` as an active render source. Read it only for explicit comparison or migration audits. The intended future state is that `Pilot_Reports/` can be renamed or moved to an archived folder without breaking rendering.
@@ -34,6 +35,7 @@ python3 ../skills/common/skill-my-tw-coverage-render-markdown/scripts/render_enr
   --out output/enrichment_all_rendered \
   --compare output/enrichment_all_render_compare.csv \
   --segment-weights ../biztrends.TW/data/company_segment_weights.csv \
+  --monthly-revenue ../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv \
   --ticker 2330
 ```
 
@@ -44,7 +46,8 @@ python3 ../skills/common/skill-my-tw-coverage-render-markdown/scripts/render_enr
   --json-dir data/enrichment_all \
   --out output/enrichment_all_rendered \
   --compare output/enrichment_all_render_compare.csv \
-  --segment-weights ../biztrends.TW/data/company_segment_weights.csv
+  --segment-weights ../biztrends.TW/data/company_segment_weights.csv \
+  --monthly-revenue ../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv
 ```
 
 After rendering, inspect key files with `rg` or `sed` before committing:
@@ -63,6 +66,8 @@ git diff -- output/enrichment_all_rendered data/enrichment_all_render_compare.cs
 - If a relationship array is empty, omit that Markdown subsection instead of fabricating content.
 - If `source_text.financial_md` already has `營收平台佔比`, preserve it and normalize its location after `季度關鍵財務數據`.
 - If `source_text.financial_md` does not have `營收平台佔比`, inject it from `company_segment_weights.csv` for tickers with active rows.
+- In `營收平台佔比` cells, include `percentage (revenue amount)` when a matching period revenue total exists; amounts are 百萬台幣. Prefer financial table revenue totals, then fall back to monthly revenue summed from GoodInfo Analyzer.
+- Insert a latest-period `主要平台` sentence under the downstream supply-chain section from `company_segment_weights.csv` for tickers with active rows, unless the source already has `主要平台`.
 - Do not overwrite `Pilot_Reports/`.
 
 ## Financial Section Policy
