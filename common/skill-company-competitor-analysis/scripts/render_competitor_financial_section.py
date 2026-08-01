@@ -306,6 +306,23 @@ def valuation_fields(json_dir: Path, stock: object) -> dict[str, object]:
     return dict(load_peer_valuation(str(json_dir), str(stock or "")))
 
 
+def date_to_quarter_label(value: object) -> str:
+    match = re.fullmatch(r"(\d{4})-(\d{2})-\d{2}", str(value or "").strip())
+    if not match:
+        return ""
+    year = match.group(1)
+    quarter = (int(match.group(2)) - 1) // 3 + 1
+    return f"{year}Q{quarter}"
+
+
+def event_indicator(values_by_period: dict[object, dict[str, object]]) -> str:
+    for period, row in sorted(values_by_period.items(), key=lambda item: CCA.period_sort_key(str(item[0])), reverse=True):
+        event_date = row.get("event_date", "")
+        if event_date:
+            return str(event_date)
+    return ""
+
+
 def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: Path, years: int) -> list[dict[str, object]]:
     configure_runner_paths(biztrends_root)
     aliases = build_alias_map(json_dir, biztrends_root)
@@ -418,7 +435,7 @@ def write_period_table(out: StringIO, title: str, periods: list[str], companies:
             row = values_by_period.get(period, {})
             for key, _label in columns:
                 value = row.get(key, "")
-                if key == "profit" and not value:
+                if not value and key in {"revenue", "profit", "gross_margin_pct"}:
                     value = row.get("event_date", "")
                 out.write(CCA.html_cell(value, align="right"))
         out.write("</tr>\n")
@@ -436,13 +453,16 @@ def write_pe_table(out: StringIO, companies: dict[tuple[object, object, object, 
         ("valuation_price", "Price", "right"),
         ("valuation_currency", "Currency", "left"),
         ("valuation_as_of", "As Of", "left"),
+        ("valuation_quarter", "Quarter", "left"),
         ("valuation_ttm_period_end", "TTM End", "left"),
         ("pe_ttm", "P/E (TTM)", "right"),
+        ("valuation_forward_quarter", "Forward Quarter", "left"),
         ("valuation_forward_period_end", "Forward End", "left"),
         ("forward_pe", "Forward P/E", "right"),
         ("ps_ttm", "P/S (TTM)", "right"),
         ("pb", "P/B", "right"),
         ("ev_ebitda_ttm", "EV/EBITDA", "right"),
+        ("event_indicator", "Event", "left"),
     ]
     for _key, label, align in columns:
         out.write(CCA.html_cell(label, header=True, align=align))
@@ -456,6 +476,9 @@ def write_pe_table(out: StringIO, companies: dict[tuple[object, object, object, 
             "relationship": CCA.RELATIONSHIP_LABEL_ZH.get(str(rel_type), rel_type),
         }
         row_values.update(first_row)
+        row_values["valuation_quarter"] = date_to_quarter_label(row_values.get("valuation_ttm_period_end"))
+        row_values["valuation_forward_quarter"] = date_to_quarter_label(row_values.get("valuation_forward_period_end"))
+        row_values["event_indicator"] = event_indicator(values_by_period)
         out.write("<tr>")
         for key, _label, align in columns:
             out.write(CCA.html_cell(row_values.get(key, ""), align=align))
@@ -467,7 +490,8 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
     if not rows:
         return ""
     unit = "百萬台幣"
-    periods = sorted({label for row in rows if (label := my_tw_markdown_period_label(row))}, key=CCA.period_sort_key, reverse=True)
+    revenue_periods = sorted({label for row in rows if (label := my_tw_markdown_period_label(row))}, key=CCA.period_sort_key, reverse=True)
+    financial_periods = sorted({label for row in rows if (label := my_tw_markdown_period_label(row)) and not bool(row.get("is_monthly_revenue_only"))}, key=CCA.period_sort_key, reverse=True)
     companies: dict[tuple[object, object, object, object], dict[object, dict[str, object]]] = defaultdict(dict)
     foreign_fx_currencies: set[str] = set()
     for row in rows:
@@ -497,9 +521,9 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
         out.write(f"FX: `{'; '.join(fx_notes)}`\n")
     out.write("\n")
     write_profile_table(out, companies)
-    write_period_table(out, "Revenue", periods, companies, [("revenue", "Revenue"), ("revenue_yoy_pct", "Rev YoY")])
-    write_period_table(out, "Profit", periods, companies, [("profit", "Profit"), ("profit_yoy_pct", "Profit YoY")])
-    write_period_table(out, "GM", periods, companies, [("gross_margin_pct", "GM")])
+    write_period_table(out, "Revenue", revenue_periods, companies, [("revenue", "Revenue"), ("revenue_yoy_pct", "Rev YoY")])
+    write_period_table(out, "Profit", financial_periods, companies, [("profit", "Profit"), ("profit_yoy_pct", "Profit YoY")])
+    write_period_table(out, "GM", financial_periods, companies, [("gross_margin_pct", "GM")])
     write_pe_table(out, companies)
     return out.getvalue().strip()
 
