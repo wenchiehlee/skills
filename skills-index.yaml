@@ -136,7 +136,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
   updated_at: '2026-07-23'
-  revised_at: '2026-07-23'
+  revised_at: '2026-08-01'
 - name: skill-investorconference-ingest
   group: common
   path: common/skill-investorconference-ingest
