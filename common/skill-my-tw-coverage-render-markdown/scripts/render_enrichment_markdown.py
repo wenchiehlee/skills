@@ -424,6 +424,78 @@ def consensus_item(consensus: dict[str, Any], metric: str, period_offset: str) -
     return None
 
 
+
+def format_eps_value(value: Any) -> str:
+    try:
+        return f"{float(value):.2f}"
+    except (TypeError, ValueError):
+        return "-"
+
+
+def actual_eps_by_period(actual_eps: dict[str, Any], key: str) -> dict[str, Any]:
+    rows = actual_eps.get(key, []) if isinstance(actual_eps, dict) else []
+    return {str(row.get("period", "")).strip(): row.get("eps_twd") for row in rows if str(row.get("period", "")).strip()}
+
+
+def insert_eps_row(section: str, values_by_period: dict[str, Any]) -> str:
+    if not values_by_period:
+        return section
+    lines = section.splitlines()
+    table_indexes = [idx for idx, line in enumerate(lines) if line.strip().startswith("|")]
+    if len(table_indexes) < 2:
+        return section
+    start, end = table_indexes[0], table_indexes[-1]
+    headers = parse_markdown_row(lines[start])
+    if len(headers) < 2:
+        return section
+    values = [format_eps_value(values_by_period.get(period)) for period in headers[1:]]
+    if all(value == "-" for value in values):
+        return section
+
+    new_row = "| EPS (TWD)               | " + " | ".join(f"{value:>12}" for value in values) + " |"
+    kept_table = []
+    for line in lines[start : end + 1]:
+        cells = parse_markdown_row(line)
+        if cells and re.search(r"\bEPS\b", cells[0], re.IGNORECASE):
+            continue
+        kept_table.append(line)
+
+    insert_at = len(kept_table)
+    for idx, line in enumerate(kept_table):
+        cells = parse_markdown_row(line)
+        if cells and cells[0] == "Net Income":
+            insert_at = idx + 1
+            break
+    kept_table.insert(insert_at, new_row)
+    return "\n".join(lines[:start] + kept_table + lines[end + 1:])
+
+
+def add_eps_rows_to_key_tables(financial: str, actual_eps: dict[str, Any]) -> str:
+    if not financial.strip() or not actual_eps:
+        return financial
+    heading = ""
+    body = financial.strip()
+    if body.startswith("## "):
+        lines = body.splitlines()
+        heading = lines[0].rstrip()
+        body = "\n".join(lines[1:]).strip()
+
+    preface, sections = split_h3_sections(body)
+    if not sections:
+        return financial
+
+    annual_eps = actual_eps_by_period(actual_eps, "annual")
+    quarterly_eps = actual_eps_by_period(actual_eps, "quarterly")
+    updated = []
+    for h, section in sections:
+        if "年度關鍵財務數據" in h:
+            section = insert_eps_row(section, annual_eps)
+        elif "季度關鍵財務數據" in h:
+            section = insert_eps_row(section, quarterly_eps)
+        updated.append(section)
+    parts = [part for part in [heading, preface, "\n\n".join(updated).strip()] if part]
+    return "\n\n".join(parts).strip()
+
 def render_market_valuation_table(valuation: dict[str, Any]) -> str:
     metrics = valuation.get("metrics", {}) or {}
     inputs = valuation.get("derived_inputs", {}) or {}
@@ -743,6 +815,7 @@ def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: 
     platform_summary = segment_weight_summaries.get(ticker, "") if segment_weight_summaries else ""
     financial = str(data.get("source_text", {}).get("financial_md", "")).strip()
     financial = replace_valuation_section(financial, data)
+    financial = add_eps_rows_to_key_tables(financial, data.get("financials", {}).get("actual_eps", {}) or {})
     if segment_weight_tables:
         financial = insert_platform_revenue_section(financial, segment_weight_tables.get(ticker, ""))
     financial = normalize_financial_section(financial)
