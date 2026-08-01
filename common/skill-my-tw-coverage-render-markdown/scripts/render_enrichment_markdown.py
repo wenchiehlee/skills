@@ -378,6 +378,165 @@ def insert_competitor_financial_section(financial: str, competitor_section: str)
     return "\n\n".join(parts).strip()
 
 
+def format_plain_number(value: object, decimals: int = 2) -> str:
+    if value is None or value == "":
+        return "NA"
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return "NA"
+    if abs(number) >= 1000:
+        return f"{number:,.0f}"
+    return f"{number:,.{decimals}f}"
+
+
+def format_multiple(value: object) -> str:
+    if value is None or value == "":
+        return "NA"
+    try:
+        return f"{float(value):.2f}x"
+    except (TypeError, ValueError):
+        return "NA"
+
+
+def format_diff_pct(value: object) -> str:
+    if value is None or value == "":
+        return "NA"
+    try:
+        return f"{float(value):+.1f}%"
+    except (TypeError, ValueError):
+        return "NA"
+
+
+def format_consensus_value(item: dict[str, Any], key: str) -> str:
+    value = item.get(key)
+    if value is None:
+        return "NA"
+    if item.get("metric") == "revenue" and item.get("unit") == "百萬台幣":
+        return format_plain_number(value, 0)
+    return format_plain_number(value, 2)
+
+
+def consensus_item(consensus: dict[str, Any], metric: str, period_offset: str) -> dict[str, Any] | None:
+    for item in consensus.get("items", []) or []:
+        if item.get("metric") == metric and item.get("period_offset") == period_offset:
+            return item
+    return None
+
+
+def render_market_valuation_table(metrics: dict[str, Any]) -> str:
+    rows = [
+        ["P/E (TTM)", format_multiple(metrics.get("pe_ttm")), "股價 / TTM EPS"],
+        ["P/S (TTM)", format_multiple(metrics.get("ps_ttm")), "市值 / TTM 營收"],
+        ["P/B", format_multiple(metrics.get("pb")), "市值 / 股東權益"],
+        ["EV/EBITDA (TTM)", format_multiple(metrics.get("ev_ebitda_ttm")), "企業價值 / TTM EBITDA"],
+    ]
+    return markdown_table(["指標", "數值", "說明"], rows)
+
+
+def render_consensus_table(consensus: dict[str, Any]) -> str:
+    rows: list[list[str]] = []
+    for offset, label in [("0y", "current year"), ("1y", "next year")]:
+        for metric, metric_label, purpose in [("eps", "EPS", "Forward P/E"), ("revenue", "Revenue", "Forward P/S")]:
+            item = consensus_item(consensus, metric, offset)
+            if not item:
+                continue
+            fiscal_year = item.get("fiscal_year") or "NA"
+            unit_note = "百萬台幣" if item.get("unit") == "百萬台幣" else str(item.get("unit") or "")
+            rows.append([
+                f"{fiscal_year}E {metric_label}",
+                format_consensus_value(item, "primary_value"),
+                format_consensus_value(item, "cross_check_value"),
+                format_diff_pct(item.get("difference_pct")),
+                f"{purpose}; {label}; 單位: {unit_note}",
+                str(item.get("confidence") or "NA"),
+            ])
+    target = consensus.get("target_price") or {}
+    if target.get("value") is not None:
+        rows.append([
+            "Target Price",
+            "NA",
+            format_plain_number(target.get("value"), 2),
+            "NA",
+            "FactSet 目標價參考",
+            "medium",
+        ])
+    if not rows:
+        return ""
+    return markdown_table(["指標", "Primary", "Cross-check", "差異", "用途 / 單位", "信心"], rows)
+
+
+def render_consensus_valuation_table(valuation: dict[str, Any]) -> str:
+    derived = valuation.get("derived_consensus_metrics", {}) or {}
+    rows: list[list[str]] = []
+    if derived.get("forward_pe_consensus") is not None:
+        rows.append([
+            "Forward P/E (Consensus)",
+            format_multiple(derived.get("forward_pe_consensus")),
+            f"股價 / {derived.get('forward_pe_fiscal_year', 'next')}E EPS consensus",
+        ])
+    if derived.get("forward_ps_consensus") is not None:
+        rows.append([
+            "Forward P/S (Consensus)",
+            format_multiple(derived.get("forward_ps_consensus")),
+            f"市值 / {derived.get('forward_ps_fiscal_year', 'next')}E Revenue consensus；Revenue 單位: 百萬台幣",
+        ])
+    if not rows:
+        metrics = valuation.get("metrics", {}) or {}
+        if metrics.get("forward_pe") is not None:
+            rows.append(["Forward P/E", format_multiple(metrics.get("forward_pe")), "provider forward P/E fallback"])
+    return markdown_table(["估值指標", "數值", "使用基礎"], rows) if rows else ""
+
+
+def render_valuation_section(data: dict[str, Any]) -> str:
+    valuation = data.get("financials", {}).get("valuation", {}) or {}
+    if not valuation:
+        return ""
+    meta_parts = []
+    if valuation.get("as_of"):
+        meta_parts.append(f"基準日: {valuation.get('as_of')}")
+    if valuation.get("price") is not None:
+        meta_parts.append(f"股價: {format_plain_number(valuation.get('price'), 2)} {valuation.get('currency') or 'TWD'}")
+    if valuation.get("ttm_period_end"):
+        meta_parts.append(f"TTM 截至: {valuation.get('ttm_period_end')}")
+    if valuation.get("forward_period_end"):
+        meta_parts.append(f"Forward: {valuation.get('forward_period_end')}")
+
+    lines = ["### 估值指標"]
+    if meta_parts:
+        lines.extend(["", " | ".join(meta_parts)])
+    lines.extend(["", "#### 市場估值", "", render_market_valuation_table(valuation.get("metrics", {}) or {})])
+
+    consensus = valuation.get("consensus", {}) or {}
+    consensus_table = render_consensus_table(consensus)
+    if consensus_table:
+        source_line = "Primary: Yahoo.Finance | Cross-check: FactSet | Revenue 單位: 百萬台幣"
+        if consensus.get("as_of"):
+            source_line = f"Consensus 截至: {consensus.get('as_of')} | " + source_line
+        lines.extend(["", "#### Consensus 估值", "", source_line, "", consensus_table])
+        derived_table = render_consensus_valuation_table(valuation)
+        if derived_table:
+            lines.extend(["", derived_table])
+    return "\n".join(lines).strip()
+
+
+def replace_valuation_section(financial: str, data: dict[str, Any]) -> str:
+    valuation_section = render_valuation_section(data)
+    if not valuation_section:
+        return financial
+    heading = ""
+    body = financial.strip()
+    if body.startswith("## "):
+        lines = body.splitlines()
+        heading = lines[0].rstrip()
+        body = "\n".join(lines[1:]).strip()
+    preface, sections = split_h3_sections(body)
+    kept = [(h, section) for h, section in sections if not h.startswith("### 估值指標")]
+    new_sections = [valuation_section] + [section for _h, section in kept]
+    parts = [part for part in [heading, preface, "\n\n".join(new_sections).strip()] if part]
+    return "\n\n".join(parts).strip()
+
+
 def wikilinks(text: str) -> set[str]:
     return {x.strip() for x in WIKILINK_RE.findall(text) if x.strip()}
 
@@ -544,6 +703,7 @@ def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: 
     ticker = str(data.get("ticker", "")).strip()
     platform_summary = segment_weight_summaries.get(ticker, "") if segment_weight_summaries else ""
     financial = str(data.get("source_text", {}).get("financial_md", "")).strip()
+    financial = replace_valuation_section(financial, data)
     if segment_weight_tables:
         financial = insert_platform_revenue_section(financial, segment_weight_tables.get(ticker, ""))
     financial = normalize_financial_section(financial)
