@@ -175,7 +175,9 @@ def resolve_contextual_alias(entity_text: str, rel_type: str, role: str, aliases
         role_text = str(role or "").casefold()
         if rel_type == "server_peer" or "server" in role_text or "伺服器" in role_text or "enterprise" in role_text:
             return "HPE"
-        return "HPQ"
+        # Plain HP is ambiguous between HP Inc. (HPQ) and Hewlett Packard Enterprise (HPE).
+        # Require the JSON source to use HPQ/HP Inc. or HPE explicitly.
+        return ""
     return aliases.get(normalized) or entity_text
 
 

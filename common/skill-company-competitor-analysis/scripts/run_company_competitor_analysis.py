@@ -31,7 +31,7 @@ AI_RELATED_CYCLES = [
     "Cloud_AI_Compute",
 ]
 
-PC_BRAND_COMPETITORS = {"2357": {"2353", "2376", "2377", "DELL", "HPQ", "0992.HK"}}
+PC_BRAND_COMPETITORS = {"2357": {"2353", "2376", "2377", "DELL", "0992.HK"}}
 IPC_BRAND_COMPETITORS = {
     "2395": {"2397", "2405", "3022", "3088", "3416", "3479", "3515", "6166", "6245", "6414", "6579", "8050", "8234"},
 }

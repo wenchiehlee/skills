@@ -39,9 +39,9 @@ For `2357 華碩`, the useful downstream product seeds are:
 
 For PC brand targets such as `2357`:
 
-- `brand_competitor`: `2353` Acer, `2376` Gigabyte, `2377` MSI, `DELL`, `HPQ`, `0992.HK`
+- `brand_competitor`: `2353` Acer, `2376` Gigabyte, `2377` MSI, `DELL`, `0992.HK`
 - `odm_peer`: `2317` Hon Hai, `2324` Compal, `2356` Inventec, `2382` Quanta, `3231` Wistron, `4938` Pegatron
-- `server_peer`: `6669` Wiwynn, `2382` Quanta, `3231` Wistron, `2356` Inventec, `2317` Hon Hai, `DELL`, `HPE`
+- `server_peer`: `6669` Wiwynn, `2382` Quanta, `3231` Wistron, `2356` Inventec, `2317` Hon Hai, `DELL`, `HPE` (Hewlett Packard Enterprise; do not use ambiguous `HP`)
 - `supplier_or_component`: `2330` TSMC, `2308` Delta, `2344` Winbond, `2408` Nanya, `2451` Transcend, `8299` Phison unless user explicitly asks for component or supply-chain exposure.
 
 
