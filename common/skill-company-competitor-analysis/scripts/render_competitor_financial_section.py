@@ -284,6 +284,8 @@ def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: P
     taiwan_metrics = CCA.taiwan_monthly_revenue_metrics(tw_stocks, years, taiwan_metrics)
     metrics.update(taiwan_metrics)
     metrics.update(CCA.us_quarterly_metrics(us_symbols, years))
+    for peer_stock in peers:
+        metrics.setdefault(peer_stock, [])
     CCA.attach_investor_event_dates(metrics, set(peers))
 
     rows: list[dict[str, object]] = []

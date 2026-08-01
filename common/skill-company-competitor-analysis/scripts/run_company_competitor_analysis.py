@@ -246,6 +246,8 @@ def load_investor_event_dates(stocks: set[str]) -> dict[tuple[str, str], dict[st
             continue
         stock = match.group(1).strip().upper()
         period = f"{match.group(2)}Q{match.group(3)}"
+        if stock not in stocks and stock.endswith("O") and stock[:-1] in stocks:
+            stock = stock[:-1]
         if stock not in stocks:
             continue
         date = row.get("開始日期", "").strip()
@@ -265,26 +267,27 @@ def load_investor_event_dates(stocks: set[str]) -> dict[tuple[str, str], dict[st
     return events
 
 
+def event_date_status(value: object, today: date | None = None) -> str:
+    if not value:
+        return ""
+    today = today or date.today()
+    try:
+        if date.fromisoformat(str(value)) < today:
+            return "Ready"
+    except ValueError:
+        return ""
+    return ""
+
+
 def format_event_date(financial_report_date: object, ir_date: object) -> str:
     parts = []
-    if financial_report_date:
-        parts.append(f"財報: {financial_report_date}")
-    if ir_date:
-        parts.append(f"法說: {ir_date}")
-    return "<br>".join(parts)
-
-
-def is_future_event_date(financial_report_date: object, ir_date: object, today: date | None = None) -> bool:
-    today = today or date.today()
-    for value in (financial_report_date, ir_date):
+    for label, value in [("財報", financial_report_date), ("法說", ir_date)]:
         if not value:
             continue
-        try:
-            if date.fromisoformat(str(value)) >= today:
-                return True
-        except ValueError:
-            continue
-    return False
+        status = event_date_status(value)
+        suffix = f" ({status})" if status else ""
+        parts.append(f"{label}: {value}{suffix}")
+    return "<br>".join(parts)
 
 
 def attach_investor_event_dates(metrics: dict[str, list[dict[str, object]]], stocks: set[str]) -> None:
@@ -330,10 +333,7 @@ def attach_investor_event_dates(metrics: dict[str, list[dict[str, object]]], sto
                 continue
             row["financial_report_event_date"] = events.get("financial_report_event_date", "")
             row["ir_event_date"] = events.get("ir_event_date", "")
-            if is_future_event_date(row["financial_report_event_date"], row["ir_event_date"]):
-                row["event_date"] = format_event_date(row["financial_report_event_date"], row["ir_event_date"])
-            else:
-                row["event_date"] = ""
+            row["event_date"] = format_event_date(row["financial_report_event_date"], row["ir_event_date"])
 
         for row in rows:
             row.setdefault("financial_report_event_date", "")
@@ -886,6 +886,8 @@ def main() -> int:
     taiwan_metrics = taiwan_monthly_revenue_metrics(tw_stocks, args.years, taiwan_metrics)
     metrics.update(taiwan_metrics)
     metrics.update(us_quarterly_metrics(us_symbols, args.years))
+    for peer_stock in peers:
+        metrics.setdefault(peer_stock, [])
     attach_investor_event_dates(metrics, set(peers))
     csv_path, md_path, row_count = write_outputs(target, peers, metrics, relationships)
     print(f"Wrote {row_count} rows")
