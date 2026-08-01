@@ -327,7 +327,6 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
     if not rows:
         return ""
     metrics = [
-        ("event_date", "Event"),
         ("revenue", "Revenue"),
         ("revenue_yoy_pct", "Rev YoY"),
         ("profit", "Profit"),
@@ -386,7 +385,10 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
         for period in periods:
             row = values_by_period.get(period, {})
             for key, _label in metrics:
-                out.write(CCA.html_cell(row.get(key, ""), align="right"))
+                value = row.get(key, "")
+                if key == "profit" and not value:
+                    value = row.get("event_date", "")
+                out.write(CCA.html_cell(value, align="right"))
         out.write("</tr>\n")
     out.write("</tbody>\n</table>\n")
     return out.getvalue().strip()

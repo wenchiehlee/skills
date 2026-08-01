@@ -700,7 +700,6 @@ def write_ai_cycle_weights_markdown(f, output_rows: list[dict[str, object]], ai_
 
 def write_pivot_markdown(f, output_rows: list[dict[str, object]]) -> None:
     metrics = [
-        ("event_date", "Event"),
         ("revenue", "Revenue"),
         ("revenue_yoy_pct", "Rev YoY"),
         ("profit", "Profit"),
@@ -749,7 +748,10 @@ def write_pivot_markdown(f, output_rows: list[dict[str, object]]) -> None:
             for period in periods:
                 row = values_by_period.get(period, {})
                 for key, _label in metrics:
-                    f.write(html_cell(row.get(key, ""), align="right"))
+                    value = row.get(key, "")
+                    if key == "profit" and not value:
+                        value = row.get("event_date", "")
+                    f.write(html_cell(value, align="right"))
             f.write("</tr>\n")
         f.write("</tbody>\n</table>\n\n")
 
