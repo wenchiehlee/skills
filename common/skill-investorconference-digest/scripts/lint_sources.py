@@ -88,6 +88,27 @@ def load_audio_metadata(root: Path) -> dict:
     return {}
 
 
+def load_audio_manifest(root: Path) -> dict:
+    f = root / "audio_manifest.json"
+    if f.exists():
+        try:
+            data = json.loads(f.read_text(encoding="utf-8"))
+            return data if isinstance(data, dict) else {}
+        except Exception:
+            pass
+    return {}
+
+
+def has_audio_source(root: Path, company: Path, base: str, audio_metadata: dict) -> bool:
+    if (company / f"{base}.m4a").exists() or (company / f"{base}.mp3").exists() or (company / f"{base}.mp4").exists():
+        return True
+    item = audio_metadata.get(base)
+    if isinstance(item, dict) and item.get("status") not in {"duplicate", "invalid"} and (item.get("sha256") or item.get("size_bytes")):
+        return True
+    manifest = load_audio_manifest(root)
+    return bool(manifest.get(base))
+
+
 def check_audio_metadata(base: str, metadata: dict):
     findings = []
     item = metadata.get(base)
@@ -324,7 +345,10 @@ def lint_quarter(root: Path, sid: str, year: int, q: int, durations: dict, audio
         findings.append(Finding("WARN", f"{base}_GT.srt", "—",
                                 "缺人工校正字幕（僅有 FIN Whisper 版）", "建議補做 GT"))
     if not gt.exists() and not fin.exists():
-        findings.append(Finding("WARN", f"{base}_*.srt", "—", "本季無任何字幕檔", "確認是否有音檔可轉錄"))
+        if has_audio_source(root, company, base, audio_metadata):
+            findings.append(Finding("WARN", f"{base}_*.srt", "—", "audio 已存在但缺字幕檔", "用 ingest/ASR 產生 FIN.srt，再依 digest SOP 補 GT"))
+        else:
+            findings.append(Finding("WARN", f"{base}_audio", "—", "缺 audio/transcript source，尚無法產生字幕", "先用 ingest 補官方 audio、webcast replay 或可信 transcript source"))
 
     if is_us:
         company_docs = [p for p in (us_report, us_tables, us_review, company / f"{base}_ir_en.md") if p.exists()]

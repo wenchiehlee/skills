@@ -464,20 +464,34 @@ def select_recent_periods(periods: list[tuple[int, int]], years: int) -> set[tup
     return set(sorted(set(periods))[-years * 4 :])
 
 def parse_official_taiwan_earnings_release(path: Path) -> dict[str, object] | None:
-    match = re.fullmatch(r"(\d+)_([0-9]{4})_q([1-4])_earnings_release\.md", path.name)
+    match = re.fullmatch(r"(\d+)_([0-9]{4})_q([1-4])_(?:earnings_release|press_release|financial_statements|ir)\.md", path.name)
     if not match:
         return None
     stock, year_text, quarter_text = match.groups()
     text = path.read_text(encoding="utf-8", errors="ignore")
     revenue_match = re.search(r"consolidated revenue of\s*NT\$([0-9,.]+)\s*billion", text, re.IGNORECASE)
-    gm_match = re.search(r"Gross margin for the quarter was\s*([0-9.]+)%", text, re.IGNORECASE)
-    op_margin_match = re.search(r"operating margin was\s*([0-9.]+)%", text, re.IGNORECASE)
+    revenue_scale = 10.0
+    if not revenue_match:
+        revenue_match = re.search(r"consolidated revenue of\s*NT\$([0-9,.]+)\s*million", text, re.IGNORECASE)
+        revenue_scale = 0.01
+    if not revenue_match:
+        revenue_match = re.search(r"Net Sales\s+([0-9,.]+)", text, re.IGNORECASE)
+        revenue_scale = 0.01
     if not revenue_match:
         return None
-    revenue = float(revenue_match.group(1).replace(",", "")) * 10.0
+
+    revenue = float(revenue_match.group(1).replace(",", "")) * revenue_scale
+    gross_profit_match = re.search(r"Gross profit\s+([0-9,.]+)", text, re.IGNORECASE)
+    gross_profit = float(gross_profit_match.group(1).replace(",", "")) * 0.01 if gross_profit_match else None
+    gm_match = re.search(r"Gross margin for the quarter was\s*([0-9.]+)%", text, re.IGNORECASE)
     gm = float(gm_match.group(1)) if gm_match else None
-    op_margin = float(op_margin_match.group(1)) if op_margin_match else None
-    profit = revenue * op_margin / 100.0 if op_margin is not None else None
+    if gm is None and gross_profit is not None and revenue:
+        gm = gross_profit / revenue * 100.0
+
+    op_income_match = re.search(r"Operating income for the quarter was\s*NT\$([0-9,.]+)\s*million", text, re.IGNORECASE)
+    if op_income_match is None:
+        op_income_match = re.search(r"Operating income\s+([0-9,.]+)", text, re.IGNORECASE)
+    profit = float(op_income_match.group(1).replace(",", "")) * 0.01 if op_income_match else None
     return {
         "period": f"{year_text}Q{quarter_text}",
         "unit": "TWD 億",
@@ -495,17 +509,23 @@ def load_official_taiwan_earnings_metrics(stocks: set[str]) -> dict[tuple[str, t
         company_dir = INVESTORCONFERENCE_DATA / stock
         if not company_dir.exists():
             continue
-        for path in company_dir.glob(f"{stock}_*_q*_earnings_release.md"):
+        for path in sorted(company_dir.glob(f"{stock}_*_q*.md")):
             row = parse_official_taiwan_earnings_release(path)
             if row is None:
                 continue
             key = period_key_taiwan(str(row.get("period") or ""))
             if key == (0, 0):
                 continue
+            existing = out.get((stock, key))
+            if existing is not None and existing.get("profit") is not None and row.get("profit") is None:
+                continue
+            if existing is not None and existing.get("gm") is not None and row.get("gm") is None:
+                row["gm"] = existing.get("gm")
+            if existing is not None and existing.get("company") and not row.get("company"):
+                row["company"] = existing.get("company", "")
             row["source_file"] = str(path)
             out[(stock, key)] = row
     return out
-
 
 def taiwan_quarterly_metrics(stocks: set[str], years: int) -> dict[str, list[dict[str, object]]]:
     by_stock_period: dict[tuple[str, tuple[int, int]], dict[str, object]] = {}

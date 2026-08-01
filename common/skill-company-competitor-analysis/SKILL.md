@@ -47,8 +47,9 @@ Use these sources in this order:
 2. `data/ic.tpex.org.tw/raw_SupplyChain_D000.csv`: semiconductor supply-chain categories, including `IC/晶圓製造` foundry peer seeds.
 3. `data/ic.tpex.org.tw/raw_SupplyChainMap.csv`: broader supply-chain context and supplier exclusion clues.
 4. `data/Python-Actions.GoodInfo.Analyzer/raw_performance1.csv`: Taiwan quarterly actual financials.
-5. `data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv`: Taiwan monthly revenue fallback for not-yet-reported quarters; fill only Revenue and Revenue YoY.
-6. `data/InvestorConference/raw_ir_quarterly_financials.csv`: official IR quarterly rows for non-Taiwan peers; prefer this over provider fallback when symbol/quarter overlaps.
+5. `../InvestorConference/data/{stock}/{stock}_{year}_q{n}_{press_release|financial_statements|ir}.md`: Taiwan official company IR sidecars; prefer these when GoodInfo has not caught up to a Ready earnings/IR event. They also provide EPS for P/E Range TTM fallback.
+6. `data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv`: Taiwan monthly revenue fallback for not-yet-reported quarters; fill only Revenue and Revenue YoY.
+7. `data/InvestorConference/raw_ir_quarterly_financials.csv`: official IR quarterly rows for non-Taiwan peers; prefer this over provider fallback when symbol/quarter overlaps.
 7. `data/ConceptStocks/raw_conceptstock_company_income.csv`: US/international quarterly actual financials; align `Q1`-`Q4` rows by `end_date` calendar quarter, not fiscal-year label.
 7. `output/company_canonical_cycle_performance_details.csv`: latest cycle exposure only for context, not as the primary competitor filter.
 8. `output/company_cycle_major_weights.csv`: latest Taiwan company revenue segment weights rolled up to canonical cycles; use this for AI canonical-cycle exposure context in markdown reports.
@@ -81,7 +82,7 @@ If a Taiwan quarter is based only on monthly revenue, label the markdown period 
 
 For US rows, exclude annual `FY` rows from quarterly tables. Use `end_date` to convert fiscal quarters into calendar-quarter labels such as `2025Q4`; for example, a US fiscal `2026-Q1` row ending in December 2025 belongs under `2025Q4`. Prefer SEC rows over AlphaVantage rows when both map to the same company and calendar quarter, then recompute YoY against the selected prior-year same calendar quarter.
 
-For Taiwan rows, use `TWD 億`. For non-Taiwan rows, preserve native currency units such as `USD 十億`, `HKD 十億`, or `KRW 十億`; the My-TW adapter converts supported foreign currencies to `百萬台幣`.
+For Taiwan rows, use `TWD 億`. If `raw_performance1.csv` is stale but InvestorConference has official `press_release`, `financial_statements`, or `ir` Markdown for that quarter, fill Revenue, Profit, GM, and EPS-derived P/E from those official sidecars before showing Ready placeholders. For non-Taiwan rows, preserve native currency units such as `USD 十億`, `HKD 十億`, or `KRW 十億`; the My-TW adapter converts supported foreign currencies to `百萬台幣`.
 
 When writing markdown reports, use this top-level section order:
 

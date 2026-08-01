@@ -340,6 +340,30 @@ def load_actual_eps_by_period(json_dir_text: str, stock_text: str) -> tuple[tupl
             out[period] = eps
     return tuple(sorted(out.items(), key=lambda item: CCA.period_sort_key(item[0])))
 
+@lru_cache(maxsize=None)
+def load_official_taiwan_eps_by_period(biztrends_root_text: str, stock_text: str) -> tuple[tuple[str, float], ...]:
+    stock = str(stock_text or "").strip().upper()
+    if not stock or not stock.isdigit():
+        return tuple()
+    investor_data = Path(biztrends_root_text).resolve().parent / "InvestorConference" / "data" / stock
+    if not investor_data.exists():
+        return tuple()
+    out: dict[str, float] = {}
+    for path in sorted(investor_data.glob(f"{stock}_*_q*.md")):
+        match = re.fullmatch(rf"{re.escape(stock)}_([0-9]{{4}})_q([1-4])_(?:earnings_release|press_release|financial_statements|ir)\.md", path.name)
+        if not match:
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        eps_match = re.search(r"EPS was\s*NT\$([0-9.]+)", text, re.IGNORECASE)
+        if eps_match is None:
+            eps_match = re.search(r"Basic Earnings Per Share \(NTD\)\s+([0-9.]+)", text, re.IGNORECASE)
+        if eps_match is None:
+            eps_match = re.search(r"EPS\(NT\$\)\s+([0-9.]+)", text, re.IGNORECASE)
+        if eps_match is None:
+            continue
+        out[f"{match.group(1)}Q{match.group(2)}"] = float(eps_match.group(1))
+    return tuple(sorted(out.items(), key=lambda item: CCA.period_sort_key(item[0])))
+
 
 def prior_quarter_label(period: str) -> str:
     match = re.fullmatch(r"(\d{4})Q([1-4])", str(period or "").strip())
@@ -485,6 +509,7 @@ def format_pe_range(price_low: float, price_avg: float, price_high: float, eps: 
 def pe_ranges_by_period(json_dir: Path, biztrends_root: Path, stock: object) -> dict[str, str]:
     stock_text = str(stock or "").strip().upper()
     eps_by_period = dict(load_actual_eps_by_period(str(json_dir), stock_text))
+    eps_by_period.update(dict(load_official_taiwan_eps_by_period(str(biztrends_root), stock_text)))
     ttm_eps = ttm_eps_by_period(eps_by_period)
     price_stats = quarterly_close_stats(biztrends_root)
     out: dict[str, str] = {}

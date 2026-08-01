@@ -1,6 +1,5 @@
 ---
 name: skill-investorconference-ingest
-version: 1.2.9
 description: 投資人說明會/財報事件材料蒐集 Ingest 模組（支援台股與美股）；法說會抓音檔、IR、逐字稿，財報事件抓 Skills 財報結果、earnings release、financial tables、SEC filing，並避免對純財報事件產生 FIN/GT。
 ---
 
@@ -227,6 +226,7 @@ Downstream consumers should prefer this official CSV over `../ConceptStocks` pro
 * `scripts/migrate_audio_to_gh_releases.py`：歷史 GDrive 資源移轉至 GitHub。
 * `scripts/fetch_yahoo_transcript.py`：透過瀏覽器抓取 Yahoo Finance 逐字稿的獨立工具。
 * `scripts/fetch_official_ir_financials.py`：抓取非台股官方 IR 財務表並輸出 `data/financials/raw_ir_quarterly_financials.csv`；目前 Lenovo 會產生 normalized quarterly rows，Samsung/SMIC 會產生 source discovery sidecar，後續再補 PDF/table parser。
+* 台股 Ready 財報/法說事件若 GoodInfo 尚未更新，需先落公司官方 PDF，並用 `skills/skill-mac-mini-ocr/scripts/convert_ir_pdfs.py <stock>` 產生 `{stock}_{year}_q{n}_{press_release|financial_statements|ir}.md`。這些 official Markdown sidecars 是 downstream competitor/valuation table 的一級補值來源。
 * `scripts/download_with_playwright.py`：以 Playwright/Chromium browser context 下載受 Cloudflare、JS challenge 或 hotlink 防護影響的官方 PDF/影音材料，並驗證 content-type 與 magic bytes。
 
 ## 🚀 使用方法
