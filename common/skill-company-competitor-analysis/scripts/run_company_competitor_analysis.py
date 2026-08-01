@@ -16,6 +16,7 @@ TAIWAN_MONTHLY_REVENUE = ROOT / "data/Python-Actions.GoodInfo.Analyzer/raw_reven
 TAIWAN_SUPPLY_F000 = ROOT / "data/ic.tpex.org.tw/raw_SupplyChain_F000.csv"
 US_INCOME = ROOT / "data/ConceptStocks/raw_conceptstock_company_income.csv"
 INVESTORCONFERENCE_IR_INCOME = ROOT / "data/InvestorConference/raw_ir_quarterly_financials.csv"
+INVESTOR_EVENTS = ROOT / "data/InvestorEvents/raw_event_upcoming_earnings.csv"
 COMPANY_CYCLE_MAJOR_WEIGHTS = OUTPUT_DIR / "company_cycle_major_weights.csv"
 COMPANY_SEGMENT_WEIGHTS = ROOT / "data/company_segment_weights.csv"
 CYCLE_MAPPING = ROOT / "data/cycle_mapping.csv"
@@ -231,6 +232,56 @@ def yoy(current: float | None, prior: float | None) -> float | None:
     if current is None or prior in (None, 0):
         return None
     return (current / prior - 1.0) * 100.0
+
+def load_investor_event_dates(stocks: set[str]) -> dict[tuple[str, str], dict[str, str]]:
+    events: dict[tuple[str, str], dict[str, str]] = defaultdict(dict)
+    if not stocks:
+        return events
+    for row in read_csv(INVESTOR_EVENTS):
+        name = row.get("事件名稱", "").strip()
+        match = re.search(r"\(([^)]+)\).*?(?:FY)?(\d{4})\s*Q([1-4])", name)
+        if not match:
+            continue
+        stock = match.group(1).strip().upper()
+        period = f"{match.group(2)}Q{match.group(3)}"
+        if stock not in stocks:
+            continue
+        date = row.get("開始日期", "").strip()
+        if not date:
+            continue
+        category = row.get("類別", "").strip()
+        event_name = row.get("事件名稱", "").strip()
+        key = (stock, period)
+        if category == "財報公告" or "財報" in event_name:
+            events[key]["financial_report_event_date"] = min(
+                [value for value in [events[key].get("financial_report_event_date"), date] if value]
+            )
+        if category == "法說會" or "法說" in event_name:
+            events[key]["ir_event_date"] = min(
+                [value for value in [events[key].get("ir_event_date"), date] if value]
+            )
+    return events
+
+
+def format_event_date(financial_report_date: object, ir_date: object) -> str:
+    parts = []
+    if financial_report_date:
+        parts.append(f"財報: {financial_report_date}")
+    if ir_date:
+        parts.append(f"法說: {ir_date}")
+    return "<br>".join(parts)
+
+
+def attach_investor_event_dates(metrics: dict[str, list[dict[str, object]]], stocks: set[str]) -> None:
+    event_dates = load_investor_event_dates({stock.upper() for stock in stocks})
+    for stock, rows in metrics.items():
+        for row in rows:
+            period = str(row.get("period") or "")
+            events = event_dates.get((stock.upper(), period), {})
+            row["financial_report_event_date"] = events.get("financial_report_event_date", "")
+            row["ir_event_date"] = events.get("ir_event_date", "")
+            row["event_date"] = format_event_date(row["financial_report_event_date"], row["ir_event_date"])
+
 
 def load_taiwan_names() -> dict[str, str]:
     names: dict[str, str] = {}
@@ -525,7 +576,7 @@ def write_outputs(stock: str, peers: dict[str, Peer], metrics: dict[str, list[di
     out_dir.mkdir(parents=True, exist_ok=True)
     csv_path = out_dir / f"company_competitor_analysis_{stock}.csv"
     md_path = out_dir / f"company_competitor_analysis_{stock}.md"
-    fields = ["stock", "company", "relationship_type", "peer_basis", "shared_categories", "period", "unit", "revenue", "revenue_yoy_pct", "profit", "profit_yoy_pct", "gross_margin_pct"]
+    fields = ["stock", "company", "relationship_type", "peer_basis", "shared_categories", "period", "financial_report_event_date", "ir_event_date", "unit", "revenue", "revenue_yoy_pct", "profit", "profit_yoy_pct", "gross_margin_pct"]
     output_rows: list[dict[str, object]] = []
     for peer_stock, peer in sorted(peers.items(), key=lambda item: (item[1].relationship_type != "target", item[1].relationship_type, item[0])):
         if peer.relationship_type != "target" and relationships and peer.relationship_type not in relationships:
@@ -538,6 +589,9 @@ def write_outputs(stock: str, peers: dict[str, Peer], metrics: dict[str, list[di
                 "peer_basis": peer.peer_basis,
                 "shared_categories": ";".join(sorted(peer.shared_categories)),
                 "period": metric.get("period"),
+                "financial_report_event_date": metric.get("financial_report_event_date", ""),
+                "ir_event_date": metric.get("ir_event_date", ""),
+                "event_date": metric.get("event_date", ""),
                 "unit": metric.get("unit"),
                 "revenue": number(metric.get("revenue")),
                 "revenue_yoy_pct": pct(metric.get("revenue_yoy_pct")),
@@ -646,6 +700,7 @@ def write_ai_cycle_weights_markdown(f, output_rows: list[dict[str, object]], ai_
 
 def write_pivot_markdown(f, output_rows: list[dict[str, object]]) -> None:
     metrics = [
+        ("event_date", "Event"),
         ("revenue", "Revenue"),
         ("revenue_yoy_pct", "Rev YoY"),
         ("profit", "Profit"),
@@ -720,6 +775,7 @@ def main() -> int:
     taiwan_metrics = taiwan_monthly_revenue_metrics(tw_stocks, args.years, taiwan_metrics)
     metrics.update(taiwan_metrics)
     metrics.update(us_quarterly_metrics(us_symbols, args.years))
+    attach_investor_event_dates(metrics, set(peers))
     csv_path, md_path, row_count = write_outputs(target, peers, metrics, relationships)
     print(f"Wrote {row_count} rows")
     print(csv_path.relative_to(ROOT))

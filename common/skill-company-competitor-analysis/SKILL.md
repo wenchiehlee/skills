@@ -95,8 +95,10 @@ When writing markdown reports, use this top-level section order:
 Pivot the Revenue/Profit/GM presentation table so `Period` is the major column and each period contains these subcolumns:
 
 ```text
-Revenue | Rev YoY | Profit | Profit YoY | GM
+Event | Revenue | Rev YoY | Profit | Profit YoY | GM
 ```
+
+Populate `Event` from `data/InvestorEvents/raw_event_upcoming_earnings.csv` when a matching `(stock, period)` `財報公告` or `法說會` row exists. Leave it blank when the event source has no matching row.
 
 Use HTML tables with `colspan` when needed, because standard Markdown pipe tables cannot express grouped period headers. Keep CSV output in long format for machine processing. In markdown reports, display `Relationship` cells in Traditional Chinese while preserving machine-readable relationship enums in CSV.
 

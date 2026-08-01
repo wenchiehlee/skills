@@ -154,6 +154,7 @@ def configure_runner_paths(biztrends_root: Path) -> None:
     CCA.TAIWAN_SUPPLY_F000 = biztrends_root / "data/ic.tpex.org.tw/raw_SupplyChain_F000.csv"
     CCA.US_INCOME = biztrends_root / "data/ConceptStocks/raw_conceptstock_company_income.csv"
     CCA.INVESTORCONFERENCE_IR_INCOME = biztrends_root / "data/InvestorConference/raw_ir_quarterly_financials.csv"
+    CCA.INVESTOR_EVENTS = biztrends_root / "data/InvestorEvents/raw_event_upcoming_earnings.csv"
     CCA.COMPANY_CYCLE_MAJOR_WEIGHTS = biztrends_root / "output/company_cycle_major_weights.csv"
     CCA.COMPANY_SEGMENT_WEIGHTS = biztrends_root / "data/company_segment_weights.csv"
     CCA.CYCLE_MAPPING = biztrends_root / "data/cycle_mapping.csv"
@@ -277,6 +278,7 @@ def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: P
     taiwan_metrics = CCA.taiwan_monthly_revenue_metrics(tw_stocks, years, taiwan_metrics)
     metrics.update(taiwan_metrics)
     metrics.update(CCA.us_quarterly_metrics(us_symbols, years))
+    CCA.attach_investor_event_dates(metrics, set(peers))
 
     rows: list[dict[str, object]] = []
     for peer_stock, peer in sorted(peers.items(), key=lambda item: (item[1].relationship_type != "target", CCA.relationship_sort_key(item[1].relationship_type), item[0])):
@@ -305,6 +307,9 @@ def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: P
                 "company": metric.get("company") or peer.company,
                 "relationship_type": peer.relationship_type,
                 "period": metric.get("period"),
+                "financial_report_event_date": metric.get("financial_report_event_date", ""),
+                "ir_event_date": metric.get("ir_event_date", ""),
+                "event_date": metric.get("event_date", ""),
                 "market": market_for_peer_stock(peer_stock),
                 "unit": metric.get("unit"),
                 "revenue": CCA.number(metric.get("revenue")),
@@ -322,6 +327,7 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
     if not rows:
         return ""
     metrics = [
+        ("event_date", "Event"),
         ("revenue", "Revenue"),
         ("revenue_yoy_pct", "Rev YoY"),
         ("profit", "Profit"),
