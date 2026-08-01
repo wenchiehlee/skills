@@ -74,8 +74,10 @@ KNOWN_ALIASES = {
 
 USD_TO_TWD_RATE = 32.3
 HKD_TO_TWD_RATE = 4.13
+KRW_TO_TWD_RATE = 0.0222
 USD_BILLION_TO_TWD_MILLION = USD_TO_TWD_RATE * 1_000.0
 HKD_BILLION_TO_TWD_MILLION = HKD_TO_TWD_RATE * 1_000.0
+KRW_BILLION_TO_TWD_MILLION = KRW_TO_TWD_RATE * 1_000.0
 
 RELATIONSHIP_BY_ROLE = [
     ("晶圓", "foundry_competitor"),
@@ -151,6 +153,7 @@ def configure_runner_paths(biztrends_root: Path) -> None:
     CCA.TAIWAN_MONTHLY_REVENUE = biztrends_root / "data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv"
     CCA.TAIWAN_SUPPLY_F000 = biztrends_root / "data/ic.tpex.org.tw/raw_SupplyChain_F000.csv"
     CCA.US_INCOME = biztrends_root / "data/ConceptStocks/raw_conceptstock_company_income.csv"
+    CCA.INVESTORCONFERENCE_IR_INCOME = biztrends_root / "data/InvestorConference/raw_ir_quarterly_financials.csv"
     CCA.COMPANY_CYCLE_MAJOR_WEIGHTS = biztrends_root / "output/company_cycle_major_weights.csv"
     CCA.COMPANY_SEGMENT_WEIGHTS = biztrends_root / "data/company_segment_weights.csv"
     CCA.CYCLE_MAPPING = biztrends_root / "data/cycle_mapping.csv"
@@ -208,6 +211,10 @@ def convert_my_tw_units(metric: dict[str, object]) -> dict[str, object]:
         metric["market"] = "Hong Kong"
         metric["fx_currency"] = "HKD"
         multiplier = HKD_BILLION_TO_TWD_MILLION
+    elif unit == "KRW 十億":
+        metric["market"] = "Korea"
+        metric["fx_currency"] = "KRW"
+        multiplier = KRW_BILLION_TO_TWD_MILLION
     else:
         metric["market"] = CCA.market_label_for_unit(unit)
         return metric
@@ -221,7 +228,7 @@ def convert_my_tw_units(metric: dict[str, object]) -> dict[str, object]:
 
 
 def market_sort_key(market: object) -> int:
-    order = {"Taiwan": 0, "US": 1, "Other": 2}
+    order = {"Taiwan": 0, "US": 1, "Hong Kong": 2, "Korea": 3, "Other": 4}
     return order.get(str(market), 9)
 
 
@@ -344,6 +351,8 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
         fx_notes.append(f"1 USD = {USD_TO_TWD_RATE:g} TWD")
     if "HKD" in foreign_fx_currencies:
         fx_notes.append(f"1 HKD = {HKD_TO_TWD_RATE:g} TWD")
+    if "KRW" in foreign_fx_currencies:
+        fx_notes.append(f"1 KRW = {KRW_TO_TWD_RATE:g} TWD")
     if fx_notes:
         out.write(f"FX: `{'; '.join(fx_notes)}`\n")
     out.write("\n<table>\n<thead>\n<tr>")

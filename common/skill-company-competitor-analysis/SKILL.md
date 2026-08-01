@@ -48,7 +48,8 @@ Use these sources in this order:
 3. `data/ic.tpex.org.tw/raw_SupplyChainMap.csv`: broader supply-chain context and supplier exclusion clues.
 4. `data/Python-Actions.GoodInfo.Analyzer/raw_performance1.csv`: Taiwan quarterly actual financials.
 5. `data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv`: Taiwan monthly revenue fallback for not-yet-reported quarters; fill only Revenue and Revenue YoY.
-6. `data/ConceptStocks/raw_conceptstock_company_income.csv`: US quarterly actual financials; align `Q1`-`Q4` rows by `end_date` calendar quarter, not fiscal-year label.
+6. `data/InvestorConference/raw_ir_quarterly_financials.csv`: official IR quarterly rows for non-Taiwan peers; prefer this over provider fallback when symbol/quarter overlaps.
+7. `data/ConceptStocks/raw_conceptstock_company_income.csv`: US/international quarterly actual financials; align `Q1`-`Q4` rows by `end_date` calendar quarter, not fiscal-year label.
 7. `output/company_canonical_cycle_performance_details.csv`: latest cycle exposure only for context, not as the primary competitor filter.
 8. `output/company_cycle_major_weights.csv`: latest Taiwan company revenue segment weights rolled up to canonical cycles; use this for AI canonical-cycle exposure context in markdown reports.
 9. `data/company_segment_weights.csv` + `data/cycle_mapping.csv`: latest US active segment weights mapped to canonical or demand AI cycles when US peers are not present in `output/company_cycle_major_weights.csv`.
@@ -80,7 +81,7 @@ If a Taiwan quarter is based only on monthly revenue, label the markdown period 
 
 For US rows, exclude annual `FY` rows from quarterly tables. Use `end_date` to convert fiscal quarters into calendar-quarter labels such as `2025Q4`; for example, a US fiscal `2026-Q1` row ending in December 2025 belongs under `2025Q4`. Prefer SEC rows over AlphaVantage rows when both map to the same company and calendar quarter, then recompute YoY against the selected prior-year same calendar quarter.
 
-For Taiwan rows, use `TWD 億`. For US rows, use `USD 十億`.
+For Taiwan rows, use `TWD 億`. For non-Taiwan rows, preserve native currency units such as `USD 十億`, `HKD 十億`, or `KRW 十億`; the My-TW adapter converts supported foreign currencies to `百萬台幣`.
 
 When writing markdown reports, use this top-level section order:
 
@@ -113,7 +114,7 @@ python3 skills/skill-company-competitor-analysis/scripts/render_competitor_finan
   --ticker 2330
 ```
 
-The adapter reads canonical competitors from `data/enrichment_all/{ticker}.json`, resolves competitor entity names to Taiwan stock IDs or US/international symbols, then renders a `### 競爭同業 Revenue/Profit/GM` markdown subsection. It uses `../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_performance1.csv`, `../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv`, and `../biztrends.TW/data/ConceptStocks/raw_conceptstock_company_income.csv` for financial data.
+The adapter reads canonical competitors from `data/enrichment_all/{ticker}.json`, resolves competitor entity names to Taiwan stock IDs or US/international symbols, then renders a `### 競爭同業 Revenue/Profit/GM` markdown subsection. It uses `../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_performance1.csv`, `../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv`, and `../biztrends.TW/data/InvestorConference/raw_ir_quarterly_financials.csv` and `../biztrends.TW/data/ConceptStocks/raw_conceptstock_company_income.csv` for financial data.
 
 The My-TW renderer imports this adapter directly from the repo-local `skills/skill-company-competitor-analysis` folder. Keep this local skill in sync with `../skills/common/skill-company-competitor-analysis` when changing the adapter.
 

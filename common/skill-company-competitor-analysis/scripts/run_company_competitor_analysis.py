@@ -15,6 +15,7 @@ TAIWAN_PERFORMANCE = ROOT / "data/Python-Actions.GoodInfo.Analyzer/raw_performan
 TAIWAN_MONTHLY_REVENUE = ROOT / "data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv"
 TAIWAN_SUPPLY_F000 = ROOT / "data/ic.tpex.org.tw/raw_SupplyChain_F000.csv"
 US_INCOME = ROOT / "data/ConceptStocks/raw_conceptstock_company_income.csv"
+INVESTORCONFERENCE_IR_INCOME = ROOT / "data/InvestorConference/raw_ir_quarterly_financials.csv"
 COMPANY_CYCLE_MAJOR_WEIGHTS = OUTPUT_DIR / "company_cycle_major_weights.csv"
 COMPANY_SEGMENT_WEIGHTS = ROOT / "data/company_segment_weights.csv"
 CYCLE_MAPPING = ROOT / "data/cycle_mapping.csv"
@@ -133,36 +134,20 @@ def month_to_taiwan_quarter(month: str) -> tuple[tuple[int, int], str] | None:
     quarter = (month_num - 1) // 3 + 1
     return (year, quarter), f"{year}Q{quarter}"
 
-def date_to_calendar_quarter(date_text: str) -> tuple[tuple[int, int], str] | None:
-    match = re.fullmatch(r"(\d{4})-(\d{2})-\d{2}", str(date_text or "").strip())
-    if not match:
-        return None
-    year = int(match.group(1))
-    month = int(match.group(2))
-    quarter = (month - 1) // 3 + 1
-    return (year, quarter), f"{year}Q{quarter}"
-
-def period_key_us(fiscal_year: str, period: str, end_date: str = "") -> tuple[int, int]:
-    parsed = date_to_calendar_quarter(end_date)
-    if parsed is not None:
-        return parsed[0]
+def period_key_us(fiscal_year: str, period: str) -> tuple[int, int]:
     match = re.fullmatch(r"Q([1-4])", period.strip())
     if not match or not fiscal_year.isdigit():
         return (0, 0)
     return (int(fiscal_year), int(match.group(1)))
 
-def period_label_us(fiscal_year: str, period: str, end_date: str) -> tuple[tuple[int, int], str]:
-    parsed = date_to_calendar_quarter(end_date)
-    if parsed is not None:
-        return parsed
-    return period_key_us(fiscal_year, period), f"{fiscal_year}-{period}"
-
-def us_income_row_priority(row: dict[str, str]) -> tuple[int, int, str]:
-    source = row.get("source", "").strip().upper()
-    validation = row.get("validation_status", "").strip().upper()
-    source_score = {"SEC": 3, "ALPHAVANTAGE": 2}.get(source, 1)
-    validation_score = 2 if validation == "VALIDATED" else 1 if validation else 0
-    return (source_score, validation_score, row.get("process_timestamp", "").strip())
+def period_key_from_end_date(end_date: str) -> tuple[int, int]:
+    match = re.fullmatch(r"(\d{4})-(\d{2})-\d{2}", str(end_date or "").strip())
+    if not match:
+        return (0, 0)
+    year = int(match.group(1))
+    month = int(match.group(2))
+    quarter = (month - 1) // 3 + 1
+    return (year, quarter)
 
 def segment_period_key(period: str) -> tuple[int, int]:
     text = period.strip()
@@ -457,37 +442,71 @@ def taiwan_monthly_revenue_metrics(stocks: set[str], years: int, existing: dict[
 
 def us_quarterly_metrics(symbols: set[str], years: int) -> dict[str, list[dict[str, object]]]:
     by_stock_period: dict[tuple[str, tuple[int, int]], dict[str, object]] = {}
+    source_priority = {
+        "InvestorConferenceOfficialIR": 0,
+        "SEC": 1,
+        "YahooFinance": 2,
+        "AlphaVantage": 3,
+        "FMP": 4,
+    }
+
+    for row in read_csv(INVESTORCONFERENCE_IR_INCOME):
+        symbol = row.get("symbol", "").strip()
+        key = period_key_from_end_date(row.get("end_date", ""))
+        revenue = to_float(row.get("total_revenue"))
+        if symbol not in symbols or key == (0, 0) or revenue is None:
+            continue
+        gross_profit = to_float(row.get("gross_profit"))
+        profit = to_float(row.get("operating_income"))
+        gm = to_float(row.get("gross_margin"))
+        if gm is None and gross_profit is not None and revenue:
+            gm = gross_profit / revenue * 100.0
+        elif gm is not None and abs(gm) <= 1.5:
+            gm *= 100.0
+        currency = row.get("currency", "").strip() or "USD"
+        scale = 1_000_000_000.0 if currency in {"USD", "HKD", "KRW"} else 1.0
+        by_stock_period[(symbol, key)] = {
+            "period": f"{key[0]}Q{key[1]}",
+            "unit": f"{currency} 十億" if scale != 1.0 else currency,
+            "revenue": revenue / scale,
+            "profit": profit / scale if profit is not None else None,
+            "gm": gm,
+            "company": row.get("company_name", "").strip() or US_NAME_OVERRIDES.get(symbol, ""),
+            "revenue_yoy_pct": to_float(row.get("revenue_yoy_pct")),
+            "source_priority": source_priority["InvestorConferenceOfficialIR"],
+        }
+
     for row in read_csv(US_INCOME):
         symbol = row.get("symbol", "").strip()
         period = row.get("period", "").strip()
-        fiscal_year = row.get("fiscal_year", "").strip()
-        if not re.fullmatch(r"Q[1-4]", period):
+        if period == "FY":
             continue
-        end_date = row.get("end_date", "").strip()
-        key, period_label = period_label_us(fiscal_year, period, end_date)
+        fiscal_year = row.get("fiscal_year", "").strip()
+        key = period_key_from_end_date(row.get("end_date", ""))
+        if key == (0, 0):
+            key = period_key_us(fiscal_year, period)
         revenue = to_float(row.get("total_revenue"))
         if symbol not in symbols or key == (0, 0) or revenue is None:
+            continue
+        source = row.get("source", "").strip()
+        existing = by_stock_period.get((symbol, key))
+        if existing and source_priority.get(source, 9) >= int(existing.get("source_priority", 9)):
             continue
         profit = to_float(row.get("operating_income"))
         gm = to_float(row.get("gross_margin"))
         if gm is not None and abs(gm) <= 1.5:
             gm *= 100.0
-        currency = (row.get("currency") or "USD").strip().upper() or "USD"
-        candidate = {
-            "period": period_label,
-            "fiscal_period": f"{fiscal_year}-{period}",
-            "end_date": end_date,
+        currency = row.get("currency", "").strip() or "USD"
+        by_stock_period[(symbol, key)] = {
+            "period": f"{key[0]}Q{key[1]}",
             "unit": f"{currency} 十億",
             "revenue": revenue / 1_000_000_000.0,
             "profit": profit / 1_000_000_000.0 if profit is not None else None,
             "gm": gm,
             "company": row.get("company_name", "").strip() or US_NAME_OVERRIDES.get(symbol, ""),
-            "revenue_yoy_pct": None,
-            "_row_priority": us_income_row_priority(row),
+            "revenue_yoy_pct": to_float(row.get("revenue_yoy_pct")),
+            "source_priority": source_priority.get(source, 9),
         }
-        existing = by_stock_period.get((symbol, key))
-        if existing is None or candidate["_row_priority"] > existing.get("_row_priority", (0, 0, "")):
-            by_stock_period[(symbol, key)] = candidate
 
     selected_periods = select_recent_periods([key for stock, key in by_stock_period if stock in symbols], years)
     out: dict[str, list[dict[str, object]]] = defaultdict(list)
@@ -495,7 +514,8 @@ def us_quarterly_metrics(symbols: set[str], years: int) -> dict[str, list[dict[s
         if key not in selected_periods:
             continue
         prior = by_stock_period.get((symbol, (key[0] - 1, key[1])), {})
-        current["revenue_yoy_pct"] = yoy(current.get("revenue"), prior.get("revenue"))
+        if current.get("revenue_yoy_pct") is None:
+            current["revenue_yoy_pct"] = yoy(current.get("revenue"), prior.get("revenue"))
         current["profit_yoy_pct"] = yoy(current.get("profit"), prior.get("profit"))
         out[symbol].append(current)
     return out

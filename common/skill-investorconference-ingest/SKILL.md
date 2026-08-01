@@ -181,6 +181,27 @@ Repo 邊界與落檔規則：
 * 已知 US calendar-year 公司財報公告需要用公告月份做 sanity check；未知 ticker 或特殊 FY 公司不得自動覆蓋 CSV/FY 標籤，需等公司 IR/SEC 確認。規則：1-3 月通常為前一年 Q4，4-6 月為當年 Q1，7-9 月為當年 Q2，10-12 月為當年 Q3；Apple、QCOM、Dell、NVIDIA 等特殊會計年度公司需保留 `QxFYyyyy` 標籤。
 * 每個 official source snapshot 建議附 `{ID}_{Year}_q{N}_sources.json`，包含 `source_url`、`source_type`、`retrieved_at`、`accession`（若為 SEC）、`sha256` 與 `notes`。
 
+## Official IR quarterly financials
+
+For non-Taiwan competitors where provider data is incomplete, ingest official IR financial tables before downstream analysis. Run from `InvestorConference`:
+
+```bash
+python3 skills/skill-investorconference-ingest/scripts/fetch_official_ir_financials.py --provider all --replace-symbol
+```
+
+Output:
+
+- `data/financials/raw_ir_quarterly_financials.csv`: normalized official quarterly rows.
+- `data/{symbol}/{symbol}_official_ir_sources.json`: source URL, retrieval timestamp, SHA-256, and discovery links.
+
+Provider status:
+
+- `0992.HK` Lenovo: parses official key financial HTML table into quarterly rows.
+- `005930.KS` Samsung: official earnings release discovery sidecar; PDF/table extraction still pending.
+- `0981.HK` SMIC: official page discovery sidecar; table extraction still pending.
+
+Downstream consumers should prefer this official CSV over `../ConceptStocks` provider rows when the same symbol and quarter both exist.
+
 ## 🇺🇸 美股材料蒐集規則
 
 當 `stock_id` 為英文字母 ticker（如 `DELL`, `QCOM`, `GOOGL`）或 metadata 顯示為美股時，Ingest 仍只負責材料蒐集，不負責投資分析或 GT 判定。應盡量落檔或記錄以下來源：
@@ -205,6 +226,7 @@ Repo 邊界與落檔規則：
 * `scripts/audit_audio_metadata.py`：重新下載 release 音檔、計算 checksum/duration、更新 `audio_metadata.json` 並標示 duplicate。
 * `scripts/migrate_audio_to_gh_releases.py`：歷史 GDrive 資源移轉至 GitHub。
 * `scripts/fetch_yahoo_transcript.py`：透過瀏覽器抓取 Yahoo Finance 逐字稿的獨立工具。
+* `scripts/fetch_official_ir_financials.py`：抓取非台股官方 IR 財務表並輸出 `data/financials/raw_ir_quarterly_financials.csv`；目前 Lenovo 會產生 normalized quarterly rows，Samsung/SMIC 會產生 source discovery sidecar，後續再補 PDF/table parser。
 * `scripts/download_with_playwright.py`：以 Playwright/Chromium browser context 下載受 Cloudflare、JS challenge 或 hotlink 防護影響的官方 PDF/影音材料，並驗證 content-type 與 magic bytes。
 
 ## 🚀 使用方法
