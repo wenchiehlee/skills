@@ -95,6 +95,7 @@ KNOWN_TW_PLAYWRIGHT_IR_BY_QUARTER = {
     ("2454", "2025", "3"): "https://ottlive.hinet.net/webapp/mediatek/watch?v=2531",
     ("2454", "2025", "4"): "https://ottlive.hinet.net/webapp/mediatek/watch?v=3556",
     ("2454", "2026", "1"): "https://ottlive.hinet.net/webapp/mediatek/watch?v=3635",
+    ("2454", "2026", "2"): "https://ottlive.hinet.net/webapp/mediatek/watch?v=4011",
     ("3034", "2025", "3"): "https://www.novatek.com.tw/upload/website/_2025Q3_25110708_904.html",
     ("3034", "2025", "4"): "https://www.novatek.com.tw/upload/website/_2025Q4_26020909_911.html",
     ("3045", "2026", "1"): "http://www.zucast.com/webcast/YZRGwetH",  # 台灣大 2026Q1 法說會 2026-05-13 (Zucast 需註冊; 音檔為 S3 直連 mp3, 已下載至 3045_2026_q1.m4a)
@@ -2344,16 +2345,17 @@ def fetch_alphaspread_transcript(stock_id: str, year: str, quarter: str, stem: s
         text = re.sub(r"\n{3,}", "\n\n", text)
         return text.strip() + "\n"
 
+    max_urls = 8
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         success = False
         
-        for url in urls:
+        for url in urls[:max_urls]:
             print(f"[AlphaSpread] Trying: {url}")
             try:
-                page.goto(url, wait_until="domcontentloaded", timeout=45000)
-                page.wait_for_timeout(5000)
+                page.goto(url, wait_until="domcontentloaded", timeout=15000)
+                page.wait_for_timeout(1500)
                 
                 # Try to find and click "Open Transcript" or "Transcript" tab if it exists
                 try:
@@ -2364,7 +2366,7 @@ def fetch_alphaspread_transcript(stock_id: str, year: str, quarter: str, stem: s
                         page.wait_for_timeout(2000)
                 except: pass
 
-                body_text = page.locator("body").inner_text(timeout=10000)
+                body_text = page.locator("body").inner_text(timeout=5000)
                 content = clean_noise(body_text)
                 
                 # More robust check: true transcript usually contains "Operator" or speaker names
@@ -2393,6 +2395,11 @@ def fetch_alphaspread_transcript(stock_id: str, year: str, quarter: str, stem: s
                 print(f"[AlphaSpread] FAILED Failed for {url}: {str(e)[:100]}")
         
         browser.close()
+
+        if not success:
+            skipped = max(0, len(urls) - max_urls)
+            suffix = f" after {max_urls} attempts; skipped {skipped} lower-priority URLs" if skipped else ""
+            print(f"[AlphaSpread] No valid transcript found for {stem}{suffix}")
 
     return outputs
 
