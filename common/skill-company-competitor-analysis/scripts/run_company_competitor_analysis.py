@@ -7,6 +7,7 @@ import math
 import re
 from collections import defaultdict
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -16,6 +17,7 @@ TAIWAN_MONTHLY_REVENUE = ROOT / "data/Python-Actions.GoodInfo.Analyzer/raw_reven
 TAIWAN_SUPPLY_F000 = ROOT / "data/ic.tpex.org.tw/raw_SupplyChain_F000.csv"
 US_INCOME = ROOT / "data/ConceptStocks/raw_conceptstock_company_income.csv"
 INVESTORCONFERENCE_IR_INCOME = ROOT / "data/InvestorConference/raw_ir_quarterly_financials.csv"
+INVESTORCONFERENCE_DATA = ROOT.parent / "InvestorConference/data"
 INVESTOR_EVENTS = ROOT / "data/InvestorEvents/raw_event_upcoming_earnings.csv"
 COMPANY_CYCLE_MAJOR_WEIGHTS = OUTPUT_DIR / "company_cycle_major_weights.csv"
 COMPANY_SEGMENT_WEIGHTS = ROOT / "data/company_segment_weights.csv"
@@ -272,6 +274,19 @@ def format_event_date(financial_report_date: object, ir_date: object) -> str:
     return "<br>".join(parts)
 
 
+def is_future_event_date(financial_report_date: object, ir_date: object, today: date | None = None) -> bool:
+    today = today or date.today()
+    for value in (financial_report_date, ir_date):
+        if not value:
+            continue
+        try:
+            if date.fromisoformat(str(value)) >= today:
+                return True
+        except ValueError:
+            continue
+    return False
+
+
 def attach_investor_event_dates(metrics: dict[str, list[dict[str, object]]], stocks: set[str]) -> None:
     event_dates = load_investor_event_dates({stock.upper() for stock in stocks})
     display_periods = {str(row.get("period") or "") for rows in metrics.values() for row in rows}
@@ -315,7 +330,10 @@ def attach_investor_event_dates(metrics: dict[str, list[dict[str, object]]], sto
                 continue
             row["financial_report_event_date"] = events.get("financial_report_event_date", "")
             row["ir_event_date"] = events.get("ir_event_date", "")
-            row["event_date"] = format_event_date(row["financial_report_event_date"], row["ir_event_date"])
+            if is_future_event_date(row["financial_report_event_date"], row["ir_event_date"]):
+                row["event_date"] = format_event_date(row["financial_report_event_date"], row["ir_event_date"])
+            else:
+                row["event_date"] = ""
 
         for row in rows:
             row.setdefault("financial_report_event_date", "")
@@ -445,6 +463,50 @@ def build_supply_peers(target: str) -> dict[str, Peer]:
 def select_recent_periods(periods: list[tuple[int, int]], years: int) -> set[tuple[int, int]]:
     return set(sorted(set(periods))[-years * 4 :])
 
+def parse_official_taiwan_earnings_release(path: Path) -> dict[str, object] | None:
+    match = re.fullmatch(r"(\d+)_([0-9]{4})_q([1-4])_earnings_release\.md", path.name)
+    if not match:
+        return None
+    stock, year_text, quarter_text = match.groups()
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    revenue_match = re.search(r"consolidated revenue of\s*NT\$([0-9,.]+)\s*billion", text, re.IGNORECASE)
+    gm_match = re.search(r"Gross margin for the quarter was\s*([0-9.]+)%", text, re.IGNORECASE)
+    op_margin_match = re.search(r"operating margin was\s*([0-9.]+)%", text, re.IGNORECASE)
+    if not revenue_match:
+        return None
+    revenue = float(revenue_match.group(1).replace(",", "")) * 10.0
+    gm = float(gm_match.group(1)) if gm_match else None
+    op_margin = float(op_margin_match.group(1)) if op_margin_match else None
+    profit = revenue * op_margin / 100.0 if op_margin is not None else None
+    return {
+        "period": f"{year_text}Q{quarter_text}",
+        "unit": "TWD 億",
+        "revenue": revenue,
+        "profit": profit,
+        "gm": gm,
+        "company": "",
+        "source_priority": 0,
+    }
+
+
+def load_official_taiwan_earnings_metrics(stocks: set[str]) -> dict[tuple[str, tuple[int, int]], dict[str, object]]:
+    out: dict[tuple[str, tuple[int, int]], dict[str, object]] = {}
+    for stock in stocks:
+        company_dir = INVESTORCONFERENCE_DATA / stock
+        if not company_dir.exists():
+            continue
+        for path in company_dir.glob(f"{stock}_*_q*_earnings_release.md"):
+            row = parse_official_taiwan_earnings_release(path)
+            if row is None:
+                continue
+            key = period_key_taiwan(str(row.get("period") or ""))
+            if key == (0, 0):
+                continue
+            row["source_file"] = str(path)
+            out[(stock, key)] = row
+    return out
+
+
 def taiwan_quarterly_metrics(stocks: set[str], years: int) -> dict[str, list[dict[str, object]]]:
     by_stock_period: dict[tuple[str, tuple[int, int]], dict[str, object]] = {}
     for row in read_csv(TAIWAN_PERFORMANCE):
@@ -467,6 +529,13 @@ def taiwan_quarterly_metrics(stocks: set[str], years: int) -> dict[str, list[dic
             "gm": gm,
             "company": row.get("company_name", "").strip(),
         }
+
+    for (stock, key), row in load_official_taiwan_earnings_metrics(stocks).items():
+        existing = by_stock_period.get((stock, key))
+        if existing is None or int(existing.get("source_priority", 9)) > int(row.get("source_priority", 9)):
+            if existing and not row.get("company"):
+                row["company"] = existing.get("company", "")
+            by_stock_period[(stock, key)] = row
 
     selected_periods = select_recent_periods([key for stock, key in by_stock_period if stock in stocks], years)
     out: dict[str, list[dict[str, object]]] = defaultdict(list)

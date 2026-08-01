@@ -154,6 +154,7 @@ def configure_runner_paths(biztrends_root: Path) -> None:
     CCA.TAIWAN_SUPPLY_F000 = biztrends_root / "data/ic.tpex.org.tw/raw_SupplyChain_F000.csv"
     CCA.US_INCOME = biztrends_root / "data/ConceptStocks/raw_conceptstock_company_income.csv"
     CCA.INVESTORCONFERENCE_IR_INCOME = biztrends_root / "data/InvestorConference/raw_ir_quarterly_financials.csv"
+    CCA.INVESTORCONFERENCE_DATA = biztrends_root.parent / "InvestorConference/data"
     CCA.INVESTOR_EVENTS = biztrends_root / "data/InvestorEvents/raw_event_upcoming_earnings.csv"
     CCA.COMPANY_CYCLE_MAJOR_WEIGHTS = biztrends_root / "output/company_cycle_major_weights.csv"
     CCA.COMPANY_SEGMENT_WEIGHTS = biztrends_root / "data/company_segment_weights.csv"
@@ -206,6 +207,9 @@ def convert_my_tw_units(metric: dict[str, object]) -> dict[str, object]:
     if unit == "TWD 億":
         metric["market"] = "Taiwan"
         multiplier = 100.0
+    elif unit == "TWD 十億":
+        metric["market"] = "Taiwan"
+        multiplier = 1000.0
     elif unit == "USD 十億":
         metric["market"] = "US"
         metric["fx_currency"] = "USD"
