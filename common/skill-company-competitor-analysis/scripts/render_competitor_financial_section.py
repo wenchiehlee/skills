@@ -377,8 +377,8 @@ def daily_price_files(biztrends_root: Path) -> list[Path]:
 
 
 @lru_cache(maxsize=None)
-def load_quarterly_close_ranges(biztrends_root_text: str) -> tuple[tuple[tuple[str, str], tuple[float, float]], ...]:
-    ranges: dict[tuple[str, str], list[float]] = {}
+def load_quarterly_close_stats(biztrends_root_text: str) -> tuple[tuple[tuple[str, str], tuple[float, float, float]], ...]:
+    stats: dict[tuple[str, str], list[float]] = {}
     for path in daily_price_files(Path(biztrends_root_text)):
         for row in read_csv(path):
             stock = str(row.get("stock_code") or "").strip().upper()
@@ -386,43 +386,45 @@ def load_quarterly_close_ranges(biztrends_root_text: str) -> tuple[tuple[tuple[s
             close = CCA.to_float(row.get("收盤價_元") or row.get("收盤_價格_元"))
             if not stock or not period or close is None:
                 continue
-            bucket = ranges.setdefault((stock, period), [close, close])
+            bucket = stats.setdefault((stock, period), [close, close, 0.0, 0.0])
             bucket[0] = min(bucket[0], close)
             bucket[1] = max(bucket[1], close)
-    return tuple(((key, (value[0], value[1])) for key, value in sorted(ranges.items())))
+            bucket[2] += close
+            bucket[3] += 1
+    return tuple(
+        (key, (value[0], value[2] / value[3], value[1]))
+        for key, value in sorted(stats.items())
+        if value[3]
+    )
 
 
-def quarterly_close_ranges(biztrends_root: Path) -> dict[tuple[str, str], tuple[float, float]]:
-    return dict(load_quarterly_close_ranges(str(biztrends_root)))
+def quarterly_close_stats(biztrends_root: Path) -> dict[tuple[str, str], tuple[float, float, float]]:
+    return dict(load_quarterly_close_stats(str(biztrends_root)))
 
 
-def format_pe_range(price_low: float, price_high: float, eps: float) -> str:
+def format_pe_range(price_low: float, price_avg: float, price_high: float, eps: float) -> str:
     if eps == 0:
         return ""
     if eps < 0:
         return "N.M."
-    low_pe = price_low / eps
-    high_pe = price_high / eps
-    if low_pe > high_pe:
-        low_pe, high_pe = high_pe, low_pe
-    low_text = ratio(low_pe)
-    high_text = ratio(high_pe)
-    if low_text == high_text:
-        return low_text
-    return f"{low_text}-{high_text}"
+    values = sorted([price_low / eps, price_avg / eps, price_high / eps])
+    texts = [ratio(value) for value in values]
+    if len(set(texts)) == 1:
+        return texts[0]
+    return "-".join(texts)
 
 
 def pe_ranges_by_period(json_dir: Path, biztrends_root: Path, stock: object) -> dict[str, str]:
     stock_text = str(stock or "").strip().upper()
     eps_by_period = dict(load_actual_eps_by_period(str(json_dir), stock_text))
     ttm_eps = ttm_eps_by_period(eps_by_period)
-    price_ranges = quarterly_close_ranges(biztrends_root)
+    price_stats = quarterly_close_stats(biztrends_root)
     out: dict[str, str] = {}
     for period, eps in ttm_eps.items():
-        prices = price_ranges.get((stock_text, period))
+        prices = price_stats.get((stock_text, period))
         if not prices:
             continue
-        out[period] = format_pe_range(prices[0], prices[1], eps)
+        out[period] = format_pe_range(prices[0], prices[1], prices[2], eps)
     return out
 
 
@@ -588,7 +590,7 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
     out = StringIO()
     out.write("### 競爭同業 Revenue/Profit/GM/PE\n\n")
     out.write(f"Revenue/Profit Unit: `{unit}`\n")
-    out.write("P/E Range: `季內最低/最高日收盤價 / TTM EPS (當季 EPS + 最近 3 季 EPS)`\n")
+    out.write("P/E Range: `季內最低/平均/最高日收盤價 / TTM EPS (當季 EPS + 最近 3 季 EPS)`\n")
     fx_notes = []
     if "USD" in foreign_fx_currencies:
         fx_notes.append(f"1 USD = {USD_TO_TWD_RATE:g} TWD")
