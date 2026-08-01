@@ -274,13 +274,38 @@ def format_event_date(financial_report_date: object, ir_date: object) -> str:
 
 def attach_investor_event_dates(metrics: dict[str, list[dict[str, object]]], stocks: set[str]) -> None:
     event_dates = load_investor_event_dates({stock.upper() for stock in stocks})
-    for stock, rows in metrics.items():
-        for row in rows:
-            period = str(row.get("period") or "")
-            events = event_dates.get((stock.upper(), period), {})
+    for stock, rows in list(metrics.items()):
+        rows_by_period = {str(row.get("period") or ""): row for row in rows}
+        for (event_stock, period), events in event_dates.items():
+            if event_stock != stock.upper():
+                continue
+            target_row = rows_by_period.get(period)
+            if target_row is not None and not target_row.get("is_monthly_revenue_only"):
+                row = target_row
+            elif target_row is not None and target_row.get("is_monthly_revenue_only"):
+                row = {
+                    "period": period,
+                    "unit": target_row.get("unit"),
+                    "revenue": None,
+                    "revenue_yoy_pct": None,
+                    "profit": None,
+                    "profit_yoy_pct": None,
+                    "gm": None,
+                    "company": target_row.get("company"),
+                    "is_monthly_revenue_only": False,
+                }
+                rows.append(row)
+                rows_by_period[period] = row
+            else:
+                continue
             row["financial_report_event_date"] = events.get("financial_report_event_date", "")
             row["ir_event_date"] = events.get("ir_event_date", "")
             row["event_date"] = format_event_date(row["financial_report_event_date"], row["ir_event_date"])
+
+        for row in rows:
+            row.setdefault("financial_report_event_date", "")
+            row.setdefault("ir_event_date", "")
+            row.setdefault("event_date", "")
 
 
 def load_taiwan_names() -> dict[str, str]:
