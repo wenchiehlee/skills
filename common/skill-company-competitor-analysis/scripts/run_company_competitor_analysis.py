@@ -274,6 +274,7 @@ def format_event_date(financial_report_date: object, ir_date: object) -> str:
 
 def attach_investor_event_dates(metrics: dict[str, list[dict[str, object]]], stocks: set[str]) -> None:
     event_dates = load_investor_event_dates({stock.upper() for stock in stocks})
+    display_periods = {str(row.get("period") or "") for rows in metrics.values() for row in rows}
     for stock, rows in list(metrics.items()):
         rows_by_period = {str(row.get("period") or ""): row for row in rows}
         for (event_stock, period), events in event_dates.items():
@@ -292,6 +293,20 @@ def attach_investor_event_dates(metrics: dict[str, list[dict[str, object]]], sto
                     "profit_yoy_pct": None,
                     "gm": None,
                     "company": target_row.get("company"),
+                    "is_monthly_revenue_only": False,
+                }
+                rows.append(row)
+                rows_by_period[period] = row
+            elif period in display_periods:
+                row = {
+                    "period": period,
+                    "unit": rows[0].get("unit") if rows else None,
+                    "revenue": None,
+                    "revenue_yoy_pct": None,
+                    "profit": None,
+                    "profit_yoy_pct": None,
+                    "gm": None,
+                    "company": rows[0].get("company") if rows else None,
                     "is_monthly_revenue_only": False,
                 }
                 rows.append(row)

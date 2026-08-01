@@ -90,6 +90,13 @@ def _load_us_next_fiscal_quarter() -> dict[str, str]:
 US_WATCHLIST = _load_us_watchlist()
 US_NEXT_FISCAL_QUARTER = _load_us_next_fiscal_quarter()
 
+def _market_label_for_symbol(symbol: str) -> str:
+    if symbol.endswith(".HK"):
+        return "港股"
+    if symbol.endswith((".TW", ".TWO")):
+        return "台股"
+    return "美股"
+
 WATCHLIST_CSV       = "StockID_TWSE_TPEX.csv"        # 完整觀察名單
 WATCHLIST_FOCUS_CSV = "StockID_TWSE_TPEX_focus.csv"  # 專注名單
 
@@ -553,7 +560,10 @@ def _extract_earnings_dates(symbol: str, company: str, market: str,
             # DELL/NVDA report ~3-4 weeks post quarter-end, not up to 3 months).
             # For known calendar-year reporters, the metadata FY label itself can be
             # off by a quarter -- _resolve_us_quarter_label overrides it in that case.
-            quarter = _resolve_us_quarter_label(symbol, date_str, US_NEXT_FISCAL_QUARTER.get(symbol), dt)
+            if market == "美股":
+                quarter = _resolve_us_quarter_label(symbol, date_str, US_NEXT_FISCAL_QUARTER.get(symbol), dt)
+            else:
+                quarter = _quarter_label(dt)
             rows.append([
                 CATEGORY_EARNINGS, market,
                 f"{company}({display}) {quarter} 財報",
@@ -566,11 +576,11 @@ def _extract_earnings_dates(symbol: str, company: str, market: str,
 
 
 def fetch_us_earnings(start: datetime, end: datetime) -> list[list]:
-    """使用 yfinance 抓取美股財報日期（未來 30 天）。"""
+    """使用 yfinance 抓取非台股觀察清單的財報日期（未來 30 天）。"""
     results = []
     for symbol, company in US_WATCHLIST.items():
         try:
-            results.extend(_extract_earnings_dates(symbol, company, "美股", start, end))
+            results.extend(_extract_earnings_dates(symbol, company, _market_label_for_symbol(symbol), start, end))
         except Exception as e:
             print(f"  {symbol} 財報日期抓取失敗: {e}")
     return results
@@ -659,14 +669,17 @@ def _purge_stale_future_earnings(existing_by_name: dict, fresh_rows: list[list],
     的 --auto-todo 需要用來比對「已發生但尚未收錄」的歷史紀錄。同時移除該筆對應的
     衍生法說會事件（見 _derive_us_call_rows），避免留下指向錯誤日期的孤兒法說會。
     """
-    fresh_names_by_ticker: dict[tuple, str] = {}
+    fresh_names_by_market_ticker: dict[tuple, str] = {}
+    fresh_names_by_ticker: dict[str, str] = {}
     for row in fresh_rows:
         if row[0] != CATEGORY_EARNINGS:
             continue
         ticker = _extract_event_ticker(row[2])
         if not ticker:
             continue
-        fresh_names_by_ticker[(row[1], ticker)] = row[2].strip()
+        fresh_name = row[2].strip()
+        fresh_names_by_market_ticker[(row[1], ticker)] = fresh_name
+        fresh_names_by_ticker[ticker] = fresh_name
 
     removed = 0
     for name in list(existing_by_name.keys()):
@@ -676,7 +689,7 @@ def _purge_stale_future_earnings(existing_by_name: dict, fresh_rows: list[list],
         ticker = _extract_event_ticker(row[2])
         if not ticker:
             continue
-        fresh_name = fresh_names_by_ticker.get((row[1], ticker))
+        fresh_name = fresh_names_by_market_ticker.get((row[1], ticker)) or fresh_names_by_ticker.get(ticker)
         if not fresh_name or fresh_name == name:
             continue
         try:
