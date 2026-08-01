@@ -170,7 +170,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
   updated_at: '2026-07-26'
-  revised_at: '2026-07-26'
+  revised_at: '2026-08-01'
 - name: skill-mac-mini-ocr
   group: common
   path: common/skill-mac-mini-ocr
