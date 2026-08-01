@@ -22,6 +22,17 @@ PLATFORM_REVENUE_HEADING = "### 營收平台佔比 (Revenue by Platform %)"
 QUARTERLY_HEADING = "### 季度關鍵財務數據 (近 4 季)"
 COMPETITOR_FINANCIAL_HEADING = "### 競爭同業 Revenue/Profit/GM"
 H3_RE = re.compile(r"(?m)^### .*$")
+DEFAULT_UPDATED_AT = "2026-08-01 17:32 CST"
+REQUIRED_RENDER_DATA = {
+    "data/ConceptStocks/raw_conceptstock_company_income.csv",
+    "data/ConceptStocks/raw_conceptstock_daily.csv",
+    "data/InvestorConference/raw_ir_quarterly_financials.csv",
+    "data/InvestorEvents/raw_event_upcoming_earnings.csv",
+    "data/Python-Actions.GoodInfo.Analyzer/raw_daily_k_chart_flow.csv",
+    "data/Python-Actions.GoodInfo.Analyzer/raw_performance1.csv",
+    "data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv",
+    "data/company_segment_weights.csv",
+}
 
 
 
@@ -53,6 +64,46 @@ def markdown_table(headers: list[str], rows: list[list[str]]) -> str:
     lines = ["| " + " | ".join(headers) + " |", "|" + "|".join(":---" for _ in headers) + "|"]
     lines.extend("| " + " | ".join(row) + " |" for row in rows)
     return "\n".join(lines)
+
+
+def read_dict_rows(path: Path) -> list[dict[str, str]]:
+    if not path.is_file():
+        return []
+    with path.open(encoding="utf-8-sig", newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def render_data_health_summary(biztrends_root: Path) -> tuple[str, list[str]]:
+    status_path = biztrends_root / "data/data_freshness_status.csv"
+    rows = read_dict_rows(status_path)
+    by_dest = {str(row.get("dest_path", "")).strip(): row for row in rows}
+    missing: list[str] = []
+    unhealthy: list[str] = []
+    warnings: list[str] = []
+    for dest in sorted(REQUIRED_RENDER_DATA):
+        row = by_dest.get(dest)
+        if row is None:
+            if (biztrends_root / dest).is_file():
+                warnings.append(f"{dest}: no freshness row")
+            else:
+                missing.append(dest)
+            continue
+        if str(row.get("file_exists", "")).strip().lower() != "true":
+            unhealthy.append(f"{dest}: missing")
+            continue
+        timestamp_status = str(row.get("timestamp_health_status", "")).strip().lower()
+        freshness_status = str(row.get("freshness_status", "")).strip().lower()
+        if timestamp_status in {"broken", "missing", "missing_file"} or freshness_status in {"broken", "missing", "missing_file"}:
+            unhealthy.append(f"{dest}: timestamp={timestamp_status or '-'} freshness={freshness_status or '-'}")
+        elif timestamp_status != "healthy" or freshness_status != "ok":
+            warnings.append(f"{dest}: timestamp={timestamp_status or '-'} freshness={freshness_status or '-'}")
+    issues = [f"missing health row: {item}" for item in missing] + unhealthy
+    summary = f"Data health: required={len(REQUIRED_RENDER_DATA)} blocking={len(issues)} warnings={len(warnings)}"
+    if warnings:
+        summary += " | warnings: " + "; ".join(warnings[:5])
+        if len(warnings) > 5:
+            summary += f"; +{len(warnings) - 5} more"
+    return summary, issues
 
 
 def load_competitor_financial_adapter(coverage_root: Path):
@@ -807,7 +858,7 @@ def render_competitive_position(data: dict[str, Any]) -> str:
     return "\n".join(lines).strip()
 
 
-def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: dict[str, str] | None = None, segment_weight_summaries: dict[str, str] | None = None, monthly_revenue_totals: dict[str, dict[str, float]] | None = None, competitor_financial_section: str = "") -> str:
+def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: dict[str, str] | None = None, segment_weight_summaries: dict[str, str] | None = None, monthly_revenue_totals: dict[str, dict[str, float]] | None = None, competitor_financial_section: str = "", updated_at: str = "") -> str:
     title = data.get("title") or f"{data.get('ticker', '')} - [[{data.get('company_name', '')}]]"
     profile = data.get("profile", {})
     business_summary = data.get("business", {}).get("summary", "").strip()
@@ -831,6 +882,8 @@ def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: 
     if financial:
         heading = financial if financial.startswith("## ") else "## 財務概況 (單位: 百萬台幣, 只有 Margin 為 %)\n" + financial
         parts.extend(["", heading])
+    if updated_at:
+        parts.extend(["", f"Updated: {updated_at}"])
     return "\n".join(part.rstrip() for part in parts).rstrip() + "\n"
 
 
@@ -868,6 +921,7 @@ def main() -> int:
     parser.add_argument("--monthly-revenue", default="../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv")
     parser.add_argument("--biztrends-root", default="../biztrends.TW")
     parser.add_argument("--competitor-financial-years", type=int, default=3)
+    parser.add_argument("--updated-at", default=DEFAULT_UPDATED_AT)
     parser.add_argument("--ticker")
     args = parser.parse_args()
 
@@ -890,6 +944,13 @@ def main() -> int:
     biztrends_root = Path(args.biztrends_root)
     if not biztrends_root.is_absolute():
         biztrends_root = (coverage_root / biztrends_root).resolve()
+    health_summary, health_issues = render_data_health_summary(biztrends_root)
+    print(health_summary)
+    if health_issues:
+        for issue in health_issues:
+            print(f"Data health issue: {issue}", file=sys.stderr)
+        return 2
+
     competitor_adapter = load_competitor_financial_adapter(coverage_root)
 
     rows = []
@@ -906,7 +967,7 @@ def main() -> int:
                 biztrends_root,
                 args.competitor_financial_years,
             )
-        rendered = render_markdown(data, "", segment_weight_tables, segment_weight_summaries, monthly_revenue_totals, competitor_financial_section)
+        rendered = render_markdown(data, "", segment_weight_tables, segment_weight_summaries, monthly_revenue_totals, competitor_financial_section, args.updated_at)
         out_path = out_dir / f"{data['ticker']}_{data['company_name']}.md"
         out_path.write_text(rendered, encoding="utf-8")
         row = compare(original, rendered, data)
