@@ -15,10 +15,12 @@ import re
 import sys
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 WIKILINK_RE = re.compile(r"\[\[([^\]]+)\]\]")
 FINANCIAL_HEADING = "## 財務概況"
 PLATFORM_REVENUE_HEADING = "### 營收平台佔比 (Revenue by Platform %)"
+PLATFORM_REVENUE_ANCHOR = "營收平台佔比-revenue-by-platform-"
 QUARTERLY_HEADING = "### 季度關鍵財務數據 (近 4 季)"
 COMPETITOR_FINANCIAL_HEADING = "### 競爭同業 Revenue/Profit/GM"
 H3_RE = re.compile(r"(?m)^### .*$")
@@ -161,6 +163,94 @@ def load_segment_weight_tables(path: Path) -> dict[str, str]:
     return tables
 
 
+def format_num(value: Any) -> str:
+    if value in (None, ""):
+        return "-"
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    if number.is_integer():
+        return f"{int(number):,}"
+    return f"{number:,.1f}"
+
+
+def evidence_anchor(evidence_item: dict[str, Any]) -> str:
+    render_section = evidence_item.get("render_section", {}) if isinstance(evidence_item, dict) else {}
+    anchor = str(render_section.get("anchor") or PLATFORM_REVENUE_ANCHOR).lstrip("#")
+    return "#" + quote(anchor, safe="")
+
+
+def render_annotation_badge(annotation: dict[str, Any], data: dict[str, Any]) -> str:
+    render = annotation.get("render", {}) if isinstance(annotation, dict) else {}
+    if not render.get("badge"):
+        return ""
+    if annotation.get("status") not in {"linked_supported", "linked_partial"}:
+        return ""
+    label = str(render.get("label") or "Evidence").strip()
+    color = str(render.get("color") or "blue").strip()
+    evidence_ref = str(annotation.get("evidence_ref", "")).strip()
+    evidence_item: Any = data
+    for part in evidence_ref.split("."):
+        if not part:
+            continue
+        evidence_item = evidence_item.get(part, {}) if isinstance(evidence_item, dict) else {}
+    if not isinstance(evidence_item, dict):
+        evidence_item = {}
+    alt = str(render.get("alt") or label).strip()
+    badge_label = label.replace("/", "%2F")
+    badge_url = f"https://img.shields.io/badge/{badge_label}-{color}"
+    return f"[![{alt}]({badge_url})]({evidence_anchor(evidence_item)})"
+
+
+def apply_annotations(markdown: str, data: dict[str, Any]) -> str:
+    annotations = data.get("annotations", []) or []
+    if not annotations:
+        return markdown
+    lines = markdown.splitlines()
+    for annotation in annotations:
+        if not isinstance(annotation, dict):
+            continue
+        match = str(annotation.get("presentation_match", "")).strip()
+        badge = render_annotation_badge(annotation, data)
+        if not match or not badge:
+            continue
+        for idx, line in enumerate(lines):
+            if match in line and badge not in line:
+                lines[idx] = line.rstrip() + " " + badge
+                break
+    return "\n".join(lines)
+
+
+def render_segment_revenue_platforms_from_evidence(data: dict[str, Any]) -> str:
+    evidence = data.get("evidence", {}).get("segment_revenue_platforms", {}) if isinstance(data.get("evidence"), dict) else {}
+    if not evidence:
+        return ""
+    rows = evidence.get("rows", []) or []
+    if not rows:
+        return ""
+    heading = str(evidence.get("render_section", {}).get("heading") or PLATFORM_REVENUE_HEADING).strip()
+    segment_order = [str(s).strip() for s in evidence.get("segment_order", []) if str(s).strip()]
+    if not segment_order:
+        seen: list[str] = []
+        for row in rows:
+            for segment in (row.get("segments", {}) or {}).keys():
+                if segment not in seen:
+                    seen.append(segment)
+        segment_order = seen
+    table_rows = []
+    for row in sorted(rows, key=lambda r: period_sort_key(str(r.get("period", ""))), reverse=True):
+        segments = row.get("segments", {}) or {}
+        rendered = [str(row.get("period", "")).strip()]
+        for segment in segment_order:
+            item = segments.get(segment, {}) or {}
+            weight = format_pct(str(item.get("weight_pct", "")).strip())
+            revenue = item.get("revenue_m_twd")
+            rendered.append(f"{weight} ({format_num(revenue)})" if weight != "-" and revenue not in (None, "") else weight)
+        table_rows.append(rendered)
+    return heading + "\n" + markdown_table(["期間"] + segment_order, table_rows)
+
+
 def load_segment_weight_summaries(path: Path) -> dict[str, str]:
     summaries: dict[str, str] = {}
     for ticker, rows in collect_segment_weight_rows(path).items():
@@ -174,10 +264,12 @@ def load_segment_weight_summaries(path: Path) -> dict[str, str]:
             summaries[ticker] = "- **主要平台:** " + ", ".join(parts) + "."
     return summaries
 
-def insert_platform_revenue_section(financial: str, platform_section: str) -> str:
+def insert_platform_revenue_section(financial: str, platform_section: str, replace_existing: bool = False) -> str:
     financial = financial.strip()
     platform_section = platform_section.strip()
-    if not financial or not platform_section or PLATFORM_REVENUE_HEADING in financial:
+    if not financial or not platform_section:
+        return financial
+    if PLATFORM_REVENUE_HEADING in financial and not replace_existing:
         return financial
 
     heading = ""
@@ -188,6 +280,8 @@ def insert_platform_revenue_section(financial: str, platform_section: str) -> st
         body = "\n".join(lines[1:]).strip()
 
     preface, sections = split_h3_sections(body)
+    if replace_existing:
+        sections = [(h, section) for h, section in sections if h != PLATFORM_REVENUE_HEADING]
     if not sections:
         parts = [part for part in [heading, body, platform_section] if part]
         return "\n\n".join(parts).strip()
@@ -867,8 +961,12 @@ def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: 
     financial = str(data.get("source_text", {}).get("financial_md", "")).strip()
     financial = replace_valuation_section(financial, data)
     financial = add_eps_rows_to_key_tables(financial, data.get("financials", {}).get("actual_eps", {}) or {})
-    if segment_weight_tables:
-        financial = insert_platform_revenue_section(financial, segment_weight_tables.get(ticker, ""))
+    platform_table = render_segment_revenue_platforms_from_evidence(data)
+    platform_table_from_evidence = bool(platform_table)
+    if not platform_table and segment_weight_tables:
+        platform_table = segment_weight_tables.get(ticker, "")
+    if platform_table:
+        financial = insert_platform_revenue_section(financial, platform_table, replace_existing=platform_table_from_evidence)
     financial = normalize_financial_section(financial)
     financial = add_revenue_amounts_to_platform_table(financial, (monthly_revenue_totals or {}).get(ticker, {}))
     financial = insert_competitor_financial_section(financial, competitor_financial_section)
@@ -882,9 +980,11 @@ def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: 
     if financial:
         heading = financial if financial.startswith("## ") else "## 財務概況 (單位: 百萬台幣, 只有 Margin 為 %)\n" + financial
         parts.extend(["", heading])
+    rendered = "\n".join(part.rstrip() for part in parts).rstrip()
+    rendered = apply_annotations(rendered, data)
     if updated_at:
-        parts.extend(["", f"Updated: {updated_at}"])
-    return "\n".join(part.rstrip() for part in parts).rstrip() + "\n"
+        rendered = rendered.rstrip() + "\n\n" + f"Updated: {updated_at}"
+    return rendered.rstrip() + "\n"
 
 
 def compare(original: str, rendered: str, data: dict[str, Any]) -> dict[str, Any]:

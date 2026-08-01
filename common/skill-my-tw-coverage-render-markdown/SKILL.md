@@ -68,20 +68,24 @@ git diff -- output/enrichment_all_rendered data/enrichment_all_render_compare.cs
 - Only render competitors that exist in `relationships.competitors`.
 - Preserve explicit roles such as `晶圓代工競爭者`, `主要競爭對手`, `競爭同業`, or other curated labels from JSON.
 - If a relationship array is empty, omit that Markdown subsection instead of fabricating content.
-- If `source_text.financial_md` already has `營收平台佔比`, preserve it and normalize its location after `季度關鍵財務數據`.
-- If `source_text.financial_md` does not have `營收平台佔比`, inject it from `company_segment_weights.csv` for tickers with active rows.
+- If `evidence.segment_revenue_platforms` exists, render `營收平台佔比` from that JSON evidence object and replace any legacy `source_text.financial_md` copy of the same section.
+- If no JSON evidence exists but `source_text.financial_md` already has `營收平台佔比`, preserve it and normalize its location after `季度關鍵財務數據`.
+- If neither JSON evidence nor legacy section exists, inject `營收平台佔比` from `company_segment_weights.csv` for tickers with active rows.
 - In `營收平台佔比` cells, include `percentage (revenue amount)` when a matching period revenue total exists; amounts are 百萬台幣. Prefer financial table revenue totals, then fall back to monthly revenue summed from GoodInfo Analyzer.
 - Render `### 估值指標` from `financials.valuation` when present. Show market valuation and consensus valuation separately. Consensus revenue in My-TW-Coverage JSON and Markdown must be `百萬台幣`, matching the `財務概況` unit.
 - Do not average Yahoo.Finance and FactSet consensus. Use Yahoo.Finance as primary and FactSet as cross-check / dispersion / target-price context. Downgrade confidence when cross-source differences are large.
 - Insert `### 競爭同業 Revenue/Profit/GM` inside `## 財務概況` when competitors from JSON can be resolved to financial data. Place it after `營收平台佔比` when present, otherwise after `季度關鍵財務數據`.
 - Insert a latest-period `主要平台` sentence under the downstream supply-chain section from `company_segment_weights.csv` for tickers with active rows, unless the source already has `主要平台`.
+- Render annotator badges only from reviewed `annotations[]` entries. Do not infer badges from headings or keywords.
+- First-wave annotator badge scope is limited to `主要平台`, `主要客戶`, `競爭同業`, and `估值/財務敘述` contexts.
+- Badge links must resolve through `evidence_ref` and the target evidence object's `render_section.anchor`. For a badge inside the same rendered company Markdown file, use a same-file anchor link.
 - Do not overwrite `Pilot_Reports/`.
 
 ## Financial Section Policy
 
 `財務概況` is not enrichment content. Prefer generating it from financial functions or data adapters rather than storing it permanently in canonical enrichment JSON.
 
-Current compatibility behavior may render `source_text.financial_md` when present in JSON. Treat that as transitional preservation, not the target architecture. `financials.valuation` is already atomic JSON and should override the legacy `source_text.financial_md` valuation subsection during rendering. When implementing the next renderer revision, replace the remaining static financial text with direct financial generation and remove static financial text from `data/enrichment_all/*.json`.
+Current compatibility behavior may render `source_text.financial_md` when present in JSON. Treat that as transitional preservation, not the target architecture. `financials.valuation` is already atomic JSON and should override the legacy `source_text.financial_md` valuation subsection during rendering. Evidence-backed sections, starting with `evidence.segment_revenue_platforms`, should render from JSON evidence and replace same-named legacy Markdown sections. When implementing later renderer revisions, replace the remaining static financial text with direct financial generation and remove static financial text from `data/enrichment_all/*.json`.
 
 ## Validation
 
