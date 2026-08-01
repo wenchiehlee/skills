@@ -202,6 +202,17 @@ skills:
   source: https://github.com/wenchiehlee-money/MOPS
   updated_at: '2026-07-19'
   revised_at: '2026-07-19'
+- name: skill-my-tw-coverage-enrichment-json
+  group: common
+  path: common/skill-my-tw-coverage-enrichment-json
+  version: 0.1.0
+  description: Extract and review My-TW-Coverage Markdown enrichment as atomic JSON
+    using the biztrends.TW focus list.
+  category: basic
+  maintainer: ''
+  source: ''
+  updated_at: ''
+  revised_at: '2026-08-02'
 - name: skill-my-tw-coverage-render-markdown
   group: common
   path: common/skill-my-tw-coverage-render-markdown
@@ -212,7 +223,7 @@ skills:
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
   updated_at: '2026-07-31'
-  revised_at: '2026-08-01'
+  revised_at: '2026-08-02'
 - name: skill-pptx-to-md
   group: common
   path: common/skill-pptx-to-md

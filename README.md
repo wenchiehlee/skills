@@ -37,7 +37,8 @@
 | [skill-mac-mini-ocr](common/skill-mac-mini-ocr) | common | document | 1.3.0 | 使用自建在 Mac-mini 上的 OCR API 服務（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-07-25 |
 | [skill-market-cost-distribution](common/skill-market-cost-distribution) | common | financial-forecasting | 1.0.1 | 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。 | 2026-07-18 |
 | [skill-mops-financialreport-pdf-md](common/skill-mops-financialreport-pdf-md) | common | financial-data | 1.0.0 | Download Taiwan MOPS quarterly financial-report PDFs, then convert same-stem Markdown sidecars with skill-mac-mini-ocr hybrid PDF/OCR workflow. | 2026-07-19 |
-| [skill-my-tw-coverage-render-markdown](common/skill-my-tw-coverage-render-markdown) | common | financial-data | 1.0.0 | Render My-TW-Coverage canonical enrichment JSON into organized Markdown without using Pilot_Reports as an active source. | 2026-08-01 |
+| [skill-my-tw-coverage-enrichment-json](common/skill-my-tw-coverage-enrichment-json) | common | basic | 0.1.0 | Extract and review My-TW-Coverage Markdown enrichment as atomic JSON using the biztrends.TW focus list. | 2026-08-02 |
+| [skill-my-tw-coverage-render-markdown](common/skill-my-tw-coverage-render-markdown) | common | financial-data | 1.0.0 | Render My-TW-Coverage canonical enrichment JSON into organized Markdown without using Pilot_Reports as an active source. | 2026-08-02 |
 | [skill-pptx-to-md](common/skill-pptx-to-md) | common | document | 1.0.0 | 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。 | 2026-07-18 |
 | [skill-revenue-expense-profit-predict](common/skill-revenue-expense-profit-predict) | common | financial-forecasting | 1.0.0 | 季度損益三線（營業收入 / 總支出 / 營業利益）底部加總預測 SOP | 2026-07-19 |
 | [skill-revenue-predict](common/skill-revenue-predict) | common | financial-forecasting | 1.0.0 | 營收預測與 10-Model 評估 SOP | 2026-07-18 |
