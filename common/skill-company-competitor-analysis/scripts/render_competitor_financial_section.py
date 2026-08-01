@@ -376,26 +376,94 @@ def daily_price_files(biztrends_root: Path) -> list[Path]:
     ]
 
 
+def taiwan_monthly_revenue_path(biztrends_root: Path) -> Path:
+    return biztrends_root / "data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv"
+
+
+def taiwan_performance_path(biztrends_root: Path) -> Path:
+    return biztrends_root / "data/Python-Actions.GoodInfo.Analyzer/raw_performance1.csv"
+
+
+def month_to_quarter_label(value: object) -> str:
+    match = re.fullmatch(r"(\d{4})/(\d{1,2})", str(value or "").strip())
+    if not match:
+        return ""
+    year = match.group(1)
+    quarter = (int(match.group(2)) - 1) // 3 + 1
+    return f"{year}Q{quarter}"
+
+
+@lru_cache(maxsize=None)
+def load_quarterly_average_prices(biztrends_root_text: str) -> tuple[tuple[tuple[str, str], float], ...]:
+    out: dict[tuple[str, str], float] = {}
+    for row in read_csv(taiwan_performance_path(Path(biztrends_root_text))):
+        stock = str(row.get("stock_code") or "").strip().upper()
+        period = str(row.get("季度") or "").strip()
+        avg = CCA.to_float(row.get("季度股價_元_平均"))
+        if stock and period and avg is not None:
+            out[(stock, period)] = avg
+    return tuple(sorted(out.items()))
+
+
 @lru_cache(maxsize=None)
 def load_quarterly_close_stats(biztrends_root_text: str) -> tuple[tuple[tuple[str, str], tuple[float, float, float]], ...]:
-    stats: dict[tuple[str, str], list[float]] = {}
-    for path in daily_price_files(Path(biztrends_root_text)):
+    biztrends_root = Path(biztrends_root_text)
+    stats: dict[tuple[str, str], tuple[float, float, float]] = {}
+
+    daily_buckets: dict[tuple[str, str], list[float]] = {}
+    for path in daily_price_files(biztrends_root):
         for row in read_csv(path):
             stock = str(row.get("stock_code") or "").strip().upper()
             period = quarter_label_from_date(row.get("交易_日期") or row.get("交易日期"))
             close = CCA.to_float(row.get("收盤價_元") or row.get("收盤_價格_元"))
             if not stock or not period or close is None:
                 continue
-            bucket = stats.setdefault((stock, period), [close, close, 0.0, 0.0])
+            bucket = daily_buckets.setdefault((stock, period), [close, close, 0.0, 0.0])
             bucket[0] = min(bucket[0], close)
             bucket[1] = max(bucket[1], close)
             bucket[2] += close
             bucket[3] += 1
-    return tuple(
-        (key, (value[0], value[2] / value[3], value[1]))
-        for key, value in sorted(stats.items())
-        if value[3]
-    )
+    for key, value in daily_buckets.items():
+        if value[3]:
+            stats[key] = (value[0], value[2] / value[3], value[1])
+
+    quarterly_avg = dict(load_quarterly_average_prices(biztrends_root_text))
+    monthly_buckets: dict[tuple[str, str], list[float]] = {}
+    for row in read_csv(taiwan_monthly_revenue_path(biztrends_root)):
+        stock = str(row.get("stock_code") or "").strip().upper()
+        period = month_to_quarter_label(row.get("月別"))
+        low = CCA.to_float(row.get("當月股價_最低"))
+        high = CCA.to_float(row.get("當月股價_最高"))
+        close = CCA.to_float(row.get("當月股價_收盤"))
+        if not stock or not period:
+            continue
+        bucket = monthly_buckets.setdefault((stock, period), [float("inf"), float("-inf"), 0.0, 0.0])
+        if low is not None:
+            bucket[0] = min(bucket[0], low)
+        if high is not None:
+            bucket[1] = max(bucket[1], high)
+        if close is not None:
+            bucket[2] += close
+            bucket[3] += 1
+    for key, value in monthly_buckets.items():
+        if key in stats or value[0] == float("inf") or value[1] == float("-inf"):
+            continue
+        avg = quarterly_avg.get(key)
+        if avg is None and value[3]:
+            avg = value[2] / value[3]
+        if avg is not None:
+            stats[key] = (value[0], avg, value[1])
+
+    for row in read_csv(taiwan_performance_path(biztrends_root)):
+        stock = str(row.get("stock_code") or "").strip().upper()
+        period = str(row.get("季度") or "").strip()
+        close = CCA.to_float(row.get("季度股價_元_收盤"))
+        avg = CCA.to_float(row.get("季度股價_元_平均"))
+        if not stock or not period or close is None or avg is None or (stock, period) in stats:
+            continue
+        stats[(stock, period)] = (min(close, avg), avg, max(close, avg))
+
+    return tuple((key, value) for key, value in sorted(stats.items()))
 
 
 def quarterly_close_stats(biztrends_root: Path) -> dict[tuple[str, str], tuple[float, float, float]]:
@@ -590,7 +658,7 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
     out = StringIO()
     out.write("### 競爭同業 Revenue/Profit/GM/PE\n\n")
     out.write(f"Revenue/Profit Unit: `{unit}`\n")
-    out.write("P/E Range: `季內最低/平均/最高日收盤價 / TTM EPS (當季 EPS + 最近 3 季 EPS)`\n")
+    out.write("P/E Range: `季內最低/平均/最高股價 / TTM EPS (當季 EPS + 最近 3 季 EPS)`; daily close 優先，歷史季度以 GoodInfo 月高低/季均價補齊\n")
     fx_notes = []
     if "USD" in foreign_fx_currencies:
         fx_notes.append(f"1 USD = {USD_TO_TWD_RATE:g} TWD")
