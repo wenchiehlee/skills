@@ -262,6 +262,50 @@ def market_for_peer_stock(stock: object) -> str:
     return "Other"
 
 
+def ratio(value: object) -> str:
+    numeric = CCA.to_float(value)
+    if numeric is None:
+        return ""
+    return f"{numeric:.2f}".rstrip("0").rstrip(".")
+
+
+@lru_cache(maxsize=None)
+def load_peer_valuation(json_dir_text: str, stock_text: str) -> tuple[tuple[str, object], ...]:
+    stock = str(stock_text or "").strip().upper()
+    if not stock:
+        return tuple()
+    path = Path(json_dir_text) / f"{stock}.json"
+    if not path.exists():
+        return tuple()
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return tuple()
+    valuation = payload.get("financials", {}).get("valuation", {})
+    if not isinstance(valuation, dict):
+        return tuple()
+    metrics = valuation.get("metrics", {})
+    if not isinstance(metrics, dict):
+        metrics = {}
+    out = {
+        "valuation_price": CCA.number(CCA.to_float(valuation.get("price"))),
+        "valuation_currency": valuation.get("currency", ""),
+        "valuation_as_of": valuation.get("as_of", ""),
+        "valuation_ttm_period_end": valuation.get("ttm_period_end", ""),
+        "valuation_forward_period_end": valuation.get("forward_period_end", ""),
+        "pe_ttm": ratio(metrics.get("pe_ttm")),
+        "forward_pe": ratio(metrics.get("forward_pe")),
+        "ps_ttm": ratio(metrics.get("ps_ttm")),
+        "pb": ratio(metrics.get("pb")),
+        "ev_ebitda_ttm": ratio(metrics.get("ev_ebitda_ttm")),
+    }
+    return tuple(out.items())
+
+
+def valuation_fields(json_dir: Path, stock: object) -> dict[str, object]:
+    return dict(load_peer_valuation(str(json_dir), str(stock or "")))
+
+
 def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: Path, years: int) -> list[dict[str, object]]:
     configure_runner_paths(biztrends_root)
     aliases = build_alias_map(json_dir, biztrends_root)
@@ -290,6 +334,7 @@ def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: P
 
     rows: list[dict[str, object]] = []
     for peer_stock, peer in sorted(peers.items(), key=lambda item: (item[1].relationship_type != "target", CCA.relationship_sort_key(item[1].relationship_type), item[0])):
+        peer_valuation = valuation_fields(json_dir, peer_stock)
         peer_metrics = metrics.get(peer_stock, [])
         if not peer_metrics:
             rows.append({
@@ -306,6 +351,7 @@ def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: P
                 "gross_margin_pct": "",
                 "fx_currency": "",
                 "is_monthly_revenue_only": False,
+                **peer_valuation,
             })
             continue
         for metric_raw in peer_metrics:
@@ -327,20 +373,99 @@ def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: P
                 "gross_margin_pct": CCA.gm_pct(metric.get("gm")),
                 "fx_currency": metric.get("fx_currency", ""),
                 "is_monthly_revenue_only": bool(metric.get("is_monthly_revenue_only")),
+                **peer_valuation,
             })
     return rows
+
+
+def write_profile_table(out: StringIO, companies: dict[tuple[object, object, object, object], dict[object, dict[str, object]]]) -> None:
+    out.write("#### Profile\n\n")
+    out.write("<table>\n<thead>\n<tr>")
+    for label in ["Stock", "Company", "Market", "Relationship"]:
+        out.write(CCA.html_cell(label, header=True))
+    out.write("</tr>\n</thead>\n<tbody>\n")
+    for stock, company, rel_type, market in sorted(companies, key=lambda item: row_sort_key((item, {}))):
+        out.write("<tr>")
+        out.write(CCA.html_cell(stock))
+        out.write(CCA.html_cell(company))
+        out.write(CCA.html_cell(market))
+        out.write(CCA.html_cell(CCA.RELATIONSHIP_LABEL_ZH.get(str(rel_type), rel_type)))
+        out.write("</tr>\n")
+    out.write("</tbody>\n</table>\n\n")
+
+
+def write_period_table(out: StringIO, title: str, periods: list[str], companies: dict[tuple[object, object, object, object], dict[object, dict[str, object]]], columns: list[tuple[str, str]]) -> None:
+    out.write(f"#### {title}\n\n")
+    out.write("<table>\n<thead>\n<tr>")
+    for label in ["Stock", "Company", "Market", "Relationship"]:
+        out.write(CCA.html_cell(label, header=True))
+    for period in periods:
+        out.write(CCA.html_cell(period, header=True, align="center", colspan=len(columns)))
+    out.write("</tr>\n<tr>")
+    for _label in ["", "", "", ""]:
+        out.write(CCA.html_cell("", header=True))
+    for _period in periods:
+        for _key, label in columns:
+            out.write(CCA.html_cell(label, header=True, align="right"))
+    out.write("</tr>\n</thead>\n<tbody>\n")
+    for (stock, company, rel_type, market), values_by_period in sorted(companies.items(), key=row_sort_key):
+        out.write("<tr>")
+        out.write(CCA.html_cell(stock))
+        out.write(CCA.html_cell(company))
+        out.write(CCA.html_cell(market))
+        out.write(CCA.html_cell(CCA.RELATIONSHIP_LABEL_ZH.get(str(rel_type), rel_type)))
+        for period in periods:
+            row = values_by_period.get(period, {})
+            for key, _label in columns:
+                value = row.get(key, "")
+                if key == "profit" and not value:
+                    value = row.get("event_date", "")
+                out.write(CCA.html_cell(value, align="right"))
+        out.write("</tr>\n")
+    out.write("</tbody>\n</table>\n\n")
+
+
+def write_pe_table(out: StringIO, companies: dict[tuple[object, object, object, object], dict[object, dict[str, object]]]) -> None:
+    out.write("#### P/E\n\n")
+    out.write("<table>\n<thead>\n<tr>")
+    columns = [
+        ("stock", "Stock", "left"),
+        ("company", "Company", "left"),
+        ("market", "Market", "left"),
+        ("relationship", "Relationship", "left"),
+        ("valuation_price", "Price", "right"),
+        ("valuation_currency", "Currency", "left"),
+        ("valuation_as_of", "As Of", "left"),
+        ("valuation_ttm_period_end", "TTM End", "left"),
+        ("pe_ttm", "P/E (TTM)", "right"),
+        ("valuation_forward_period_end", "Forward End", "left"),
+        ("forward_pe", "Forward P/E", "right"),
+        ("ps_ttm", "P/S (TTM)", "right"),
+        ("pb", "P/B", "right"),
+        ("ev_ebitda_ttm", "EV/EBITDA", "right"),
+    ]
+    for _key, label, align in columns:
+        out.write(CCA.html_cell(label, header=True, align=align))
+    out.write("</tr>\n</thead>\n<tbody>\n")
+    for (stock, company, rel_type, market), values_by_period in sorted(companies.items(), key=row_sort_key):
+        first_row = next(iter(values_by_period.values()), {}) if values_by_period else {}
+        row_values = {
+            "stock": stock,
+            "company": company,
+            "market": market,
+            "relationship": CCA.RELATIONSHIP_LABEL_ZH.get(str(rel_type), rel_type),
+        }
+        row_values.update(first_row)
+        out.write("<tr>")
+        for key, _label, align in columns:
+            out.write(CCA.html_cell(row_values.get(key, ""), align=align))
+        out.write("</tr>\n")
+    out.write("</tbody>\n</table>\n")
 
 
 def render_pivot(rows: list[dict[str, object]]) -> str:
     if not rows:
         return ""
-    metrics = [
-        ("revenue", "Revenue"),
-        ("revenue_yoy_pct", "Rev YoY"),
-        ("profit", "Profit"),
-        ("profit_yoy_pct", "Profit YoY"),
-        ("gross_margin_pct", "GM"),
-    ]
     unit = "百萬台幣"
     periods = sorted({label for row in rows if (label := my_tw_markdown_period_label(row))}, key=CCA.period_sort_key, reverse=True)
     companies: dict[tuple[object, object, object, object], dict[object, dict[str, object]]] = defaultdict(dict)
@@ -355,10 +480,12 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
         companies.setdefault(company_key, {})
         if period_label:
             companies[company_key][period_label] = row
+        elif not companies[company_key]:
+            companies[company_key][""] = row
 
     out = StringIO()
-    out.write("### 競爭同業 Revenue/Profit/GM\n\n")
-    out.write(f"Unit: `{unit}`\n")
+    out.write("### 競爭同業 Revenue/Profit/GM/PE\n\n")
+    out.write(f"Revenue/Profit Unit: `{unit}`\n")
     fx_notes = []
     if "USD" in foreign_fx_currencies:
         fx_notes.append(f"1 USD = {USD_TO_TWD_RATE:g} TWD")
@@ -368,37 +495,12 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
         fx_notes.append(f"1 KRW = {KRW_TO_TWD_RATE:g} TWD")
     if fx_notes:
         out.write(f"FX: `{'; '.join(fx_notes)}`\n")
-    out.write("\n<table>\n<thead>\n<tr>")
-    out.write(CCA.html_cell("Stock", header=True))
-    out.write(CCA.html_cell("Company", header=True))
-    out.write(CCA.html_cell("Market", header=True))
-    out.write(CCA.html_cell("Relationship", header=True))
-    for period in periods:
-        out.write(CCA.html_cell(period, header=True, align="center", colspan=len(metrics)))
-    out.write("</tr>\n<tr>")
-    out.write(CCA.html_cell("", header=True))
-    out.write(CCA.html_cell("", header=True))
-    out.write(CCA.html_cell("", header=True))
-    out.write(CCA.html_cell("", header=True))
-    for _period in periods:
-        for _key, label in metrics:
-            out.write(CCA.html_cell(label, header=True, align="right"))
-    out.write("</tr>\n</thead>\n<tbody>\n")
-    for (stock, company, rel_type, market), values_by_period in sorted(companies.items(), key=row_sort_key):
-        out.write("<tr>")
-        out.write(CCA.html_cell(stock))
-        out.write(CCA.html_cell(company))
-        out.write(CCA.html_cell(market))
-        out.write(CCA.html_cell(CCA.RELATIONSHIP_LABEL_ZH.get(str(rel_type), rel_type)))
-        for period in periods:
-            row = values_by_period.get(period, {})
-            for key, _label in metrics:
-                value = row.get(key, "")
-                if key == "profit" and not value:
-                    value = row.get("event_date", "")
-                out.write(CCA.html_cell(value, align="right"))
-        out.write("</tr>\n")
-    out.write("</tbody>\n</table>\n")
+    out.write("\n")
+    write_profile_table(out, companies)
+    write_period_table(out, "Revenue", periods, companies, [("revenue", "Revenue"), ("revenue_yoy_pct", "Rev YoY")])
+    write_period_table(out, "Profit", periods, companies, [("profit", "Profit"), ("profit_yoy_pct", "Profit YoY")])
+    write_period_table(out, "GM", periods, companies, [("gross_margin_pct", "GM")])
+    write_pe_table(out, companies)
     return out.getvalue().strip()
 
 
