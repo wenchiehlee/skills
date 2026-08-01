@@ -424,14 +424,44 @@ def consensus_item(consensus: dict[str, Any], metric: str, period_offset: str) -
     return None
 
 
-def render_market_valuation_table(metrics: dict[str, Any]) -> str:
+def render_market_valuation_table(valuation: dict[str, Any]) -> str:
+    metrics = valuation.get("metrics", {}) or {}
+    inputs = valuation.get("derived_inputs", {}) or {}
+    currency = valuation.get("currency") or "TWD"
+    price = valuation.get("price")
+    market_cap = valuation.get("market_cap_m_twd")
+    enterprise_value = valuation.get("enterprise_value_m_twd")
     rows = [
-        ["P/E (TTM)", format_multiple(metrics.get("pe_ttm")), "股價 / TTM EPS"],
-        ["P/S (TTM)", format_multiple(metrics.get("ps_ttm")), "市值 / TTM 營收"],
-        ["P/B", format_multiple(metrics.get("pb")), "市值 / 股東權益"],
-        ["EV/EBITDA (TTM)", format_multiple(metrics.get("ev_ebitda_ttm")), "企業價值 / TTM EBITDA"],
+        [
+            "P/E (TTM)",
+            format_multiple(metrics.get("pe_ttm")),
+            f"股價 {format_plain_number(price, 2)} {currency}",
+            f"TTM EPS {format_plain_number(inputs.get('ttm_eps_twd'), 2)} {currency}",
+            "股價 / TTM EPS",
+        ],
+        [
+            "P/S (TTM)",
+            format_multiple(metrics.get("ps_ttm")),
+            f"市值 {format_plain_number(market_cap, 0)} 百萬台幣",
+            f"TTM 營收 {format_plain_number(inputs.get('ttm_revenue_m_twd'), 0)} 百萬台幣",
+            "市值 / TTM 營收",
+        ],
+        [
+            "P/B",
+            format_multiple(metrics.get("pb")),
+            f"市值 {format_plain_number(market_cap, 0)} 百萬台幣",
+            f"股東權益 {format_plain_number(inputs.get('book_value_m_twd'), 0)} 百萬台幣",
+            "市值 / 股東權益",
+        ],
+        [
+            "EV/EBITDA (TTM)",
+            format_multiple(metrics.get("ev_ebitda_ttm")),
+            f"企業價值 {format_plain_number(enterprise_value, 0)} 百萬台幣",
+            f"TTM EBITDA {format_plain_number(inputs.get('ttm_ebitda_m_twd'), 0)} 百萬台幣",
+            "企業價值 / TTM EBITDA",
+        ],
     ]
-    return markdown_table(["指標", "數值", "說明"], rows)
+    return markdown_table(["指標", "數值", "分子", "分母", "說明"], rows)
 
 
 def render_consensus_table(consensus: dict[str, Any]) -> str:
@@ -468,24 +498,33 @@ def render_consensus_table(consensus: dict[str, Any]) -> str:
 
 def render_consensus_valuation_table(valuation: dict[str, Any]) -> str:
     derived = valuation.get("derived_consensus_metrics", {}) or {}
+    price = valuation.get("price")
+    market_cap = valuation.get("market_cap_m_twd")
+    currency = valuation.get("currency") or "TWD"
     rows: list[list[str]] = []
     if derived.get("forward_pe_consensus") is not None:
+        year = derived.get("forward_pe_fiscal_year", "next")
         rows.append([
             "Forward P/E (Consensus)",
             format_multiple(derived.get("forward_pe_consensus")),
-            f"股價 / {derived.get('forward_pe_fiscal_year', 'next')}E EPS consensus",
+            f"股價 {format_plain_number(price, 2)} {currency}",
+            f"{year}E EPS {format_plain_number(derived.get('forward_eps_twd'), 2)} {currency}",
+            "股價 / consensus EPS",
         ])
     if derived.get("forward_ps_consensus") is not None:
+        year = derived.get("forward_ps_fiscal_year", "next")
         rows.append([
             "Forward P/S (Consensus)",
             format_multiple(derived.get("forward_ps_consensus")),
-            f"市值 / {derived.get('forward_ps_fiscal_year', 'next')}E Revenue consensus；Revenue 單位: 百萬台幣",
+            f"市值 {format_plain_number(market_cap, 0)} 百萬台幣",
+            f"{year}E Revenue {format_plain_number(derived.get('forward_revenue_m_twd'), 0)} 百萬台幣",
+            "市值 / consensus revenue",
         ])
     if not rows:
         metrics = valuation.get("metrics", {}) or {}
         if metrics.get("forward_pe") is not None:
-            rows.append(["Forward P/E", format_multiple(metrics.get("forward_pe")), "provider forward P/E fallback"])
-    return markdown_table(["估值指標", "數值", "使用基礎"], rows) if rows else ""
+            rows.append(["Forward P/E", format_multiple(metrics.get("forward_pe")), "NA", "NA", "provider forward P/E fallback"])
+    return markdown_table(["估值指標", "數值", "分子", "分母", "使用基礎"], rows) if rows else ""
 
 
 def render_valuation_section(data: dict[str, Any]) -> str:
@@ -505,7 +544,7 @@ def render_valuation_section(data: dict[str, Any]) -> str:
     lines = ["### 估值指標"]
     if meta_parts:
         lines.extend(["", " | ".join(meta_parts)])
-    lines.extend(["", "#### 市場估值", "", render_market_valuation_table(valuation.get("metrics", {}) or {})])
+    lines.extend(["", "#### 市場估值", "", render_market_valuation_table(valuation)])
 
     consensus = valuation.get("consensus", {}) or {}
     consensus_table = render_consensus_table(consensus)
