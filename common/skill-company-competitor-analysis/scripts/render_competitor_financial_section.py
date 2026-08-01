@@ -306,13 +306,99 @@ def valuation_fields(json_dir: Path, stock: object) -> dict[str, object]:
     return dict(load_peer_valuation(str(json_dir), str(stock or "")))
 
 
-def date_to_quarter_label(value: object) -> str:
+def quarter_label_from_date(value: object) -> str:
     match = re.fullmatch(r"(\d{4})-(\d{2})-\d{2}", str(value or "").strip())
     if not match:
         return ""
     year = match.group(1)
     quarter = (int(match.group(2)) - 1) // 3 + 1
     return f"{year}Q{quarter}"
+
+
+@lru_cache(maxsize=None)
+def load_actual_eps_by_period(json_dir_text: str, stock_text: str) -> tuple[tuple[str, float], ...]:
+    stock = str(stock_text or "").strip().upper()
+    if not stock:
+        return tuple()
+    path = Path(json_dir_text) / f"{stock}.json"
+    if not path.exists():
+        return tuple()
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return tuple()
+    actual_eps = payload.get("financials", {}).get("actual_eps", {})
+    if not isinstance(actual_eps, dict):
+        return tuple()
+    out: dict[str, float] = {}
+    for item in actual_eps.get("quarterly", []) or []:
+        if not isinstance(item, dict):
+            continue
+        period = quarter_label_from_date(item.get("period"))
+        eps = CCA.to_float(item.get("eps_twd"))
+        if period and eps is not None:
+            out[period] = eps
+    return tuple(sorted(out.items()))
+
+
+def daily_price_files(biztrends_root: Path) -> list[Path]:
+    return [
+        biztrends_root / "data/Python-Actions.GoodInfo.Analyzer/raw_daily_k_chart_flow.csv",
+        biztrends_root / "data/ConceptStocks/raw_conceptstock_daily.csv",
+    ]
+
+
+@lru_cache(maxsize=None)
+def load_quarterly_close_ranges(biztrends_root_text: str) -> tuple[tuple[tuple[str, str], tuple[float, float]], ...]:
+    ranges: dict[tuple[str, str], list[float]] = {}
+    for path in daily_price_files(Path(biztrends_root_text)):
+        for row in read_csv(path):
+            stock = str(row.get("stock_code") or "").strip().upper()
+            period = quarter_label_from_date(row.get("交易_日期") or row.get("交易日期"))
+            close = CCA.to_float(row.get("收盤價_元") or row.get("收盤_價格_元"))
+            if not stock or not period or close is None:
+                continue
+            bucket = ranges.setdefault((stock, period), [close, close])
+            bucket[0] = min(bucket[0], close)
+            bucket[1] = max(bucket[1], close)
+    return tuple(((key, (value[0], value[1])) for key, value in sorted(ranges.items())))
+
+
+def quarterly_close_ranges(biztrends_root: Path) -> dict[tuple[str, str], tuple[float, float]]:
+    return dict(load_quarterly_close_ranges(str(biztrends_root)))
+
+
+def format_pe_range(price_low: float, price_high: float, eps: float) -> str:
+    if eps == 0:
+        return ""
+    if eps < 0:
+        return "N.M."
+    low_pe = price_low / eps
+    high_pe = price_high / eps
+    if low_pe > high_pe:
+        low_pe, high_pe = high_pe, low_pe
+    low_text = ratio(low_pe)
+    high_text = ratio(high_pe)
+    if low_text == high_text:
+        return low_text
+    return f"{low_text}-{high_text}"
+
+
+def pe_ranges_by_period(json_dir: Path, biztrends_root: Path, stock: object) -> dict[str, str]:
+    stock_text = str(stock or "").strip().upper()
+    eps_by_period = dict(load_actual_eps_by_period(str(json_dir), stock_text))
+    price_ranges = quarterly_close_ranges(biztrends_root)
+    out: dict[str, str] = {}
+    for period, eps in eps_by_period.items():
+        prices = price_ranges.get((stock_text, period))
+        if not prices:
+            continue
+        out[period] = format_pe_range(prices[0], prices[1], eps)
+    return out
+
+
+def date_to_quarter_label(value: object) -> str:
+    return quarter_label_from_date(value)
 
 
 def event_indicator(values_by_period: dict[object, dict[str, object]]) -> str:
@@ -352,6 +438,7 @@ def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: P
     rows: list[dict[str, object]] = []
     for peer_stock, peer in sorted(peers.items(), key=lambda item: (item[1].relationship_type != "target", CCA.relationship_sort_key(item[1].relationship_type), item[0])):
         peer_valuation = valuation_fields(json_dir, peer_stock)
+        peer_pe_ranges = pe_ranges_by_period(json_dir, biztrends_root, peer_stock)
         peer_metrics = metrics.get(peer_stock, [])
         if not peer_metrics:
             rows.append({
@@ -366,6 +453,7 @@ def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: P
                 "profit": "",
                 "profit_yoy_pct": "",
                 "gross_margin_pct": "",
+                "pe_range": "",
                 "fx_currency": "",
                 "is_monthly_revenue_only": False,
                 **peer_valuation,
@@ -388,6 +476,7 @@ def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: P
                 "profit": CCA.number(metric.get("profit")),
                 "profit_yoy_pct": CCA.pct(metric.get("profit_yoy_pct")),
                 "gross_margin_pct": CCA.gm_pct(metric.get("gm")),
+                "pe_range": peer_pe_ranges.get(str(metric.get("period") or ""), ""),
                 "fx_currency": metric.get("fx_currency", ""),
                 "is_monthly_revenue_only": bool(metric.get("is_monthly_revenue_only")),
                 **peer_valuation,
@@ -435,55 +524,15 @@ def write_period_table(out: StringIO, title: str, periods: list[str], companies:
             row = values_by_period.get(period, {})
             for key, _label in columns:
                 value = row.get(key, "")
-                if not value and key in {"revenue", "profit", "gross_margin_pct"}:
+                if not value and key in {"revenue", "profit", "gross_margin_pct", "pe_range"}:
                     value = row.get("event_date", "")
                 out.write(CCA.html_cell(value, align="right"))
         out.write("</tr>\n")
     out.write("</tbody>\n</table>\n\n")
 
 
-def write_pe_table(out: StringIO, companies: dict[tuple[object, object, object, object], dict[object, dict[str, object]]]) -> None:
-    out.write("#### P/E\n\n")
-    out.write("<table>\n<thead>\n<tr>")
-    columns = [
-        ("stock", "Stock", "left"),
-        ("company", "Company", "left"),
-        ("market", "Market", "left"),
-        ("relationship", "Relationship", "left"),
-        ("valuation_price", "Price", "right"),
-        ("valuation_currency", "Currency", "left"),
-        ("valuation_as_of", "As Of", "left"),
-        ("valuation_quarter", "Quarter", "left"),
-        ("valuation_ttm_period_end", "TTM End", "left"),
-        ("pe_ttm", "P/E (TTM)", "right"),
-        ("valuation_forward_quarter", "Forward Quarter", "left"),
-        ("valuation_forward_period_end", "Forward End", "left"),
-        ("forward_pe", "Forward P/E", "right"),
-        ("ps_ttm", "P/S (TTM)", "right"),
-        ("pb", "P/B", "right"),
-        ("ev_ebitda_ttm", "EV/EBITDA", "right"),
-        ("event_indicator", "Event", "left"),
-    ]
-    for _key, label, align in columns:
-        out.write(CCA.html_cell(label, header=True, align=align))
-    out.write("</tr>\n</thead>\n<tbody>\n")
-    for (stock, company, rel_type, market), values_by_period in sorted(companies.items(), key=row_sort_key):
-        first_row = next(iter(values_by_period.values()), {}) if values_by_period else {}
-        row_values = {
-            "stock": stock,
-            "company": company,
-            "market": market,
-            "relationship": CCA.RELATIONSHIP_LABEL_ZH.get(str(rel_type), rel_type),
-        }
-        row_values.update(first_row)
-        row_values["valuation_quarter"] = date_to_quarter_label(row_values.get("valuation_ttm_period_end"))
-        row_values["valuation_forward_quarter"] = date_to_quarter_label(row_values.get("valuation_forward_period_end"))
-        row_values["event_indicator"] = event_indicator(values_by_period)
-        out.write("<tr>")
-        for key, _label, align in columns:
-            out.write(CCA.html_cell(row_values.get(key, ""), align=align))
-        out.write("</tr>\n")
-    out.write("</tbody>\n</table>\n")
+def write_pe_table(out: StringIO, periods: list[str], companies: dict[tuple[object, object, object, object], dict[object, dict[str, object]]]) -> None:
+    write_period_table(out, "P/E", periods, companies, [("pe_range", "P/E Range")])
 
 
 def render_pivot(rows: list[dict[str, object]]) -> str:
@@ -524,7 +573,7 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
     write_period_table(out, "Revenue", revenue_periods, companies, [("revenue", "Revenue"), ("revenue_yoy_pct", "Rev YoY")])
     write_period_table(out, "Profit", financial_periods, companies, [("profit", "Profit"), ("profit_yoy_pct", "Profit YoY")])
     write_period_table(out, "GM", financial_periods, companies, [("gross_margin_pct", "GM")])
-    write_pe_table(out, companies)
+    write_pe_table(out, financial_periods, companies)
     return out.getvalue().strip()
 
 
