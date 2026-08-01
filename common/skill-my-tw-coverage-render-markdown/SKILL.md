@@ -78,7 +78,9 @@ git diff -- output/enrichment_all_rendered data/enrichment_all_render_compare.cs
 - Insert a latest-period `主要平台` sentence under the downstream supply-chain section from `company_segment_weights.csv` for tickers with active rows, unless the source already has `主要平台`.
 - Render annotator badges only from reviewed `annotations[]` entries. Do not infer badges from headings or keywords.
 - First-wave annotator badge scope is limited to `主要平台`, `主要客戶`, `競爭同業`, and `估值/財務敘述` contexts.
-- Badge links must resolve through `evidence_ref` and the target evidence object's `render_section.anchor`. For a badge inside the same rendered company Markdown file, use a same-file anchor link.
+- Evidence badge links must resolve through `evidence_ref` and the target evidence object's `render_section.anchor`. For a badge inside the same rendered company Markdown file, use a same-file anchor link.
+- Entity badges are separate from evidence badges: when a relationship-line wikilink resolves to an existing `output/enrichment_all_rendered/{ticker}_{company}.md`, render a shield badge whose visible label is only the entity name and whose link points to that rendered company context page.
+- Do not render entity badges for unresolved entities; keep their original wikilinks. Do not use entity badges as evidence unless the target page itself contains evidence-backed context.
 - Do not overwrite `Pilot_Reports/`.
 
 ## Financial Section Policy

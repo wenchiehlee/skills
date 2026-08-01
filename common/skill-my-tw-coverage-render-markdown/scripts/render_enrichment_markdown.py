@@ -18,6 +18,7 @@ from typing import Any
 from urllib.parse import quote
 
 WIKILINK_RE = re.compile(r"\[\[([^\]]+)\]\]")
+ENTITY_BADGE_RE = re.compile(r"\[!\[([^\]]+)\]\(https://img\.shields\.io/badge/[^)]*\)\]\([^)]*\.md\)")
 FINANCIAL_HEADING = "## 財務概況"
 PLATFORM_REVENUE_HEADING = "### 營收平台佔比 (Revenue by Platform %)"
 PLATFORM_REVENUE_ANCHOR = "營收平台佔比-revenue-by-platform-"
@@ -797,6 +798,62 @@ def wikilinks(text: str) -> set[str]:
     return {x.strip() for x in WIKILINK_RE.findall(text) if x.strip()}
 
 
+def rendered_reference_entities(text: str) -> set[str]:
+    entities = wikilinks(text)
+    entities.update(x.strip() for x in ENTITY_BADGE_RE.findall(text) if x.strip())
+    return entities
+
+
+def badge_label_text(label: str) -> str:
+    return label.replace("/", "%2F")
+
+
+def build_entity_render_index(json_dir: Path, output_dir: Path) -> dict[str, str]:
+    index: dict[str, str] = {}
+    for json_path in sorted(json_dir.glob("*.json")):
+        try:
+            data = json.loads(json_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        ticker = str(data.get("ticker", "")).strip()
+        company = str(data.get("company_name", "")).strip()
+        if not ticker or not company:
+            continue
+        filename = f"{ticker}_{company}.md"
+        if not (output_dir / filename).exists():
+            continue
+        aliases = {ticker, company, f"{ticker} {company}", f"{ticker}_{company}"}
+        for entity in data.get("entities", []) or []:
+            if not isinstance(entity, dict):
+                continue
+            wikilink = str(entity.get("wikilink", "")).strip()
+            if wikilink == company:
+                aliases.add(wikilink)
+        for alias in aliases:
+            if alias:
+                index.setdefault(alias, filename)
+    return index
+
+
+def render_entity_badge(label: str, filename: str) -> str:
+    return f"[![{label}](https://img.shields.io/badge/{badge_label_text(label)}-blue)]({quote(filename)})"
+
+
+def apply_entity_badges(line: str, entity_render_index: dict[str, str] | None = None) -> str:
+    if not entity_render_index:
+        return line
+
+    def repl(match: re.Match[str]) -> str:
+        raw = match.group(1).strip()
+        display = raw.split("|", 1)[0].strip()
+        filename = entity_render_index.get(display) or entity_render_index.get(raw)
+        if not filename:
+            return match.group(0)
+        return render_entity_badge(display, filename)
+
+    return WIKILINK_RE.sub(repl, line)
+
+
 def load_json_files(json_dir: Path, ticker: str | None = None) -> list[Path]:
     if ticker:
         path = json_dir / f"{ticker}.json"
@@ -899,7 +956,7 @@ def render_supply_chain(data: dict[str, Any], platform_summary: str = "") -> str
     return "\n".join(lines).strip()
 
 
-def render_relationship_section(data: dict[str, Any]) -> str:
+def render_relationship_section(data: dict[str, Any], entity_render_index: dict[str, str] | None = None) -> str:
     rel = data.get("relationships", {})
     groups = [
         ("customers", "主要客戶"),
@@ -930,7 +987,7 @@ def render_relationship_section(data: dict[str, Any]) -> str:
         for item in items:
             line = clean_item_text(item)
             if line:
-                lines.append(line)
+                lines.append(apply_entity_badges(line, entity_render_index))
         lines.append("")
     return "\n".join(lines).strip()
 
@@ -947,12 +1004,12 @@ def render_competitive_position(data: dict[str, Any]) -> str:
         for item in items:
             line = clean_item_text(item)
             if line:
-                lines.append(line)
+                lines.append(apply_entity_badges(line, entity_render_index))
         lines.append("")
     return "\n".join(lines).strip()
 
 
-def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: dict[str, str] | None = None, segment_weight_summaries: dict[str, str] | None = None, monthly_revenue_totals: dict[str, dict[str, float]] | None = None, competitor_financial_section: str = "", updated_at: str = "") -> str:
+def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: dict[str, str] | None = None, segment_weight_summaries: dict[str, str] | None = None, monthly_revenue_totals: dict[str, dict[str, float]] | None = None, competitor_financial_section: str = "", updated_at: str = "", entity_render_index: dict[str, str] | None = None) -> str:
     title = data.get("title") or f"{data.get('ticker', '')} - [[{data.get('company_name', '')}]]"
     profile = data.get("profile", {})
     business_summary = data.get("business", {}).get("summary", "").strip()
@@ -973,7 +1030,7 @@ def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: 
 
     parts: list[str] = [f"# {title}", "", "## 業務簡介"]
     parts.extend(format_metadata(profile))
-    parts.extend(["", business_summary, "", "## 供應鏈位置", render_supply_chain(data, platform_summary), "", "## 主要客戶及供應商", render_relationship_section(data)])
+    parts.extend(["", business_summary, "", "## 供應鏈位置", render_supply_chain(data, platform_summary), "", "## 主要客戶及供應商", render_relationship_section(data, entity_render_index)])
     competitive = render_competitive_position(data)
     if competitive:
         parts.extend(["", competitive])
@@ -989,7 +1046,7 @@ def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: 
 
 def compare(original: str, rendered: str, data: dict[str, Any]) -> dict[str, Any]:
     source_links = wikilinks(source_enrichment_text(data))
-    rendered_links = wikilinks(rendered)
+    rendered_links = rendered_reference_entities(rendered)
     missing_links = sorted(source_links - rendered_links)
     source_sections = data.get("source_text", {})
     section_results = []
@@ -1052,6 +1109,7 @@ def main() -> int:
         return 2
 
     competitor_adapter = load_competitor_financial_adapter(coverage_root)
+    entity_render_index = build_entity_render_index(json_dir, out_dir)
 
     rows = []
     written = 0
@@ -1067,7 +1125,7 @@ def main() -> int:
                 biztrends_root,
                 args.competitor_financial_years,
             )
-        rendered = render_markdown(data, "", segment_weight_tables, segment_weight_summaries, monthly_revenue_totals, competitor_financial_section, args.updated_at)
+        rendered = render_markdown(data, "", segment_weight_tables, segment_weight_summaries, monthly_revenue_totals, competitor_financial_section, args.updated_at, entity_render_index)
         out_path = out_dir / f"{data['ticker']}_{data['company_name']}.md"
         out_path.write_text(rendered, encoding="utf-8")
         row = compare(original, rendered, data)
