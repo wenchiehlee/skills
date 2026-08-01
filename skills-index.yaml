@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-07-31'
+generated_at: '2026-08-01'
 skills:
 - name: skill-adb-gadget
   group: common
@@ -46,7 +46,7 @@ skills:
   maintainer: wenchiehlee
   source: biztrends.TW
   updated_at: '2026-07-22'
-  revised_at: '2026-07-31'
+  revised_at: '2026-08-01'
 - name: skill-company-cycle-index
   group: common
   path: common/skill-company-cycle-index
@@ -147,7 +147,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
   updated_at: '2026-07-26'
-  revised_at: '2026-07-26'
+  revised_at: '2026-08-01'
 - name: skill-investorconference-ir-pdf-md
   group: common
   path: common/skill-investorconference-ir-pdf-md

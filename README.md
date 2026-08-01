@@ -22,7 +22,7 @@
 | [skill-adb-gadget](common/skill-adb-gadget) | common | basic | 1.0.1 | PowerShell module for managing dual ADB transports (USB + Ethernet) on an embedded Android device that exposes a USB composite gadget — handles state detection, Ethernet bootstrapping, safe reboot/recovery, gadget mount, and HID function control. | 2026-07-21 |
 | [skill-ai-trend-analytics](common/skill-ai-trend-analytics) | common | basic | 0.2.2 | Build AI trend coverage, validity, issue register, and inference quality-gate outputs from company canonical cycle data. | 2026-07-21 |
 | [skill-all-models-benchmark](common/skill-all-models-benchmark) | common | financial-forecasting | 1.0.0 | 多模型與分析師共識效能評估標準作業程序。 | 2026-07-18 |
-| [skill-company-competitor-analysis](common/skill-company-competitor-analysis) | common | financial-strategy | 0.1.0 | 依指定 stock id，使用 supply-chain product peer seed 與 relationship rules 區分 brand competitor、ODM peer、server peer 與 supplier/component，並輸出最近三年季度 Revenue、Revenue YoY、Profit、Profit YoY、GM 競爭者分析表。 | 2026-07-31 |
+| [skill-company-competitor-analysis](common/skill-company-competitor-analysis) | common | financial-strategy | 0.1.0 | 依指定 stock id，使用 supply-chain product peer seed 與 relationship rules 區分 brand competitor、ODM peer、server peer 與 supplier/component，並輸出最近三年季度 Revenue、Revenue YoY、Profit、Profit YoY、GM 競爭者分析表。 | 2026-08-01 |
 | [skill-company-cycle-index](common/skill-company-cycle-index) | common | financial-strategy | 1.3.1 | 套用已審核或已結構化的 company revenue segment weights 到 canonical cycle model；支援 Taiwan 與 United_States pipeline，US 對齊 canonical_cycle_specification 並用 latest-mix proxy 補齊缺 segment quarters，生成對應 company_cycle_index_*.png 並更新 README。 | 2026-07-21 |
 | [skill-company-revenue-segment-weights](common/skill-company-revenue-segment-weights) | common | financial-strategy | 1.3.0 | 更新與稽核 company revenue segment weights evidence、quarterly candidates、QA report 與 active snapshot；目前支援 biztrends.TW 台股 InvestorConference/MOPS/IR Markdown evidence，並在更新 company_segment_weights.csv 前產出資料解讀 QA。 | 2026-07-21 |
 | [skill-download-logo](common/skill-download-logo) | common | basic | 1.0.0 | 指定台灣股票代碼或美股概念股 Ticker，自動下載高解析度公司官方 Logo PNG，並限制在固定大小。 | 2026-07-18 |
@@ -31,7 +31,7 @@
 | [skill-google-alert-fetch](common/skill-google-alert-fetch) | common | financial-data | 1.0.0 | 維運 GoogleAlertManager 的 Google Alerts 抓取管線：更新 GoPublic 股票觀察/專注清單 CSV、同步 Google Alert RSS、匯出 fallback RSS、抓取文章、依 focus CSV 更新 README，並排查 fetch/analyze workflows。 | 2026-07-22 |
 | [skill-google-analytics-monitor](common/skill-google-analytics-monitor) | common | analytics | 1.0.0 | 使用 google-analytics-cli 產生 GA4 網站監控 Markdown/README 報告，包含 YAML daily metadata、即時活躍人數、近 7/28 天短期趨勢、近 3 個月流量趨勢、來源/媒介、Top 10 URL、熱門頁面、事件與異常觀察。 | 2026-07-18 |
 | [skill-investorconference-digest](common/skill-investorconference-digest) | common | basic | 2.4.5 | 法說會/earnings call 與財報結果 digest SOP；支援 FIN/GT/IR/Q&A、Skills 財報結果、公司財報文件、Yahoo consensus、預期差、模型修正路徑與美股對台股 read-through。 | 2026-07-23 |
-| [skill-investorconference-ingest](common/skill-investorconference-ingest) | common | basic | 1.3.0 | 投資人說明會/財報事件材料蒐集 Ingest 模組；法說會抓音檔、IR、逐字稿，財報事件抓 Skills 財報結果、earnings release、financial tables、SEC filing，並避免對純財報事件產生 FIN/GT。 | 2026-07-26 |
+| [skill-investorconference-ingest](common/skill-investorconference-ingest) | common | basic | 1.3.0 | 投資人說明會/財報事件材料蒐集 Ingest 模組；法說會抓音檔、IR、逐字稿，財報事件抓 Skills 財報結果、earnings release、financial tables、SEC filing，並避免對純財報事件產生 FIN/GT。 | 2026-08-01 |
 | [skill-investorconference-ir-pdf-md](common/skill-investorconference-ir-pdf-md) | common | financial-data | 1.0.0 | Fetch InvestorConference official IR PDFs through ingest, then convert them to Markdown using the repo-local Mac-mini OCR hybrid pipeline with auditable TODO/OCR markers. | 2026-07-19 |
 | [skill-investorconference-upcoming-earnings](common/skill-investorconference-upcoming-earnings) | common | financial-data | 1.0.0 | Regenerate raw_event_upcoming_earnings.csv from InvestorConference's own TW/US watchlists, classifying every event as 財報, 法說會, or 受邀法說. | 2026-07-26 |
 | [skill-mac-mini-ocr](common/skill-mac-mini-ocr) | common | document | 1.3.0 | 使用自建在 Mac-mini 上的 OCR API 服務（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-07-25 |
@@ -54,7 +54,7 @@
 | [skill-uvc-4k-capture](common/skill-uvc-4k-capture) | common | basic | 1.0.0 | Enable camera-agnostic 4K UVC capture on Android BaseUnit: setup_uvc.sh advertises 4K frame descriptor, uvc_camera_forward detects camera max MJPEG resolution at runtime and clamps negotiation — Jieli U20 stays at 1080p, Logitech MeetUp unlocks 3840×2160@30fps. | 2026-07-21 |
 | [skill-wasapi-capture-debug](common/skill-wasapi-capture-debug) | common | basic | 1.0.1 | Enumerate Windows WASAPI capture endpoints via COM IMMDeviceEnumerator to verify UAC2 speakerphone visibility, device state, and active audio sessions. | 2026-07-21 |
 
-最後產生日期：2026-07-31
+最後產生日期：2026-08-01
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理
