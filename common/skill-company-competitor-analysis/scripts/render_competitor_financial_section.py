@@ -338,7 +338,35 @@ def load_actual_eps_by_period(json_dir_text: str, stock_text: str) -> tuple[tupl
         eps = CCA.to_float(item.get("eps_twd"))
         if period and eps is not None:
             out[period] = eps
-    return tuple(sorted(out.items()))
+    return tuple(sorted(out.items(), key=lambda item: CCA.period_sort_key(item[0])))
+
+
+def prior_quarter_label(period: str) -> str:
+    match = re.fullmatch(r"(\d{4})Q([1-4])", str(period or "").strip())
+    if not match:
+        return ""
+    year = int(match.group(1))
+    quarter = int(match.group(2)) - 1
+    if quarter == 0:
+        year -= 1
+        quarter = 4
+    return f"{year}Q{quarter}"
+
+
+def ttm_eps_by_period(eps_by_period: dict[str, float]) -> dict[str, float]:
+    out: dict[str, float] = {}
+    for period, eps in eps_by_period.items():
+        periods = [period]
+        for _ in range(3):
+            previous = prior_quarter_label(periods[-1])
+            if not previous:
+                periods = []
+                break
+            periods.append(previous)
+        if len(periods) != 4 or any(p not in eps_by_period for p in periods):
+            continue
+        out[period] = sum(eps_by_period[p] for p in periods)
+    return out
 
 
 def daily_price_files(biztrends_root: Path) -> list[Path]:
@@ -387,9 +415,10 @@ def format_pe_range(price_low: float, price_high: float, eps: float) -> str:
 def pe_ranges_by_period(json_dir: Path, biztrends_root: Path, stock: object) -> dict[str, str]:
     stock_text = str(stock or "").strip().upper()
     eps_by_period = dict(load_actual_eps_by_period(str(json_dir), stock_text))
+    ttm_eps = ttm_eps_by_period(eps_by_period)
     price_ranges = quarterly_close_ranges(biztrends_root)
     out: dict[str, str] = {}
-    for period, eps in eps_by_period.items():
+    for period, eps in ttm_eps.items():
         prices = price_ranges.get((stock_text, period))
         if not prices:
             continue
@@ -559,6 +588,7 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
     out = StringIO()
     out.write("### 競爭同業 Revenue/Profit/GM/PE\n\n")
     out.write(f"Revenue/Profit Unit: `{unit}`\n")
+    out.write("P/E Range: `季內最低/最高日收盤價 / TTM EPS (當季 EPS + 最近 3 季 EPS)`\n")
     fx_notes = []
     if "USD" in foreign_fx_currencies:
         fx_notes.append(f"1 USD = {USD_TO_TWD_RATE:g} TWD")
