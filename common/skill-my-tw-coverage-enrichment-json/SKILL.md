@@ -12,7 +12,7 @@ description: >-
 
 ## Purpose
 
-Convert `../My-TW-Coverage/Pilot_Reports/**/*.md` from presentation Markdown into atomic canonical JSON, using `data/enrichment_all` as the active JSON review universe.
+Convert `../My-TW-Coverage/Pilot_Reports/*.md` from presentation Markdown into atomic canonical JSON, using `data/enrichment_all` as the active JSON review universe.
 
 Current state:
 
