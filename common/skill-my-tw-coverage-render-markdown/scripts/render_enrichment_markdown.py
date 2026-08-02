@@ -839,7 +839,7 @@ def render_entity_badge(label: str, filename: str) -> str:
     return f"[![{label}](https://img.shields.io/badge/{badge_label_text(label)}-blue)]({quote(filename)})"
 
 
-def apply_entity_badges(line: str, entity_render_index: dict[str, str] | None = None) -> str:
+def apply_entity_badges(line: str, entity_render_index: dict[str, str] | None = None, current_filename: str = "") -> str:
     if not entity_render_index:
         return line
 
@@ -847,11 +847,17 @@ def apply_entity_badges(line: str, entity_render_index: dict[str, str] | None = 
         raw = match.group(1).strip()
         display = raw.split("|", 1)[0].strip()
         filename = entity_render_index.get(display) or entity_render_index.get(raw)
-        if not filename:
+        if not filename or filename == current_filename:
             return match.group(0)
         return render_entity_badge(display, filename)
 
     return WIKILINK_RE.sub(repl, line)
+
+
+def apply_entity_badges_to_markdown(markdown: str, entity_render_index: dict[str, str] | None, current_filename: str) -> str:
+    if not entity_render_index:
+        return markdown
+    return "\n".join(apply_entity_badges(line, entity_render_index, current_filename) for line in markdown.splitlines())
 
 
 def load_json_files(json_dir: Path, ticker: str | None = None) -> list[Path]:
@@ -987,12 +993,12 @@ def render_relationship_section(data: dict[str, Any], entity_render_index: dict[
         for item in items:
             line = clean_item_text(item)
             if line:
-                lines.append(apply_entity_badges(line, entity_render_index))
+                lines.append(line)
         lines.append("")
     return "\n".join(lines).strip()
 
 
-def render_competitive_position(data: dict[str, Any]) -> str:
+def render_competitive_position(data: dict[str, Any], entity_render_index: dict[str, str] | None = None) -> str:
     comp = data.get("competitive_position", {})
     groups = [("moats", "核心競爭力"), ("risks", "競爭與營運風險"), ("notes", "競爭定位補充")]
     lines: list[str] = []
@@ -1004,7 +1010,7 @@ def render_competitive_position(data: dict[str, Any]) -> str:
         for item in items:
             line = clean_item_text(item)
             if line:
-                lines.append(apply_entity_badges(line, entity_render_index))
+                lines.append(line)
         lines.append("")
     return "\n".join(lines).strip()
 
@@ -1031,7 +1037,7 @@ def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: 
     parts: list[str] = [f"# {title}", "", "## 業務簡介"]
     parts.extend(format_metadata(profile))
     parts.extend(["", business_summary, "", "## 供應鏈位置", render_supply_chain(data, platform_summary), "", "## 主要客戶及供應商", render_relationship_section(data, entity_render_index)])
-    competitive = render_competitive_position(data)
+    competitive = render_competitive_position(data, entity_render_index)
     if competitive:
         parts.extend(["", competitive])
     if financial:
@@ -1039,6 +1045,8 @@ def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: 
         parts.extend(["", heading])
     rendered = "\n".join(part.rstrip() for part in parts).rstrip()
     rendered = apply_annotations(rendered, data)
+    current_filename = f"{ticker}_{data.get('company_name', '')}.md"
+    rendered = apply_entity_badges_to_markdown(rendered, entity_render_index, current_filename)
     if updated_at:
         rendered = rendered.rstrip() + "\n\n" + f"Updated: {updated_at}"
     return rendered.rstrip() + "\n"
