@@ -94,6 +94,7 @@ git diff -- output/enrichment_all_rendered data/enrichment_all_render_compare.cs
 - Theme badges are separate from entity badges and evidence badges. Convert only wikilinks that resolve to `data/themes/*.json` theme `tag` or `aliases` into badges linking to `../themes/{output_filename}`.
 - Do not use theme `anchor_entities` for badge conversion. `[[NVIDIA]]` is an entity/company mention; `[[NVIDIA 供應鏈]]` is a theme mention.
 - Render theme pages with `python3 skills/skill-my-tw-coverage-render-markdown/scripts/build_themes.py`. The skill entry delegates to the repo-local `scripts/build_themes.py` implementation so theme rendering has one code path. Theme pages must be generated from `data/themes/*.json` plus `data/enrichment_all/*.json`, not from `Pilot_Reports/`.
+- In rendered theme pages, company entries must use entity-style badge links to `output/enrichment_all_rendered/*.md`. Keep internal matching metadata such as `Theme ID`, `source_path`, and `match` out of presentation Markdown.
 - Do not overwrite `Pilot_Reports/`.
 
 ## Financial Section Policy
