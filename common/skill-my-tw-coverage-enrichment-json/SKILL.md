@@ -124,6 +124,8 @@ python3 skills/skill-my-tw-coverage-enrichment-json/scripts/backfill_theme_links
 
 After reviewing the queue, write additions with `--write`. New links should be stored in `themes[]` with `id`, `tag`, `role`, `source_path`, `matched_text`, `confidence`, and `status`. Use `status=needs_review` for derived matches until reviewed.
 
+Theme supply-chain structure may be authored in `data/themes/*.json` under `theme_supply_chain`. This is separate from per-company `supply_chain`: it describes the theme's own 上游/中游/下游 layers and should align to `../biztrends.TW/data/ic.tpex.org.tw/raw_SupplyChain_*.csv` through criteria such as `chain_code`, `positions`, and `subcategories`. Each taxonomy-derived entry should keep evidence/provenance through its IC chain/position/subcategory source path; do not infer theme layers solely from keyword matches.
+
 ## Evidence and Annotation Rules
 
 JSON should fully describe rendered Markdown context. Rendered Markdown is output, not storage. When a presentation claim has source-backed data, add an `evidence` object and an `annotations[]` entry rather than hardcoding Markdown badges.

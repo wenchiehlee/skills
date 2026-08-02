@@ -96,6 +96,9 @@ git diff -- output/enrichment_all_rendered data/enrichment_all_render_compare.cs
 - Do not use theme `anchor_entities` for badge conversion. `[[NVIDIA]]` is an entity/company mention; `[[NVIDIA 供應鏈]]` is a theme mention.
 - Render theme pages with `python3 skills/skill-my-tw-coverage-render-markdown/scripts/build_themes.py`. The skill entry delegates to the repo-local `scripts/build_themes.py` implementation so theme rendering has one code path. Theme pages must be generated from `data/themes/*.json` plus `data/enrichment_all/*.json`, not from `Pilot_Reports/`.
 - In rendered theme pages, company entries must use entity-style badge links to `output/enrichment_all_rendered/*.md`. Keep internal matching metadata such as `Theme ID`, `source_path`, and `match` out of presentation Markdown.
+
+- Theme pages may define `theme_supply_chain` in `data/themes/*.json`. When present, `上游`, `中游`, and `下游/客戶關係` must be rendered from explicit criteria backed by `../biztrends.TW/data/ic.tpex.org.tw/raw_SupplyChain_*.csv`; free-text matches from company JSON should only contribute to `相關公司` so they do not distort the structured theme layers.
+- In `theme_supply_chain`, each role contains IC taxonomy criteria such as `chain_code`, `chain_name`, `positions`, and `subcategories`. Rendered company rows should display the IC chain/subcategory as context, while internal provenance such as `source_path` and `match` stays out of presentation Markdown.
 - Do not overwrite `Pilot_Reports/`.
 
 ## Financial Section Policy
