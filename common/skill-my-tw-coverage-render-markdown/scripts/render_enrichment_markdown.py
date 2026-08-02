@@ -19,7 +19,7 @@ from urllib.parse import quote
 
 WIKILINK_RE = re.compile(r"\[\[([^\]]+)\]\]")
 ENTITY_BADGE_RE = re.compile(r"\[!\[([^\]]+)\]\(https://img\.shields\.io/badge/[^)]*\)\]\([^)]*\.md\)")
-THEME_BADGE_COLOR = "blue"
+THEME_BADGE_COLOR = "green"
 
 ENTITY_ALIAS_BY_COMPANY = {
     "中華電": ["中華電信"],
@@ -28,6 +28,9 @@ ENTITY_ALIAS_BY_COMPANY = {
     "世界": ["世界先進"],
     "光寶科": ["光寶科技"],
     "台達電": ["台達電子"],
+    "華碩": ["ASUSTeK Computer", "ASUS"],
+    "仁寶": ["Compal Electronics", "Compal"],
+    "技嘉": ["Gigabyte Technology", "GIGABYTE"],
     "臻鼎-KY": ["臻鼎"],
     "鈺齊-KY": ["鈺齊"],
     "鴻華先進-創": ["鴻華先進"],
@@ -841,6 +844,19 @@ def add_entity_alias(index: dict[str, str], alias: str, filename: str) -> None:
         index.setdefault(normalized, filename)
 
 
+def extract_self_aliases(data: dict[str, Any], ticker: str) -> set[str]:
+    aliases: set[str] = set()
+    business = data.get("business", {}) if isinstance(data.get("business"), dict) else {}
+    summary = str(business.get("summary") or business.get("business_summary_md") or "")
+    ticker_pattern = re.escape(ticker)
+    for match in re.finditer(rf"[（(][^）)]*{ticker_pattern}[^）)]*?[\s,，、/：:;；-]*\[\[([^\]]+)\]\](?=[\s,，、/;；）)])[^）)]*[）)]", summary):
+        aliases.add(match.group(1).strip())
+    start_match = re.match(rf"\s*\[\[([^\]]+)\]\]\s*[（(]\s*{ticker_pattern}\s*[）)]", summary)
+    if start_match:
+        aliases.add(start_match.group(1).strip())
+    return {alias for alias in aliases if alias}
+
+
 def build_entity_render_index(json_dir: Path, output_dir: Path) -> dict[str, str]:
     index: dict[str, str] = {}
     for json_path in sorted(json_dir.glob("*.json")):
@@ -857,6 +873,7 @@ def build_entity_render_index(json_dir: Path, output_dir: Path) -> dict[str, str
             continue
         aliases = {ticker, company, f"{ticker} {company}", f"{ticker}_{company}"}
         aliases.update(ENTITY_ALIAS_BY_COMPANY.get(company, []))
+        aliases.update(extract_self_aliases(data, ticker))
         for suffix in ("-KY", "-KY創", "-創"):
             if company.endswith(suffix):
                 aliases.add(company[: -len(suffix)])
