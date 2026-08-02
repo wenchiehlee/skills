@@ -200,8 +200,8 @@ def render_annotation_badge(annotation: dict[str, Any], data: dict[str, Any]) ->
     if not isinstance(evidence_item, dict):
         evidence_item = {}
     alt = str(render.get("alt") or label).strip()
-    badge_label = label.replace("/", "%2F")
-    badge_url = f"https://img.shields.io/badge/{badge_label}-{color}"
+    badge_label = badge_label_text(label)
+    badge_url = f"https://img.shields.io/badge/{badge_label}-{quote(color, safe='')}"
     return f"[![{alt}]({badge_url})]({evidence_anchor(evidence_item)})"
 
 
@@ -806,7 +806,8 @@ def rendered_reference_entities(text: str) -> set[str]:
 
 
 def badge_label_text(label: str) -> str:
-    return label.replace("/", "%2F")
+    # Shields badge path segments cannot contain raw spaces or non-ASCII text.
+    return quote(label.replace("-", "--"), safe="")
 
 
 def build_entity_render_index(json_dir: Path, output_dir: Path) -> dict[str, str]:
