@@ -99,6 +99,9 @@ git diff -- output/enrichment_all_rendered data/enrichment_all_render_compare.cs
 
 - Theme pages may define `theme_supply_chain` in `data/themes/*.json`. When present, `上游`, `中游`, and `下游/客戶關係` must be rendered from explicit criteria backed by `../biztrends.TW/data/ic.tpex.org.tw/raw_SupplyChain_*.csv`; free-text matches from company JSON should only contribute to `相關公司` so they do not distort the structured theme layers.
 - In `theme_supply_chain`, each role contains IC taxonomy criteria such as `chain_code`, `chain_name`, `positions`, and `subcategories`. Rendered company rows should display the IC chain/subcategory as context, while internal provenance such as `source_path` and `match` stays out of presentation Markdown.
+- Do not derive rendered theme company classification from `source_md` or `Pilot_Reports/` folder paths. Use JSON `profile.chain_name`, then `profile.industry`, then `profile.sector` for free-text related-company context.
+- Render theme classification context as plain text; strip legacy wikilink markup from metadata fields such as `profile.industry` so strings like `[[Meta]]l Fabrication` display as `Metal Fabrication`.
+- In taxonomy-backed theme sections, sort `上游`, `中游`, and `下游/客戶關係` entries by parsed JSON `profile.market_cap` descending, with unknown market cap last.
 - Do not overwrite `Pilot_Reports/`.
 
 ## Financial Section Policy
