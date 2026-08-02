@@ -20,6 +20,23 @@ from urllib.parse import quote
 WIKILINK_RE = re.compile(r"\[\[([^\]]+)\]\]")
 ENTITY_BADGE_RE = re.compile(r"\[!\[([^\]]+)\]\(https://img\.shields\.io/badge/[^)]*\)\]\([^)]*\.md\)")
 THEME_BADGE_COLOR = "blue"
+
+ENTITY_ALIAS_BY_COMPANY = {
+    "中華電": ["中華電信"],
+    "台灣大": ["台灣大哥大"],
+    "遠傳": ["遠傳電信"],
+    "世界": ["世界先進"],
+    "光寶科": ["光寶科技"],
+    "台達電": ["台達電子"],
+    "臻鼎-KY": ["臻鼎"],
+    "鈺齊-KY": ["鈺齊"],
+    "鴻華先進-創": ["鴻華先進"],
+    "友達": ["友達光電"],
+    "群創": ["群創光電"],
+    "日月光投控": ["日月光"],
+    "LINEPAY": ["LINE Pay"],
+}
+
 FINANCIAL_HEADING = "## 財務概況"
 PLATFORM_REVENUE_HEADING = "### 營收平台佔比 (Revenue by Platform %)"
 PLATFORM_REVENUE_ANCHOR = "營收平台佔比-revenue-by-platform-"
@@ -810,6 +827,20 @@ def badge_label_text(label: str) -> str:
     return quote(label.replace("-", "--"), safe="")
 
 
+def normalized_entity_key(value: str) -> str:
+    return re.sub(r"[\s_\-]+", "", value).lower()
+
+
+def add_entity_alias(index: dict[str, str], alias: str, filename: str) -> None:
+    alias = str(alias).strip()
+    if not alias:
+        return
+    index.setdefault(alias, filename)
+    normalized = normalized_entity_key(alias)
+    if normalized:
+        index.setdefault(normalized, filename)
+
+
 def build_entity_render_index(json_dir: Path, output_dir: Path) -> dict[str, str]:
     index: dict[str, str] = {}
     for json_path in sorted(json_dir.glob("*.json")):
@@ -825,6 +856,10 @@ def build_entity_render_index(json_dir: Path, output_dir: Path) -> dict[str, str
         if not (output_dir / filename).exists():
             continue
         aliases = {ticker, company, f"{ticker} {company}", f"{ticker}_{company}"}
+        aliases.update(ENTITY_ALIAS_BY_COMPANY.get(company, []))
+        for suffix in ("-KY", "-KY創", "-創"):
+            if company.endswith(suffix):
+                aliases.add(company[: -len(suffix)])
         for entity in data.get("entities", []) or []:
             if not isinstance(entity, dict):
                 continue
@@ -832,8 +867,7 @@ def build_entity_render_index(json_dir: Path, output_dir: Path) -> dict[str, str
             if wikilink == company:
                 aliases.add(wikilink)
         for alias in aliases:
-            if alias:
-                index.setdefault(alias, filename)
+            add_entity_alias(index, alias, filename)
     return index
 
 
@@ -917,9 +951,16 @@ def apply_entity_badges(line: str, entity_render_index: dict[str, str] | None = 
     def repl(match: re.Match[str]) -> str:
         raw = match.group(1).strip()
         display = raw.split("|", 1)[0].strip()
-        filename = entity_render_index.get(display) or entity_render_index.get(raw)
-        if not filename or filename == current_filename:
+        filename = (
+            entity_render_index.get(display)
+            or entity_render_index.get(raw)
+            or entity_render_index.get(normalized_entity_key(display))
+            or entity_render_index.get(normalized_entity_key(raw))
+        )
+        if not filename:
             return match.group(0)
+        if filename == current_filename:
+            return display
         return render_entity_badge(display, filename)
 
     return normalize_badge_spacing(WIKILINK_RE.sub(repl, line))
