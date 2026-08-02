@@ -58,6 +58,12 @@ python3 skills/skill-my-tw-coverage-render-markdown/scripts/render_enrichment_ma
   --themes-dir data/themes
 ```
 
+Rebuild theme pages through the same render skill:
+
+```bash
+python3 skills/skill-my-tw-coverage-render-markdown/scripts/build_themes.py
+```
+
 After rendering, inspect key files with `rg` or `sed` before committing:
 
 ```bash
@@ -87,7 +93,7 @@ git diff -- output/enrichment_all_rendered data/enrichment_all_render_compare.cs
 - Do not render entity badges for unresolved entities; keep their original wikilinks. Skip the current company itself to avoid self-link badges. Do not use entity badges as evidence unless the target page itself contains evidence-backed context.
 - Theme badges are separate from entity badges and evidence badges. Convert only wikilinks that resolve to `data/themes/*.json` theme `tag` or `aliases` into badges linking to `../themes/{output_filename}`.
 - Do not use theme `anchor_entities` for badge conversion. `[[NVIDIA]]` is an entity/company mention; `[[NVIDIA 供應鏈]]` is a theme mention.
-- Render theme pages with `python3 scripts/build_themes.py`. Theme pages must be generated from `data/themes/*.json` plus `data/enrichment_all/*.json`, not from `Pilot_Reports/`.
+- Render theme pages with `python3 skills/skill-my-tw-coverage-render-markdown/scripts/build_themes.py`. The skill entry delegates to the repo-local `scripts/build_themes.py` implementation so theme rendering has one code path. Theme pages must be generated from `data/themes/*.json` plus `data/enrichment_all/*.json`, not from `Pilot_Reports/`.
 - Do not overwrite `Pilot_Reports/`.
 
 ## Financial Section Policy
@@ -109,7 +115,7 @@ python3 -m py_compile skills/skill-my-tw-coverage-render-markdown/scripts/render
 2. Render a known sample, usually `2330`, and rebuild themes when theme behavior changed:
 
 ```bash
-python3 scripts/build_themes.py
+python3 skills/skill-my-tw-coverage-render-markdown/scripts/build_themes.py
 ```
 
 3. Confirm the rendered output comes from JSON and contains expected JSON-backed sections:

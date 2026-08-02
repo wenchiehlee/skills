@@ -179,5 +179,5 @@ For each focus ticker:
 - This skill does not update upstream financial CSVs.
 - This skill may define or backfill JSON `evidence` and `annotations`, but it does not render Markdown badges directly.
 - This skill does not directly update `biztrends.TW/data/company_segment_weights.csv`.
-- This skill does not render `output/themes`; use `skill-my-tw-coverage-render-markdown` / `scripts/build_themes.py` after theme links are reviewed.
+- This skill does not render `output/themes`; use `skill-my-tw-coverage-render-markdown` / `skills/skill-my-tw-coverage-render-markdown/scripts/build_themes.py` after theme links are reviewed.
 - Do not treat legacy `source_text.*_md` as final storage for evidence; use it only as transitional non-lossy preservation until atomic evidence is complete.
