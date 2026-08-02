@@ -15,7 +15,9 @@ Use this skill to render canonical enrichment JSON into Markdown for review or p
 ## Source Boundaries
 
 - Canonical enrichment source: `data/enrichment_all/*.json`
-- Rendered output: `output/enrichment_all_rendered/*.md`
+- Rendered company output: `output/enrichment_all_rendered/*.md`
+- Rendered theme output: `output/themes/*.md`
+- Theme definitions: `data/themes/*.json`
 - Comparison report: `output/enrichment_all_render_compare.csv`
 - Revenue mix source when available: `../biztrends.TW/data/company_segment_weights.csv`
 - Revenue amount fallback source: `../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv`
@@ -39,6 +41,7 @@ python3 skills/skill-my-tw-coverage-render-markdown/scripts/render_enrichment_ma
   --segment-weights ../biztrends.TW/data/company_segment_weights.csv \
   --monthly-revenue ../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv \
   --biztrends-root ../biztrends.TW \
+  --themes-dir data/themes \
   --ticker 2330
 ```
 
@@ -51,7 +54,8 @@ python3 skills/skill-my-tw-coverage-render-markdown/scripts/render_enrichment_ma
   --compare output/enrichment_all_render_compare.csv \
   --segment-weights ../biztrends.TW/data/company_segment_weights.csv \
   --monthly-revenue ../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv \
-  --biztrends-root ../biztrends.TW
+  --biztrends-root ../biztrends.TW \
+  --themes-dir data/themes
 ```
 
 After rendering, inspect key files with `rg` or `sed` before committing:
@@ -81,6 +85,9 @@ git diff -- output/enrichment_all_rendered data/enrichment_all_render_compare.cs
 - Evidence badge links must resolve through `evidence_ref` and the target evidence object's `render_section.anchor`. For a badge inside the same rendered company Markdown file, use a same-file anchor link.
 - Entity badges are separate from evidence badges: in the final Markdown pass, convert any Obsidian-style wikilink that resolves to an existing `output/enrichment_all_rendered/{ticker}_{company}.md` into a shield badge whose visible label is only the entity name and whose link points to that rendered company context page.
 - Do not render entity badges for unresolved entities; keep their original wikilinks. Skip the current company itself to avoid self-link badges. Do not use entity badges as evidence unless the target page itself contains evidence-backed context.
+- Theme badges are separate from entity badges and evidence badges. Convert only wikilinks that resolve to `data/themes/*.json` theme `tag` or `aliases` into badges linking to `../themes/{output_filename}`.
+- Do not use theme `anchor_entities` for badge conversion. `[[NVIDIA]]` is an entity/company mention; `[[NVIDIA 供應鏈]]` is a theme mention.
+- Render theme pages with `python3 scripts/build_themes.py`. Theme pages must be generated from `data/themes/*.json` plus `data/enrichment_all/*.json`, not from `Pilot_Reports/`.
 - Do not overwrite `Pilot_Reports/`.
 
 ## Financial Section Policy
@@ -99,7 +106,11 @@ Before reporting completion:
 python3 -m py_compile skills/skill-my-tw-coverage-render-markdown/scripts/render_enrichment_markdown.py
 ```
 
-2. Render a known sample, usually `2330`.
+2. Render a known sample, usually `2330`, and rebuild themes when theme behavior changed:
+
+```bash
+python3 scripts/build_themes.py
+```
 
 3. Confirm the rendered output comes from JSON and contains expected JSON-backed sections:
 

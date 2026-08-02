@@ -88,6 +88,8 @@ Canonical JSON should keep both structured atoms and original Markdown snippets:
 - `source_text`: original section bodies, so migration is non-lossy.
 - `evidence`: atomic source-backed facts and tables that rendered Markdown can cite.
 - `annotations`: reviewed links from presentation claims to evidence objects, including badge-rendering intent.
+- `themes`: reviewed links from company context to `data/themes/*.json` theme objects.
+- `links`: optional resolved navigation links whose `kind` is `entity`, `theme`, or `evidence`.
 - `quality`: parser status, review status, warnings, and counts.
 
 Do not treat the first parsed JSON as approved. It remains a review artifact until its atoms are approved.
@@ -104,6 +106,23 @@ Normalize competitive language into structured keys:
 When extraction is ambiguous, preserve text in `source_text` and add a `quality.warnings` entry instead of inventing a precise atom.
 
 Do not auto-fill `relationships.competitors` from same-folder or same-industry peers. If competitors are not explicit in source or reviewed JSON, leave the array empty and review it manually. Folder peers are classification context, not validated competitors.
+
+## Theme Link Rules
+
+Themes are not company entities. `Apple`, `NVIDIA`, and `Tesla` refer to companies when used as entity mentions; `Apple 供應鏈`, `NVIDIA 供應鏈`, and `Tesla 供應鏈` refer to theme pages under `output/themes/`.
+
+Theme definitions are canonical in `data/themes/*.json`. Brand supply-chain themes may define `anchor_entities` such as `Apple` or `NVIDIA`, but those anchors are only used to classify customer, supplier, or supply-chain contexts. Do not add plain company names such as `NVIDIA` to theme `aliases`; keep them in the entity/company universe.
+
+Backfill/review theme links from My-TW-Coverage root:
+
+```bash
+python3 skills/skill-my-tw-coverage-enrichment-json/scripts/backfill_theme_links.py \
+  --json-dir data/enrichment_all \
+  --themes-dir data/themes \
+  --review-out output/theme_link_review_queue.csv
+```
+
+After reviewing the queue, write additions with `--write`. New links should be stored in `themes[]` with `id`, `tag`, `role`, `source_path`, `matched_text`, `confidence`, and `status`. Use `status=needs_review` for derived matches until reviewed.
 
 ## Evidence and Annotation Rules
 
@@ -160,4 +179,5 @@ For each focus ticker:
 - This skill does not update upstream financial CSVs.
 - This skill may define or backfill JSON `evidence` and `annotations`, but it does not render Markdown badges directly.
 - This skill does not directly update `biztrends.TW/data/company_segment_weights.csv`.
+- This skill does not render `output/themes`; use `skill-my-tw-coverage-render-markdown` / `scripts/build_themes.py` after theme links are reviewed.
 - Do not treat legacy `source_text.*_md` as final storage for evidence; use it only as transitional non-lossy preservation until atomic evidence is complete.

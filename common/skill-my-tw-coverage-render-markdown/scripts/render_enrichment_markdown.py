@@ -19,6 +19,7 @@ from urllib.parse import quote
 
 WIKILINK_RE = re.compile(r"\[\[([^\]]+)\]\]")
 ENTITY_BADGE_RE = re.compile(r"\[!\[([^\]]+)\]\(https://img\.shields\.io/badge/[^)]*\)\]\([^)]*\.md\)")
+THEME_BADGE_COLOR = "blue"
 FINANCIAL_HEADING = "## 財務概況"
 PLATFORM_REVENUE_HEADING = "### 營收平台佔比 (Revenue by Platform %)"
 PLATFORM_REVENUE_ANCHOR = "營收平台佔比-revenue-by-platform-"
@@ -839,6 +840,75 @@ def render_entity_badge(label: str, filename: str) -> str:
     return f"[![{label}](https://img.shields.io/badge/{badge_label_text(label)}-blue)]({quote(filename)})"
 
 
+def theme_output_filename(theme_def: dict[str, Any]) -> str:
+    render = theme_def.get("render", {}) if isinstance(theme_def.get("render"), dict) else {}
+    filename = str(render.get("output_filename") or "").strip()
+    if filename:
+        return filename
+    tag = str(theme_def.get("tag", "")).strip()
+    return tag.replace(" ", "_").replace("/", "_") + ".md"
+
+
+def build_theme_render_index(themes_dir: Path) -> dict[str, dict[str, str]]:
+    index: dict[str, dict[str, str]] = {}
+    if not themes_dir.is_dir():
+        return index
+    for path in sorted(themes_dir.glob("*.json")):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        tag = str(data.get("tag", "")).strip()
+        if not tag:
+            continue
+        render = data.get("render", {}) if isinstance(data.get("render"), dict) else {}
+        filename = theme_output_filename(data)
+        color = str(render.get("badge_color") or THEME_BADGE_COLOR).strip()
+        label = str(render.get("badge_label") or tag).strip()
+        target = {"filename": filename, "color": color, "label": label}
+        aliases = [tag] + [str(x).strip() for x in data.get("aliases", []) or [] if str(x).strip()]
+        # Anchor entities are intentionally excluded: [[NVIDIA]] is a company, not [[NVIDIA 供應鏈]].
+        for alias in aliases:
+            index.setdefault(alias, target)
+    return index
+
+
+def render_theme_badge(display: str, target: dict[str, str]) -> str:
+    label = str(target.get("label") or display).strip()
+    color = str(target.get("color") or THEME_BADGE_COLOR).strip()
+    filename = str(target.get("filename") or "").strip()
+    if not filename:
+        return f"[[{display}]]"
+    return f"[![{label}](https://img.shields.io/badge/{badge_label_text(label)}-{color})](../themes/{quote(filename)})"
+
+
+def normalize_badge_spacing(line: str) -> str:
+    badge = r"\[!\[[^\]]+\]\(https://img\.shields\.io/badge/[^)]*\)\]\([^)]*\.md\)"
+    line = re.sub(rf"(?<=[A-Za-z0-9\u4e00-\u9fff])({badge})", r" \1", line)
+    return re.sub(rf"({badge})(?=[A-Za-z0-9\u4e00-\u9fff])", r"\1 ", line)
+
+
+def apply_theme_badges(line: str, theme_render_index: dict[str, dict[str, str]] | None = None) -> str:
+    if not theme_render_index:
+        return line
+
+    def repl(match: re.Match[str]) -> str:
+        raw = match.group(1).strip()
+        display = raw.split("|", 1)[0].strip()
+        target = theme_render_index.get(display) or theme_render_index.get(raw)
+        if not target:
+            return match.group(0)
+        return render_theme_badge(display, target)
+
+    return normalize_badge_spacing(WIKILINK_RE.sub(repl, line))
+
+
+def apply_theme_badges_to_markdown(markdown: str, theme_render_index: dict[str, dict[str, str]] | None) -> str:
+    if not theme_render_index:
+        return markdown
+    return "\n".join(apply_theme_badges(line, theme_render_index) for line in markdown.splitlines())
+
+
 def apply_entity_badges(line: str, entity_render_index: dict[str, str] | None = None, current_filename: str = "") -> str:
     if not entity_render_index:
         return line
@@ -851,7 +921,7 @@ def apply_entity_badges(line: str, entity_render_index: dict[str, str] | None = 
             return match.group(0)
         return render_entity_badge(display, filename)
 
-    return WIKILINK_RE.sub(repl, line)
+    return normalize_badge_spacing(WIKILINK_RE.sub(repl, line))
 
 
 def apply_entity_badges_to_markdown(markdown: str, entity_render_index: dict[str, str] | None, current_filename: str) -> str:
@@ -1015,7 +1085,7 @@ def render_competitive_position(data: dict[str, Any], entity_render_index: dict[
     return "\n".join(lines).strip()
 
 
-def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: dict[str, str] | None = None, segment_weight_summaries: dict[str, str] | None = None, monthly_revenue_totals: dict[str, dict[str, float]] | None = None, competitor_financial_section: str = "", updated_at: str = "", entity_render_index: dict[str, str] | None = None) -> str:
+def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: dict[str, str] | None = None, segment_weight_summaries: dict[str, str] | None = None, monthly_revenue_totals: dict[str, dict[str, float]] | None = None, competitor_financial_section: str = "", updated_at: str = "", entity_render_index: dict[str, str] | None = None, theme_render_index: dict[str, dict[str, str]] | None = None) -> str:
     title = data.get("title") or f"{data.get('ticker', '')} - [[{data.get('company_name', '')}]]"
     profile = data.get("profile", {})
     business_summary = data.get("business", {}).get("summary", "").strip()
@@ -1045,6 +1115,7 @@ def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: 
         parts.extend(["", heading])
     rendered = "\n".join(part.rstrip() for part in parts).rstrip()
     rendered = apply_annotations(rendered, data)
+    rendered = apply_theme_badges_to_markdown(rendered, theme_render_index)
     current_filename = f"{ticker}_{data.get('company_name', '')}.md"
     rendered = apply_entity_badges_to_markdown(rendered, entity_render_index, current_filename)
     if updated_at:
@@ -1085,6 +1156,7 @@ def main() -> int:
     parser.add_argument("--segment-weights", default="../biztrends.TW/data/company_segment_weights.csv")
     parser.add_argument("--monthly-revenue", default="../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv")
     parser.add_argument("--biztrends-root", default="../biztrends.TW")
+    parser.add_argument("--themes-dir", default="data/themes")
     parser.add_argument("--competitor-financial-years", type=int, default=3)
     parser.add_argument("--updated-at", default=DEFAULT_UPDATED_AT)
     parser.add_argument("--ticker")
@@ -1118,6 +1190,10 @@ def main() -> int:
 
     competitor_adapter = load_competitor_financial_adapter(coverage_root)
     entity_render_index = build_entity_render_index(json_dir, out_dir)
+    themes_dir = Path(args.themes_dir)
+    if not themes_dir.is_absolute():
+        themes_dir = (coverage_root / themes_dir).resolve()
+    theme_render_index = build_theme_render_index(themes_dir)
 
     rows = []
     written = 0
@@ -1133,7 +1209,7 @@ def main() -> int:
                 biztrends_root,
                 args.competitor_financial_years,
             )
-        rendered = render_markdown(data, "", segment_weight_tables, segment_weight_summaries, monthly_revenue_totals, competitor_financial_section, args.updated_at, entity_render_index)
+        rendered = render_markdown(data, "", segment_weight_tables, segment_weight_summaries, monthly_revenue_totals, competitor_financial_section, args.updated_at, entity_render_index, theme_render_index)
         out_path = out_dir / f"{data['ticker']}_{data['company_name']}.md"
         out_path.write_text(rendered, encoding="utf-8")
         row = compare(original, rendered, data)
