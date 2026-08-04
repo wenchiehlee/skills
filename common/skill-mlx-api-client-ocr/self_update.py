@@ -168,7 +168,7 @@ def _git(args: list[str], cwd: Path, label: str = "") -> tuple[bool, str]:
 def _git_commit_and_push(target_dir: Path, skill_folder_name: str, version: str) -> bool:
     """
     在 target_dir 所屬的 git repo 中，
-    將 skill 資料夾的變更 add → commit → push。
+    將 skill 資料夾的變更 add → commit → pull --rebase → push。
     回傳是否成功。
     """
     repo_root = _find_git_root(target_dir)
@@ -199,12 +199,38 @@ def _git_commit_and_push(target_dir: Path, skill_folder_name: str, version: str)
         return False
     print(f"  [git] ✓ commit: {commit_msg}")
 
-    # 4. git push
-    ok, out = _git(["push"], cwd=repo_root, label="push")
+    # 4. git pull --rebase（防止 remote 有新 commit 導致 push 被拒絕）
+    ok, out = _git(["pull", "--rebase"], cwd=repo_root, label="pull --rebase")
     if not ok:
+        # pull 失敗通常是網路或 conflict，記錄但嘗試繼續
+        print(f"  [git] ⚠️  pull --rebase 失敗，仍嘗試 push", file=sys.stderr)
+
+    # 5. git push
+    result = subprocess.run(
+        ["git", "push"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    push_out = (result.stdout + result.stderr).strip()
+
+    # LFS lock warning 會讓 rc=1 但實際 push 成功（輸出含 "Locking support detected"）
+    lfs_warning_only = (
+        result.returncode != 0
+        and "Locking support detected" in push_out
+        and ("->") in push_out  # 有實際推送的 ref
+    )
+    if result.returncode == 0 or lfs_warning_only:
+        if lfs_warning_only:
+            print(f"  [git] ✓ push 完成（LFS lock warning，已忽略）")
+        else:
+            print(f"  [git] ✓ push 完成")
+        return True
+    else:
+        print(f"  [git push] ✗ 失敗（rc={result.returncode}）: {push_out[:300]}", file=sys.stderr)
         return False
-    print(f"  [git] ✓ push 完成")
-    return True
 
 
 # ── 模式 A：從 GitHub 拉取更新 ───────────────────────────────────────────────
