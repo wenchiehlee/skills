@@ -36,6 +36,7 @@
 | [skill-investorconference-upcoming-earnings](common/skill-investorconference-upcoming-earnings) | common | financial-data | 1.0.0 | Regenerate raw_event_upcoming_earnings.csv from InvestorConference's own TW/US watchlists, classifying every event as 財報, 法說會, or 受邀法說. | 2026-08-01 |
 | [skill-mac-mini-ocr](common/skill-mac-mini-ocr) | common | document | 1.3.0 | 使用自建在 Mac-mini 上的 OCR API 服務（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-07-25 |
 | [skill-market-cost-distribution](common/skill-market-cost-distribution) | common | financial-forecasting | 1.0.1 | 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。 | 2026-07-18 |
+| [skill-mlx-api-client-ocr](common/skill-mlx-api-client-ocr) | common | document | 1.4.0 | 呼叫 Mac-mini MLX API Server 的 OCR 客戶端（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-08-05 |
 | [skill-mops-financialreport-pdf-md](common/skill-mops-financialreport-pdf-md) | common | financial-data | 1.0.0 | Download Taiwan MOPS quarterly financial-report PDFs, then convert same-stem Markdown sidecars with skill-mac-mini-ocr hybrid PDF/OCR workflow. | 2026-07-19 |
 | [skill-my-tw-coverage-enrichment-json](common/skill-my-tw-coverage-enrichment-json) | common | basic | 0.1.0 | Extract and review My-TW-Coverage Markdown enrichment as atomic JSON using the biztrends.TW focus list. | 2026-08-02 |
 | [skill-my-tw-coverage-render-markdown](common/skill-my-tw-coverage-render-markdown) | common | financial-data | 1.0.0 | Render My-TW-Coverage canonical enrichment JSON into organized Markdown without using Pilot_Reports as an active source. | 2026-08-02 |
@@ -55,7 +56,7 @@
 | [skill-uvc-4k-capture](common/skill-uvc-4k-capture) | common | basic | 1.0.0 | Enable camera-agnostic 4K UVC capture on Android BaseUnit: setup_uvc.sh advertises 4K frame descriptor, uvc_camera_forward detects camera max MJPEG resolution at runtime and clamps negotiation — Jieli U20 stays at 1080p, Logitech MeetUp unlocks 3840×2160@30fps. | 2026-07-21 |
 | [skill-wasapi-capture-debug](common/skill-wasapi-capture-debug) | common | basic | 1.0.1 | Enumerate Windows WASAPI capture endpoints via COM IMMDeviceEnumerator to verify UAC2 speakerphone visibility, device state, and active audio sessions. | 2026-07-21 |
 
-最後產生日期：2026-08-03
+最後產生日期：2026-08-04
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理
