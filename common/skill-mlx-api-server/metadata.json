@@ -30,9 +30,14 @@
   ],
   "deployments": [
     {
-      "repo": "wenchiehlee/Mac-mini",
-      "local_path": "github.com/Mac-mini/MLX-API-Server-skill",
+      "repo": "wenchiehlee/skills",
+      "local_path": "github.com/skills/common/skill-mlx-api-server",
       "role": "registry"
+    },
+    {
+      "repo": "wenchiehlee/Mac-mini",
+      "local_path": "github.com/Mac-mini/skills/skill-mlx-api-server",
+      "role": "consumer"
     }
   ]
 }
