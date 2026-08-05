@@ -9,10 +9,38 @@
   "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-tw-land-realty-comps",
   "updated_at": "2026-07-25",
   "license": "MIT",
-  "tags": ["realty", "land", "house", "taiwan", "lvr", "csv", "valuation", "price-index"],
+  "tags": [
+    "realty",
+    "land",
+    "house",
+    "taiwan",
+    "lvr",
+    "csv",
+    "valuation",
+    "price-index"
+  ],
   "compatibility": {
     "python": ">=3.10",
     "requires": [],
-    "system": ["curl"]
-  }
+    "system": [
+      "curl"
+    ]
+  },
+  "files": [
+    "examples/price_index.example.json",
+    "examples/targets.example.json",
+    "metadata.json",
+    "scripts/build_realty_comps.py",
+    "scripts/fetch_price_index.py",
+    "scripts/fetch_realty_season.py",
+    "self_update.py",
+    "SKILL.md"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "local_path": "github.com/skills/common/skill-tw-land-realty-comps",
+      "role": "registry"
+    }
+  ]
 }

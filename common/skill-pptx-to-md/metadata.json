@@ -9,9 +9,30 @@
   "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-pptx-to-md",
   "updated_at": "2026-07-09",
   "license": "MIT",
-  "tags": ["pptx", "powerpoint", "markdown", "converter", "office"],
+  "tags": [
+    "pptx",
+    "powerpoint",
+    "markdown",
+    "converter",
+    "office"
+  ],
   "compatibility": {
     "python": ">=3.10",
-    "requires": ["python-pptx"]
-  }
+    "requires": [
+      "python-pptx"
+    ]
+  },
+  "files": [
+    "metadata.json",
+    "scripts/pptx_to_md.py",
+    "self_update.py",
+    "SKILL.md"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "local_path": "github.com/skills/common/skill-pptx-to-md",
+      "role": "registry"
+    }
+  ]
 }
