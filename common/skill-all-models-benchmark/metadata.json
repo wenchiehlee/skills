@@ -18,8 +18,13 @@
   "deployments": [
     {
       "repo": "wenchiehlee/skills",
-      "local_path": "github.com/skills/common/skill-all-models-benchmark",
-      "role": "registry"
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-all-models-benchmark"
+    },
+    {
+      "repo": "wenchiehlee/biztrends.TW",
+      "role": "consumer",
+      "local_path": "github.com/biztrends.TW/skills/skill-all-models-benchmark"
     }
   ]
 }

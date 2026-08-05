@@ -30,8 +30,13 @@
   "deployments": [
     {
       "repo": "wenchiehlee/skills",
-      "local_path": "github.com/skills/common/skill-market-cost-distribution",
-      "role": "registry"
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-market-cost-distribution"
+    },
+    {
+      "repo": "wenchiehlee/MarketCostDistribution",
+      "role": "consumer",
+      "local_path": "github.com/MarketCostDistribution/skills/skill-market-cost-distribution"
     }
   ]
 }

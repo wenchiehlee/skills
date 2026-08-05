@@ -16,8 +16,13 @@
   "deployments": [
     {
       "repo": "wenchiehlee/skills",
-      "local_path": "github.com/skills/common/skill-finmind-fetch",
-      "role": "registry"
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-finmind-fetch"
+    },
+    {
+      "repo": "wenchiehlee/FinMind",
+      "role": "consumer",
+      "local_path": "github.com/FinMind/skills/skill-finmind-fetch"
     }
   ]
 }

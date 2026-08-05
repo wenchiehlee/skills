@@ -18,8 +18,13 @@
   "deployments": [
     {
       "repo": "wenchiehlee/skills",
-      "local_path": "github.com/skills/common/skill-taiex-report",
-      "role": "registry"
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-taiex-report"
+    },
+    {
+      "repo": "wenchiehlee/TAIEX.TW",
+      "role": "consumer",
+      "local_path": "github.com/TAIEX.TW/skills/skill-taiex-report"
     }
   ]
 }

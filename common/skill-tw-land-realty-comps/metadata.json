@@ -39,8 +39,18 @@
   "deployments": [
     {
       "repo": "wenchiehlee/skills",
-      "local_path": "github.com/skills/common/skill-tw-land-realty-comps",
-      "role": "registry"
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-tw-land-realty-comps"
+    },
+    {
+      "repo": "wenchiehlee/LandAsset",
+      "role": "consumer",
+      "local_path": "github.com/LandAsset/skills/skill-tw-land-realty-comps"
+    },
+    {
+      "repo": "wenchiehlee/TW.LandWatcher",
+      "role": "consumer",
+      "local_path": "github.com/TW.LandWatcher/skills/skill-tw-land-realty-comps"
     }
   ]
 }

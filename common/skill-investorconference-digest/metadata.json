@@ -35,8 +35,13 @@
   "deployments": [
     {
       "repo": "wenchiehlee/skills",
-      "local_path": "github.com/skills/common/skill-investorconference-digest",
-      "role": "registry"
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-investorconference-digest"
+    },
+    {
+      "repo": "wenchiehlee/InvestorConference",
+      "role": "consumer",
+      "local_path": "github.com/InvestorConference/skills/skill-investorconference-digest"
     }
   ]
 }

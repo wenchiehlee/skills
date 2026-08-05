@@ -44,8 +44,13 @@
   "deployments": [
     {
       "repo": "wenchiehlee/skills",
-      "local_path": "github.com/skills/common/skill-tw-land-geo-signal",
-      "role": "registry"
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-tw-land-geo-signal"
+    },
+    {
+      "repo": "wenchiehlee/LandAsset",
+      "role": "consumer",
+      "local_path": "github.com/LandAsset/skills/skill-tw-land-geo-signal"
     }
   ]
 }

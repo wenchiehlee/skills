@@ -21,8 +21,13 @@
   "deployments": [
     {
       "repo": "wenchiehlee/skills",
-      "local_path": "github.com/skills/common/skill-revenue-predict",
-      "role": "registry"
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-revenue-predict"
+    },
+    {
+      "repo": "wenchiehlee/biztrends.TW",
+      "role": "consumer",
+      "local_path": "github.com/biztrends.TW/skills/skill-revenue-predict"
     }
   ]
 }

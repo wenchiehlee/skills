@@ -16,8 +16,13 @@
   "deployments": [
     {
       "repo": "wenchiehlee/skills",
-      "local_path": "github.com/skills/common/skill-download-logo",
-      "role": "registry"
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-download-logo"
+    },
+    {
+      "repo": "wenchiehlee/biztrends.TW",
+      "role": "consumer",
+      "local_path": "github.com/biztrends.TW/skills/skill-download-logo"
     }
   ]
 }
