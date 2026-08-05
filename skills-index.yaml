@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-08-04'
+generated_at: '2026-08-05'
 skills:
 - name: skill-adb-gadget
   group: common
@@ -34,7 +34,7 @@ skills:
   maintainer: WJLEE
   source: biztrends.TW/Skills/skill-all-models-benchmark.md
   updated_at: '2026-07-05'
-  revised_at: '2026-07-18'
+  revised_at: '2026-08-05'
 - name: skill-company-competitor-analysis
   group: common
   path: common/skill-company-competitor-analysis
@@ -80,7 +80,7 @@ skills:
   maintainer: wenchiehlee
   source: ''
   updated_at: '2026-07-07'
-  revised_at: '2026-07-18'
+  revised_at: '2026-08-05'
 - name: skill-facebook-fetch
   group: common
   path: common/skill-facebook-fetch
@@ -91,7 +91,7 @@ skills:
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/Facebook.Fetch
   updated_at: '2026-07-21'
-  revised_at: '2026-07-26'
+  revised_at: '2026-08-05'
 - name: skill-finmind-fetch
   group: common
   path: common/skill-finmind-fetch
@@ -102,7 +102,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/FinMind
   updated_at: '2026-07-24'
-  revised_at: '2026-07-25'
+  revised_at: '2026-08-05'
 - name: skill-google-alert-fetch
   group: common
   path: common/skill-google-alert-fetch
@@ -136,7 +136,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
   updated_at: '2026-07-23'
-  revised_at: '2026-08-01'
+  revised_at: '2026-08-05'
 - name: skill-investorconference-ingest
   group: common
   path: common/skill-investorconference-ingest
@@ -180,7 +180,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/MarketCostDistribution
   updated_at: '2026-07-15'
-  revised_at: '2026-07-18'
+  revised_at: '2026-08-05'
 - name: skill-mlx-api-client-ocr
   group: common
   path: common/skill-mlx-api-client-ocr
@@ -245,7 +245,7 @@ skills:
   maintainer: wenchiehlee
   source: ''
   updated_at: '2026-07-09'
-  revised_at: '2026-07-18'
+  revised_at: '2026-08-05'
 - name: skill-revenue-expense-profit-predict
   group: common
   path: common/skill-revenue-expense-profit-predict
@@ -255,7 +255,7 @@ skills:
   maintainer: ''
   source: ''
   updated_at: ''
-  revised_at: '2026-07-19'
+  revised_at: '2026-08-05'
 - name: skill-revenue-predict
   group: common
   path: common/skill-revenue-predict
@@ -265,7 +265,7 @@ skills:
   maintainer: ''
   source: ''
   updated_at: ''
-  revised_at: '2026-07-18'
+  revised_at: '2026-08-05'
 - name: skill-stock-universe-onboarding
   group: common
   path: common/skill-stock-universe-onboarding
@@ -286,7 +286,7 @@ skills:
   maintainer: wenchiehlee
   source: TAIEX.TW
   updated_at: '2026-07-07'
-  revised_at: '2026-07-18'
+  revised_at: '2026-08-05'
 - name: skill-taiex-monitor
   group: common
   path: common/skill-taiex-monitor
@@ -296,7 +296,7 @@ skills:
   maintainer: wenchiehlee
   source: TAIEX.TW
   updated_at: '2026-07-07'
-  revised_at: '2026-07-18'
+  revised_at: '2026-08-05'
 - name: skill-taiex-report
   group: common
   path: common/skill-taiex-report
@@ -306,7 +306,7 @@ skills:
   maintainer: wenchiehlee
   source: TAIEX.TW
   updated_at: '2026-07-07'
-  revised_at: '2026-07-19'
+  revised_at: '2026-08-05'
 - name: skill-taiex-sync
   group: common
   path: common/skill-taiex-sync
@@ -316,7 +316,7 @@ skills:
   maintainer: wenchiehlee
   source: TAIEX.TW
   updated_at: '2026-07-07'
-  revised_at: '2026-07-18'
+  revised_at: '2026-08-05'
 - name: skill-taiex-viz
   group: common
   path: common/skill-taiex-viz
@@ -326,7 +326,7 @@ skills:
   maintainer: wenchiehlee
   source: TAIEX.TW
   updated_at: '2026-07-07'
-  revised_at: '2026-07-18'
+  revised_at: '2026-08-05'
 - name: skill-tw-land-geo-signal
   group: common
   path: common/skill-tw-land-geo-signal
@@ -337,7 +337,7 @@ skills:
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/LandAsset
   updated_at: '2026-07-25'
-  revised_at: '2026-07-25'
+  revised_at: '2026-08-05'
 - name: skill-tw-land-realty-comps
   group: common
   path: common/skill-tw-land-realty-comps
@@ -347,7 +347,7 @@ skills:
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/LandAsset
   updated_at: '2026-07-25'
-  revised_at: '2026-07-25'
+  revised_at: '2026-08-05'
 - name: skill-usb-gadget-debug
   group: common
   path: common/skill-usb-gadget-debug
