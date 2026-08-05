@@ -358,7 +358,7 @@ skills:
   maintainer: WJLEE
   source: wj-lee_Barco.github.com/gadget/debug_usb.py
   updated_at: '2026-07-21'
-  revised_at: '2026-07-21'
+  revised_at: '2026-08-05'
 - name: skill-usb-gadget-monitor
   group: common
   path: common/skill-usb-gadget-monitor
@@ -371,7 +371,7 @@ skills:
   maintainer: WJLEE
   source: wj-lee_Barco.github.com/gadget/android_baseunit_monitor.py
   updated_at: '2026-07-21'
-  revised_at: '2026-07-21'
+  revised_at: '2026-08-05'
 - name: skill-usb-uvc-4k-capture
   group: common
   path: common/skill-usb-uvc-4k-capture
