@@ -160,4 +160,4 @@ android_baseunit_monitor.py
 ## 9. Related Skills
 
 - [`skill-usb-gadget-debug`](../skill-usb-gadget-debug/SKILL.md) — lightweight USB node check (no GUI)
-- [`skill-wasapi-capture-debug`](../skill-wasapi-capture-debug/SKILL.md) — detailed WASAPI capture endpoint dump
+- [`skill-usb-wasapi-capture-debug`](../skill-usb-wasapi-capture-debug/SKILL.md) — detailed WASAPI capture endpoint dump

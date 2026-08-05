@@ -1,0 +1,22 @@
+{
+  "name": "skill-company-investorconference-upcoming-earnings",
+  "description": "Regenerate raw_event_upcoming_earnings.csv from InvestorConference's own TW/US watchlists, classifying every event as 財報, 法說會, or 受邀法說.",
+  "category": "financial-data",
+  "version": "1.0.0",
+  "author": "wenchiehlee",
+  "maintainer": "wenchiehlee",
+  "source": "https://github.com/wenchiehlee-money/InvestorConference",
+  "updated_at": "2026-07-26",
+  "license": "MIT",
+  "tags": [
+    "investor-conference",
+    "earnings-calendar",
+    "mops",
+    "yfinance",
+    "watchlist",
+    "financial-results"
+  ],
+  "dependencies": [
+    "skill-company-investorconference-ingest>=1.2.9"
+  ]
+}

@@ -97,5 +97,5 @@ No external pip packages required. Script exits after one enumeration pass.
 
 ## 6. Related Skills
 
-- [`skill-wasapi-capture-debug`](../skill-wasapi-capture-debug/SKILL.md) — verify UAC2 capture endpoint visible to WASAPI
+- [`skill-usb-wasapi-capture-debug`](../skill-usb-wasapi-capture-debug/SKILL.md) — verify UAC2 capture endpoint visible to WASAPI
 - [`skill-usb-gadget-monitor`](../skill-usb-gadget-monitor/SKILL.md) — real-time GUI combining USB + WASAPI + UVC status
