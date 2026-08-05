@@ -19,14 +19,7 @@
   "files": [
     "SKILL.md",
     "metadata.json",
-    "self_update.py",
-    "scripts/server.py",
-    "scripts/auth.py",
-    "scripts/config.py",
-    "scripts/executor.py",
-    "scripts/ocr_run.py",
-    "scripts/requirements.txt",
-    "scripts/bench_params.py"
+    "self_update.py"
   ],
   "deployments": [
     {
