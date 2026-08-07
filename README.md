@@ -56,7 +56,7 @@
 | [skill-usb-uvc-4k-capture](common/skill-usb-uvc-4k-capture) | common | basic | 1.0.0 | Enable camera-agnostic 4K UVC capture on Android BaseUnit: setup_uvc.sh advertises 4K frame descriptor, uvc_camera_forward detects camera max MJPEG resolution at runtime and clamps negotiation — Jieli U20 stays at 1080p, Logitech MeetUp unlocks 3840×2160@30fps. | 2026-08-05 |
 | [skill-usb-wasapi-capture-debug](common/skill-usb-wasapi-capture-debug) | common | basic | 1.0.1 | Enumerate Windows WASAPI capture endpoints via COM IMMDeviceEnumerator to verify UAC2 speakerphone visibility, device state, and active audio sessions. | 2026-08-05 |
 
-最後產生日期：2026-08-05
+最後產生日期：2026-08-07
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理
