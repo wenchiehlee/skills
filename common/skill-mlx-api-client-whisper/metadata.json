@@ -1,0 +1,57 @@
+{
+  "name": "skill-mlx-api-client-whisper",
+  "description": "以 GitHub issue 觸發 Mac-mini 上的 whisper 轉錄 pipeline（skill-mlx-api-server-whisper），並輪詢結果是否已同步回本 repo。支援法說會音訊、YouTube 財經影片等多種來源。",
+  "category": "document",
+  "version": "1.0.0",
+  "author": "wenchiehlee",
+  "maintainer": "wenchiehlee",
+  "source": "https://github.com/wenchiehlee/InvestorConference",
+  "updated_at": "2026-08-07",
+  "license": "MIT",
+  "tags": [
+    "whisper",
+    "asr",
+    "youtube",
+    "mac-mini",
+    "github-issues",
+    "api-client",
+    "async"
+  ],
+  "compatibility": {
+    "python": ">=3.10",
+    "requires": [
+      "requests",
+      "python-dotenv"
+    ],
+    "env": [
+      "WHISPER_TARGET_REPO",
+      "WHISPER_SOURCE_REPO",
+      "WHISPER_SOURCE_TYPE",
+      "GH_TOKEN"
+    ]
+  },
+  "files": [
+    "SKILL.md",
+    "metadata.json",
+    "self_update.py",
+    "scripts/whisper_issue_client.py"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "local_path": "github.com/skills/common/skill-mlx-api-client-whisper",
+      "role": "registry"
+    },
+    {
+      "repo": "wenchiehlee/InvestorConference",
+      "local_path": "github.com/InvestorConference/skills/skill-mlx-api-client-whisper",
+      "role": "consumer"
+    },
+    {
+      "repo": "wenchiehlee-money/YoutubeAudio.Fetch",
+      "local_path": "github.com/YoutubeAudio.Fetch/skills/skill-mlx-api-client-whisper",
+      "role": "consumer"
+    }
+  ],
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-mlx-api-client-whisper"
+}

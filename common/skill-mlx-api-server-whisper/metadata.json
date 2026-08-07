@@ -1,0 +1,60 @@
+{
+  "name": "mlx-api-server-whisper",
+  "description": "Mac-mini 上以 self-hosted GitHub Actions runner 執行的語音轉錄 pipeline（whisper 轉錄 → LLM postprocess → CER 校驗 → GT 校正迴圈），透過 issue 驅動、支援多種音訊來源（法說會、YouTube 財經影片…）。",
+  "category": "server",
+  "version": "1.0.0",
+  "author": "wenchiehlee",
+  "maintainer": "wenchiehlee",
+  "source": "https://github.com/wenchiehlee/Mac-mini/tree/main/Whisper-API-Server",
+  "updated_at": "2026-08-07",
+  "license": "MIT",
+  "tags": [
+    "server",
+    "whisper",
+    "mlx",
+    "faster-whisper",
+    "cer",
+    "asr",
+    "mac-mini",
+    "github-actions",
+    "self-hosted-runner",
+    "youtube"
+  ],
+  "compatibility": {
+    "platform": "macOS (Apple Silicon)",
+    "python": ">=3.10",
+    "requires": [
+      "mlx-whisper",
+      "faster-whisper",
+      "pyyaml",
+      "opencc-python-reimplemented",
+      "httpx",
+      "python-dotenv",
+      "jiwer",
+      "amplitude-analytics"
+    ],
+    "secrets": [
+      "REPO_FILE_SYNC_WENCHIEHLEE_MONEY",
+      "HF_TOKEN",
+      "AMPLITUDE_API_KEY"
+    ]
+  },
+  "files": [
+    "SKILL.md",
+    "metadata.json",
+    "self_update.py"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "local_path": "github.com/skills/common/skill-mlx-api-server-whisper",
+      "role": "registry"
+    },
+    {
+      "repo": "wenchiehlee/Mac-mini",
+      "local_path": "github.com/Mac-mini/skills/skill-mlx-api-server-whisper",
+      "role": "consumer"
+    }
+  ],
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-mlx-api-server-whisper"
+}
