@@ -1,15 +1,15 @@
 ---
-name: mac-mini-ocr
+name: skill-mlx-api-client-ocr
 description: 使用自建在 Mac-mini 上的 OCR API 服務，將 PDF 或圖片報告轉錄為 Markdown 格式，適用於健康報告或各類文件的數位化分析。
 ---
 
-# Mac-mini OCR API 整合技能 (mac-mini-ocr)
+# Mac-mini OCR API 整合技能 (skill-mlx-api-client-ocr)
 
 | 項目 | 內容 |
 | :--- | :--- |
 | 版本 | 1.3.0（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/FamilyHealthyCheck |
-| 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mac-mini-ocr`） |
+| 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-client-ocr`） |
 | 維護者 | wenchiehlee |
 
 此技能封裝了與 Tailscale 虛擬局域網路內自建的 Mac-mini OCR API 的連線與排版抓取。它能自動將您上傳的 PDF 檔案或圖片（JPG/PNG 等）傳送至 Mac-mini 伺服器，利用 OCR 引擎進行文字轉錄，並以結構清晰的 Markdown 格式回傳，方便後續的數據提取與分析。
@@ -19,7 +19,7 @@ description: 使用自建在 Mac-mini 上的 OCR API 服務，將 PDF 或圖片�
 ## 📦 技能結構說明
 當您將此技能複製到其他專案時，整個技能資料夾結構如下：
 ```text
-mac-mini-ocr/
+skill-mlx-api-client-ocr/
 ├── SKILL.md               # 技能描述與對接指引 (本檔案)
 ├── metadata.json          # 機器可讀 metadata（名稱、版本、來源），供版本檢查使用
 ├── self_update.py         # 從 skills 登錄庫檢查並更新此技能的工具
@@ -141,7 +141,7 @@ for heic_path in sorted(Path("Images").glob("*.HEIC")):
 *   **編碼相容性**：針對 Windows 主機提供 UTF-8 stdout 自動重新配置，防止因檔名或內容中的中文字元導致 Unicode 噴錯。
 
 ## 🔄 版本管理與更新
-*   本技能的唯一可信來源為 skills 登錄庫中的 `common/skill-mac-mini-ocr`；各專案（FamilyHealthyCheck、Tax、MOPS 等）內的副本皆由登錄庫部署而來。
+*   本技能的唯一可信來源為 skills 登錄庫中的 `common/skill-mlx-api-client-ocr`；各專案（FamilyHealthyCheck、Tax、MOPS 等）內的副本皆由登錄庫部署而來。
 *   版本採語意化版本（`MAJOR.MINOR.PATCH`），記錄於 `metadata.json` 的 `version` 欄位。
 *   檢查並更新到登錄庫最新版本：在技能資料夾內執行
     ```bash

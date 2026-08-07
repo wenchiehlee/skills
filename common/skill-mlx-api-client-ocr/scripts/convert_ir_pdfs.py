@@ -3,12 +3,12 @@
 """
 convert_ir_pdfs.py — 批次將各股票資料夾中的 *.pdf 轉為 *.md
 
-轉錄一律透過 skills/mac-mini-ocr 技能（與其他 repo 的用法一致）：
+轉錄一律透過 skills/skill-mlx-api-client-ocr 技能（與其他 repo 的用法一致）：
 - 先保留 PDF 內建文字層，產生乾淨 Markdown。
 - 只有無文字層或文字層不足的頁面才標記 TODO:OCR，並嘗試用 Mac-mini OCR 補轉錄。
 - Mac-mini 離線或 OCR 失敗時，保留文字層 Markdown 與 TODO:OCR 標記，之後可用以下指令補轉錄：
 
-      python skills/mac-mini-ocr/scripts/refine_todo_ocr.py <md檔> --pdf <pdf檔>
+      python skills/skill-mlx-api-client-ocr/scripts/refine_todo_ocr.py <md檔> --pdf <pdf檔>
 
 使用方式：
     python scripts/convert_ir_pdfs.py             # 掃描全部股票資料夾
@@ -40,7 +40,7 @@ load_dotenv(REPO_ROOT / ".env")
 # 透過技能腳本進行轉錄
 SKILL_SCRIPTS = Path(__file__).resolve().parent
 if not SKILL_SCRIPTS.exists():
-    SKILL_SCRIPTS = REPO_ROOT / "skills" / "skill-mac-mini-ocr" / "scripts"
+    SKILL_SCRIPTS = REPO_ROOT / "skills" / "skill-mlx-api-client-ocr" / "scripts"
 sys.path.insert(0, str(SKILL_SCRIPTS))
 from ocr_client import transcribe_document_to_markdown  # noqa: E402
 from pdf_fallback import extract_pdf_to_markdown  # noqa: E402
@@ -103,7 +103,7 @@ def convert_pdf_to_md(pdf_path, md_path):
         return True
 
 def main():
-    print("=== Converting Investor Presentation PDFs to Markdown (via skills/mac-mini-ocr) ===")
+    print("=== Converting Investor Presentation PDFs to Markdown (via skills/skill-mlx-api-client-ocr) ===")
     targets = set(sys.argv[1:])
     data_dir = REPO_ROOT / "data"
     company_dirs = [d for d in data_dir.iterdir() if is_company_dir(d)]

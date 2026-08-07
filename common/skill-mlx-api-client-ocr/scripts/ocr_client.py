@@ -13,6 +13,11 @@ import re
 from pathlib import Path
 from dotenv import load_dotenv
 
+try:
+    from bs4 import BeautifulSoup
+except Exception:  # pragma: no cover - optional dependency
+    BeautifulSoup = None
+
 # Fix Windows console encoding for Chinese characters
 if platform.system() == 'Windows':
     try:
@@ -24,6 +29,56 @@ if platform.system() == 'Windows':
 load_dotenv()
 
 SAVE_RESULTS_MARKER = "===============save results:==============="
+
+HTML_TABLE_RE = re.compile(r"<table\b.*?</table>", re.IGNORECASE | re.DOTALL)
+
+
+def _html_table_to_markdown(html: str) -> str:
+    """Convert a single <table>...</table> block to a GFM pipe table.
+
+    Baidu Unlimited-OCR emits detected tables as raw HTML <table> markup
+    (correct row/column structure) rather than Markdown pipe syntax. GitHub
+    renders embedded HTML tables fine, but downstream tooling that expects
+    plain Markdown (digest/segment-weight extraction, grep-based pipelines)
+    doesn't parse HTML — so normalize to a pipe table here.
+    """
+    if BeautifulSoup is None:
+        return html
+
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+        table = soup.find("table")
+        if table is None:
+            return html
+
+        rows = []
+        for tr in table.find_all("tr"):
+            cells = []
+            for cell in tr.find_all(["td", "th"]):
+                # Drop non-text placeholders (e.g. <img> markers for icons/checkmarks)
+                # rather than losing the whole cell.
+                text = cell.get_text(separator=" ", strip=True)
+                cells.append(text.replace("|", "/").replace("\n", " ").strip())
+            if any(cells):
+                rows.append(cells)
+
+        if len(rows) < 1:
+            return html
+
+        col_count = max(len(r) for r in rows)
+        rows = [r + [""] * (col_count - len(r)) for r in rows]
+
+        md_lines = ["| " + " | ".join(rows[0]) + " |", "|" + "|".join(["---"] * col_count) + "|"]
+        for r in rows[1:]:
+            md_lines.append("| " + " | ".join(r) + " |")
+        return "\n".join(md_lines)
+    except Exception:
+        return html
+
+
+def _convert_html_tables(text: str) -> str:
+    """Replace every HTML <table> block in *text* with a Markdown pipe table."""
+    return HTML_TABLE_RE.sub(lambda m: _html_table_to_markdown(m.group(0)), text)
 
 
 def clean_ocr_markdown(markdown_text: str) -> str:
@@ -53,6 +108,7 @@ def clean_ocr_markdown(markdown_text: str) -> str:
             cleaned_lines.append(stripped)
 
     text = "\n".join(cleaned_lines)
+    text = _convert_html_tables(text)
     text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()
 

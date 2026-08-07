@@ -63,6 +63,58 @@ def _extract_with_pypdf(path_obj: Path, min_chars: int, mark_embedded_images: bo
     return parts, len(reader.pages), todo_count
 
 
+def _table_cell_to_text(value) -> str:
+    """Render one extracted table cell. None means "part of a merged cell
+    above/left" per PyMuPDF's table.extract() convention — must stay blank,
+    not be filled in, or every row in a vertically-merged column ends up
+    showing a duplicate copy of the first row's text (a real bug we hit in
+    table.to_markdown(), which fills merged cells instead of leaving them
+    blank)."""
+    if value is None:
+        return ""
+    return str(value).replace("\n", "; ").replace("|", "/").strip()
+
+
+def _extract_tables_markdown(page) -> list[str]:
+    """Detect tabular regions on a page and render them as Markdown tables.
+
+    Numeric financial tables (monthly sales, income statements, etc.) come out
+    of plain fitz text extraction as an unstructured flat list of numbers with
+    no row/column alignment. find_tables() recovers the grid so downstream
+    readers (and digest/segment-weight extraction) get an actual table instead
+    of having to guess which number belongs to which row.
+
+    Renders from table.extract() (raw cell values) rather than
+    table.to_markdown(), because to_markdown() incorrectly back-fills merged
+    cells with a repeated copy of a neighboring row's text.
+    """
+    try:
+        tables = page.find_tables()
+    except Exception:
+        return []
+    out: list[str] = []
+    for i, table in enumerate(tables.tables, start=1):
+        try:
+            rows = table.extract()
+        except Exception:
+            continue
+        if not rows or len(rows) < 2:
+            continue
+        col_count = max(len(r) for r in rows)
+        md_rows = [
+            "| " + " | ".join(_table_cell_to_text(r[c]) if c < len(r) else "" for c in range(col_count)) + " |"
+            for r in rows
+        ]
+        header = md_rows[0]
+        sep = "|" + "|".join(["---"] * col_count) + "|"
+        out.append(f"**表格 {i}（自動偵測，儲存格合併已保留空白,不做重複填值)：**")
+        out.append(header)
+        out.append(sep)
+        out.extend(md_rows[1:])
+        out.append("")
+    return out
+
+
 def _extract_with_fitz(path_obj: Path, min_chars: int, mark_embedded_images: bool) -> tuple[list[str], int, int]:
     if fitz is None:
         raise RuntimeError("PyMuPDF/fitz is not available")
@@ -82,6 +134,10 @@ def _extract_with_fitz(path_obj: Path, min_chars: int, mark_embedded_images: boo
             parts.append("> TODO:OCR - 此頁文字層不足，待 Mac-mini OCR 補轉錄。")
         else:
             parts.append(text)
+            table_md = _extract_tables_markdown(page)
+            if table_md:
+                parts.append("")
+                parts.extend(table_md)
             if mark_embedded_images and image_count:
                 todo_count += 1
                 parts.append("")
