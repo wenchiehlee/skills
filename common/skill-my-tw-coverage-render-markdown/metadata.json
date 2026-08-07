@@ -2,7 +2,7 @@
   "name": "skill-my-tw-coverage-render-markdown",
   "description": "Render My-TW-Coverage canonical enrichment JSON into organized Markdown without using Pilot_Reports as an active source.",
   "category": "financial-data",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "maintainer": "wenchiehlee-money",
   "source": "https://github.com/wenchiehlee-money/My-TW-Coverage",
   "updated_at": "2026-07-31",
@@ -11,5 +11,8 @@
       "name": "skill-company-competitor-analysis",
       "version": ">=0.1.0"
     }
+  ],
+  "files": [
+    "self_update.py"
   ]
 }

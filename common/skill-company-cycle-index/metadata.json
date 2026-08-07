@@ -2,8 +2,11 @@
   "name": "skill-company-cycle-index",
   "description": "套用已審核或已結構化的 company revenue segment weights 到 canonical cycle model；支援 Taiwan 與 United_States pipeline，US 對齊 canonical_cycle_specification 並用 latest-mix proxy 補齊缺 segment quarters，生成對應 company_cycle_index_*.png 並更新 README。",
   "category": "financial-strategy",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "maintainer": "wenchiehlee",
   "source": "biztrends.TW",
-  "updated_at": "2026-07-20"
+  "updated_at": "2026-07-20",
+  "files": [
+    "self_update.py"
+  ]
 }

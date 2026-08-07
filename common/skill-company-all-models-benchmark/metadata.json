@@ -2,7 +2,7 @@
   "name": "skill-company-all-models-benchmark",
   "description": "多模型與分析師共識效能評估標準作業程序。",
   "category": "financial-forecasting",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "maintainer": "WJLEE",
   "source": "biztrends.TW/Skills/skill-company-all-models-benchmark.md",
   "updated_at": "2026-07-05",

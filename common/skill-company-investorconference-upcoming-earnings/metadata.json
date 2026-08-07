@@ -2,7 +2,7 @@
   "name": "skill-company-investorconference-upcoming-earnings",
   "description": "Regenerate raw_event_upcoming_earnings.csv from InvestorConference's own TW/US watchlists, classifying every event as 財報, 法說會, or 受邀法說.",
   "category": "financial-data",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee-money/InvestorConference",
@@ -18,5 +18,8 @@
   ],
   "dependencies": [
     "skill-company-investorconference-ingest>=1.2.9"
+  ],
+  "files": [
+    "self_update.py"
   ]
 }

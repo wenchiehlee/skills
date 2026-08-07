@@ -1,5 +1,8 @@
 {
   "name": "skill-company-ai-trend-analytics",
-  "version": "0.2.2",
-  "description": "Build AI trend coverage, validity, issue register, and inference quality-gate outputs from company canonical cycle data."
+  "version": "0.2.3",
+  "description": "Build AI trend coverage, validity, issue register, and inference quality-gate outputs from company canonical cycle data.",
+  "files": [
+    "self_update.py"
+  ]
 }

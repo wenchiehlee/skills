@@ -2,11 +2,14 @@
   "name": "skill-android-adb-gadget",
   "description": "PowerShell module for managing dual ADB transports (USB + Ethernet) on an embedded Android device that exposes a USB composite gadget — handles state detection, Ethernet bootstrapping, safe reboot/recovery, gadget mount, and HID function control.",
   "category": "basic",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "maintainer": "WJLEE",
   "source": "wj-lee_Barco.github.com/gadget/skills/Android BaseUnit-adb",
   "updated_at": "2026-07-21",
   "compatibility": {
     "copilot-cli": ">=1.0.0"
-  }
+  },
+  "files": [
+    "self_update.py"
+  ]
 }

@@ -2,7 +2,7 @@
   "name": "skill-taiex-viz",
   "description": "不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖",
   "category": "financial-accounting",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "maintainer": "wenchiehlee",
   "source": "TAIEX.TW",
   "updated_at": "2026-07-07",

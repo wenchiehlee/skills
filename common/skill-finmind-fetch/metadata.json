@@ -2,7 +2,7 @@
   "name": "skill-finmind-fetch",
   "description": "Fetch Taiwan stock margin and price data from FinMind API and export/merge to stage1 raw CSV.",
   "category": "financial-data",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee/FinMind",
   "updated_at": "2026-07-24",

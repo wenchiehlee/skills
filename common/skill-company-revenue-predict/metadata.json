@@ -2,7 +2,7 @@
   "name": "skill-company-revenue-predict",
   "description": "營收預測與 10-Model 評估 SOP",
   "category": "financial-forecasting",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "wenchiehlee",
   "license": "MIT",
   "tags": [

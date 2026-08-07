@@ -1,7 +1,7 @@
 {
   "name": "skill-company-investorconference-digest",
   "description": "法說會/earnings call 與財報結果 digest SOP；支援 FIN/GT/IR/Q&A、Skills 財報結果、公司財報文件、Yahoo consensus、預期差、模型修正路徑與美股對台股 read-through。",
-  "version": "2.4.5",
+  "version": "2.4.6",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee-money/InvestorConference",

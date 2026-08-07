@@ -2,9 +2,12 @@
   "name": "skill-stock-universe-onboarding",
   "description": "Add stocks or tickers to upstream ConceptStocks and TAIEX monitor/focus source lists without editing generated downstream outputs.",
   "category": "financial-data",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "maintainer": "wenchiehlee",
   "source": "biztrends.TW / ConceptStocks / Selenium-Actions.Auction",
   "updated_at": "2026-07-22",
-  "dependencies": []
+  "dependencies": [],
+  "files": [
+    "self_update.py"
+  ]
 }

@@ -2,7 +2,7 @@
   "name": "skill-company-mops-financialreport-pdf-md",
   "description": "Download Taiwan MOPS quarterly financial-report PDFs, then convert same-stem Markdown sidecars with skill-mac-mini-ocr hybrid PDF/OCR workflow.",
   "category": "financial-data",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee-money/MOPS",
@@ -18,5 +18,8 @@
   ],
   "dependencies": [
     "skill-mac-mini-ocr>=1.2.0"
+  ],
+  "files": [
+    "self_update.py"
   ]
 }

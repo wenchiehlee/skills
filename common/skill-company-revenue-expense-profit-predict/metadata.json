@@ -2,7 +2,7 @@
   "name": "skill-company-revenue-expense-profit-predict",
   "description": "季度損益三線（營業收入 / 總支出 / 營業利益）底部加總預測 SOP",
   "category": "financial-forecasting",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "wenchiehlee",
   "license": "MIT",
   "tags": [
