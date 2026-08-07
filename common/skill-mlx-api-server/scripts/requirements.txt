@@ -1,0 +1,19 @@
+flask>=3.0
+python-dotenv>=1.0
+waitress>=3.0
+mlx-vlm>=0.1.0
+torch
+torchvision
+einops
+pymupdf
+addict
+easydict
+pillow
+psutil
+matplotlib
+# Pinned <5.0.0: baidu/Unlimited-OCR remote code fails to import on transformers 5.x
+# (see a6d70e6); upstream unfixed as of 2026-07. Keeps us in CVE-2026-5241 range
+# (LightGlue model-loading ACE, patched in 5.5.0) — accepted: this server never
+# loads LightGlue models, and the OCR path already runs trust_remote_code=True.
+# Re-attempt upgrade to >=5.5.0 once Unlimited-OCR supports transformers 5.x.
+transformers<5.0.0

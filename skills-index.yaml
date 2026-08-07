@@ -227,13 +227,13 @@ skills:
 - name: skill-mlx-api-server
   group: common
   path: common/skill-mlx-api-server
-  version: 1.0.1
+  version: 1.1.0
   description: 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，提供 Baidu Unlimited-OCR
     文件轉錄（/ocr）與 MLX LLM 推理（/exec，Qwen3.5/Gemma4），以 Flask/Waitress 常駐服務形式運行。
   category: server
   maintainer: wenchiehlee
-  source: https://github.com/wenchiehlee/Mac-mini/tree/main/MLX-API-Server
-  updated_at: '2026-08-05'
+  source: https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts
+  updated_at: '2026-08-07'
   revised_at: '2026-08-07'
 - name: skill-mlx-api-server-whisper
   group: common

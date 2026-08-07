@@ -2,12 +2,11 @@
   "name": "mlx-api-server",
   "description": "在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，提供 Baidu Unlimited-OCR 文件轉錄（/ocr）與 MLX LLM 推理（/exec，Qwen3.5/Gemma4），以 Flask/Waitress 常駐服務形式運行。",
   "category": "server",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
-  "source": "https://github.com/wenchiehlee/Mac-mini/tree/main/MLX-API-Server",
-  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-mlx-api-server",
-  "updated_at": "2026-08-05",
+  "source": "https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts",
+  "updated_at": "2026-08-07",
   "license": "MIT",
   "tags": [
     "server",
@@ -35,7 +34,15 @@
   "files": [
     "SKILL.md",
     "metadata.json",
-    "self_update.py"
+    "self_update.py",
+    "scripts/server.py",
+    "scripts/auth.py",
+    "scripts/config.py",
+    "scripts/executor.py",
+    "scripts/ocr_run.py",
+    "scripts/bench_params.py",
+    "scripts/test_qwen3_thinking.py",
+    "scripts/requirements.txt"
   ],
   "deployments": [
     {
@@ -48,5 +55,6 @@
       "local_path": "github.com/Mac-mini/skills/skill-mlx-api-server",
       "role": "consumer"
     }
-  ]
+  ],
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-mlx-api-server"
 }
