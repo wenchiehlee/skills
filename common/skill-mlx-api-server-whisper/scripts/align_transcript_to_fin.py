@@ -31,7 +31,7 @@ import sys
 import difflib
 from pathlib import Path
 
-WHISPER_DIR = Path(__file__).parent           # Mac-mini/Whisper-API-Server
+WHISPER_DIR = Path(__file__).parent           # Mac-mini/mlx-api-server-whisper
 MAC_MINI    = WHISPER_DIR.parent             # Mac-mini
 IC_REPO     = MAC_MINI.parent / "InvestorConference"
 
@@ -288,7 +288,7 @@ def main():
     asp_path = stock_dir / f"{stem}_alphaspread_transcript.md"
 
     out_ic = stock_dir / f"{stem}_GT.srt"          # InvestorConference copy
-    out_gt = gt_dir    / f"{stem}_GT.srt"          # Whisper-API-Server GroundTrue
+    out_gt = gt_dir    / f"{stem}_GT.srt"          # mlx-api-server-whisper GroundTrue
 
     for p in (fin_path, asp_path):
         if not p.exists():

@@ -21,8 +21,8 @@ Metrics per case × strategy:
   gt_dist    — edit distance to turboscribe GT (if available)
 
 Usage (on Mac mini):
-    python3 Whisper-API-Server/probe_mlx_per_seg.py \\
-        --sandbox Whisper-API-Server/whisper-sandbox \\
+    python3 mlx-api-server-whisper/probe_mlx_per_seg.py \\
+        --sandbox mlx-api-server-whisper/whisper-sandbox \\
         --stem 2357_2025_q4_stage1
 """
 
@@ -259,7 +259,7 @@ def avg_pairwise_ed(texts: list[str]) -> float:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--sandbox", default="Whisper-API-Server/whisper-sandbox")
+    parser.add_argument("--sandbox", default="mlx-api-server-whisper/whisper-sandbox")
     parser.add_argument("--stem",    default="2357_2025_q4_stage1")
     parser.add_argument("--model",   default="mlx-community/Qwen2.5-14B-Instruct-4bit")
     parser.add_argument("--exps",    default="1,2,3,4,6",

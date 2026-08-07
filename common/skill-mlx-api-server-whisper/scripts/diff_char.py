@@ -95,14 +95,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("stem", help="e.g. 2357_2025_q4_stage2")
     parser.add_argument("stage", help="stage name, e.g. mlx-exp1-exp2-exp3-exp4-exp6-final")
-    parser.add_argument("--sandbox", default="Whisper-API-Server/whisper-sandbox")
+    parser.add_argument("--sandbox", default="mlx-api-server-whisper/whisper-sandbox")
     parser.add_argument("--context", type=int, default=12,
                         help="chars of context before/after diff")
     args = parser.parse_args()
 
     sandbox = Path(args.sandbox)
     # GT is always _GT.srt (renamed from _turboscribe.srt)
-    gt_path = Path("Mac-mini/Whisper-API-Server/GroundTrue") / f"{args.stem}_GT.srt"
+    gt_path = Path("Mac-mini/mlx-api-server-whisper/GroundTrue") / f"{args.stem}_GT.srt"
     if not gt_path.exists():
         # Fallback to sandbox if not in GroundTrue/
         gt_path = sandbox / f"{args.stem}_GT.srt"

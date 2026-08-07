@@ -9,10 +9,10 @@ Pipeline:
   Pass 5  Write final srt
 
 Usage:
-  python Whisper-API-Server/merge_transcripts.py \\
-      --sandbox Whisper-API-Server/whisper-sandbox \\
+  python mlx-api-server-whisper/merge_transcripts.py \\
+      --sandbox mlx-api-server-whisper/whisper-sandbox \\
       --stem 2357_2025_q4 \\
-      --output Whisper-API-Server/whisper-sandbox/2357_2025_q4_final.srt
+      --output mlx-api-server-whisper/whisper-sandbox/2357_2025_q4_final.srt
 """
 
 import re
@@ -212,7 +212,7 @@ def write_srt(segs: list, out_path: Path, stem: str, source_note: str):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--sandbox', default='Whisper-API-Server/whisper-sandbox')
+    parser.add_argument('--sandbox', default='mlx-api-server-whisper/whisper-sandbox')
     parser.add_argument('--stem',    default='2357_2025_q4')
     parser.add_argument('--output',  default=None)
     parser.add_argument('--window',  type=float, default=2.0)

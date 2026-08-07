@@ -38,7 +38,7 @@ def parse_scores(report_path: Path) -> dict[str, float]:
 def main():
     parser = argparse.ArgumentParser(description="Select best exp by cross-stage 評分")
     parser.add_argument("stem", help="e.g. 2357_2025_q4")
-    parser.add_argument("--sandbox", default="Whisper-API-Server/whisper-sandbox")
+    parser.add_argument("--sandbox", default="mlx-api-server-whisper/whisper-sandbox")
     args = parser.parse_args()
 
     sandbox = Path(args.sandbox)

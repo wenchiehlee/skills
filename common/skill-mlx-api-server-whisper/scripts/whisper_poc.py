@@ -1018,10 +1018,10 @@ def main():
     # ── Apply company config (only if explicit args were NOT provided) ─────────
     if args.company_config is not None:
         config_path = Path(args.company_config)
-        # cwd-relative (not __file__-relative): these live in Whisper-API-Server/ as
+        # cwd-relative (not __file__-relative): these live in mlx-api-server-whisper/ as
         # data/config that grows over time, independent of where this script itself lives.
-        generic_config_path = Path("Whisper-API-Server/whisper.yaml")
-        generic_en_config_path = Path("Whisper-API-Server/whisper-en.yaml")
+        generic_config_path = Path("mlx-api-server-whisper/whisper.yaml")
+        generic_en_config_path = Path("mlx-api-server-whisper/whisper-en.yaml")
         if not config_path.exists():
             if generic_config_path.exists():
                 print(

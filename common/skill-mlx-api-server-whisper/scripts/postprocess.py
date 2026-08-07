@@ -12,7 +12,7 @@ import io
 from pathlib import Path
 
 # Configs
-SANDBOX = Path("Whisper-API-Server/whisper-sandbox")
+SANDBOX = Path("mlx-api-server-whisper/whisper-sandbox")
 EXPECTED_LANG: str = "zh" 
 CORRECTIONS: dict[str, str] = {}
 ENG_CORRECTIONS: dict[str, str] = {}
@@ -29,10 +29,10 @@ HALLUCINATION_BLACKLIST = [
 def _load_config(stem: str) -> None:
     global EXPECTED_LANG, CORRECTIONS, ENG_CORRECTIONS
     stock_id = stem.split("_")[0]
-    # cwd-relative (not __file__-relative): these live in Whisper-API-Server/ as
+    # cwd-relative (not __file__-relative): these live in mlx-api-server-whisper/ as
     # data/config that grows over time, independent of where this script itself lives.
-    generic_path = Path("Whisper-API-Server/whisper.yaml")
-    config_path = Path("Whisper-API-Server/company-configs") / stock_id / "whisper.yaml"
+    generic_path = Path("mlx-api-server-whisper/whisper.yaml")
+    config_path = Path("mlx-api-server-whisper/company-configs") / stock_id / "whisper.yaml"
     EXPECTED_LANG, CORRECTIONS, ENG_CORRECTIONS = "zh", {}, {}
 
     def _load_file(p: Path):

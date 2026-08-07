@@ -1,4 +1,4 @@
-# Usage: run from Whisper-API-Server/ directory
+# Usage: run from mlx-api-server-whisper/ directory
 #   python gen_stage_gt.py 2357_2025_q3
 #   python gen_stage_gt.py 2357_2025_q3 2357_2025_q4
 #   python gen_stage_gt.py --merge-only 2357_2025_q4   # merge Draft SRTs only, skip stage cut

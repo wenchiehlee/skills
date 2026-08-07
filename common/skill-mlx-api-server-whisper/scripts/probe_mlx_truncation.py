@@ -8,7 +8,7 @@ same merge task under different parameter / prompt style combinations
 and report whether the model outputs the full text or truncates.
 
 Usage (on Mac mini):
-    python Whisper-API-Server/probe_mlx_truncation.py
+    python mlx-api-server-whisper/probe_mlx_truncation.py
 
 Output: a table showing which combos produce full output vs truncation.
 """

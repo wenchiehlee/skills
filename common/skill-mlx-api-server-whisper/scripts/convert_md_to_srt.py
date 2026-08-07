@@ -52,7 +52,7 @@ def parse_md_to_srt(md_path):
     return "\n".join(output)
 
 def main():
-    sandbox_dir = Path("Mac-mini/Whisper-API-Server/whisper-sandbox")
+    sandbox_dir = Path("Mac-mini/mlx-api-server-whisper/whisper-sandbox")
     md_files = list(sandbox_dir.glob("*.md"))
     
     # Exclude report files

@@ -9,10 +9,10 @@ Usage:
   export CODEX_API_KEY=...
 
   # Single-exp (fast, exp1 only):
-  python Whisper-API-Server/llm_merge_review.py --stem 2357_2025_q4 --single
+  python mlx-api-server-whisper/llm_merge_review.py --stem 2357_2025_q4 --single
 
   # Multi-exp (3 experiments):
-  python Whisper-API-Server/llm_merge_review.py --stem 2357_2025_q4
+  python mlx-api-server-whisper/llm_merge_review.py --stem 2357_2025_q4
 """
 
 import re
@@ -238,7 +238,7 @@ def dedup_segments(all_segs: list) -> list:
 
 def main():
     parser = argparse.ArgumentParser()
-    sandbox = Path("Whisper-API-Server/whisper-sandbox")
+    sandbox = Path("mlx-api-server-whisper/whisper-sandbox")
     parser.add_argument('--stem',   default=None,
                         help='File stem (e.g. 2357_2025_q4); auto-builds paths')
     parser.add_argument('--exp1',   default=None)

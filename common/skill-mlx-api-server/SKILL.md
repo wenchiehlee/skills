@@ -20,7 +20,7 @@ description: 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，�
 
 服務透過 Tailscale VPN 對外提供，由 `launchd` (`com.mlx.apiserver`) 常駐管理，GitHub Actions 每 6 小時自動健康檢查並於異常時自動恢復。
 
-> ⚠️ **Whisper 語音轉錄不是本服務的端點。** `Whisper-API-Server/whisper_poc.py` 是獨立腳本，由 `run-pipeline.yml`（`runs-on: [self-hosted, macOS]`）在 Mac-mini 上以 self-hosted GitHub Actions runner **本機直接執行**，不經過 `/exec`、不受 `auth.py` / `MLX_ALLOWED_MODELS` 限制，也**不佔用**這裡的 `threading.Semaphore(MLX_MAX_CONCURRENT)` 併發額度。它只是共用同一台 Mac-mini 與同一組 Amplitude 埋點（`app_name=whisper-transcription(-stage)`），因此在 `MLX-API-Server.md` 的統計表（`model=whisper-large-v3`）裡會混雜出現——**不代表 whisper 可以透過本 API server 呼叫**。
+> ⚠️ **Whisper 語音轉錄不是本服務的端點。** `mlx-api-server-whisper/whisper_poc.py` 是獨立腳本，由 `run-pipeline.yml`（`runs-on: [self-hosted, macOS]`）在 Mac-mini 上以 self-hosted GitHub Actions runner **本機直接執行**，不經過 `/exec`、不受 `auth.py` / `MLX_ALLOWED_MODELS` 限制，也**不佔用**這裡的 `threading.Semaphore(MLX_MAX_CONCURRENT)` 併發額度。它只是共用同一台 Mac-mini 與同一組 Amplitude 埋點（`app_name=whisper-transcription(-stage)`），因此在 `mlx-api-server.md` 的統計表（`model=whisper-large-v3`）裡會混雜出現——**不代表 whisper 可以透過本 API server 呼叫**。
 >
 > 觸發方式是 InvestorConference repo 偵測到缺少 `FIN.srt` 時，在 Mac-mini repo 開一張帶 `generate-FIN` label 與 YAML metadata（`task_type/stem/audio_url` 等）的 issue，`run-pipeline.yml` 監聽 `issues: types: [labeled]` 接手執行「轉錄（多組 exp）→ postprocess → CER 比對 → 挑最佳版本 → git commit/push → sync 回 InvestorConference」整條有狀態流程。維持此設計的理由：音訊檔案本來就在 Mac-mini 本機（runner 直接讀 `../InvestorConference/{stock_id}/{stem}.m4a`，見專案記憶 `project_audio_paths`），且流程本身涉及多步驟編排與跨 repo git 讀寫，不適合改成單一無狀態 HTTP endpoint（會需要重造非同步 job 佇列、大檔案上傳、以及 GitHub Actions 已經免費提供的觸發/併發/日誌機制）。
 
@@ -42,7 +42,7 @@ skill-mlx-api-server/
     └── test_qwen3_thinking.py  # Qwen3 enable_thinking=False 迴歸測試
 ```
 
-> 本技能是「真正的程式碼來源」（不像 `skill-mlx-api-server-whisper` 只留文件）：`scripts/*.py` 是唯一版本，`deploy-mlx-api.yml`／`health-mlx-api.yml`／`bench-params.yml`／`test-qwen3-thinking.yml` 都直接從這裡讀取，不再有 `MLX-API-Server/*.py` 這份舊路徑的副本。
+> 本技能是「真正的程式碼來源」（不像 `skill-mlx-api-server-whisper` 只留文件）：`scripts/*.py` 是唯一版本，`deploy-mlx-api.yml`／`health-mlx-api.yml`／`bench-params.yml`／`test-qwen3-thinking.yml` 都直接從這裡讀取，不再有 `mlx-api-server/*.py` 這份舊路徑的副本。
 
 ## 🏗️ 架構概覽
 
@@ -265,7 +265,7 @@ OCR 呼叫透過 `_send_amplitude_event_async()` 非同步送出 `llm_call` 事�
 - `duration_sec`: 處理秒數
 - `app_name`: 來自 `X-App-Name` request header（Caller 應設定此 header 以區分應用）
 
-> `MLX-API-Server.md` 統計表中的 `whisper-large-v3` / `whisper-transcription(-stage)` 是 `Whisper-API-Server/whisper_poc.py`（self-hosted runner，見上方警示）自行送出的 Amplitude 事件，與本 server 的 `/exec`、`/ocr` 呼叫無關，僅因共用同一 Amplitude project 而出現在同一份統計中。
+> `mlx-api-server.md` 統計表中的 `whisper-large-v3` / `whisper-transcription(-stage)` 是 `mlx-api-server-whisper/whisper_poc.py`（self-hosted runner，見上方警示）自行送出的 Amplitude 事件，與本 server 的 `/exec`、`/ocr` 呼叫無關，僅因共用同一 Amplitude project 而出現在同一份統計中。
 
 ## 🔌 API 參考
 

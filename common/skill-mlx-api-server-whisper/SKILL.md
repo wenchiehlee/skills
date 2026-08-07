@@ -77,7 +77,7 @@ YouTube `video_id` 固定 11 碼（`[A-Za-z0-9_-]{11}`），regex 用這點從 s
 **這不是模型權重訓練**，而是「prompt 錨定 + 確定性修正字典 + CER 驅動選版」的組合：
 
 1. **`company-configs/{stock_id}/whisper.yaml`**（選填）——`executives`/`products`/`terms`/`example_sentences` 灌進 whisper 的 `initial_prompt` 錨定人名/產品名/語境；`corrections`/`english_corrections` 是 `postprocess.py` 讀取的確定性字串取代字典（如 `廣打→廣達`）。
-   - **`stock_id` 未帶時 fallback 到全域 `Whisper-API-Server/whisper.yaml`**（已驗證路徑，QCOM 沒有 company config 時就是這樣運作）——YouTube 影片若未指定 `stock_id`，一樣安全運作。
+   - **`stock_id` 未帶時 fallback 到全域 `mlx-api-server-whisper/whisper.yaml`**（已驗證路徑，QCOM 沒有 company config 時就是這樣運作）——YouTube 影片若未指定 `stock_id`，一樣安全運作。
    - 若 YouTube 影片明確討論特定個股（例如評論台積電），直接在 issue metadata 填對應 `stock_id`，即可沿用該公司既有的 company-configs。
 2. **GT.srt 是唯一真相來源**：每次 pipeline 執行都從 `source_repo` 即時拉最新 GT（pull-on-demand，見 [[feedback_refine_gt_via_issue]]），餵給 `verify_cer.py` 算 CER，CER 最低的版本 promote 成 `FIN.srt`。
 3. **`generate_fin_srt` vs `refine_fin_srt`**：前者從音訊全新轉錄；後者用於 GT 在來源端被人工修正後，重新跑 CER 評分/postprocess（通常搭配 `skip_transcribe: true`，跳過最耗時的轉錄步驟，兩者程式邏輯上目前完全一致，只差在呼叫端如何設定 metadata）。
@@ -106,7 +106,7 @@ skill-mlx-api-server-whisper/
 
 `scripts/*.py` 是唯一版本（v2.0.0 起，之前只有文件、沒有程式碼）；`run-pipeline.yml`／`eval-sample.yml`／`rebuild-global-leaderboard.yml`／`check-python-arch.yml` 都直接呼叫這裡。
 
-**留在 `Whisper-API-Server/`、刻意不搬進來的東西**（資料／會成長的設定，跟腳本位置解耦）：
+**留在 `mlx-api-server-whisper/`、刻意不搬進來的東西**（資料／會成長的設定，跟腳本位置解耦）：
 
 | 項目 | 為什麼留在原地 |
 |---|---|
@@ -114,9 +114,9 @@ skill-mlx-api-server-whisper/
 | `company-configs/{stock_id}/whisper.yaml` | 會隨時間持續新增/調整的每股設定，不該綁死在 skill 版本裡 |
 | `whisper.yaml`、`whisper-en.yaml`（全域 fallback 設定） | 同上，且會被人手動調整通用修正字典 |
 | `pipeline_config.yaml`、`sample_windows.yaml` | 實驗參數設定，調參時直接改，不走 skill 版本管理 |
-| `.env`、`Whisper-API-Server.md`、`references/` | 本機 secrets／統計報表／設計文件，非可攜程式碼 |
+| `.env`、`mlx-api-server-whisper.md`、`references/` | 本機 secrets／統計報表／設計文件，非可攜程式碼 |
 
-> ⚠️ **路徑陷阱（已修）**：`whisper_poc.py`／`postprocess.py` 原本用 `Path(__file__).parent / "whisper.yaml"` 讀全域設定——這種寫法會「跟著程式碼位置走」。搬進 `scripts/` 後若不修，會去 `scripts/whisper.yaml`（不存在）找，而不是 `Whisper-API-Server/whisper.yaml`。已改成寫死的 cwd-relative `Path("Whisper-API-Server/whisper.yaml")`，跟同檔案其他資料夾路徑（如 `whisper-sandbox`）風格一致。之後新增類似「讀全域設定」的程式碼，切記用 cwd-relative，不要用 `__file__`-relative。
+> ⚠️ **路徑陷阱（已修）**：`whisper_poc.py`／`postprocess.py` 原本用 `Path(__file__).parent / "whisper.yaml"` 讀全域設定——這種寫法會「跟著程式碼位置走」。搬進 `scripts/` 後若不修，會去 `scripts/whisper.yaml`（不存在）找，而不是 `mlx-api-server-whisper/whisper.yaml`。已改成寫死的 cwd-relative `Path("mlx-api-server-whisper/whisper.yaml")`，跟同檔案其他資料夾路徑（如 `whisper-sandbox`）風格一致。之後新增類似「讀全域設定」的程式碼，切記用 cwd-relative，不要用 `__file__`-relative。
 
 ## 🔄 版本管理與更新
 

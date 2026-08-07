@@ -12,8 +12,8 @@ Strategy:
   - Report the threshold where truncation starts
 
 Usage (on Mac mini):
-    python3 Whisper-API-Server/probe_mlx_chunk_limit.py \
-        --sandbox Whisper-API-Server/whisper-sandbox \
+    python3 mlx-api-server-whisper/probe_mlx_chunk_limit.py \
+        --sandbox mlx-api-server-whisper/whisper-sandbox \
         --stem 2357_2025_q4_stage2
 """
 
@@ -109,7 +109,7 @@ def build_prompt(segs: list, tokenizer) -> tuple[str, int]:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--sandbox", default="Whisper-API-Server/whisper-sandbox")
+    parser.add_argument("--sandbox", default="mlx-api-server-whisper/whisper-sandbox")
     parser.add_argument("--stem",    default="2357_2025_q4_stage2")
     parser.add_argument("--model",   default="mlx-community/Qwen2.5-14B-Instruct-4bit")
     parser.add_argument(

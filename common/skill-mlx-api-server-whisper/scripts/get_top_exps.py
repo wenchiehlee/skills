@@ -6,7 +6,7 @@ averages 評分 across available reports, and prints the top-N exp
 numbers as a comma-separated string (e.g. "3,1").
 
 Usage:
-    python get_top_exps.py 2357_2025_q4 --sandbox Whisper-API-Server/whisper-sandbox
+    python get_top_exps.py 2357_2025_q4 --sandbox mlx-api-server-whisper/whisper-sandbox
     python get_top_exps.py 2357_2025_q4 --top-n 2
 """
 from __future__ import annotations
@@ -36,7 +36,7 @@ def parse_scores(report_path: Path) -> dict[str, float]:
 def main():
     parser = argparse.ArgumentParser(description="Get top-N exp numbers from cer_reports")
     parser.add_argument("stem", help="e.g. 2357_2025_q4")
-    parser.add_argument("--sandbox", default="Whisper-API-Server/whisper-sandbox")
+    parser.add_argument("--sandbox", default="mlx-api-server-whisper/whisper-sandbox")
     parser.add_argument("--top-n", type=int, default=2)
     args = parser.parse_args()
 

@@ -26,7 +26,7 @@ def _get_api_key() -> str:
     try:
         from pathlib import Path
         from dotenv import load_dotenv
-        load_dotenv(Path(__file__).parent.parent.parent / ".env")  # repo root /.env
+        load_dotenv(Path(__file__).parents[4] / ".env")  # repo root /.env (analytics/ -> scripts/ -> skill-mlx-api-server-whisper/ -> skills/ -> repo root)
     except ImportError:
         pass
     _api_key = os.getenv("AMPLITUDE_API_KEY", "")
