@@ -45,8 +45,10 @@ pip install requests python-dotenv
 WHISPER_TARGET_REPO=ZhongZheng782/Mac-mini          # 跑 pipeline 的 repo
 WHISPER_SOURCE_REPO=wenchiehlee-money/YoutubeAudio.Fetch   # 本 repo（音訊/GT 的家）
 WHISPER_SOURCE_TYPE=youtube                          # investor_conference | youtube
-GH_TOKEN=<PAT with issues:write on target repo>
+REPO_FILE_SYNC_ZHONGZHENG782_MONEY=<PAT，僅需 WHISPER_TARGET_REPO 的 Issues: Read and write>
 ```
+
+> 變數名沿用既有 `tools/manage_missing_fin_issues.py` 與 Mac-mini Actions secrets 的命名慣例（`REPO_FILE_SYNC_<...>`）。這個 PAT **只需要對 `WHISPER_TARGET_REPO`（例如 `ZhongZheng782/Mac-mini`）開 Issues: Read and write**——不需要 Contents 權限，也不需要對本 repo（`WHISPER_SOURCE_REPO`）本身有任何權限，因為 `check_fin_status()` 只檢查本地檔案是否已被 `git pull` 同步下來，不透過 API 查詢。若沒有 `REPO_FILE_SYNC_*` 變數，會 fallback 讀取通用的 `GH_TOKEN`。
 
 > `WHISPER_SOURCE_TYPE=investor_conference` 時 stem 需符合 `{stock_id}_{year}_q{quarter}`；`youtube` 時需符合 `{channel}_{video_id}`（video_id 固定 11 碼）。詳見 `skill-mlx-api-server-whisper` SKILL.md 的 stem 規則表。
 

@@ -27,7 +27,7 @@
       "WHISPER_TARGET_REPO",
       "WHISPER_SOURCE_REPO",
       "WHISPER_SOURCE_TYPE",
-      "GH_TOKEN"
+      "REPO_FILE_SYNC_ZHONGZHENG782_MONEY"
     ]
   },
   "files": [

@@ -97,7 +97,9 @@ class WhisperIssueClient:
       WHISPER_TARGET_REPO   — repo that runs run-pipeline.yml, e.g. "ZhongZheng782/Mac-mini"
       WHISPER_SOURCE_REPO   — this repo (owner/name), e.g. "wenchiehlee-money/YoutubeAudio.Fetch"
       WHISPER_SOURCE_TYPE   — "investor_conference" | "youtube"
-      GH_TOKEN / REPO_FILE_SYNC_* — PAT with issues:write on target repo, contents:read on source repo
+      REPO_FILE_SYNC_<TARGET_OWNER>_<...> (e.g. REPO_FILE_SYNC_ZHONGZHENG782_MONEY) / GH_TOKEN
+        — PAT with Issues: Read and write on WHISPER_TARGET_REPO only (no contents access needed;
+        FIN.srt landing is checked as a local file, see check_fin_status()).
     """
 
     LABELS_BASE = ["generate-FIN", "auto-generated"]
@@ -113,13 +115,16 @@ class WhisperIssueClient:
         self.target_repo = target_repo or os.environ.get("WHISPER_TARGET_REPO", "")
         self.source_repo = source_repo or os.environ.get("WHISPER_SOURCE_REPO", "")
         self.source_type = source_type or os.environ.get("WHISPER_SOURCE_TYPE", "investor_conference")
-        token = token or os.environ.get("GH_TOKEN") or next(
+        # REPO_FILE_SYNC_* takes precedence (matches the naming convention already used by
+        # tools/manage_missing_fin_issues.py and the Mac-mini Actions secrets); GH_TOKEN is
+        # a generic fallback for local/ad-hoc use.
+        token = token or next(
             (v for k, v in os.environ.items() if k.startswith("REPO_FILE_SYNC_")), None
-        )
+        ) or os.environ.get("GH_TOKEN")
         if not self.target_repo or not self.source_repo:
             raise RuntimeError("WHISPER_TARGET_REPO and WHISPER_SOURCE_REPO must be set (env or .env)")
         if not token:
-            raise RuntimeError("GH_TOKEN (or a REPO_FILE_SYNC_* var) is required")
+            raise RuntimeError("A REPO_FILE_SYNC_* var (or GH_TOKEN) is required")
         self.client = GitHubClient(token)
         self.repo_root = repo_root or Path.cwd()
         # source_repo's own name is used as a label so multiple source repos can
