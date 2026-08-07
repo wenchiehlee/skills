@@ -238,12 +238,12 @@ skills:
 - name: skill-mlx-api-server-whisper
   group: common
   path: common/skill-mlx-api-server-whisper
-  version: 1.0.0
+  version: 2.0.0
   description: Mac-mini 上以 self-hosted GitHub Actions runner 執行的語音轉錄 pipeline（whisper
     轉錄 → LLM postprocess → CER 校驗 → GT 校正迴圈），透過 issue 驅動、支援多種音訊來源（法說會、YouTube 財經影片…）。
   category: server
   maintainer: wenchiehlee
-  source: https://github.com/wenchiehlee/Mac-mini/tree/main/Whisper-API-Server
+  source: https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server-whisper/scripts
   updated_at: '2026-08-07'
   revised_at: '2026-08-07'
 - name: skill-my-tw-coverage-enrichment-json

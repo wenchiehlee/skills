@@ -7,8 +7,8 @@ description: Mac-mini 上以 self-hosted GitHub Actions runner 執行的語音�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.0.0（詳見 `metadata.json`） |
-| 來源 | https://github.com/wenchiehlee/Mac-mini/tree/main/Whisper-API-Server |
+| 版本 | 2.0.0（詳見 `metadata.json`） |
+| 來源 | https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server-whisper/scripts |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-server-whisper`） |
 | 維護者 | wenchiehlee |
 | 執行位置 | **Mac-mini 本機**，以 self-hosted GitHub Actions runner 身分執行 `run-pipeline.yml` |
@@ -21,7 +21,7 @@ description: Mac-mini 上以 self-hosted GitHub Actions runner 執行的語音�
 | | `skill-mlx-api-server` | `skill-mlx-api-server-whisper`（本技能） |
 |---|---|---|
 | 觸發 | 任何機器直接 `POST /exec`、`/ocr`，同步等 response | 來源 repo 開 GitHub issue（`generate-FIN` label），self-hosted runner 監聽 `issues: labeled` 事件 |
-| 部署方式 | `deploy-mlx-api.yml` 把 `scripts/*.py` 複製到 `~/mlx-api/`，`launchd` 常駐 | 無獨立部署；runner 每次執行時 `actions/checkout` 整個 Mac-mini repo，直接跑 repo 內的 `Whisper-API-Server/*.py` |
+| 部署方式 | `deploy-mlx-api.yml` 把 `scripts/*.py` 複製到 `~/mlx-api/`，`launchd` 常駐 | 無獨立部署；runner 每次執行時 `actions/checkout` 整個 Mac-mini repo，直接跑 repo 內的 `skills/skill-mlx-api-server-whisper/scripts/*.py` |
 | 執行時間 | 數秒~數分鐘，同步回應 | 單一 stem 完整跑完約 1–1.5 小時（多實驗轉錄＋postprocess＋CER），非同步、以 git commit 產出結果 |
 | 併發控制 | `threading.Semaphore(MLX_MAX_CONCURRENT)` | GitHub Actions `concurrency: group` per issue/stem，單一 self-hosted runner 序列執行 |
 
@@ -87,12 +87,36 @@ YouTube `video_id` 固定 11 碼（`[A-Za-z0-9_-]{11}`），regex 用這點從 s
 
 ```text
 skill-mlx-api-server-whisper/
-├── SKILL.md               # 本檔案
+├── SKILL.md                       # 本檔案
 ├── metadata.json
-└── self_update.py
+├── self_update.py
+└── scripts/
+    ├── whisper_poc.py             # 主轉錄腳本（mlx-whisper / faster-whisper，多實驗參數）
+    ├── postprocess.py             # rescue（多 exp 投票）+ fix（corrections 字典）
+    ├── verify_cer.py              # CER/WER 對 GT 評分、挑最佳版本、產生報表
+    ├── analytics/                 # Amplitude 埋點小套件（whisper_poc.py 用 sys.path 匯入，需同層）
+    │   ├── __init__.py
+    │   └── amplitude.py
+    └── （其餘 21 支輔助/研究工具：analyze_critical.py / select_best_exp.py /
+         get_top_exps.py / probe_mlx_*.py / benchmark.py / merge_transcripts.py /
+         align_transcript_to_fin.py / convert_*.py / gen_*.py / diff_char.py /
+         cut_sample.py / extract_stage.py / add_punctuation.py / llm_merge_review.py /
+         audio_utils.py / whisper_exp.py / check_arch.py — 完整清單見 metadata.json）
 ```
 
-本技能刻意**不複製** `Whisper-API-Server/*.py` 到 skill 資料夾——pipeline 腳本的唯一來源是 Mac-mini repo 本身（self-hosted runner 執行時已經 checkout 整個 repo，沒有額外部署步驟）。本技能封裝的是**跨來源通用的 metadata schema、stem 規則、目錄慣例與調校原則**，實際腳本異動請直接改 `Whisper-API-Server/` 與 `.github/workflows/run-pipeline.yml`。
+`scripts/*.py` 是唯一版本（v2.0.0 起，之前只有文件、沒有程式碼）；`run-pipeline.yml`／`eval-sample.yml`／`rebuild-global-leaderboard.yml`／`check-python-arch.yml` 都直接呼叫這裡。
+
+**留在 `Whisper-API-Server/`、刻意不搬進來的東西**（資料／會成長的設定，跟腳本位置解耦）：
+
+| 項目 | 為什麼留在原地 |
+|---|---|
+| `GroundTrue/`、`whisper-sandbox/`、`backup/`、`tmp/` | pipeline 執行時的輸出/暫存，是資料不是程式碼 |
+| `company-configs/{stock_id}/whisper.yaml` | 會隨時間持續新增/調整的每股設定，不該綁死在 skill 版本裡 |
+| `whisper.yaml`、`whisper-en.yaml`（全域 fallback 設定） | 同上，且會被人手動調整通用修正字典 |
+| `pipeline_config.yaml`、`sample_windows.yaml` | 實驗參數設定，調參時直接改，不走 skill 版本管理 |
+| `.env`、`Whisper-API-Server.md`、`references/` | 本機 secrets／統計報表／設計文件，非可攜程式碼 |
+
+> ⚠️ **路徑陷阱（已修）**：`whisper_poc.py`／`postprocess.py` 原本用 `Path(__file__).parent / "whisper.yaml"` 讀全域設定——這種寫法會「跟著程式碼位置走」。搬進 `scripts/` 後若不修，會去 `scripts/whisper.yaml`（不存在）找，而不是 `Whisper-API-Server/whisper.yaml`。已改成寫死的 cwd-relative `Path("Whisper-API-Server/whisper.yaml")`，跟同檔案其他資料夾路徑（如 `whisper-sandbox`）風格一致。之後新增類似「讀全域設定」的程式碼，切記用 cwd-relative，不要用 `__file__`-relative。
 
 ## 🔄 版本管理與更新
 
