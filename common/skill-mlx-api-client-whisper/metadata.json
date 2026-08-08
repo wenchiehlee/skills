@@ -2,7 +2,7 @@
   "name": "skill-mlx-api-client-whisper",
   "description": "以 GitHub issue 觸發 Mac-mini 上的 whisper 轉錄 pipeline（skill-mlx-api-server-whisper），並輪詢結果是否已同步回本 repo。支援法說會音訊、YouTube 財經影片等多種來源。",
   "category": "document",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee/InvestorConference",

@@ -191,11 +191,22 @@ class WhisperIssueClient:
         if title in open_issues:
             return None
         fin_path = self.fin_path_for(stem)
-        return self.client.request(
+        # Labels must be added via a separate call, not inline in the create payload:
+        # GitHub does not fire a `labeled` webhook event for labels set at creation
+        # time, only for labels added to an already-existing issue. run-pipeline.yml
+        # triggers on `issues: types: [labeled]`, so an inline-labeled issue would
+        # silently never run the pipeline (found via Mac-mini issue #21, stuck ~3 weeks).
+        new_issue = self.client.request(
             "POST",
             f"/repos/{self.target_repo}/issues",
-            {"title": title, "body": self.issue_body(stem, audio_url, fin_path, task_type, stock_id), "labels": self.labels},
+            {"title": title, "body": self.issue_body(stem, audio_url, fin_path, task_type, stock_id)},
         )
+        self.client.request(
+            "POST",
+            f"/repos/{self.target_repo}/issues/{new_issue['number']}/labels",
+            {"labels": self.labels},
+        )
+        return new_issue
 
     def check_fin_status(self, stem: str) -> bool:
         """True if FIN.srt for `stem` already exists locally in this (source) repo."""
