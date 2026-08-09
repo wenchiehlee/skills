@@ -75,8 +75,16 @@ def _table_cell_to_text(value) -> str:
     return str(value).replace("\n", "; ").replace("|", "/").strip()
 
 
-def _extract_tables_markdown(page) -> list[str]:
-    """Detect tabular regions on a page and render them as Markdown tables.
+def _find_tables(page):
+    """find_tables() wrapper; returns a list of table objects (possibly empty)."""
+    try:
+        return list(page.find_tables().tables)
+    except Exception:
+        return []
+
+
+def _tables_markdown(tables) -> list[str]:
+    """Render already-detected tables as Markdown tables.
 
     Numeric financial tables (monthly sales, income statements, etc.) come out
     of plain fitz text extraction as an unstructured flat list of numbers with
@@ -88,12 +96,8 @@ def _extract_tables_markdown(page) -> list[str]:
     table.to_markdown(), because to_markdown() incorrectly back-fills merged
     cells with a repeated copy of a neighboring row's text.
     """
-    try:
-        tables = page.find_tables()
-    except Exception:
-        return []
     out: list[str] = []
-    for i, table in enumerate(tables.tables, start=1):
+    for i, table in enumerate(tables, start=1):
         try:
             rows = table.extract()
         except Exception:
@@ -115,6 +119,45 @@ def _extract_tables_markdown(page) -> list[str]:
     return out
 
 
+def _bbox_overlap_ratio(block_bbox, table_bbox) -> float:
+    """Fraction of block_bbox's area covered by table_bbox."""
+    bx0, by0, bx1, by1 = block_bbox
+    tx0, ty0, tx1, ty1 = table_bbox
+    ix0, iy0 = max(bx0, tx0), max(by0, ty0)
+    ix1, iy1 = min(bx1, tx1), min(by1, ty1)
+    if ix1 <= ix0 or iy1 <= iy0:
+        return 0.0
+    inter = (ix1 - ix0) * (iy1 - iy0)
+    block_area = max((bx1 - bx0) * (by1 - by0), 1e-6)
+    return inter / block_area
+
+
+def _non_table_text(page, tables) -> str:
+    """Page text with blocks that fall inside a detected table's bbox removed.
+
+    Prevents the same numbers appearing twice in the Markdown: once as a flat
+    unstructured text dump, once as the structured Markdown table. Only
+    surrounding prose (titles, captions, notes) stays in the plain-text part.
+    """
+    if not tables:
+        return (page.get_text("text") or "").strip()
+
+    table_bboxes = [tuple(t.bbox) for t in tables]
+    try:
+        blocks = page.get_text("blocks")
+    except Exception:
+        return (page.get_text("text") or "").strip()
+
+    kept = []
+    for b in blocks:
+        x0, y0, x1, y1, block_text = b[0], b[1], b[2], b[3], b[4]
+        if any(_bbox_overlap_ratio((x0, y0, x1, y1), tb) > 0.5 for tb in table_bboxes):
+            continue
+        if block_text.strip():
+            kept.append(block_text.strip())
+    return "\n".join(kept).strip()
+
+
 def _extract_with_fitz(path_obj: Path, min_chars: int, mark_embedded_images: bool) -> tuple[list[str], int, int]:
     if fitz is None:
         raise RuntimeError("PyMuPDF/fitz is not available")
@@ -133,10 +176,14 @@ def _extract_with_fitz(path_obj: Path, min_chars: int, mark_embedded_images: boo
             parts.append(TODO_MARKER.format(source=path_obj.name, page=idx, reason=reason))
             parts.append("> TODO:OCR - 此頁文字層不足，待 Mac-mini OCR 補轉錄。")
         else:
-            parts.append(text)
-            table_md = _extract_tables_markdown(page)
+            tables = _find_tables(page)
+            display_text = _non_table_text(page, tables) if tables else text
+            if display_text:
+                parts.append(display_text)
+            table_md = _tables_markdown(tables)
             if table_md:
-                parts.append("")
+                if display_text:
+                    parts.append("")
                 parts.extend(table_md)
             if mark_embedded_images and image_count:
                 todo_count += 1
