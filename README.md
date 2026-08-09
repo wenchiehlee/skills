@@ -37,7 +37,7 @@
 | [skill-finmind-fetch](common/skill-finmind-fetch) | common | financial-data | 1.0.1 | Fetch Taiwan stock margin and price data from FinMind API and export/merge to stage1 raw CSV. | 2026-08-07 |
 | [skill-google-alert-fetch](common/skill-google-alert-fetch) | common | financial-data | 1.0.1 | 維運 GoogleAlertManager 的 Google Alerts 抓取管線：更新 GoPublic 股票觀察/專注清單 CSV、同步 Google Alert RSS、匯出 fallback RSS、抓取文章、依 focus CSV 更新 README，並排查 fetch/analyze workflows。 | 2026-08-07 |
 | [skill-google-analytics-monitor](common/skill-google-analytics-monitor) | common | analytics | 1.0.1 | 使用 google-analytics-cli 產生 GA4 網站監控 Markdown/README 報告，包含 YAML daily metadata、即時活躍人數、近 7/28 天短期趨勢、近 3 個月流量趨勢、來源/媒介、Top 10 URL、熱門頁面、事件與異常觀察。 | 2026-08-07 |
-| [skill-mlx-api-client-ocr](common/skill-mlx-api-client-ocr) | common | document | 1.5.1 | 呼叫 Mac-mini MLX API Server 的 OCR 客戶端（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-08-07 |
+| [skill-mlx-api-client-ocr](common/skill-mlx-api-client-ocr) | common | document | 1.6.0 | 呼叫 Mac-mini MLX API Server 的 OCR 客戶端（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-08-09 |
 | [skill-mlx-api-client-whisper](common/skill-mlx-api-client-whisper) | common | document | 1.0.1 | 以 GitHub issue 觸發 Mac-mini 上的 whisper 轉錄 pipeline（skill-mlx-api-server-whisper），並輪詢結果是否已同步回本 repo。支援法說會音訊、YouTube 財經影片等多種來源。 | 2026-08-08 |
 | [skill-mlx-api-server](common/skill-mlx-api-server) | common | server | 1.1.0 | 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，提供 Baidu Unlimited-OCR 文件轉錄（/ocr）與 MLX LLM 推理（/exec，Qwen3.5/Gemma4），以 Flask/Waitress 常駐服務形式運行。 | 2026-08-07 |
 | [skill-mlx-api-server-whisper](common/skill-mlx-api-server-whisper) | common | server | 2.0.0 | Mac-mini 上以 self-hosted GitHub Actions runner 執行的語音轉錄 pipeline（whisper 轉錄 → LLM postprocess → CER 校驗 → GT 校正迴圈），透過 issue 驅動、支援多種音訊來源（法說會、YouTube 財經影片…）。 | 2026-08-07 |
@@ -58,7 +58,7 @@
 | [skill-usb-uvc-4k-capture](common/skill-usb-uvc-4k-capture) | common | basic | 1.0.1 | Enable camera-agnostic 4K UVC capture on Android BaseUnit: setup_uvc.sh advertises 4K frame descriptor, uvc_camera_forward detects camera max MJPEG resolution at runtime and clamps negotiation — Jieli U20 stays at 1080p, Logitech MeetUp unlocks 3840×2160@30fps. | 2026-08-07 |
 | [skill-usb-wasapi-capture-debug](common/skill-usb-wasapi-capture-debug) | common | basic | 1.0.2 | Enumerate Windows WASAPI capture endpoints via COM IMMDeviceEnumerator to verify UAC2 speakerphone visibility, device state, and active audio sessions. | 2026-08-07 |
 
-最後產生日期：2026-08-08
+最後產生日期：2026-08-09
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理
