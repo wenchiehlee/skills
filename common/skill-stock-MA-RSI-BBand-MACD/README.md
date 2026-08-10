@@ -28,6 +28,10 @@ skill-stock-MA-RSI-BBand-MACD/
 
 ## 版本
 
+- 1.1.0 (2026-08-10)：新增 `--source {fugle,yahoo}` 選擇主要資料來源——沒有Fugle/
+  TaishinSDK憑證的consumer repo可以改用 `--source yahoo`（純yfinance，不需要任何憑證），
+  代號直接傳yfinance ticker格式；有Fugle憑證的repo維持預設的 `--source fugle` + 選配
+  `--verify` 雙來源交叉比對。兩種來源輸出的CSV欄位格式完全一致。
 - 1.0.0 (2026-08-10)：自 GoogleSheet.Banks 的 `update_zscore_stats.py` 收錄並泛化——
   拿掉對特定Google Sheet的依賴，改成通用CLI（`--symbols`/`--list` + CSV輸出），
   新增MACD(12,26,9)與明確的布林通道(BBand)輸出，`--verify`交叉比對機制沿用原本已驗證過

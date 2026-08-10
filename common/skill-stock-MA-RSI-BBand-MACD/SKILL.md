@@ -32,12 +32,28 @@ ETF在2025年11月有一次1:7分割，`yf.Ticker.splits`沒有登記，導致 a
 yfinance 版本沒有拿掉，保留給 `--verify` 模式做交叉比對——只要看到報告裡差異過大，
 代表其中一邊的還原口徑對不上，可以進一步排查。
 
+## 資料來源可選（不是每個consumer repo都有Fugle憑證）
+
+`--source fugle`（預設）跟 `--source yahoo` 二選一，決定輸出CSV的**主要**資料來源：
+
+- **有Fugle/TaishinSDK憑證的repo**（例如本skill的來源專案GoogleSheet.Banks）：用預設的
+  `--source fugle`，可以額外加 `--verify` 讓 yfinance 當第二個來源做交叉比對，兩邊都跑
+  最完整、最能互相驗證。
+- **沒有Fugle憑證的repo**：改用 `--source yahoo`，完全不需要TaishinSDK/broker帳密，直接
+  用yfinance當唯一來源——代號要直接傳yfinance ticker格式（例如`0050.TW`、`2330.TW`），
+  跟`--source fugle`模式下代號是「純Fugle symbol、不用後綴」不一樣，別搞混。這個模式下
+  `--verify`沒有意義（沒有第二來源可比對），傳了會被忽略並印警告。
+
+兩種模式的CSV輸出格式（FIELD_ORDER）完全一樣，差別只在資料口徑（Fugle手動回溯調整 vs
+yfinance auto_adjust），下游程式不用因為換來源改讀取邏輯。
+
 ## 命令說明
 
 | 命令格式 | 功能說明 |
 |---------|--------|
-| `python <SKILL_DIR>/scripts/run_indicators.py --symbols 0050 0052 2330 --fugle-env-prefix USER1_ --output out.csv` | 直接指定代號清單 |
+| `python <SKILL_DIR>/scripts/run_indicators.py --symbols 0050 0052 2330 --fugle-env-prefix USER1_ --output out.csv` | Fugle為主要來源（預設），直接指定代號清單 |
 | `python <SKILL_DIR>/scripts/run_indicators.py --list StockID.csv --fugle-env-prefix USER1_ --output out.csv` | 從CSV讀取代號清單（欄位：代號/symbol/stock_code，可選yahoo_symbol） |
+| `python <SKILL_DIR>/scripts/run_indicators.py --source yahoo --symbols 0050.TW 2330.TW --output out.csv` | 只用yfinance，不需要任何Fugle憑證，代號要直接是yfinance ticker |
 | 加上 `--verify` | 額外抓yfinance版本，印出跟Fugle版本的RSI(14)/z-score(MA240)差異報告（不影響輸出CSV；只對CSV裡有yahoo_symbol欄的代號生效） |
 | `--years N`（預設2） | 還原股價回溯年數，2年足夠算MA240/RSI14/MACD的暖機視窗 |
 

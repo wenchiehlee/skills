@@ -2,7 +2,20 @@
 # -*- coding: utf-8 -*-
 """
 run_indicators.py — CLI 進入點：算一批股票的 MA/STD/布林通道(BBand)/RSI(14)/MACD，
-輸出一個 CSV（每檔一列的最新快照），資料來源是還原股價（Fugle為主，yfinance僅供verify）。
+輸出一個 CSV（每檔一列的最新快照）。
+
+**資料來源可選**（`--source`），因為不是每個consumer repo都有Fugle/TaishinSDK憑證：
+
+  - `--source fugle`（預設）：Fugle API為主要來源（還原股價，見price_loader.py），
+    需要 `--fugle-env-prefix` 對應的TaishinSDK憑證。可以加 `--verify` 額外抓yfinance
+    版本做交叉比對（只印報告，不影響輸出CSV），適合像GoogleSheet.Banks這種本來就有
+    Fugle憑證、想要雙來源互相驗證的repo。
+  - `--source yahoo`：yfinance auto_adjust=True 為主要來源，**不需要任何Fugle憑證**，
+    適合沒有台新/複委託帳號的repo。這個模式下 `--symbols`/`--list` 裡的代號要直接是
+    yfinance ticker格式（例如`0050.TW`、`2330.TW`），不會自動補後綴；`--list` CSV如果
+    有 `yahoo_symbol` 欄，會優先用那一欄。`--verify` 在這個模式下沒有意義（沒有第二個
+    來源可以比對），會被忽略並印警告。已知限制：yfinance對部分台股ETF分割事件還原
+    不完整（見SKILL.md），選這個模式前要清楚這個風險。
 
 輸出 CSV 欄位（每個 --ma-period 各一組 MA{n}/STD{n}/zscore_MA{n}，外加固定欄位）：
   symbol, close,
@@ -14,14 +27,17 @@ run_indicators.py — CLI 進入點：算一批股票的 MA/STD/布林通道(BBa
 
 用法：
 
-  # 直接指定代號（Fugle symbol，台股不用加交易所後綴）
+  # Fugle為主（預設），直接指定代號（Fugle symbol，台股不用加交易所後綴）
   python run_indicators.py --symbols 0050 0052 2330 --fugle-env-prefix USER1_ --output out.csv
 
   # 從 CSV 讀名單（至少要有一欄「代號」或「symbol」；有「yahoo_symbol」欄才能用 --verify）
   python run_indicators.py --list StockID.csv --fugle-env-prefix USER1_ --output out.csv
 
-  # 交叉比對 yfinance，額外印出差異報告（不影響輸出CSV，CSV永遠是Fugle版本）
+  # 交叉比對 yfinance，額外印出差異報告（不影響輸出CSV，CSV永遠是主要來源版本）
   python run_indicators.py --symbols 0050 0052 --fugle-env-prefix USER1_ --output out.csv --verify
+
+  # 只用yfinance（不需要Fugle憑證），代號要直接是yfinance ticker
+  python run_indicators.py --source yahoo --symbols 0050.TW 2330.TW --output out.csv
 """
 import argparse
 import sys
@@ -117,22 +133,7 @@ def print_verify_report(fugle_rows: dict, yahoo_rows: dict):
         print(f"{symbol:8s}{f_rsi_s:>10s}{y_rsi_s:>10s}{'  ':2s}{f_z_s:>16s}{y_z_s:>16s}{flag}")
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--symbols", nargs="+", help="直接指定代號清單（跟--list擇一）")
-    parser.add_argument("--list", help="從CSV讀取代號清單（跟--symbols擇一）")
-    parser.add_argument("--fugle-env-prefix", default="", help="TaishinSDK登入用的環境變數前綴，例如 USER1_（對應 FUGLE_USER1_PERSONAL_ID 等）")
-    parser.add_argument("--years", type=int, default=2, help="還原股價回溯年數（預設2年，足夠算MA240/RSI14/MACD）")
-    parser.add_argument("--output", required=True, help="輸出CSV路徑")
-    parser.add_argument("--verify", action="store_true", help="額外抓yfinance版本做交叉比對並印出報告（不影響輸出CSV，CSV永遠是Fugle版本）；只對有yahoo_symbol對照的代號生效")
-    args = parser.parse_args()
-
-    if not args.symbols and not args.list:
-        parser.error("必須指定 --symbols 或 --list 其中一個")
-
-    targets = load_symbol_list(args)
-    print(f"共 {len(targets)} 檔代號，回溯 {args.years} 年，來源：Fugle API")
-
+def run_fugle_source(args, targets):
     sdk, acc = login_fugle(args.fugle_env_prefix)
     rc = sdk.marketdata.rest_client
 
@@ -142,17 +143,58 @@ def main():
     print(f"抓取還原調整事件（除息+減資/分割），{start_date}~{end_date}...")
     market_events = fetch_fugle_market_adjustment_events(rc, start_date, end_date)
 
-    fugle_rows = {}
+    rows = {}
     for t in targets:
         symbol = t["symbol"]
         close = fetch_fugle_adjusted(rc, symbol, years=args.years, market_events=market_events)
-        row = build_row(symbol, close)
-        fugle_rows[symbol] = row
+        rows[symbol] = build_row(symbol, close)
         n_events = len(market_events.get(symbol, []))
         status = f"{len(close)}筆日線，{n_events}筆除權息/分割事件" if not close.empty else "⚠️ 無資料"
         print(f"  {symbol}: {status}")
+    return rows
 
-    out_df = pd.DataFrame([fugle_rows[t["symbol"]] for t in targets])[FIELD_ORDER]
+
+def run_yahoo_source(args, targets):
+    """代號直接當yfinance ticker用（--list有yahoo_symbol欄的話優先用那一欄）。"""
+    rows = {}
+    for t in targets:
+        symbol = t["symbol"]
+        yahoo_ticker = t.get("yahoo_symbol") or symbol
+        close = fetch_yahoo_adjusted(yahoo_ticker, period=f"{args.years}y")
+        rows[symbol] = build_row(symbol, close)
+        status = f"{len(close)}筆日線" if not close.empty else "⚠️ 無資料"
+        print(f"  {symbol}（{yahoo_ticker}）: {status}")
+    return rows
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--symbols", nargs="+", help="直接指定代號清單（跟--list擇一）")
+    parser.add_argument("--list", help="從CSV讀取代號清單（跟--symbols擇一）")
+    parser.add_argument("--source", choices=["fugle", "yahoo"], default="fugle",
+                         help="主要資料來源（預設fugle）。fugle需要--fugle-env-prefix對應的TaishinSDK憑證；"
+                              "yahoo不需要任何憑證，但代號要直接是yfinance ticker格式（例如0050.TW）")
+    parser.add_argument("--fugle-env-prefix", default="", help="TaishinSDK登入用的環境變數前綴，例如 USER1_（對應 FUGLE_USER1_PERSONAL_ID 等），只有 --source fugle 才需要")
+    parser.add_argument("--years", type=int, default=2, help="還原股價回溯年數（預設2年，足夠算MA240/RSI14/MACD）")
+    parser.add_argument("--output", required=True, help="輸出CSV路徑")
+    parser.add_argument("--verify", action="store_true", help="只在--source fugle時有效：額外抓yfinance版本做交叉比對並印出報告（不影響輸出CSV）；只對有yahoo_symbol對照的代號生效")
+    args = parser.parse_args()
+
+    if not args.symbols and not args.list:
+        parser.error("必須指定 --symbols 或 --list 其中一個")
+    if args.verify and args.source != "fugle":
+        print("⚠️ --verify 只在 --source fugle 時有效（需要跟另一個來源比對），本次忽略。")
+        args.verify = False
+
+    targets = load_symbol_list(args)
+    print(f"共 {len(targets)} 檔代號，回溯 {args.years} 年，來源：{'Fugle API' if args.source == 'fugle' else 'yfinance'}")
+
+    if args.source == "fugle":
+        primary_rows = run_fugle_source(args, targets)
+    else:
+        primary_rows = run_yahoo_source(args, targets)
+
+    out_df = pd.DataFrame([primary_rows[t["symbol"]] for t in targets])[FIELD_ORDER]
     out_path = Path(args.output)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_df.to_csv(out_path, index=False, encoding="utf-8-sig")
@@ -168,7 +210,7 @@ def main():
             for t in verifiable:
                 close = fetch_yahoo_adjusted(t["yahoo_symbol"], period=f"{args.years}y")
                 yahoo_rows[t["symbol"]] = build_row(t["symbol"], close)
-            print_verify_report({k: v for k, v in fugle_rows.items() if k in yahoo_rows}, yahoo_rows)
+            print_verify_report({k: v for k, v in primary_rows.items() if k in yahoo_rows}, yahoo_rows)
 
 
 if __name__ == "__main__":
