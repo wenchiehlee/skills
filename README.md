@@ -44,6 +44,8 @@
 | [skill-my-tw-coverage-enrichment-json](common/skill-my-tw-coverage-enrichment-json) | common | basic | 0.1.1 | Extract and review My-TW-Coverage Markdown enrichment as atomic JSON using the biztrends.TW focus list. | 2026-08-07 |
 | [skill-my-tw-coverage-render-markdown](common/skill-my-tw-coverage-render-markdown) | common | financial-data | 1.0.1 | Render My-TW-Coverage canonical enrichment JSON into organized Markdown without using Pilot_Reports as an active source. | 2026-08-07 |
 | [skill-pptx-to-md](common/skill-pptx-to-md) | common | document | 1.0.1 | 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。 | 2026-08-07 |
+| [skill-stock-MA-RSI-BBand-MACD](common/skill-stock-MA-RSI-BBand-MACD) | common | financial-strategy | 1.0.0 | 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI(14)、MACD），以Fugle API還原股價（自動回溯調整除息+分割/減資）為權威來源，保留yfinance版本供交叉比對。 | 2026-08-10 |
+| [skill-stock-TopCrash](common/skill-stock-TopCrash) | common | financial-strategy | 1.0.0 | 任意指數/股票在指定年份範圍內的「崩盤Top N」清單——1/3/5/7/9/11日跌幅、事件標籤、VIX/CNN恐慌貪婪情境、恢復天數與形態(V/U修復)，輸出CSV。 | 2026-08-10 |
 | [skill-stock-market-cost-distribution](common/skill-stock-market-cost-distribution) | common | financial-forecasting | 1.0.2 | 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。 | 2026-08-07 |
 | [skill-stock-universe-onboarding](common/skill-stock-universe-onboarding) | common | financial-data | 1.0.1 | Add stocks or tickers to upstream ConceptStocks and TAIEX monitor/focus source lists without editing generated downstream outputs. | 2026-08-07 |
 | [skill-taiex-compare](common/skill-taiex-compare) | common | financial-accounting | 1.0.1 | 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異 | 2026-08-07 |
@@ -58,7 +60,7 @@
 | [skill-usb-uvc-4k-capture](common/skill-usb-uvc-4k-capture) | common | basic | 1.0.1 | Enable camera-agnostic 4K UVC capture on Android BaseUnit: setup_uvc.sh advertises 4K frame descriptor, uvc_camera_forward detects camera max MJPEG resolution at runtime and clamps negotiation — Jieli U20 stays at 1080p, Logitech MeetUp unlocks 3840×2160@30fps. | 2026-08-07 |
 | [skill-usb-wasapi-capture-debug](common/skill-usb-wasapi-capture-debug) | common | basic | 1.0.2 | Enumerate Windows WASAPI capture endpoints via COM IMMDeviceEnumerator to verify UAC2 speakerphone visibility, device state, and active audio sessions. | 2026-08-07 |
 
-最後產生日期：2026-08-09
+最後產生日期：2026-08-10
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理
