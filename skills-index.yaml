@@ -281,7 +281,7 @@ skills:
 - name: skill-stock-MA-RSI-BBand-MACD
   group: common
   path: common/skill-stock-MA-RSI-BBand-MACD
-  version: 1.1.0
+  version: 1.2.0
   description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI(14)、MACD）。可選Fugle API還原股價（自動回溯調整除息+分割/減資）或yfinance為主要來源，前者可額外交叉比對後者。
   category: financial-strategy
   maintainer: wenchiehlee
