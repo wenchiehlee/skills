@@ -1,6 +1,6 @@
 ---
 name: skill-stock-MA-RSI-BBand-MACD
-description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI(14)、MACD），以Fugle API還原股價（自動回溯調整除息+分割/減資）為權威來源，保留yfinance版本供交叉比對。
+description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MACD），以Fugle API還原股價（自動回溯調整除息+分割/減資）為權威來源，保留yfinance版本供交叉比對。
 ---
 
 # Stock MA / RSI / BBand / MACD Skill
@@ -9,8 +9,27 @@ description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI(14)�
 
 - **MA/STD/z-score**：MA20/MA60/MA120/MA240（月/季/半年/年線）各自的均線、標準差、z-score（(現價-MA)/STD，可判斷偏離幾個標準差）
 - **布林通道（BBand）**：以MA20/STD20為基礎，上軌=MA20+2σ、下軌=MA20-2σ
-- **RSI(14)**：Wilder 1978原始定義（EMA遞迴平滑版本，不是簡單移動平均）
+- **RSI(period可調，預設14)**：Wilder 1978原始定義（EMA遞迴平滑版本，不是簡單移動平均）
 - **MACD(12,26,9)**：DIF、訊號線、柱狀圖(histogram)
+
+## 讓消費端把RSI變成「即時公式」，不是每天重跑一次的靜態值
+
+`indicators.py` 額外提供 `calc_rsi_state(close, period)`，回傳
+`{last_close, avg_gain, avg_loss}`——RSI是遞迴定義（今天的平滑值=昨天的平滑值*(n-1)/n
++今天漲跌*1/n），只知道「現價」沒辦法重算，但只要把這三個值當輔助欄位存進試算表，
+下游就能寫一條公式讓RSI隨盤中報價即時變動，不必每次報價跳動都重新登入API重算整條序列：
+
+```
+gain_today = MAX(現價-上一收盤價, 0)
+loss_today = MAX(上一收盤價-現價, 0)
+avg_gain_today = avg_gain*(period-1)/period + gain_today/period
+avg_loss_today = avg_loss*(period-1)/period + loss_today/period
+RSI = 100 - 100/(1 + avg_gain_today/avg_loss_today)
+```
+
+GoogleSheet.Banks 的 `update_zscore_stats.py` 是這個模式的參考實作：`calc_rsi_state()`
+算出的三個值寫進輔助欄（每天一次），P欄（RSI顯示欄）本身則是引用「現價欄+這三個輔助欄」
+的公式，達到即時重算。
 
 ## 為什麼需要這個技能——還原股價口徑問題
 

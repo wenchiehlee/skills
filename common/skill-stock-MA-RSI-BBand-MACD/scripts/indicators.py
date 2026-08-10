@@ -50,6 +50,40 @@ def calc_rsi(close: pd.Series, period: int = 14) -> pd.Series:
     return 100 - 100 / (1 + rs)
 
 
+def calc_rsi_state(close: pd.Series, period: int = 14) -> dict:
+    """回傳 Wilder RSI 遞迴平滑在「最後一筆收盤價當下」的內部狀態：
+    {last_close, avg_gain, avg_loss}。
+
+    用途：RSI是遞迴定義（今天的平滑值 = 昨天的平滑值*(n-1)/n + 今天漲跌*1/n），
+    只給「現價」這一個數字沒辦法重算，但只要知道「上一個收盤價」跟「上一個收盤價當下
+    的avg_gain/avg_loss」，往後一天的RSI就能用一條試算表公式即時算出來（不用等腳本重跑）：
+
+      gain_today  = MAX(現價-上一收盤價, 0)
+      loss_today  = MAX(上一收盤價-現價, 0)
+      avg_gain_today = avg_gain * (period-1)/period + gain_today/period
+      avg_loss_today = avg_loss * (period-1)/period + loss_today/period
+      RSI = 100 - 100/(1 + avg_gain_today/avg_loss_today)
+
+    這三個值只需要腳本每天算一次（用「到昨天收盤為止」的序列），試算表公式再用當天
+    即時報價（現價欄）跟這三個值算出「即時RSI」，達到RSI隨報價變動即時更新，不必每次
+    報價跳動都重新登入API重算整條序列。"""
+    delta = close.diff()
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+    avg_gain = gain.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
+    avg_loss = loss.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
+
+    def last(s):
+        v = s.iloc[-1] if len(s) else float("nan")
+        return None if pd.isna(v) else float(v)
+
+    return {
+        "last_close": last(close),
+        "avg_gain": last(avg_gain),
+        "avg_loss": last(avg_loss),
+    }
+
+
 def calc_macd(close: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> pd.DataFrame:
     """標準 MACD：DIF = EMA_fast - EMA_slow，MACD訊號線 = DIF 的 EMA_signal，
     柱狀圖(histogram) = DIF - 訊號線。EMA 用 adjust=False（遞迴版本，業界標準）。"""

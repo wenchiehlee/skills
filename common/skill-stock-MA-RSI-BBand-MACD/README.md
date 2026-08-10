@@ -28,6 +28,10 @@ skill-stock-MA-RSI-BBand-MACD/
 
 ## 版本
 
+- 1.2.0 (2026-08-10)：`indicators.py` 新增 `calc_rsi_state(close, period)`，回傳
+  Wilder RSI遞迴平滑在最後一筆收盤價當下的內部狀態（last_close/avg_gain/avg_loss），
+  讓消費端能把RSI做成即時公式（引用「現價+這三個輔助值」），不必每天/每次報價變動都
+  重新登入API重算整條序列。GoogleSheet.Banks的`update_zscore_stats.py`已改用這個模式。
 - 1.1.0 (2026-08-10)：新增 `--source {fugle,yahoo}` 選擇主要資料來源——沒有Fugle/
   TaishinSDK憑證的consumer repo可以改用 `--source yahoo`（純yfinance，不需要任何憑證），
   代號直接傳yfinance ticker格式；有Fugle憑證的repo維持預設的 `--source fugle` + 選配
