@@ -21,13 +21,22 @@ skill-stock-MA-RSI-BBand-MACD/
   metadata.json         # 版本與來源 metadata
   self_update.py         # 通用技能自我更新工具（跟其他skill共用同一份，勿修改）
   scripts/
-    run_indicators.py    # CLI進入點：批次算指標、寫CSV、選配--verify交叉比對
-    price_loader.py       # Fugle還原股價（除息+分割回溯調整）+ yfinance交叉來源
-    indicators.py          # 純數學：MA/STD/BBand/z-score/RSI(14)/MACD(12,26,9)
+    run_indicators.py    # CLI進入點：批次算指標快照、寫CSV、選配--verify交叉比對
+    run_backtest.py       # CLI進入點：(0)~(13b)條件分類法歷史回測，多horizon
+    backtest.py            # 純邏輯：回測條件偵測+forward報酬/勝率統計
+    price_loader.py         # Fugle還原股價（除息+分割回溯調整）+ yfinance交叉來源
+    indicators.py            # 純數學：MA/STD/BBand/z-score/RSI/MACD(12,26,9)
 ```
 
 ## 版本
 
+- 1.3.0 (2026-08-10)：新增歷史回測模組 `backtest.py`/`run_backtest.py`——(0)~(13b)條件
+  分類法（單日急跌/跌破均線/RSI超賣/z-score偏離/創新高新低），支援多horizon（例如
+  60/180/360日）forward報酬/勝率統計。`price_loader.fetch_fugle_adjusted()` 新增明確
+  `start_date`/`end_date` 參數（原本只能「回溯N年到今天」，長期回測要能指定任意歷史區間），
+  `fetch_fugle_market_adjustment_events()` 自動分段處理Fugle除息/分割端點的3年查詢上限。
+  這次把GoogleSheet.Banks `投資決策分層.md` 的回測邏輯收進來時，發現該文件先前的資料完全
+  沒做除息回溯還原，藉這次機會一併修正，詳見SKILL.md。
 - 1.2.0 (2026-08-10)：`indicators.py` 新增 `calc_rsi_state(close, period)`，回傳
   Wilder RSI遞迴平滑在最後一筆收盤價當下的內部狀態（last_close/avg_gain/avg_loss），
   讓消費端能把RSI做成即時公式（引用「現價+這三個輔助值」），不必每天/每次報價變動都

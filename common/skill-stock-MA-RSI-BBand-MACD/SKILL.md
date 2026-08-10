@@ -1,6 +1,6 @@
 ---
 name: skill-stock-MA-RSI-BBand-MACD
-description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MACD），以Fugle API還原股價（自動回溯調整除息+分割/減資）為權威來源，保留yfinance版本供交叉比對。
+description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MACD）與歷史回測，以Fugle API還原股價（自動回溯調整除息+分割/減資）為權威來源，保留yfinance版本供交叉比對。
 ---
 
 # Stock MA / RSI / BBand / MACD Skill
@@ -11,6 +11,21 @@ description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MA
 - **布林通道（BBand）**：以MA20/STD20為基礎，上軌=MA20+2σ、下軌=MA20-2σ
 - **RSI(period可調，預設14)**：Wilder 1978原始定義（EMA遞迴平滑版本，不是簡單移動平均）
 - **MACD(12,26,9)**：DIF、訊號線、柱狀圖(histogram)
+
+## 歷史回測（`scripts/backtest.py` + `scripts/run_backtest.py`）
+
+除了「當下快照」，`backtest.py` 提供一整套(0)~(13b)編號的條件分類法歷史回測——單日急跌、
+跌破MA(短/中/長，各含組合/剛跌破事件/純狀態三種)、RSI超賣(兩個門檻，各三種)、創新高/新低
+（兩組窗口）、z-score偏離（每個MA週期各-1σ/-2σ），對每個條件算歷史觸發次數、跟可設定的多個
+horizon（例如60/180/360日）forward報酬/勝率。CLI用法見`run_backtest.py`檔頭docstring。
+
+**除息還原是回測正確性的關鍵**：這套回測邏輯2026-08-10從GoogleSheet.Banks的`投資決策分層.md`
+收進本skill時，發現該文件先前用的資料來源完全沒做除息回溯還原（只有0050的股票分割手動修正過，
+其餘除息缺口都沒處理）——高殖利率的停泊股尤其嚴重，除息缺口會被誤判成「單日跌深」污染急跌類
+條件的統計，MA/RSI/z-score也會系統性偏移。全部改用本skill的`fetch_fugle_adjusted()`（正確
+回溯調整除息+分割）重算後，基準勝率普遍大幅上升、部分訊號結論方向整個反轉（例如RSI(20)訊號
+品質，修正前資料顯示「因股而異」，修正後資料顯示「全面優於RSI(14)、沒有例外」）——這是本skill
+存在的核心理由：回測邏輯抽成可重跑工具，才不會讓資料品質問題悄悄污染分析結論而不自知。
 
 ## 讓消費端把RSI變成「即時公式」，不是每天重跑一次的靜態值
 

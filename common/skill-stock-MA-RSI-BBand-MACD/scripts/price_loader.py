@@ -102,31 +102,42 @@ def fetch_fugle_candles(rest_client, symbol: str, start_date: date, end_date: da
 
 
 def fetch_fugle_market_adjustment_events(rest_client, start_date: date, end_date: date) -> dict:
-    """抓「整個市場」的除息(dividends)跟減資/分割(capital_changes)事件（單次呼叫涵蓋
-    整段查詢範圍，不用分年），回傳 {symbol: [(ex_date, factor), ...]}，
-    factor = referencePrice/previousClose（<1 代表當天價格被除權息壓低）。"""
+    """抓「整個市場」的除息(dividends)跟減資/分割(capital_changes)事件，回傳
+    {symbol: [(ex_date, factor), ...]}，factor = referencePrice/previousClose
+    （<1 代表當天價格被除權息壓低）。
+
+    這兩個端點單次查詢範圍上限3年（比candles的1年限制更寬，但長期回測——例如
+    投資決策分層.md用的2016年至今近10年窗口——還是會超過，所以這裡自動分段抓
+    （用略小於3年的區塊避免邊界誤差），行為對呼叫端透明，不用自己處理分段。"""
     events: dict[str, list] = {}
+    max_span_days = 3 * 365 - 5  # 略小於3年，避免邊界剛好卡在限制上
 
-    div = rest_client.stock.corporate_actions.dividends(
-        start_date=start_date.strftime("%Y-%m-%d"),
-        end_date=end_date.strftime("%Y-%m-%d"),
-    )
-    for d in div.get("data", []):
-        prev, ref = d.get("previousClose"), d.get("referencePrice")
-        if not prev or not ref:
-            continue
-        events.setdefault(d["symbol"], []).append((pd.Timestamp(d["date"]), ref / prev))
+    cur_start = start_date
+    while cur_start < end_date:
+        cur_end = min(end_date, cur_start + timedelta(days=max_span_days))
 
-    cc = rest_client.stock.corporate_actions.capital_changes(
-        start_date=start_date.strftime("%Y-%m-%d"),
-        end_date=end_date.strftime("%Y-%m-%d"),
-    )
-    for d in cc.get("data", []):
-        raw = d.get("raw", {})
-        prev, ref = raw.get("previousClose"), raw.get("referencePrice")
-        if not prev or not ref:
-            continue
-        events.setdefault(d["symbol"], []).append((pd.Timestamp(d["resumeDate"]), ref / prev))
+        div = rest_client.stock.corporate_actions.dividends(
+            start_date=cur_start.strftime("%Y-%m-%d"),
+            end_date=cur_end.strftime("%Y-%m-%d"),
+        )
+        for d in div.get("data", []):
+            prev, ref = d.get("previousClose"), d.get("referencePrice")
+            if not prev or not ref:
+                continue
+            events.setdefault(d["symbol"], []).append((pd.Timestamp(d["date"]), ref / prev))
+
+        cc = rest_client.stock.corporate_actions.capital_changes(
+            start_date=cur_start.strftime("%Y-%m-%d"),
+            end_date=cur_end.strftime("%Y-%m-%d"),
+        )
+        for d in cc.get("data", []):
+            raw = d.get("raw", {})
+            prev, ref = raw.get("previousClose"), raw.get("referencePrice")
+            if not prev or not ref:
+                continue
+            events.setdefault(d["symbol"], []).append((pd.Timestamp(d["resumeDate"]), ref / prev))
+
+        cur_start = cur_end + timedelta(days=1)
 
     return events
 
@@ -141,12 +152,17 @@ def adjust_close(dates: pd.Series, closes: pd.Series, events_for_symbol: list) -
 
 
 def fetch_fugle_adjusted(rest_client, symbol: str, years: int = 2,
-                          market_events: dict | None = None) -> pd.Series:
+                          market_events: dict | None = None,
+                          start_date: date | None = None, end_date: date | None = None) -> pd.Series:
     """回傳單一代號的還原收盤價序列（pd.Series，index=交易日 Timestamp，由舊到新）。
     market_events 可選——批次處理多檔時，外面先呼叫一次
-    fetch_fugle_market_adjustment_events() 傳進來，避免每檔都重打一次全市場端點。"""
-    end_date = datetime.now().date()
-    start_date = end_date - timedelta(days=365 * years + 30)
+    fetch_fugle_market_adjustment_events() 傳進來，避免每檔都重打一次全市場端點。
+    預設（不給start_date/end_date）是「回溯years年到今天」，用於算當下指標快照；
+    長期歷史回測（例如run_backtest.py）要明確給start_date/end_date，不受years限制。"""
+    if end_date is None:
+        end_date = datetime.now().date()
+    if start_date is None:
+        start_date = end_date - timedelta(days=365 * years + 30)
 
     df = fetch_fugle_candles(rest_client, symbol, start_date, end_date)
     if df.empty:
