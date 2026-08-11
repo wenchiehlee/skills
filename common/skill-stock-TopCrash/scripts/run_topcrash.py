@@ -25,6 +25,8 @@ run_topcrash.py — CLI 進入點：抓一段年份範圍內某指數/股票的�
 named_events.json 格式：
   [{"name": "全球COVID 2020/2", "start": "2020-01-30", "end": "2021-06-30"}, ...]
 """
+from __future__ import annotations  # Python 3.8相容：本檔案有list[dict]/X|None這類PEP585/604語法，3.8需要這行才能import
+
 import argparse
 import json
 import sys

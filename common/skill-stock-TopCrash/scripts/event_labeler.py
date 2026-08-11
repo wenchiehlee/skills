@@ -10,6 +10,8 @@ event_labeler.py — 依日期查具名崩盤事件標籤，兩層優先序：
 
 兩個來源都是可選的（都不給就永遠回傳「其他」，crash_detector 會退化成純日期去重）。
 """
+from __future__ import annotations  # Python 3.8相容：本檔案有list[dict]/X|None這類PEP585/604語法，3.8需要這行才能import
+
 import pandas as pd
 
 

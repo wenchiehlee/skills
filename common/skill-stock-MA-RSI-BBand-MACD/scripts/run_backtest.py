@@ -22,6 +22,8 @@ run_backtest.py — CLI 進入點：對一批股票跑 backtest.py 的(0)~(13b)�
 （n/per_year是條件本身的全樣本觸發次數；n_h/avg/win是該horizon下的forward報酬統計，
 avg/win為None代表該horizon下這個條件從沒觸發過或全部落在資料尾端無法算forward報酬）。
 """
+from __future__ import annotations  # Python 3.8相容：本檔案有list[dict]/X|None這類PEP585/604語法，3.8需要這行才能import
+
 import argparse
 import sys
 from datetime import date, datetime, timedelta

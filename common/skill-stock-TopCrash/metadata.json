@@ -1,6 +1,6 @@
 {
   "name": "skill-stock-TopCrash",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "source": "https://github.com/wenchiehlee-money/GoogleSheet.Banks",
   "maintainer": "wenchiehlee",
   "description": "任意指數/股票在指定年份範圍內的「崩盤Top N」清單——1/3/5/7/9/11日跌幅、事件標籤、VIX/CNN恐慌貪婪情境、恢復天數與形態(V/U修復)，輸出CSV。",

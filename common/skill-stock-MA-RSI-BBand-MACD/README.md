@@ -30,6 +30,12 @@ skill-stock-MA-RSI-BBand-MACD/
 
 ## 版本
 
+- 1.3.1 (2026-08-11)：修正Python 3.8相容性——`list[dict]`/`X | None`這類PEP585/604型別
+  標註語法在3.8會直接讓import炸掉（`TypeError: 'type' object is not subscriptable`），
+  受影響的每個檔案開頭加`from __future__ import annotations`延遲型別標註求值。是造成
+  GoogleSheet.Banks的`Fugle Stock Data`跟`TAIEX Crash Top50 Weekly`兩個排程失敗的元兇
+  （self-hosted runner卡在Python 3.8）。
+
 - 1.3.0 (2026-08-10)：新增歷史回測模組 `backtest.py`/`run_backtest.py`——(0)~(13b)條件
   分類法（單日急跌/跌破均線/RSI超賣/z-score偏離/創新高新低），支援多horizon（例如
   60/180/360日）forward報酬/勝率統計。`price_loader.fetch_fugle_adjusted()` 新增明確

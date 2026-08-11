@@ -39,6 +39,8 @@ run_indicators.py — CLI 進入點：算一批股票的 MA/STD/布林通道(BBa
   # 只用yfinance（不需要Fugle憑證），代號要直接是yfinance ticker
   python run_indicators.py --source yahoo --symbols 0050.TW 2330.TW --output out.csv
 """
+from __future__ import annotations  # Python 3.8相容：本檔案有list[dict]/X|None這類PEP585/604語法，3.8需要這行才能import
+
 import argparse
 import sys
 from pathlib import Path

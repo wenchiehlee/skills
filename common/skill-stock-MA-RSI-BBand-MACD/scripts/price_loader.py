@@ -25,6 +25,8 @@ Fugle 端點限制（實測記錄，不是官方文件）：
 需要 `taishin_sdk`（`pip install taishin_sdk`，內部依賴 `fugle-marketdata`）與有效的
 台新複委託/證券帳號憑證才能使用 Fugle 來源；yfinance 來源不需要任何憑證。
 """
+from __future__ import annotations  # Python 3.8相容：本檔案有list[dict]/X|None這類PEP585/604語法，3.8需要這行才能import
+
 import base64
 import os
 import tempfile

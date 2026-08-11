@@ -24,6 +24,8 @@ backtest.py — 歷史回測：對「單日急跌/跌破均線/RSI超賣/z-score
 close 序列（還原股價）由呼叫端自己準備（用price_loader.fetch_fugle_adjusted或
 fetch_yahoo_adjusted都可以），這裡純粹是回測邏輯。
 """
+from __future__ import annotations  # Python 3.8相容：本檔案有list[dict]/X|None這類PEP585/604語法，3.8需要這行才能import
+
 import pandas as pd
 
 from indicators import calc_ma, calc_std, calc_rsi

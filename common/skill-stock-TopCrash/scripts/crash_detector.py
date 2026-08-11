@@ -7,6 +7,8 @@ crash_detector.py — 純邏輯：從一段日收盤價序列裡找出「崩盤 
 「這天最壞的表現」，全樣本依最壞表現排序（最負的排最前），依序選入，遇到同一具名事件
 只取最壞的一筆、未命名事件用日期間隔去重，直到湊滿 top_n 筆或沒有更負的候選為止。
 """
+from __future__ import annotations  # Python 3.8相容：本檔案有list[dict]/X|None這類PEP585/604語法，3.8需要這行才能import
+
 from datetime import date
 
 import pandas as pd

@@ -25,6 +25,11 @@ skill-stock-TopCrash/
 
 ## 版本
 
+- 1.0.1 (2026-08-11)：修正Python 3.8相容性——`list[dict]`/`X | None`這類PEP585/604型別
+  標註語法在3.8會直接讓import炸掉（`TypeError: 'type' object is not subscriptable`），
+  受影響的每個檔案開頭加`from __future__ import annotations`延遲型別標註求值。是造成
+  GoogleSheet.Banks的`TAIEX Crash Top50 Weekly`排程失敗的元兇（self-hosted runner卡在
+  Python 3.8）。
 - 1.0.0 (2026-08-10)：自 GoogleSheet.Banks 的 `taiex_crash_top50.py` 收錄並泛化——
   拿掉對特定Google Sheet寫入邏輯，改成通用CLI + CSV輸出；補上原本只存在於試算表裡
   （非程式碼生成）的「恢復天數/恢復形態」欄位，自行設計計算方法並用5筆已知案例驗證；
