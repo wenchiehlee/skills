@@ -21,8 +21,13 @@ description: 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡�
    財經口述影片畫面常隨句子開頭切換，不需要句子裡明講「看這張圖」才算候選；
    純語意判斷，不用關鍵字比對，但會排除明顯只是延續同一段話的句子
 3. 用 `yt-dlp` 下載原始影片（僅暫存，用完即刪，音訊已經由 whisper pipeline 另外取得）
-4. 用 `ffmpeg` 在每個時間點擷取一張畫面，存成
-   `data/{channel}/{stem}_keyframes/{stem}_{HHMMSS}.png`
+4. 用 `ffmpeg` 在每個時間點擷取一張畫面；用 8x8 average hash 跟前一張**保留下來**的畫面比
+   對，Hamming distance ≤ 6（滿分 64）視為畫面沒真的切換（LLM 猜的話題邊界不一定對應到
+   實際換頁），直接刪掉該張、不計入輸出——避免同一張投影片因為講者多講幾句話被連續截好
+   幾張幾乎一樣的圖
+5. 去重後存成 `data/{channel}/{stem}_keyframes/{stem}_{HHMMSS}.png`，並產生一份
+   `data/{channel}/{stem}_keyframes.md` 索引：每個保留的時間碼、縮圖連結與 LLM 給的說明
+   逐一對照，方便瀏覽或做跨影片交叉比對，不用重新呼叫 LLM 就能查閱
 
 ## ⚠️ 與 `skill-mlx-api-client-whisper` 的關係
 
@@ -34,11 +39,12 @@ whisper pipeline 只下載/處理**音訊**；本技能是它的下游，需要*
 
 ### 1. 安裝依賴
 ```bash
-pip install python-dotenv
+pip install python-dotenv Pillow
 # 共用 LLM 客戶端（登錄庫 wenchiehlee/llm 的 sibling checkout）：
 uv add --editable "../llm"
 # 或在 requirements.txt 中加入一行：-e ../llm
 ```
+（`Pillow` 用於截圖的 average-hash 去重比對。）
 另需系統已安裝 [`yt-dlp`](https://github.com/yt-dlp/yt-dlp)、[`ffmpeg`](https://ffmpeg.org/)
 與 [Node.js](https://nodejs.org/)（`node` 需在 PATH 上，`download_video()` 呼叫 `yt-dlp`
 時固定帶 `--js-runtimes node`，解出 YouTube 簽章用）。
@@ -93,7 +99,9 @@ KeyframeExtractor().extract(
 ## 輸出
 
 若逐字稿中沒有找到值得截圖的視覺重點時刻，不會下載影片，直接回傳空清單。
-找到的每個時刻各存一張 PNG，檔名帶時間碼（`{stem}_{HHMMSS}.png`），方便對照原始逐字稿的時間軸。
+去重後每個保留的時刻各存一張 PNG，檔名帶時間碼（`{stem}_{HHMMSS}.png`），方便對照原始
+逐字稿的時間軸；同時在 `{stem}_keyframes/` 旁邊產生 `{stem}_keyframes.md`，用表格列出
+每張截圖的時間碼、縮圖與 LLM 給的說明，作為該影片的關鍵畫面索引。
 
 ## 🔄 版本管理與更新
 - 唯一可信來源為 skills 登錄庫中的 `common/skill-youtube-channel-srt-keyframe-extract`

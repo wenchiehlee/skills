@@ -1,0 +1,49 @@
+{
+  "name": "skill-youtube-channel-fetch",
+  "description": "從 YouTube 財經頻道下載最新影片的音訊，發佈為本 repo 的 GitHub Release 附件，並寫入 audio_manifest.json，供 skill-mlx-api-client-whisper 觸發轉錄。",
+  "category": "document",
+  "version": "1.0.0",
+  "author": "wenchiehlee",
+  "maintainer": "wenchiehlee",
+  "source": "https://github.com/wenchiehlee-money/YoutubeAudio.Fetch",
+  "updated_at": "2026-08-11",
+  "license": "MIT",
+  "tags": [
+    "youtube",
+    "audio",
+    "yt-dlp",
+    "github-releases",
+    "manifest"
+  ],
+  "compatibility": {
+    "python": ">=3.10",
+    "requires": [
+      "requests",
+      "python-dotenv",
+      "yt-dlp (external CLI)"
+    ],
+    "env": [
+      "WHISPER_SOURCE_REPO",
+      "REPO_FILE_SYNC_WENCHIEHLEE_MONEY"
+    ]
+  },
+  "files": [
+    "SKILL.md",
+    "metadata.json",
+    "self_update.py",
+    "scripts/channel_fetch.py"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "local_path": "github.com/skills/common/skill-youtube-channel-fetch",
+      "role": "registry"
+    },
+    {
+      "repo": "wenchiehlee-money/YoutubeAudio.Fetch",
+      "local_path": "github.com/YoutubeAudio.Fetch/skills/skill-youtube-channel-fetch",
+      "role": "consumer"
+    }
+  ],
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-youtube-channel-fetch"
+}

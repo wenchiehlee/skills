@@ -34,6 +34,8 @@ try:
 except ImportError:
     pass
 
+from PIL import Image
+
 from llm import LLMClient
 
 # yt-dlp only enables the "deno" JS runtime by default; without one it can't run the
@@ -107,6 +109,29 @@ def render_transcript(cues: list[SrtCue]) -> str:
     return "\n".join(f"[{c.start}] {c.text}" for c in cues)
 
 
+# Two consecutive "new topic" moments can still land on the same on-screen slide (the
+# LLM's topic-boundary guess doesn't always coincide with an actual slide change), so
+# adjacent captures are frequently near-identical. An 8x8 average hash is enough to
+# catch that — full duplicate-detection accuracy isn't needed, just "is this basically
+# the same slide as the one we just kept".
+DUPLICATE_HASH_SIZE = 8
+DUPLICATE_HASH_THRESHOLD = 6  # max Hamming distance (out of 64 bits) to call it a duplicate
+
+
+def _average_hash(path: Path, hash_size: int = DUPLICATE_HASH_SIZE) -> int:
+    img = Image.open(path).convert("L").resize((hash_size, hash_size), Image.LANCZOS)
+    pixels = list(img.getdata())
+    avg = sum(pixels) / len(pixels)
+    bits = 0
+    for p in pixels:
+        bits = (bits << 1) | (1 if p > avg else 0)
+    return bits
+
+
+def _hamming_distance(a: int, b: int) -> int:
+    return bin(a ^ b).count("1")
+
+
 class KeyframeExtractor:
     def __init__(self, client: LLMClient | None = None) -> None:
         self.client = client or LLMClient(app_name="skill-youtube-channel-srt-keyframe-extract")
@@ -116,7 +141,12 @@ class KeyframeExtractor:
             return []
         transcript = render_transcript(cues)
         prompt = f"{SYSTEM_PROMPT}\n\n{JSON_INSTRUCTION}\n\n逐字稿：\n{transcript}"
-        data = self.client.generate_json(prompt)
+        # Default max_tokens (8192) is enough for a short video's moment list but gets
+        # cut off mid-JSON on longer transcripts (e.g. 990 cues), since every cue is a
+        # potential moment under the loosened "new topic/number" criteria. Scale with
+        # transcript length instead of guessing a single fixed budget.
+        max_tokens = min(32768, max(8192, len(cues) * 60))
+        data = self.client.generate_json(prompt, max_tokens=max_tokens)
         if isinstance(data, dict):
             return data.get("moments", [])
         return []
@@ -153,26 +183,74 @@ class KeyframeExtractor:
         if not moments:
             print(f"[keyframe_extract] no key visual moments found in {srt_path}")
             return []
+        moments = sorted(moments, key=lambda m: m["timestamp"])
 
         out_dir = Path(out_dir) if out_dir else srt_path.parent / f"{stem}_keyframes"
         out_dir.mkdir(parents=True, exist_ok=True)
 
         saved: list[Path] = []
+        kept_moments: list[dict] = []
+        skipped_duplicates = 0
         with tempfile.TemporaryDirectory(prefix="keyframe_extract_") as tmp:
             tmp_dir = Path(tmp)
             print(f"[keyframe_extract] downloading video for {stem} ({len(moments)} moment(s) to capture)")
             video_path = self.download_video(video_url, tmp_dir)
+            last_hash: int | None = None
             for moment in moments:
                 ts = moment["timestamp"]
                 ts_compact = ts.replace(":", "")
                 out_path = out_dir / f"{stem}_{ts_compact}.png"
-                print(f"[keyframe_extract]   {ts} — {moment.get('reason', '')}")
                 self.grab_frame(video_path, ts, out_path)
+
+                frame_hash = _average_hash(out_path)
+                if last_hash is not None and _hamming_distance(frame_hash, last_hash) <= DUPLICATE_HASH_THRESHOLD:
+                    print(f"[keyframe_extract]   {ts} — skipped (duplicate of previous kept frame)")
+                    out_path.unlink(missing_ok=True)
+                    skipped_duplicates += 1
+                    continue
+
+                last_hash = frame_hash
+                print(f"[keyframe_extract]   {ts} — {moment.get('reason', '')}")
                 saved.append(out_path)
+                kept_moments.append(moment)
             # video_path lives in the TemporaryDirectory; it is removed on context exit.
 
-        print(f"[keyframe_extract] done. saved {len(saved)} PNG(s) to {out_dir}")
+        index_path = self._write_index_md(stem, srt_path, video_url, out_dir, kept_moments, saved)
+        print(
+            f"[keyframe_extract] done. saved {len(saved)} PNG(s) "
+            f"({skipped_duplicates} duplicate(s) skipped) to {out_dir}; index: {index_path}"
+        )
         return saved
+
+    def _write_index_md(
+        self,
+        stem: str,
+        srt_path: Path,
+        video_url: str,
+        out_dir: Path,
+        moments: list[dict],
+        saved: list[Path],
+    ) -> Path:
+        """Write a per-video Markdown mapping of each kept snapshot to its timestamp
+        and reason, so the PNGs can be browsed/cross-referenced without re-running
+        the LLM pass."""
+        index_path = out_dir.parent / f"{stem}_keyframes.md"
+        lines = [
+            f"# {stem} — 關鍵畫面索引",
+            "",
+            f"- 來源逐字稿：`{srt_path.name}`",
+            f"- 影片：{video_url}",
+            f"- 截圖數：{len(saved)}",
+            "",
+            "| 時間碼 | 畫面 | 說明 |",
+            "| --- | --- | --- |",
+        ]
+        for moment, path in zip(moments, saved):
+            rel_path = f"{out_dir.name}/{path.name}"
+            reason = moment.get("reason", "").replace("|", "\\|")
+            lines.append(f"| {moment['timestamp']} | ![{path.name}]({rel_path}) | {reason} |")
+        index_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return index_path
 
 
 if __name__ == "__main__":

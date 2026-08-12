@@ -21,6 +21,7 @@
     "requires": [
       "llm (editable, ../llm)",
       "python-dotenv",
+      "Pillow",
       "yt-dlp (external CLI)",
       "ffmpeg (external CLI)"
     ],
