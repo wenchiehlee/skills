@@ -179,6 +179,18 @@ skills:
   source: https://github.com/wenchiehlee/FinMind
   updated_at: '2026-07-24'
   revised_at: '2026-08-07'
+- name: skill-finmind-miz
+  group: common
+  path: common/skill-finmind-miz
+  version: 1.0.0
+  description: Fetch book content from the self-hosted Calibre-Web epub reader at
+    books.miz.com.tw via browser automation (epub.js book.spine/book.load), and export
+    as Markdown into Miz.Fetch's books/ folder convention.
+  category: document
+  maintainer: wenchiehlee-money
+  source: https://github.com/wenchiehlee-money/Miz.Fetch
+  updated_at: '2026-08-12'
+  revised_at: '2026-08-12'
 - name: skill-google-alert-fetch
   group: common
   path: common/skill-google-alert-fetch
