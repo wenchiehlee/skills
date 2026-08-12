@@ -1,9 +1,9 @@
 ---
-name: skill-finmind-miz
+name: skill-miz-fetch
 description: 從自架 Calibre-Web 電子書伺服器（books.miz.com.tw）取得書籍原始 epub 或閱讀器全文，並依 Miz.Fetch 專案規範匯出為 Markdown（books/[書名]/metadata.md + 00.md, 01.md, ...），保留標題/粗體/清單排版並抽出內嵌圖片。
 ---
 
-# FinMind Miz Book Fetch Skill（Miz 電子書擷取技能）
+# Miz Fetch Skill（Miz 電子書擷取技能）
 
 此技能用於將 **books.miz.com.tw**（使用者自架、開放存取的 Calibre-Web 個人電子書伺服器）上的書籍，轉換為 Markdown 並存入 [Miz.Fetch](https://github.com/wenchiehlee-money/Miz.Fetch) 專案的 `books/` 資料夾。
 
