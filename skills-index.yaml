@@ -451,3 +451,14 @@ skills:
   source: wj-lee_Barco.github.com/gadget/debug_wasapi.py
   updated_at: '2026-07-21'
   revised_at: '2026-08-07'
+- name: skill-youtube-channel-srt-keyframe-extract
+  group: common
+  path: common/skill-youtube-channel-srt-keyframe-extract
+  version: 1.0.0
+  description: 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡報／數字等視覺重點的時間點，下載對應影片並擷取該時間點的畫面存成帶時間碼的
+    PNG。
+  category: document
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee-money/YoutubeAudio.Fetch
+  updated_at: '2026-08-11'
+  revised_at: '2026-08-12'
