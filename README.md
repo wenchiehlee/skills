@@ -26,7 +26,7 @@
 | [skill-company-cycle-index](common/skill-company-cycle-index) | common | financial-strategy | 1.3.2 | 套用已審核或已結構化的 company revenue segment weights 到 canonical cycle model；支援 Taiwan 與 United_States pipeline，US 對齊 canonical_cycle_specification 並用 latest-mix proxy 補齊缺 segment quarters，生成對應 company_cycle_index_*.png 並更新 README。 | 2026-08-07 |
 | [skill-company-download-logo](common/skill-company-download-logo) | common | basic | 1.0.1 | 指定台灣股票代碼或美股概念股 Ticker，自動下載高解析度公司官方 Logo PNG，並限制在固定大小。 | 2026-08-07 |
 | [skill-company-investorconference-digest](common/skill-company-investorconference-digest) | common | basic | 2.4.6 | 法說會/earnings call 與財報結果 digest SOP；支援 FIN/GT/IR/Q&A、Skills 財報結果、公司財報文件、Yahoo consensus、預期差、模型修正路徑與美股對台股 read-through。 | 2026-08-07 |
-| [skill-company-investorconference-ingest](common/skill-company-investorconference-ingest) | common | basic | 1.3.1 | 投資人說明會/財報事件材料蒐集 Ingest 模組；法說會抓音檔、IR、逐字稿，財報事件抓 Skills 財報結果、earnings release、financial tables、SEC filing，並避免對純財報事件產生 FIN/GT。 | 2026-08-11 |
+| [skill-company-investorconference-ingest](common/skill-company-investorconference-ingest) | common | basic | 1.3.1 | 投資人說明會/財報事件材料蒐集 Ingest 模組；法說會抓音檔、IR、逐字稿，財報事件抓 Skills 財報結果、earnings release、financial tables、SEC filing，並避免對純財報事件產生 FIN/GT。 | 2026-08-12 |
 | [skill-company-investorconference-ir-pdf-md](common/skill-company-investorconference-ir-pdf-md) | common | financial-data | 1.0.1 | Fetch InvestorConference official IR PDFs through ingest, then convert them to Markdown using the repo-local Mac-mini OCR hybrid pipeline with auditable TODO/OCR markers. | 2026-08-07 |
 | [skill-company-investorconference-upcoming-earnings](common/skill-company-investorconference-upcoming-earnings) | common | financial-data | 1.0.1 | Regenerate raw_event_upcoming_earnings.csv from InvestorConference's own TW/US watchlists, classifying every event as 財報, 法說會, or 受邀法說. | 2026-08-07 |
 | [skill-company-mops-financialreport-pdf-md](common/skill-company-mops-financialreport-pdf-md) | common | financial-data | 1.0.1 | Download Taiwan MOPS quarterly financial-report PDFs, then convert same-stem Markdown sidecars with skill-mac-mini-ocr hybrid PDF/OCR workflow. | 2026-08-07 |
@@ -60,7 +60,7 @@
 | [skill-usb-uvc-4k-capture](common/skill-usb-uvc-4k-capture) | common | basic | 1.0.1 | Enable camera-agnostic 4K UVC capture on Android BaseUnit: setup_uvc.sh advertises 4K frame descriptor, uvc_camera_forward detects camera max MJPEG resolution at runtime and clamps negotiation — Jieli U20 stays at 1080p, Logitech MeetUp unlocks 3840×2160@30fps. | 2026-08-07 |
 | [skill-usb-wasapi-capture-debug](common/skill-usb-wasapi-capture-debug) | common | basic | 1.0.2 | Enumerate Windows WASAPI capture endpoints via COM IMMDeviceEnumerator to verify UAC2 speakerphone visibility, device state, and active audio sessions. | 2026-08-07 |
 
-最後產生日期：2026-08-11
+最後產生日期：2026-08-12
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理
