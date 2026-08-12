@@ -267,7 +267,7 @@ skills:
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
   updated_at: '2026-07-31'
-  revised_at: '2026-08-07'
+  revised_at: '2026-08-12'
 - name: skill-pptx-to-md
   group: common
   path: common/skill-pptx-to-md
