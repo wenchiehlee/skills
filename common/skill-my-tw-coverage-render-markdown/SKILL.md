@@ -102,6 +102,8 @@ git diff -- output/enrichment_all_rendered data/enrichment_all_render_compare.cs
 - Do not derive rendered theme company classification from `source_md` or `Pilot_Reports/` folder paths. Use JSON `profile.chain_name`, then `profile.industry`, then `profile.sector` for free-text related-company context.
 - Render theme classification context as plain text; strip legacy wikilink markup from metadata fields such as `profile.industry` so strings like `[[Meta]]l Fabrication` display as `Metal Fabrication`.
 - In taxonomy-backed theme sections, sort `上游`, `中游`, and `下游/客戶關係` entries by parsed JSON `profile.market_cap` descending, with unknown market cap last.
+- In taxonomy-backed theme sections, each ticker should appear in only one structured layer. When a company matches multiple layer criteria, select the entry with the lowest `primary_rank` from `data/themes/*.json`; use role defaults only when `primary_rank` is absent.
+- For taxonomy-backed theme pages, do not repeat a ticker in `相關公司` after it has already been assigned to `上游`, `中游`, or `下游/客戶關係`.
 - Do not overwrite `Pilot_Reports/`.
 
 ## Financial Section Policy
