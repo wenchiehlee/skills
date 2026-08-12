@@ -1,0 +1,50 @@
+{
+  "name": "skill-youtube-channel-srt-keyframe-extract",
+  "description": "分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡報／數字等視覺重點的時間點，下載對應影片並擷取該時間點的畫面存成帶時間碼的 PNG。",
+  "category": "document",
+  "version": "1.0.0",
+  "author": "wenchiehlee",
+  "maintainer": "wenchiehlee",
+  "source": "https://github.com/wenchiehlee-money/YoutubeAudio.Fetch",
+  "updated_at": "2026-08-11",
+  "license": "MIT",
+  "tags": [
+    "youtube",
+    "srt",
+    "keyframe",
+    "ffmpeg",
+    "yt-dlp",
+    "llm"
+  ],
+  "compatibility": {
+    "python": ">=3.10",
+    "requires": [
+      "llm (editable, ../llm)",
+      "python-dotenv",
+      "yt-dlp (external CLI)",
+      "ffmpeg (external CLI)"
+    ],
+    "env": [
+      "GEMINI_API_KEY (or CODEX_API_URL/CODEX_API_KEY, or MLX_API_URL/MLX_SERVER_API_KEY — see ../llm)"
+    ]
+  },
+  "files": [
+    "SKILL.md",
+    "metadata.json",
+    "self_update.py",
+    "scripts/keyframe_extract.py"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "local_path": "github.com/skills/common/skill-youtube-channel-srt-keyframe-extract",
+      "role": "registry"
+    },
+    {
+      "repo": "wenchiehlee-money/YoutubeAudio.Fetch",
+      "local_path": "github.com/YoutubeAudio.Fetch/skills/skill-youtube-channel-srt-keyframe-extract",
+      "role": "consumer"
+    }
+  ],
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-youtube-channel-srt-keyframe-extract"
+}
