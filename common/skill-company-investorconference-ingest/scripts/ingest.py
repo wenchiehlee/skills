@@ -98,6 +98,7 @@ KNOWN_TW_PLAYWRIGHT_IR_BY_QUARTER = {
     ("2454", "2026", "1"): "https://ottlive.hinet.net/webapp/mediatek/watch?v=3635",
     ("2454", "2026", "2"): "https://ottlive.hinet.net/webapp/mediatek/watch?v=4011",
     ("2412", "2026", "2"): "https://www.zucast.com/webcast/9oAoIhNS",  # 中華電 2026Q2 法說會 2026-08-05 (Zucast optional terms form -> S3 mp3)
+    ("2379", "2026", "2"): "https://www.zucast.com/webcast/bv68uLnF",  # 瑞昱 2026Q2 線上法人說明會 2026-07-30 (official Zucast webcast)
     ("3034", "2025", "3"): "https://www.novatek.com.tw/upload/website/_2025Q3_25110708_904.html",
     ("3034", "2025", "4"): "https://www.novatek.com.tw/upload/website/_2025Q4_26020909_911.html",
     ("3045", "2026", "1"): "http://www.zucast.com/webcast/YZRGwetH",  # 台灣大 2026Q1 法說會 2026-05-13 (Zucast 需註冊; 音檔為 S3 直連 mp3, 已下載至 3045_2026_q1.m4a)
