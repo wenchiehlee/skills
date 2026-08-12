@@ -451,6 +451,17 @@ skills:
   source: wj-lee_Barco.github.com/gadget/debug_wasapi.py
   updated_at: '2026-07-21'
   revised_at: '2026-08-07'
+- name: skill-youtube-channel-fetch
+  group: common
+  path: common/skill-youtube-channel-fetch
+  version: 1.0.0
+  description: 從 YouTube 財經頻道下載最新影片的音訊，發佈為本 repo 的 GitHub Release 附件，並寫入 audio_manifest.json，供
+    skill-mlx-api-client-whisper 觸發轉錄。
+  category: document
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee-money/YoutubeAudio.Fetch
+  updated_at: '2026-08-11'
+  revised_at: '2026-08-12'
 - name: skill-youtube-channel-srt-keyframe-extract
   group: common
   path: common/skill-youtube-channel-srt-keyframe-extract
