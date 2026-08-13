@@ -1038,6 +1038,43 @@ def scrape_google_finance_earnings_audio(stock_id: str, year: str, quarter: str)
         ),
     }
 
+def title_matches_target_quarter(title: str, year: str, quarter: str) -> bool:
+    """Return True only when a media title explicitly matches the target fiscal quarter."""
+    if not title:
+        return False
+    normalized = re.sub(r"[\s_\-/]+", " ", title.lower())
+    compact = re.sub(r"[^a-z0-9一二三四第季年]", "", title.lower())
+    yy = year[-2:]
+    q = str(quarter)
+    cn_q = {"1": "一", "2": "二", "3": "三", "4": "四"}.get(q, q)
+
+    target_patterns = [
+        rf"\bq{q}\b.*\b(?:{year}|{yy})\b",
+        rf"\b(?:{year}|{yy})\b.*\bq{q}\b",
+        rf"\b{q}q\b.*\b(?:{year}|{yy})\b",
+        rf"\b(?:{year}|{yy})\b.*\b{q}q\b",
+    ]
+    target_match = any(re.search(pat, normalized, re.I) for pat in target_patterns)
+    target_match = target_match or f"{year}q{q}" in compact or f"q{q}{year}" in compact
+    target_match = target_match or f"{q}q{year}" in compact or f"{year}{q}q" in compact
+    target_match = target_match or f"{year}年第{cn_q}季" in compact or f"第{cn_q}季{year}年" in compact
+
+    wrong_quarter_match = False
+    for other in {"1", "2", "3", "4"} - {q}:
+        other_cn = {"1": "一", "2": "二", "3": "三", "4": "四"}[other]
+        wrong_patterns = [
+            rf"\bq{other}\b.*\b(?:{year}|{yy})\b",
+            rf"\b(?:{year}|{yy})\b.*\bq{other}\b",
+            rf"\b{other}q\b.*\b(?:{year}|{yy})\b",
+            rf"\b(?:{year}|{yy})\b.*\b{other}q\b",
+        ]
+        wrong_quarter_match = wrong_quarter_match or any(re.search(pat, normalized, re.I) for pat in wrong_patterns)
+        wrong_quarter_match = wrong_quarter_match or f"{year}q{other}" in compact or f"q{other}{year}" in compact
+        wrong_quarter_match = wrong_quarter_match or f"{other}q{year}" in compact or f"{year}{other}q" in compact
+        wrong_quarter_match = wrong_quarter_match or f"{year}年第{other_cn}季" in compact or f"第{other_cn}季{year}年" in compact
+
+    return target_match and not wrong_quarter_match
+
 def scrape_playwright_direct_ir(stock_id: str, ir_url: str, year: str, quarter: str) -> tuple:
     """
     Use Playwright to render a JS-heavy IR page and intercept video URLs.
@@ -1193,7 +1230,6 @@ def scrape_playwright_direct_ir(stock_id: str, ir_url: str, year: str, quarter: 
     yt_candidates = [(u, d) for u, d in all_videos
                      if re.search(r'(?:youtu\.be/|youtube\.com/watch)', u)]
     if yt_candidates:
-        q_str = f"Q{quarter}"
         for yt_url, _ in yt_candidates:
             try:
                 r = subprocess.run(
@@ -1201,15 +1237,15 @@ def scrape_playwright_direct_ir(stock_id: str, ir_url: str, year: str, quarter: 
                     capture_output=True, encoding="utf-8", errors="replace", timeout=15,
                 )
                 title = r.stdout.strip()
-                if target_year in title or (year in title and q_str.lower() in title.lower()):
+                if title_matches_target_quarter(title, year, quarter):
                     print(f"[PW-IR] YouTube title match: {title}")
                     return yt_url, ""
+                if title:
+                    print(f"[PW-IR] YouTube title rejected for Q{quarter} {year}: {title}")
             except Exception:
                 continue
-        # No title match - use first YouTube candidate (most recent = first on page)
-        url, _ = yt_candidates[0]
-        print(f"[PW-IR] YouTube fallback (first on page): {url[:80]}...")
-        return url, ""
+        print(f"[PW-IR] No YouTube title matched Q{quarter} {year}; rejecting YouTube candidates.")
+        return None, None
 
     # Fallback: first intercepted (most recent)
     url, date_str = all_videos[0]
@@ -1232,7 +1268,6 @@ def scrape_ir_site(ir_url: str, year: str, quarter: str) -> str | None:
             return None
 
         print(f"[IR] Found {len(yt_ids)} YouTube ID(s).")
-        q_str = f"Q{quarter}"
         for vid_id in yt_ids:
             check_url = f"https://www.youtube.com/watch?v={vid_id}"
             try:
@@ -1241,9 +1276,11 @@ def scrape_ir_site(ir_url: str, year: str, quarter: str) -> str | None:
                     capture_output=True, encoding="utf-8", errors="replace", timeout=10,
                 )
                 title = r.stdout.strip()
-                if year in title and q_str.lower() in title.lower():
+                if title_matches_target_quarter(title, year, quarter):
                     print(f"[IR] Matched: {title}")
                     return check_url
+                if title:
+                    print(f"[IR] Rejected YouTube title for Q{quarter} {year}: {title}")
             except Exception:
                 continue
 

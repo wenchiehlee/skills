@@ -103,6 +103,8 @@ Ingest 必須把來源分成兩層，且不得讓二級來源覆蓋一級來源�
 
 若公司官方 IR 頁的 `VIDEO`、`影音`、`錄音` 或 replay 連結是短 HTML redirect、YouTube 短網址、Zucast/webcast player 或其他二段式播放器，ingest 必須跟隨該官方 redirect 並把最後可重現的 quarter-specific URL 寫入 direct source mapping；不得只依賴 `ytsearch` 或 MOPS fallback。若 redirect 只在 browser network 裡暴露 `.mp3`、`.m4a`、`.mp4` 或 HLS manifest，需用 Playwright/Chromium 擷取並驗證後落檔。
 
+若官方 IR 頁只提供 YouTube 候選，title 必須明確符合目標年度與季度（例如 `Q2 2026`、`2Q 2026`、`2026Q2` 或中文 `2026年第二季`）。若 title 顯示同年度其他季度（例如目標 `2026 Q2` 卻是 `1Q 2026`），必須拒絕該候選；不得用「頁面第一支影片」或只匹配年度的 fallback 產生音檔。
+
 驗證時不得用固定 45 或 60 分鐘作為正確音檔門檻；部分官方法說 replay 可能只有十幾分鐘。長度檢查只用來拒絕明顯空檔或截斷檔，正確性仍以官方來源、目標季度名稱、會議日期窗口與 checksum 去重為主。
 
 ### Playwright browser-download fallback
