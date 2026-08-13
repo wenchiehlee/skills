@@ -744,7 +744,7 @@ def scrape_mops_playwright(stock_id: str, year: str, quarter: str) -> dict:
                 continue
             url = f"https://mopsov.twse.com.tw/nas/STR/{fn}"
             result["pdfs"].append((fn, url))
-            print(f"[MOPS-PW] PDF: {fn}")
+            print(f"[MOPS-PW] Conference attachment PDF: {fn}")
 
     except Exception as e:
         print(f"[MOPS-PW] Parse error: {e}")
@@ -2973,7 +2973,7 @@ def commit_push_files(stock_id: str, year: str, quarter: str,
         msg = (f"feat: add {stock_id} {year} Q{quarter} earnings call audio (audio on GDrive){extras_str}\n\n"
                f"Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>")
     else:
-        msg = (f"feat: add {stock_id} {year} Q{quarter} official PDF material(s) (audio remains unavailable){extras_str}\n\n"
+        msg = (f"feat: add {stock_id} {year} Q{quarter} official conference attachment PDF(s) (audio remains unavailable){extras_str}\n\n"
                f"Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>")
     if not git("commit", "-m", msg):
         print(f"[git] commit failed")
@@ -3188,7 +3188,7 @@ def ingest_earnings_audio(stock_id: str, year: str, quarter: str,
                     lang = "ir_en" if fn[len(stock_id)+8] == "E" else "ir"
                     dest = save_dir / f"{stock_id}_{year}_q{quarter}_{lang}.pdf"
                     if dest.exists():
-                        print(f"[MOPS-PW] PDF already exists: {dest.name}")
+                        print(f"[MOPS-PW] Conference attachment PDF already exists: {dest.name}")
                         continue
                     try:
                         r = requests.get(pdf_url, headers={"User-Agent": UA,
@@ -3197,9 +3197,9 @@ def ingest_earnings_audio(stock_id: str, year: str, quarter: str,
                             dest.write_bytes(r.content)
                             print(f"[MOPS-PW] OK {dest.name} ({len(r.content)//1024}KB)")
                         else:
-                            print(f"[MOPS-PW] PDF invalid response: {fn} status={r.status_code}")
+                            print(f"[MOPS-PW] Conference attachment PDF invalid response: {fn} status={r.status_code}")
                     except Exception as e:
-                        print(f"[MOPS-PW] PDF download failed: {e}")
+                        print(f"[MOPS-PW] Conference attachment PDF download failed: {e}")
 
                 # Extract conf_date from irconference URL filename
                 m = re.search(r'_(\d{8})_', mops_data["video_url"])
@@ -3208,7 +3208,7 @@ def ingest_earnings_audio(stock_id: str, year: str, quarter: str,
                 return done()
         elif mops_data.get("pdfs"):
             # No video but has PDFs - download them directly
-            print(f"[MOPS-PW] No video, but found {len(mops_data['pdfs'])} PDF(s) - downloading.")
+            print(f"[MOPS-PW] No video, but found {len(mops_data['pdfs'])} conference attachment PDF(s) - downloading.")
             for fn, pdf_url in mops_data["pdfs"]:
                 # Infer lang suffix from filename (M=中文, E=英文)
                 lang = "ir_en" if fn[len(stock_id)+8] == "E" else "ir"
@@ -3221,7 +3221,7 @@ def ingest_earnings_audio(stock_id: str, year: str, quarter: str,
                             dest.write_bytes(r.content)
                             print(f"[MOPS-PW] OK {dest.name} ({len(r.content)//1024}KB)")
                     except Exception as e:
-                        print(f"[MOPS-PW] PDF download failed: {e}")
+                        print(f"[MOPS-PW] Conference attachment PDF download failed: {e}")
         else:
             # Fallback: original requests-based MOPS scraper
             mops_url = scrape_mops_tw(stock_id, year, quarter)
@@ -3271,12 +3271,12 @@ def ingest_earnings_audio(stock_id: str, year: str, quarter: str,
             pdf_paths.append(lp)
 
     if pdf_paths:
-        print(f"\nOK SUCCESS: found {len(pdf_paths)} official PDF material(s) for {stock_id} {year} Q{quarter}; audio remains unavailable.")
+        print(f"\nOK SUCCESS: found {len(pdf_paths)} official conference attachment PDF(s) for {stock_id} {year} Q{quarter}; audio remains unavailable.")
         if auto_push:
             return commit_push_files(stock_id, year, quarter, output_path, pdf_paths, [])
         return str(pdf_paths[0])
 
-    print(f"\nFAILED FAILED: Could not find audio or official PDF materials for {stock_id} {year} Q{quarter}")
+    print(f"\nFAILED FAILED: Could not find audio or official conference attachment PDFs for {stock_id} {year} Q{quarter}")
     return None
 
 

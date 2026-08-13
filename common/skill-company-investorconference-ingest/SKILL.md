@@ -55,6 +55,18 @@ python skills/skill-company-investorconference-ingest/scripts/audit_audio_metada
 
 Ingest 不得只信任 MOPS 查詢結果的第一個影音檔。部分公司或 MOPS 查詢會回傳該公司最新法說影音，即使目標是前一季度。
 
+
+### MOPS 文件類型邊界
+
+本 repo 會接觸兩種不同的 MOPS 相關文件，必須在命名與 README 說明中區分：
+
+| 類型 | 來源/入口 | README row | 目前落檔/連結 | 用途 | 不可做的事 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| MOPS 法說會附件 | `t100sb07_1` 法說會/受邀法說公告附件，常見檔名 `{stock}{YYYYMMDD}{M/E}001.pdf` | `法說會` / `受邀法說` | `data/{stock}/{stock}_{year}_q{quarter}_ir.pdf`、`_ir_en.pdf` | 法說會簡報、presentation deck、營運/財務結果簡報；可支援 digest 與 GT 校正 | 不得稱為「財報」或用來滿足 `財報` row 的 statutory financial report 缺口 |
+| MOPS repo 財報文件 | `../MOPS` 或 `wenchiehlee-investment/MOPS/downloads/...`，常見檔名 `{YYYYQQ}_{stock}_AI1.pdf`、`AIA.pdf` | `財報` | README 外部連結或後續落檔為 report/financial statement 類材料 | 財報事件的一級財務文件、GoodInfo 尚未更新時的財務數字來源 | 不得用來滿足 `法說會` row 的音檔/法說會附件缺口；除非同一來源明確也是法說會簡報 |
+
+因此，像 `2382_2026_q2_ir.pdf` / `_ir_en.pdf` 這類從 `238220260813M001.pdf` / `E001.pdf` 取得的檔案，應描述為「MOPS 法說會附件 / investor-conference presentation deck」。即使內容包含 Q2 財務結果，也不是 MOPS repo 的財報文件。相反地，README `財報` row 連到 `wenchiehlee-investment/MOPS/downloads/.../202602_2382_AI1.pdf` 這類檔案時，才是財報事件材料。
+
 ### 來源層級與衝突處理
 
 Ingest 必須把來源分成兩層，且不得讓二級來源覆蓋一級來源的季度、日期、檔案類型或公司正式材料判定。
