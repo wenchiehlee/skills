@@ -39,9 +39,9 @@
 | [skill-google-analytics-monitor](common/skill-google-analytics-monitor) | common | analytics | 1.0.1 | 使用 google-analytics-cli 產生 GA4 網站監控 Markdown/README 報告，包含 YAML daily metadata、即時活躍人數、近 7/28 天短期趨勢、近 3 個月流量趨勢、來源/媒介、Top 10 URL、熱門頁面、事件與異常觀察。 | 2026-08-07 |
 | [skill-miz-fetch](common/skill-miz-fetch) | common | document | 1.0.0 | Fetch book content from the self-hosted Calibre-Web epub reader at books.miz.com.tw via browser automation (epub.js book.spine/book.load), and export as Markdown into Miz.Fetch's books/ folder convention. | 2026-08-12 |
 | [skill-mlx-api-client-ocr](common/skill-mlx-api-client-ocr) | common | document | 1.6.0 | 呼叫 Mac-mini MLX API Server 的 OCR 客戶端（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-08-09 |
-| [skill-mlx-api-client-whisper](common/skill-mlx-api-client-whisper) | common | document | 1.0.1 | 以 GitHub issue 觸發 Mac-mini 上的 whisper 轉錄 pipeline（skill-mlx-api-server-whisper），並輪詢結果是否已同步回本 repo。支援法說會音訊、YouTube 財經影片等多種來源。 | 2026-08-08 |
+| [skill-mlx-api-client-whisper](common/skill-mlx-api-client-whisper) | common | document | 1.0.2 | 以 GitHub issue 觸發 Mac-mini 上的 whisper 轉錄 pipeline（skill-mlx-api-server-whisper），並輪詢結果是否已同步回本 repo。支援法說會音訊、YouTube 財經影片等多種來源。 | 2026-08-13 |
 | [skill-mlx-api-server](common/skill-mlx-api-server) | common | server | 1.1.0 | 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，提供 Baidu Unlimited-OCR 文件轉錄（/ocr）與 MLX LLM 推理（/exec，Qwen3.5/Gemma4），以 Flask/Waitress 常駐服務形式運行。 | 2026-08-07 |
-| [skill-mlx-api-server-whisper](common/skill-mlx-api-server-whisper) | common | server | 2.0.0 | Mac-mini 上以 self-hosted GitHub Actions runner 執行的語音轉錄 pipeline（whisper 轉錄 → LLM postprocess → CER 校驗 → GT 校正迴圈），透過 issue 驅動、支援多種音訊來源（法說會、YouTube 財經影片…）。 | 2026-08-07 |
+| [skill-mlx-api-server-whisper](common/skill-mlx-api-server-whisper) | common | server | 2.0.1 | Mac-mini 上以 self-hosted GitHub Actions runner 執行的語音轉錄 pipeline（whisper 轉錄 → LLM postprocess → CER 校驗 → GT 校正迴圈），透過 issue 驅動、支援多種音訊來源（法說會、YouTube 財經影片…）。 | 2026-08-13 |
 | [skill-my-tw-coverage-enrichment-json](common/skill-my-tw-coverage-enrichment-json) | common | basic | 0.1.1 | Extract and review My-TW-Coverage Markdown enrichment as atomic JSON using the biztrends.TW focus list. | 2026-08-07 |
 | [skill-my-tw-coverage-render-markdown](common/skill-my-tw-coverage-render-markdown) | common | financial-data | 1.0.1 | Render My-TW-Coverage canonical enrichment JSON into organized Markdown without using Pilot_Reports as an active source. | 2026-08-12 |
 | [skill-pptx-to-md](common/skill-pptx-to-md) | common | document | 1.0.1 | 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。 | 2026-08-07 |
@@ -63,7 +63,7 @@
 | [skill-youtube-channel-fetch](common/skill-youtube-channel-fetch) | common | document | 1.0.0 | 從 YouTube 財經頻道下載最新影片的音訊，發佈為本 repo 的 GitHub Release 附件，並寫入 audio_manifest.json，供 skill-mlx-api-client-whisper 觸發轉錄。 | 2026-08-12 |
 | [skill-youtube-channel-srt-keyframe-extract](common/skill-youtube-channel-srt-keyframe-extract) | common | document | 1.0.0 | 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡報／數字等視覺重點的時間點，下載對應影片並擷取該時間點的畫面存成帶時間碼的 PNG。 | 2026-08-12 |
 
-最後產生日期：2026-08-12
+最後產生日期：2026-08-13
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理
