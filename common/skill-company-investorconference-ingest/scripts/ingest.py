@@ -1492,7 +1492,12 @@ def download_audio(source: str, output_path: Path,
         
         print(f"[CCDNTech] Patched HLS stream URL to: {source}")
 
-    is_direct_media = (
+    is_quartr_hls = (
+        source.startswith(("http://", "https://"))
+        and "files.quartr.com" in source.lower()
+        and ".m3u8" in source.lower()
+    )
+    is_direct_media = is_quartr_hls or (
         source.startswith(("http://", "https://"))
         and re.search(r"\.(?:mp4|m4a|mp3|wav)(?:[?#].*)?$", source, re.I)
         and "playlist.m3u8" not in source.lower()
