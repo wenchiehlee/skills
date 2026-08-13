@@ -95,13 +95,20 @@ def step_rescue(stem: str, exps: list[int]):
         return
     
     # ── Language-Aware Anchor Selection ──────────────────────────────────────
+    # Keep this aligned with run-pipeline.yml production auto exps:
+    #   zh=1,6,11; mixed=1,6,11,14; en=1,13
+    # Priority is GT-calibrated from 30 full-call FIN/GT samples (2026-08-12).
     if EXPECTED_LANG == "en":
-        # English Priority: MLX (1) > Turbo EN (13) > Faster-Whisper (7, 11)
-        anchor_id = next((i for i in [1, 13, 7, 11, 0] if i in results), exps[0])
+        priority = [13, 1, 20, 15, 19, 7, 11, 0]
+    elif EXPECTED_LANG == "mixed":
+        priority = [14, 11, 6, 1, 7, 3, 0]
     else:
-        # ZH/Mixed Priority: Faster-Whisper (7, 11) > MLX (1) > Turbo Mixed (14)
-        anchor_id = next((i for i in [7, 11, 1, 14, 0] if i in results), exps[0])
-        
+        priority = [11, 6, 1, 7, 3, 14, 0]
+
+    anchor_id = next((i for i in priority if i in results), exps[0])
+    rescue_order = [i for i in priority if i in results and i != anchor_id]
+    rescue_order.extend(i for i in sorted(results) if i != anchor_id and i not in rescue_order)
+
     anchor_segs = results[anchor_id]
     print(f"  Anchor Model: exp{anchor_id} ({len(anchor_segs)} segments)")
     
@@ -111,7 +118,7 @@ def step_rescue(stem: str, exps: list[int]):
         txt, start = seg["text"], seg["start"]
         if is_compromised(txt, EXPECTED_LANG):
             rescued = False
-            for other_id in [i for i in [1, 7, 11, 13, 14, 0] if i in results and i != anchor_id]:
+            for other_id in rescue_order:
                 # Find roughly overlapping segment
                 for o_seg in results[other_id]:
                     if abs(o_seg["start"] - start) < 1.5:

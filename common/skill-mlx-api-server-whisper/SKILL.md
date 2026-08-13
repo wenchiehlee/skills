@@ -7,7 +7,7 @@ description: Mac-mini 上以 self-hosted GitHub Actions runner 執行的語音�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 2.0.0（詳見 `metadata.json`） |
+| 版本 | 2.0.1（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server-whisper/scripts |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-server-whisper`） |
 | 維護者 | wenchiehlee |
@@ -39,7 +39,7 @@ description: Mac-mini 上以 self-hosted GitHub Actions runner 執行的語音�
         ↓  4. postprocess.py --step best（rescue 多 exp 投票 + fix 字典修正）
         ↓  5. verify_cer.py（CER/WER 對 GT 評分，挑最佳版本 promote 成 FIN.srt）
         ↓  6. git commit/push 回 Mac-mini repo
-        ↓  7. sync-gt-srt action：GT/FIN 推回 source_repo
+        ↓  7. sync-fin action：FIN.srt 推回 source_repo（GT 由 source_repo 維護，Mac-mini GroundTrue 只是 cache）
 ```
 
 ## 📨 Issue Metadata Schema（v2，支援多來源）
@@ -72,6 +72,18 @@ YouTube `video_id` 固定 11 碼（`[A-Za-z0-9_-]{11}`），regex 用這點從 s
 ../{basename(source_repo)}/{group_id}/{stem}_GT.srt             # GT（gh api contents，即時拉取）
 ```
 
+## ⚙️ Production 實驗組合（GT-calibrated）
+
+2026-08-12 以 InvestorConference 同步後的 30 個 full-call `GT.srt + raw exp*.srt` 樣本重算 key_CER/WER 後，production `auto` 不再盲跑歷史大組合；預設改為少量高勝率實驗：
+
+| language | `auto` exps | 原因 |
+|---|---:|---|
+| `zh` | `1,6,11` | 比舊 `1,2,3,4,6` 更接近 oracle，少跑 2 組 |
+| `mixed` | `1,6,11,14` | `exp14` 對 mixed 樣本是必要保護，避免 3034 類樣本爆 CER |
+| `en` | `1,13` | 品質接近舊 `1,13,15,19,20`，轉錄時間大幅下降；`exp1` 是 `exp13` 異常時的 fallback |
+
+`all` 仍保留作研究/debug；`exp2`、`exp4`、`exp7`、`exp15`、`exp19` 等不再是 production default，但可手動指定做 A/B 或 fallback。`postprocess.py` 的 anchor/rescue priority 必須和這個 policy 保持一致。
+
 ## 🎓 語音辨識調校迴圈（company-configs + GT）
 
 **這不是模型權重訓練**，而是「prompt 錨定 + 確定性修正字典 + CER 驅動選版」的組合：
@@ -79,8 +91,8 @@ YouTube `video_id` 固定 11 碼（`[A-Za-z0-9_-]{11}`），regex 用這點從 s
 1. **`company-configs/{stock_id}/whisper.yaml`**（選填）——`executives`/`products`/`terms`/`example_sentences` 灌進 whisper 的 `initial_prompt` 錨定人名/產品名/語境；`corrections`/`english_corrections` 是 `postprocess.py` 讀取的確定性字串取代字典（如 `廣打→廣達`）。
    - **`stock_id` 未帶時 fallback 到全域 `mlx-api-server-whisper/whisper.yaml`**（已驗證路徑，QCOM 沒有 company config 時就是這樣運作）——YouTube 影片若未指定 `stock_id`，一樣安全運作。
    - 若 YouTube 影片明確討論特定個股（例如評論台積電），直接在 issue metadata 填對應 `stock_id`，即可沿用該公司既有的 company-configs。
-2. **GT.srt 是唯一真相來源**：每次 pipeline 執行都從 `source_repo` 即時拉最新 GT（pull-on-demand，見 [[feedback_refine_gt_via_issue]]），餵給 `verify_cer.py` 算 CER，CER 最低的版本 promote 成 `FIN.srt`。
-3. **`generate_fin_srt` vs `refine_fin_srt`**：前者從音訊全新轉錄；後者用於 GT 在來源端被人工修正後，重新跑 CER 評分/postprocess（通常搭配 `skip_transcribe: true`，跳過最耗時的轉錄步驟，兩者程式邏輯上目前完全一致，只差在呼叫端如何設定 metadata）。
+2. **GT.srt 是唯一真相來源，且 owner 是 `source_repo`**：每次 pipeline 執行都從 `source_repo` 即時拉最新 GT（pull-on-demand，見 [[feedback_refine_gt_via_issue]]），餵給 `verify_cer.py` 算 CER，CER 最低的版本 promote 成 `FIN.srt`。Mac-mini 的 `mlx-api-server-whisper/GroundTrue/` 只是本地 cache，不是權威來源；自動流程只把 FIN.srt sync 回 source repo，不會用 cache GT 覆蓋 source repo。
+3. **`generate_fin_srt` vs `refine_fin_srt`**：前者從音訊全新轉錄；後者用於 GT 在來源端被人工修正後，重新跑 CER 評分/postprocess（通常搭配 `skip_transcribe: true`，跳過最耗時的轉錄步驟，兩者程式邏輯上目前完全一致，只差在呼叫端如何設定 metadata）。InvestorConference 這類 source repo 可在 `data/**/*_GT.srt` 更新後通知 Mac-mini 跑 refine。
 4. **設計原則（人工把關，非自動化）**：語境相依的修正（例如某次特例誤植）只留在 GT，不會自動被寫進 `company-configs` 的 `corrections` 字典；只有可泛化的系統性 ASR 錯誤才由人工判斷後手動 promote 進 config。**目前沒有、也不打算做自動從 GT 學習 corrections 字典的機制。**
 
 ## 📦 技能結構說明

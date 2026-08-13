@@ -7,7 +7,7 @@ description: 以 GitHub issue 觸發 Mac-mini 上的 whisper 轉錄 pipeline（s
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.0.0（詳見 `metadata.json`） |
+| 版本 | 1.0.2（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/InvestorConference |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-client-whisper`） |
 | 維護者 | wenchiehlee |
@@ -19,7 +19,7 @@ description: 以 GitHub issue 觸發 Mac-mini 上的 whisper 轉錄 pipeline（s
 
 1. 本技能在**目標 repo**（跑 pipeline 的 Mac-mini repo）開一張帶 `generate-FIN` label 的 issue，附上 YAML metadata
 2. Mac-mini 上的 self-hosted runner（`run-pipeline.yml`）監聽到 label 後接手執行
-3. 執行完成後，結果（`FIN.srt`/`GT.srt`）會被 sync 回**本 repo**（你呼叫此技能所在的 repo）
+3. 執行完成後，Mac-mini 只會把 `FIN.srt` sync 回**本 repo**（你呼叫此技能所在的 repo）；`GT.srt` 由本 repo 維護，Mac-mini 的 GroundTrue 只是 cache
 4. 呼叫方（例如排程或下一次執行）呼叫 `check_fin_status` / `close_if_done` 確認完成並關閉 issue
 
 ## 📦 技能結構說明
@@ -79,11 +79,11 @@ python scripts/whisper_issue_client.py status some-channel_dQw4w9WgXcQ
 
 ## 🔁 GT 修正迴圈（`refine_fin_srt`）
 
-若 GT.srt 在本 repo 被人工修正過，想讓 Mac-mini 重新跑 CER 評分（不需要重新轉錄），呼叫時指定 `task_type="refine_fin_srt"`：
+若 GT.srt 在本 repo 被人工修正過，本 repo 是 GT owner；Mac-mini 不會把 cache GT 回推覆蓋本 repo。想讓 Mac-mini 重新拉最新 GT 並重跑 CER 評分（不需要重新轉錄），呼叫時指定 `task_type="refine_fin_srt"`：
 ```python
 client.open_fin_request(stem, audio_url, task_type="refine_fin_srt")
 ```
-GT 校正原則見 `skill-mlx-api-server-whisper` SKILL.md：語境相依的修正只留在 GT，不會自動被學習進 `company-configs` 的 corrections 字典。
+GT 校正原則見 `skill-mlx-api-server-whisper` SKILL.md：語境相依的修正只留在 GT，不會自動被學習進 `company-configs` 的 corrections 字典。若本 repo 有 `data/**/*_GT.srt` 更新通知 workflow，可直接 dispatch Mac-mini `run-pipeline.yml`，並帶 `skip_transcribe=true`。
 
 ## 🔄 版本管理與更新
 - 唯一可信來源為 skills 登錄庫中的 `common/skill-mlx-api-client-whisper`；各專案（InvestorConference、YoutubeAudio.Fetch）內的副本皆由登錄庫部署而來
