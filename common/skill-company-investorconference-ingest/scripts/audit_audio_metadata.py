@@ -121,6 +121,7 @@ def main() -> int:
             print(f"[audit] Downloading {stem}...")
             download(url, local)
         duration = probe_duration(local)
+        previous = metadata.get(stem) if isinstance(metadata.get(stem), dict) else {}
         item = {
             "file": audio_file_path(stem, url),
             "sha256": sha256_file(local),
@@ -128,9 +129,12 @@ def main() -> int:
             "duration_sec": round(duration, 3) if duration is not None else None,
             "release_url": url,
             "checked_at": checked_at,
-            "source": "github_release_audit",
+            "source": previous.get("source", "github_release_audit"),
             "status": "ok",
         }
+        for source_key in ("source_url", "captured_media_url", "note"):
+            if previous.get(source_key):
+                item[source_key] = previous[source_key]
         metadata[stem] = item
         if args.update_durations and duration is not None:
             durations[item["file"]] = int(duration)

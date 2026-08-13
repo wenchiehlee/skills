@@ -111,6 +111,23 @@ KNOWN_TW_IR = {
     "3034": "https://www.novatek.com.tw/en-global/Download/ir_event/Index/analyst_meeting", # Novatek IR
 }
 
+# US IR "financial results" listing pages (Q4/NASDAQ IR platform) that expose
+# per-quarter slides/transcript/tables PDFs directly, keyed by ticker.
+# Used as a fallback when the events-and-presentations page (KNOWN_US_IR) has
+# no scrapable YouTube ID (JS-rendered) for the target quarter.
+KNOWN_US_FINANCIAL_RESULTS = {
+    "AMD": "https://ir.amd.com/financial-information/financial-results",
+}
+
+# Q4 Inc. "NIR" investor-relations sites (e.g. SanDisk): presentation cards are
+# tagged data-title="QxFYyy Earnings Presentation" and link to extensionless
+# /static-files/{uuid} PDFs that reject plain requests.get() (connection reset),
+# so these need a Playwright-rendered page + download interception.
+KNOWN_US_NIR_PRESENTATIONS = {
+    "SNDK": "https://investor.sandisk.com/news-events/presentations",
+    "GFS": "https://investors.gf.com/investor-relations/news-events/presentations",
+}
+
 # Per-company PDF attachment URL templates (optional, keyed by stock_id)
 # Use {year} and {quarter} placeholders
 KNOWN_PDF_ATTACHMENTS = {
@@ -750,8 +767,10 @@ def _quarter_date_window(year: str, quarter: str) -> tuple[str, int, int]:
 
 def _probe_delta_ccdntech_url(url: str, expect_playlist: bool = False) -> bool:
     """Return True when a Delta ccdntech URL looks live."""
+    import urllib3
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     try:
-        resp = requests.get(url, timeout=15, headers={"User-Agent": UA})
+        resp = requests.get(url, timeout=15, headers={"User-Agent": UA}, verify=False)
         body = resp.text
         if expect_playlist:
             return resp.status_code == 200 and "#EXTM3U" in body
@@ -784,43 +803,88 @@ def _extract_delta_landing_video(stock_id: str, year: str, quarter: str) -> tupl
             print(f"[Delta] Landing page fetch failed: {e}")
             continue
 
+        # Try to parse blocks from HTML meeting-list first (historical fallback)
         blocks = re.findall(r'<div class="meeting-list">(.*?)</ul></div>', html, re.S)
-        if not blocks:
-            continue
+        if blocks:
+            print(f"[Delta] Found {len(blocks)} meeting block(s) on {page_url}")
+            for block in blocks:
+                date_m = re.search(r'<li class="date">\s*(\d{4})/(\d{1,2})/(\d{1,2})\s*</li>', block)
+                title_m = re.search(r'<li class="title">\s*([^<]+?)\s*</li>', block)
+                if not date_m or not title_m:
+                    continue
 
-        print(f"[Delta] Found {len(blocks)} meeting block(s) on {page_url}")
-        for block in blocks:
-            date_m = re.search(r'<li class="date">\s*(\d{4})/(\d{1,2})/(\d{1,2})\s*</li>', block)
-            title_m = re.search(r'<li class="title">\s*([^<]+?)\s*</li>', block)
-            if not date_m or not title_m:
-                continue
+                conf_year = date_m.group(1)
+                conf_month = int(date_m.group(2))
+                conf_date = f"{date_m.group(1)}{int(date_m.group(2)):02d}{int(date_m.group(3)):02d}"
+                title = title_m.group(1).strip()
+                if conf_year != target_year or not (month_min <= conf_month <= month_max):
+                    continue
+                if quarter_label not in title:
+                    continue
 
-            conf_year = date_m.group(1)
-            conf_month = int(date_m.group(2))
-            conf_date = f"{date_m.group(1)}{int(date_m.group(2)):02d}{int(date_m.group(3)):02d}"
-            title = title_m.group(1).strip()
-            if conf_year != target_year or not (month_min <= conf_month <= month_max):
-                continue
-            if quarter_label not in title:
-                continue
-
-            matched_conf_date = conf_date
-            zh_m = re.search(
-                r'class="open-video"[^>]*data-url="([^"]+)"[^>]*>\s*(?:Chinese|中文影片|中文)\s*<',
-                block,
-                re.I,
-            )
-            if zh_m:
-                video_url = zh_m.group(1).replace('&amp;', '&')
-                direct_hls = None
-                m = re.search(r'vod41/([^&]+)', video_url)
-                if m:
-                    direct_hls = f"https://cdn41.ccdntech.com/vod-http/_definst_/vod41/{m.group(1)}/playlist.m3u8"
-                if direct_hls and _probe_delta_ccdntech_url(direct_hls, expect_playlist=True):
-                    print(f"[Delta] Matched landing-page Chinese HLS: {direct_hls[:80]}...")
-                    return direct_hls, conf_date
-                print(f"[Delta] Matched landing-page Chinese video: {video_url[:80]}...")
-                return video_url, conf_date
+                matched_conf_date = conf_date
+                zh_m = re.search(
+                    r'class="open-video"[^>]*data-url="([^"]+)"[^>]*>\s*(?:Chinese|中文影片|中文)\s*<',
+                    block,
+                    re.I,
+                )
+                if zh_m:
+                    video_url = zh_m.group(1).replace('&amp;', '&')
+                    direct_hls = None
+                    m = re.search(r'vod41/([^&]+)', video_url)
+                    if m:
+                        direct_hls = f"https://cdn41.ccdntech.com/vod-http/_definst_/vod41/{m.group(1)}/playlist.m3u8"
+                    if direct_hls and _probe_delta_ccdntech_url(direct_hls, expect_playlist=True):
+                        print(f"[Delta] Matched landing-page Chinese HLS: {direct_hls[:80]}...")
+                        return direct_hls, conf_date
+                    print(f"[Delta] Matched landing-page Chinese video: {video_url[:80]}...")
+                    return video_url, conf_date
+        else:
+            # Next.js client-side rendering state parser
+            normalized_html = html.replace('\\"', '"')
+            parts = normalized_html.split('"title":"')
+            if len(parts) > 1:
+                print(f"[Delta] Found {len(parts) - 1} serialized meeting entries in HTML state")
+                for p in parts[1:]:
+                    title_end = p.find('","')
+                    if title_end == -1:
+                        continue
+                    title = p[:title_end]
+                    
+                    # Search for annual
+                    annual_m = re.search(r'"annual":"([^"]+)"', p)
+                    if not annual_m:
+                        continue
+                    annual = annual_m.group(1)
+                    
+                    # Search for publishedAt
+                    pub_m = re.search(r'"publishedAt":"(\d{4})-(\d{2})-(\d{2})', p)
+                    if not pub_m:
+                        continue
+                    conf_date = f"{pub_m.group(1)}{pub_m.group(2)}{pub_m.group(3)}"
+                    
+                    if annual != target_year or quarter_label not in title:
+                        continue
+                        
+                    matched_conf_date = conf_date
+                    
+                    # Find media array content
+                    media_match = re.search(r'"media":\[(.*?)(?:\],"assets"|\]\})', p)
+                    if media_match:
+                        media_str = media_match.group(1)
+                        items = re.findall(r'\{"name":"[^"]+","url":"([^"]+)".*?"displayName":"([^"]+)"\}', media_str)
+                        for url, display_name in items:
+                            if "中" in display_name:
+                                video_url = url.replace(r'\u0026', '&').replace('&amp;', '&')
+                                direct_hls = None
+                                m = re.search(r'vod41/([^&]+)', video_url)
+                                if m:
+                                    direct_hls = f"https://cdn41.ccdntech.com/vod-http/_definst_/vod41/{m.group(1)}/playlist.m3u8"
+                                if direct_hls and _probe_delta_ccdntech_url(direct_hls, expect_playlist=True):
+                                    print(f"[Delta] Matched dynamic Chinese HLS: {direct_hls[:80]}...")
+                                    return direct_hls, conf_date
+                                print(f"[Delta] Matched dynamic Chinese video: {video_url[:80]}...")
+                                return video_url, conf_date
 
         print(f"[Delta] No matching Chinese video block found on {page_url}")
 
@@ -854,6 +918,125 @@ def _extract_delta_landing_video(stock_id: str, year: str, quarter: str) -> tupl
     print(f"[Delta] Could not verify a Chinese replay URL for {matched_conf_date}")
     return None, matched_conf_date
 
+
+def _is_google_finance_media_candidate(url: str) -> bool:
+    """Return True for reusable Quartr media manifests exposed by Google Finance."""
+    low = url.lower()
+    if "files.quartr.com" not in low:
+        return False
+    if not re.search(r"\.(m3u8|mp3|m4a|mp4)(?:\?|$)", low):
+        return False
+    # Segment/part playlists are implementation details; yt-dlp/ffmpeg should use the
+    # top-level manifest so the downloaded audio is complete and reproducible.
+    blocked = ("/parts.m3u8", "/chunks.m3u8", "part_", "segment", "/seg-")
+    return not any(token in low for token in blocked)
+
+
+def _google_finance_exchange_for_market(market: str) -> str | None:
+    return {"TW": "TPE"}.get(market)
+
+
+def scrape_google_finance_earnings_audio(stock_id: str, year: str, quarter: str) -> dict:
+    """
+    Use Google Finance earnings tab as a secondary discovery source for Quartr replay audio.
+
+    Google/Quartr must not override company IR, MOPS/TWSE, or other primary sources. This
+    fallback only returns a reusable media URL when the rendered page identifies the target
+    fiscal quarter and exposes a recorded audio manifest.
+    """
+    market = detect_market(stock_id)
+    exchange = _google_finance_exchange_for_market(market)
+    if not exchange:
+        return {}
+
+    source_url = f"https://www.google.com/finance/beta/quote/{stock_id}:{exchange}?tab=earnings"
+    target_year, month_min, month_max = _quarter_date_window(year, quarter)
+    fiscal_tokens = [
+        f"Fiscal Q{quarter} {year}",
+        f"Q{quarter} {year} earnings",
+        f"Q{quarter} {year} Earnings",
+    ]
+
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        print("[Google-Finance] playwright not installed; skipping secondary audio discovery.")
+        return {}
+
+    captured: list[str] = []
+    page_text = ""
+
+    def on_response(response):
+        url = response.url
+        if _is_google_finance_media_candidate(url):
+            if url not in captured:
+                captured.append(url)
+                print(f"[Google-Finance] Intercepted media candidate: {url[:100]}...")
+
+    print(f"[Google-Finance] Secondary discovery: {source_url}")
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                headless=True,
+                args=["--no-sandbox", "--disable-setuid-sandbox"],
+            )
+            page = browser.new_page(user_agent=UA)
+            page.on("response", on_response)
+            page.goto(source_url, wait_until="domcontentloaded", timeout=45000)
+            page.wait_for_timeout(7000)
+
+            try:
+                play_button = page.get_by_role("button", name=re.compile(r"Play", re.I)).first
+                if play_button.count():
+                    play_button.click(timeout=1500)
+                    page.wait_for_timeout(3000)
+            except Exception:
+                pass
+
+            try:
+                page_text = page.locator("body").inner_text(timeout=5000)
+            except Exception:
+                page_text = ""
+            browser.close()
+    except Exception as e:
+        print(f"[Google-Finance] Browser discovery failed: {e}")
+        return {}
+
+    has_target_quarter = any(token in page_text for token in fiscal_tokens)
+    has_recorded_audio = "Recorded" in page_text and "Play" in page_text
+    if not captured:
+        print("[Google-Finance] No Quartr media manifest found.")
+        return {}
+    if not has_target_quarter:
+        print("[Google-Finance] Media found, but target fiscal quarter text was not confirmed; rejecting.")
+        return {}
+    if not has_recorded_audio:
+        print("[Google-Finance] Target quarter confirmed and media manifest found; accepting despite missing Recorded label in rendered text.")
+
+    preferred = []
+    fallback = []
+    for url in captured:
+        m = re.search(r"/streams/(\d{4})-(\d{2})-(\d{2})/", url)
+        if m:
+            y, mo = m.group(1), int(m.group(2))
+            if y == target_year and month_min <= mo <= month_max:
+                preferred.append(url)
+            else:
+                print(f"[Google-Finance] Rejecting out-of-window stream URL: {url[:100]}...")
+        else:
+            fallback.append(url)
+
+    media_url = (preferred or fallback)[0]
+    print(f"[Google-Finance] Accepted secondary Quartr audio candidate: {media_url[:100]}...")
+    return {
+        "audio_url": media_url,
+        "source_url": source_url,
+        "provider": "google_finance_quartr",
+        "note": (
+            "Secondary source discovery: Google Finance earnings tab exposed Quartr replay audio; "
+            "company IR/MOPS/TWSE sources remain primary."
+        ),
+    }
 
 def scrape_playwright_direct_ir(stock_id: str, ir_url: str, year: str, quarter: str) -> tuple:
     """
@@ -1153,8 +1336,12 @@ def update_audio_metadata(
     release_url: str | None = None,
     status: str = "ok",
     duplicate_of: str | None = None,
+    source: str = "local_file",
+    source_url: str | None = None,
+    captured_media_url: str | None = None,
+    note: str | None = None,
 ) -> None:
-    """Record checksum, size and probed duration for a local audio file."""
+    """Record checksum, size, probed duration and auditable source info."""
     stem = audio_path.stem
     duration = probe_audio_duration(audio_path)
     item = {
@@ -1164,9 +1351,15 @@ def update_audio_metadata(
         "duration_sec": round(duration, 3) if duration is not None else None,
         "release_url": release_url or release_url_for_stem(repo, stem),
         "checked_at": datetime.date.today().isoformat(),
-        "source": "local_file",
+        "source": source,
         "status": status,
     }
+    if source_url:
+        item["source_url"] = source_url
+    if captured_media_url:
+        item["captured_media_url"] = captured_media_url
+    if note:
+        item["note"] = note
     if duplicate_of:
         item["duplicate_of"] = duplicate_of
     metadata = load_audio_metadata(repo)
@@ -1370,6 +1563,102 @@ def download_mops_pdfs(stock_id: str, conf_date: str, year: str, quarter: str,
     return downloaded
 
 
+def scrape_us_financial_results(base_url: str, year: str, quarter: str) -> dict:
+    """Scrape a Q4/NASDAQ-IR-style 'financial results' listing page for the
+    slides/transcript/tables PDFs matching a given quarter.
+
+    These platforms assign an opaque numeric record id per quarter (e.g.
+    /db/841/9232/) shared by all PDFs of that release, but the filenames
+    inconsistently encode the quarter as "1Q_2026", "Q1'26", or "Q1 2026".
+    Returns {"slides": url, "transcript": url, "tables": url} for whichever
+    are found.
+    """
+    from urllib.parse import unquote
+
+    result = {"slides": None, "transcript": None, "tables": None}
+    try:
+        resp = requests.get(base_url, headers={"User-Agent": UA}, timeout=30)
+        if resp.status_code != 200:
+            return result
+    except Exception as e:
+        print(f"[US-IR] Failed to fetch {base_url}: {e}")
+        return result
+
+    yy = year[2:]
+    patterns = [
+        re.compile(rf"{quarter}Q[\s_]?{year}", re.I),
+        re.compile(rf"Q{quarter}['\s_]?{year}", re.I),
+        re.compile(rf"Q{quarter}'{yy}\b", re.I),
+    ]
+
+    pdf_hrefs = re.findall(r'href="([^"]+\.pdf)"', resp.text)
+    for href in pdf_hrefs:
+        readable = unquote(href).replace("+", " ")
+        if not any(p.search(readable) for p in patterns):
+            continue
+        if "/webcast_transcript/" in href and not result["transcript"]:
+            result["transcript"] = href
+        elif "/presentation/" in href and not result["slides"]:
+            result["slides"] = href
+        elif "/financial_tables_pdf/" in href and not result["tables"]:
+            result["tables"] = href
+
+    return result
+
+
+def scrape_nir_presentation_pdf(base_url: str, year: str, quarter: str) -> str | None:
+    """Scrape a Q4 Inc. 'NIR' presentations page for the slide deck matching a
+    fiscal quarter, identified via its data-title="..." card. Different
+    tenants format the quarter differently (SanDisk: "Q4FY26 Earnings
+    Presentation"; GlobalFoundries: "Q2 2026 earnings presentation"), so
+    match loosely on "Q{quarter}" followed by either the 4- or 2-digit year.
+    Returns the absolute /static-files/ URL, or None."""
+    from playwright.sync_api import sync_playwright
+
+    yy = year[2:]
+    label_pat = re.compile(rf'data-title="Q{quarter}\s*(?:FY)?\s*(?:{year}|{yy})\b[^"]*"', re.I)
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page(user_agent=UA)
+            page.goto(base_url, wait_until="networkidle", timeout=45000)
+            html = page.content()
+            browser.close()
+    except Exception as e:
+        print(f"[US-NIR] Failed to fetch {base_url}: {e}")
+        return None
+
+    m = label_pat.search(html)
+    if not m:
+        return None
+    href_m = re.search(r'href="(/static-files/[a-f0-9-]+)"', html[m.end():m.end() + 3000])
+    if not href_m:
+        return None
+    return urljoin(base_url, href_m.group(1))
+
+
+def download_nir_pdf(url: str, dest: Path) -> bool:
+    """Download a Q4 Inc. /static-files/ PDF. Plain requests.get() gets its
+    connection reset by this host, so use Playwright's download interception."""
+    from playwright.sync_api import sync_playwright
+
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page(user_agent=UA)
+            with page.expect_download(timeout=45000) as dl_info:
+                try:
+                    page.goto(url, timeout=45000)
+                except Exception:
+                    pass  # navigation is expected to abort once the download starts
+            dl_info.value.save_as(str(dest))
+            browser.close()
+        return dest.exists() and dest.stat().st_size > 0
+    except Exception as e:
+        print(f"[US-NIR] Download failed: {e}")
+        return False
+
+
 # ── PDF Downloader ────────────────────────────────────────────────────────────
 
 def download_pdfs(stock_id: str, year: str, quarter: str,
@@ -1408,6 +1697,49 @@ def download_pdfs(stock_id: str, year: str, quarter: str,
                 browser.close()
         except Exception as e:
             print(f"[PDF-3034] FAILED Failed to scrape PDFs: {e}")
+
+    # US IR "financial results" listing page fallback (e.g. AMD)
+    fin_results_url = KNOWN_US_FINANCIAL_RESULTS.get(stock_id.upper())
+    if fin_results_url:
+        print(f"[US-IR] Scraping {fin_results_url} for {year} Q{quarter} PDFs...")
+        found = scrape_us_financial_results(fin_results_url, year, quarter)
+        for kind, suffix in (("slides", "ir_en"), ("transcript", "transcript"), ("tables", "financial_tables")):
+            url = found.get(kind)
+            if not url:
+                continue
+            dest = save_dir / f"{stock_id}_{year}_q{quarter}_{suffix}.pdf"
+            if dest.exists():
+                print(f"[US-IR] Already downloaded: {dest}")
+                downloaded.append(dest)
+                continue
+            try:
+                resp = requests.get(url, timeout=30, headers={"User-Agent": UA})
+                if resp.status_code == 200 and resp.content[:4] == b"%PDF":
+                    dest.write_bytes(resp.content)
+                    print(f"[US-IR] OK Saved: {dest} ({dest.stat().st_size // 1024} KB)")
+                    downloaded.append(dest)
+                else:
+                    print(f"[US-IR] FAILED HTTP {resp.status_code}: {url}")
+            except Exception as e:
+                print(f"[US-IR] FAILED Failed: {e}")
+        if not any(found.values()):
+            print(f"[US-IR] No matching PDFs found for {year} Q{quarter}")
+
+    # Q4 Inc. "NIR" presentations page fallback (e.g. SanDisk)
+    nir_url = KNOWN_US_NIR_PRESENTATIONS.get(stock_id.upper())
+    if nir_url:
+        print(f"[US-NIR] Scraping {nir_url} for {year} Q{quarter} slides...")
+        dest = save_dir / f"{stock_id}_{year}_q{quarter}_ir_en.pdf"
+        if dest.exists():
+            print(f"[US-NIR] Already downloaded: {dest}")
+            downloaded.append(dest)
+        else:
+            pdf_url = scrape_nir_presentation_pdf(nir_url, year, quarter)
+            if pdf_url and download_nir_pdf(pdf_url, dest):
+                print(f"[US-NIR] OK Saved: {dest} ({dest.stat().st_size // 1024} KB)")
+                downloaded.append(dest)
+            else:
+                print(f"[US-NIR] No matching presentation found for {year} Q{quarter}")
 
     templates = KNOWN_PDF_ATTACHMENTS.get(stock_id, [])
     if not templates:
@@ -1839,9 +2171,28 @@ def update_readme() -> None:
 
     def _call_transcript_cells(r: dict) -> tuple[str, str]:
         fin, gt = _srt_cells(r["stock_id"], r["year"], r["quarter"])
-        if fin == "-" and r.get("transcript_pdf"):
-            fin = f"[📝]({r['transcript_pdf']})"
+        if r.get("transcript_pdf"):
+            # 📄 marks an official PDF transcript (distinct from a generated
+            # FIN.srt subtitle, 📝); show both if both exist.
+            pdf_link = f"[📄]({r['transcript_pdf']})"
+            fin = pdf_link if fin == "-" else f"{fin} / {pdf_link}"
         return fin, gt
+
+    # Pre-scan: collect (sid, year, quarter) keys that already have a genuine
+    # 法說會/受邀法說 CSV event, so a separate same-quarter 財報 event doesn't
+    # inject a duplicate call-materials row under its own (different) date.
+    genuine_call_keys = set()
+    for ev in upcoming_ir:
+        ev_class = ev.get("類別", "")
+        if ev_class in ("財報", "財報公告"):
+            continue
+        m = re.search(r'[（(](\w+)[）)]', ev.get("事件名稱", ""))
+        sid_pre = m.group(1) if m else None
+        if not sid_pre:
+            continue
+        y_pre, q_pre = _csv_row_yq(ev.get("事件名稱", ""), ev.get("備註", ""), ev.get("開始日期", ""))
+        if y_pre and q_pre:
+            genuine_call_keys.add((sid_pre, y_pre, q_pre))
 
     for ev in upcoming_ir:
         ev_name  = ev.get("事件名稱", "")
@@ -1920,11 +2271,14 @@ def update_readme() -> None:
             key = (sid, exp_year, exp_q)
             for r in rows:
                 if (r["stock_id"], r["year"], r["quarter"]) == key:
-                    # For financial reports, match event evidence to avoid a duplicate
-                    # local-only row. If call materials also exist, a separate call row
-                    # is added below.
+                    # For financial reports, match on either the financial report
+                    # itself or on investor-conference evidence (so a same-day
+                    # 法說會 row still gets added below even before the official
+                    # report PDF has been fetched).
                     if ev_type == "財報":
-                        if r.get("report_cn") or r.get("report_en"):
+                        if (r.get("report_cn") or r.get("report_en") or r.get("audio_path")
+                                or r.get("webcast_url") or r.get("pdf_cn") or r.get("pdf_en")
+                                or r.get("transcript_pdf")):
                             ingested = r
                             matched_keys.add(key)
                             break
@@ -2006,7 +2360,9 @@ def update_readme() -> None:
             "mops": _get_mops_link(sid, link1),
         })
 
-        if ev_type == "財報" and sid and not str(sid).isdigit() and ingested and (ingested.get("audio_path") or ingested.get("webcast_url") or ingested.get("pdf_cn") or ingested.get("pdf_en") or ingested.get("transcript_pdf")):
+        if (ev_type == "財報" and sid and ingested
+                and (ingested["stock_id"], ingested["year"], ingested["quarter"]) not in genuine_call_keys
+                and (ingested.get("audio_path") or ingested.get("webcast_url") or ingested.get("pdf_cn") or ingested.get("pdf_en") or ingested.get("transcript_pdf"))):
             matched_keys.add((ingested["stock_id"], ingested["year"], ingested["quarter"]))
             call_audio = _webcast_cell(ingested)
             call_fin, call_gt = _call_transcript_cells(ingested)
@@ -2487,7 +2843,8 @@ def fetch_yahoo_transcript(yahoo_url: str, stem: str, save_dir: Path) -> list[Pa
 
 def commit_push_files(stock_id: str, year: str, quarter: str,
                       audio_path: Path, pdf_paths: list = None,
-                      extra_paths: list = None) -> str | None:
+                      extra_paths: list = None,
+                      audio_source_info: dict | None = None) -> str | None:
     """
     Move the downloaded audio (and optional PDFs) into InvestorConference/data/<stock_id>/,
     commit (git-lfs for .m4a), push, then remove local whisper-sandbox copies.
@@ -2516,21 +2873,24 @@ def commit_push_files(stock_id: str, year: str, quarter: str,
                 print(f"[git] {' '.join(args)}: {err}")
         return result.returncode == 0
 
-    # Find and remove old audio formats with same stem
-    stem = audio_path.stem
-    for old_audio in target_dir.glob(f"{stem}.*"):
-        if old_audio.suffix.lower() in [".mp3", ".m4a", ".wav"] and \
-           old_audio.suffix.lower() != audio_path.suffix.lower():
-            print(f"[git] Removing old audio format: {old_audio.name}")
-            git("rm", str(old_audio.relative_to(repo)))
-            if old_audio.exists():
-                old_audio.unlink()
+    audio_exists = audio_path is not None and audio_path.exists()
 
-    # Move audio
-    target_audio = target_dir / audio_path.name
-    shutil.move(str(audio_path), str(target_audio))
-    print(f"[git] Moved -> {target_audio}")
-    # git("add", str(target_audio.relative_to(repo)))  # Audio now on GDrive
+    if audio_exists:
+        # Find and remove old audio formats with same stem
+        stem = audio_path.stem
+        for old_audio in target_dir.glob(f"{stem}.*"):
+            if old_audio.suffix.lower() in [".mp3", ".m4a", ".wav"] and \
+               old_audio.suffix.lower() != audio_path.suffix.lower():
+                print(f"[git] Removing old audio format: {old_audio.name}")
+                git("rm", str(old_audio.relative_to(repo)))
+                if old_audio.exists():
+                    old_audio.unlink()
+
+        # Move audio
+        target_audio = target_dir / audio_path.name
+        shutil.move(str(audio_path), str(target_audio))
+        print(f"[git] Moved -> {target_audio}")
+        # git("add", str(target_audio.relative_to(repo)))  # Audio now on GDrive
 
     # Move PDFs / transcript / other extras
     for pdf in (pdf_paths or []):
@@ -2547,17 +2907,20 @@ def commit_push_files(stock_id: str, year: str, quarter: str,
             print(f"[git] Using existing file -> {target_extra}")
         git("add", str(target_extra.relative_to(repo)))
 
-    # Update audio_durations.json
-    update_audio_durations(repo, target_audio)
-    git("add", "audio_durations.json")
+    if audio_exists:
+        # Update audio_durations.json
+        update_audio_durations(repo, target_audio)
+        git("add", "audio_durations.json")
 
-    # Upload to GitHub Releases and update manifest
-    release_url, _manifest_path = upload_to_gdrive_and_update_manifest(repo, stock_id, target_audio)
-    git("add", "audio_manifest.json")
+        # Upload to GitHub Releases and update manifest
+        release_url, _manifest_path = upload_to_gdrive_and_update_manifest(repo, stock_id, target_audio)
+        git("add", "audio_manifest.json")
 
-    # Persist checksum metadata after the final release URL is known.
-    update_audio_metadata(repo, target_audio, release_url=release_url)
-    git("add", "audio_metadata.json")
+        # Persist checksum metadata after the final release URL is known.
+        update_audio_metadata(
+            repo, target_audio, release_url=release_url, **(audio_source_info or {})
+        )
+        git("add", "audio_metadata.json")
 
     # Regenerate README.md and stage it
     update_readme()
@@ -2569,11 +2932,15 @@ def commit_push_files(stock_id: str, year: str, quarter: str,
     if extra_paths:
         extras.append(f"{len(extra_paths)} extra file(s)")
     extras_str = f" + {', '.join(extras)}" if extras else ""
-    msg = (f"feat: add {stock_id} {year} Q{quarter} earnings call audio (audio on GDrive){extras_str}\n\n"
-           f"Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>")
+    if audio_exists:
+        msg = (f"feat: add {stock_id} {year} Q{quarter} earnings call audio (audio on GDrive){extras_str}\n\n"
+               f"Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>")
+    else:
+        msg = (f"feat: add {stock_id} {year} Q{quarter} official PDF material(s) (audio remains unavailable){extras_str}\n\n"
+               f"Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>")
     if not git("commit", "-m", msg):
         print(f"[git] commit failed")
-        return str(target_audio)
+        return str(target_audio) if audio_exists else (str(target_dir / pdf_paths[0].name) if pdf_paths else None)
 
     print(f"[git] Committed. Pushing (LFS upload may take a moment) ...")
     if git("push", "origin", "main"):
@@ -2581,7 +2948,7 @@ def commit_push_files(stock_id: str, year: str, quarter: str,
     else:
         print(f"[git] push failed - committed locally, push manually.")
 
-    return str(target_audio)
+    return str(target_audio) if audio_exists else (str(target_dir / pdf_paths[0].name) if pdf_paths else None)
 
 
 # ── Main Ingestion Function ───────────────────────────────────────────────────
@@ -2616,6 +2983,7 @@ def ingest_earnings_audio(stock_id: str, year: str, quarter: str,
 
     output_path = save_dir / f"{stock_id}_{year}_q{quarter}.m4a"
     _conf_date: list = [None]   # mutable cell so inner functions can write it
+    _audio_source_info: list[dict] = [{}]
 
     def verify_audio_length(path: Path, min_minutes: float = 10.0) -> bool:
         """Verify audio is at least min_minutes long using ffprobe."""
@@ -2675,7 +3043,8 @@ def ingest_earnings_audio(stock_id: str, year: str, quarter: str,
         if auto_push:
             # Commit even if only audio exists (removed the strict pdf/extra check)
             pushed = commit_push_files(
-                stock_id, year, quarter, output_path, pdf_paths, extra_paths
+                stock_id, year, quarter, output_path, pdf_paths, extra_paths,
+                _audio_source_info[0],
             )
             return pushed or str(output_path)
         return str(output_path)
@@ -2839,11 +3208,35 @@ def ingest_earnings_audio(stock_id: str, year: str, quarter: str,
         if download_audio(target_url, output_path):
             return done()
 
+    # Google Finance is a secondary discovery source. It is intentionally after
+    # official company IR and MOPS probes, and accepted audio is tagged as secondary
+    # in audio_metadata.json for auditability.
+    if market == "TW":
+        google_audio = scrape_google_finance_earnings_audio(stock_id, year, quarter)
+        google_url = google_audio.get("audio_url")
+        if google_url:
+            _audio_source_info[0] = {
+                "source": google_audio.get("provider", "google_finance_quartr"),
+                "source_url": google_audio.get("source_url"),
+                "captured_media_url": google_url,
+                "note": google_audio.get("note"),
+            }
+            print(f"\n[Google-Finance] Downloading secondary audio candidate: {google_url}")
+            if download_audio(google_url, output_path, no_check_cert=True):
+                return done()
+            print("[Google-Finance] Secondary audio download failed. Falling back to PDFs.")
+
     pdf_paths = download_pdfs(stock_id, year, quarter, save_dir)
+    # Scan save_dir for any PDFs that were downloaded by MOPS playwright scraper or other methods
+    local_pdfs = list(save_dir.glob(f"{stock_id}_{year}_q{quarter}_*.pdf"))
+    for lp in local_pdfs:
+        if lp not in pdf_paths:
+            pdf_paths.append(lp)
+
     if pdf_paths:
         print(f"\nOK SUCCESS: found {len(pdf_paths)} official PDF material(s) for {stock_id} {year} Q{quarter}; audio remains unavailable.")
         if auto_push:
-            commit_push_files(stock_id, year, quarter, output_path, pdf_paths, [])
+            return commit_push_files(stock_id, year, quarter, output_path, pdf_paths, [])
         return str(pdf_paths[0])
 
     print(f"\nFAILED FAILED: Could not find audio or official PDF materials for {stock_id} {year} Q{quarter}")

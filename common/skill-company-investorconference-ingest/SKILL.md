@@ -62,7 +62,21 @@ Ingest 必須把來源分成兩層，且不得讓二級來源覆蓋一級來源�
 | 層級 | 來源 | 可用用途 | 限制 |
 | :--- | :--- | :--- | :--- |
 | 一級來源 | 公司 IR 官網、公司正式 replay/webcast、公司正式 PDF、MOPS/TWSE 官方公告、SEC filing（美股） | 決定季度、日期、檔案類型、是否為正式公司材料；落檔與 README metadata 的主依據 | 若一級來源彼此衝突，必須保留衝突紀錄並降信心，不得靜默覆蓋 |
-| 二級來源 | FinmoConf、AlphaSpread、Yahoo Finance transcript、AlphaMemo、第三方法說會索引或摘要平台 | 發現資料、補逐字稿、補 speaker/Q&A、交叉驗證、產生候選來源清單 | 不得覆蓋一級來源的季度/日期/檔案類型；不得單獨作為官方音檔或官方簡報判定 |
+| 二級來源 | Google Finance earnings tab / Quartr、FinmoConf、AlphaSpread、Yahoo Finance transcript、AlphaMemo、第三方法說會索引或摘要平台 | 發現資料、補逐字稿、補 speaker/Q&A、交叉驗證、產生候選來源清單 | 不得覆蓋一級來源的季度/日期/檔案類型；不得單獨作為官方音檔或官方簡報判定 |
+
+#### Google Finance earnings tab secondary fallback
+
+若公司 IR、官方 webcast/replay 與 MOPS/TWSE 都沒有取得音檔，Ingest 可把 Google Finance earnings tab 當作二級 discovery fallback，例如 `https://www.google.com/finance/beta/quote/2382:TPE?tab=earnings`。這個來源常由 Quartr 提供文件、逐字稿或 HLS replay audio，可補足 README 中暫列 `無` 的音檔缺口。
+
+使用條件：
+
+1. 只在一級來源已檢查後使用；不得跳過公司 IR、官方 replay 或 MOPS/TWSE。
+2. 必須用 Playwright/Chromium render earnings tab，不能只用靜態 HTML 判定沒有資料。
+3. 頁面必須明確顯示目標 `Fiscal Q{N} {Year}` 或等價季度文字；若仍是 `Waiting for the earnings call` 且未攔截到 media manifest，不得產生音檔。
+4. 僅接受可重現的 Quartr media manifest 或音檔 URL，例如 `files.quartr.com/.../master.m3u8` 或 `/streams/YYYY-MM-DD/.../playlists.m3u8`；不得用 segment、chunk、`part_*.ts` 或中間實作 URL。
+5. 若 URL 含會議日期（例如 `/streams/2026-07-30/...`），日期必須落在目標季度的法說會窗口。
+6. 下載後仍要通過 checksum、duration、duplicate gate；成功時 `audio_metadata.json` 必須記錄 `source: google_finance_quartr`、Google Finance page `source_url`、實際 `captured_media_url` 與 secondary-source note。
+7. Google/Quartr 只能補音檔、逐字稿與 discovery metadata；README 的季度、日期、事件類型與官方 PDF 判定仍以一級來源為準。
 
 若一級與二級來源衝突，例如第三方索引把公司官方 `2026 Q2` 法說會標成 `2026Q3`：
 
@@ -118,6 +132,23 @@ python skills/skill-company-investorconference-ingest/scripts/download_with_play
 
 > [!IMPORTANT]
 > browser-download fallback 是 ingest 的一級材料取得流程，不是 digest 的推論流程。成功取得的檔案仍必須通過 checksum/magic-byte/content-type gate，並產生 Markdown sidecar 供 digest 使用。
+
+#### chrome-devtools MCP browser inspection（僅限互動 session，非 daily-ingest.yml）
+
+某些 IR 站（例如 Wistron/緯創）在 Akamai edge 層級直接擋掉 headless 環境（`requests`、無頭 Playwright）：連根網域都回 403 `Access Denied`（`errors.edgesuite.net`），不是單一頁面或爬蟲偽裝問題，`curl`/`requests`/headless Playwright 換 UA、locale、header 都無法繞過。
+
+在互動式 Codex session 中處理 ingest 時，若 **mcp chrome devtools** 可用，應優先把它納入瀏覽器檢查流程：用它確認目前已開啟的頁面、觀察真實瀏覽器渲染狀態、檢查是否落在 Access Denied / registration / replay 頁、必要時跑 accessibility 或 Lighthouse snapshot 來驗證頁面可讀性。這對官方 IR 頁、webcast player、JavaScript redirect 與需要真瀏覽器 session 的下載線索特別有用。
+
+若一般工具無法取得材料，且 chrome-devtools MCP 暴露了可操作頁面、DOM snapshot、script evaluation 或 network inspection 類工具，則可把該真實、已通過瀏覽器驗證的 session 作為最後一層 fallback：
+
+1. 先呼叫可用的 `mcp__chrome_devtools` 工具（例如 `list_pages`，若存在則用 page/open/snapshot/click/evaluate/network 相關工具）確認瀏覽器 session 與目標一級來源頁面狀態；若成功載入非 Access Denied 頁，代表該瀏覽器 session 可能已通過 bot 防護。
+2. 用可用的 DOM snapshot、page inspection 或 click 工具找出目標音檔/PDF 連結（`data-title`、年份 tab、分頁按鈕等需要時操作 DOM 找出正確季度）。
+3. 若工具支援在頁面 context 內執行 script 或讀取 network，才可用該能力 `fetch()` 目標 URL、擷取實際 media/PDF URL，並把大檔案寫到 scratchpad 或本地暫存，避免把 base64 大內容塞進對話 context。
+4. 本地用 Python/ffmpeg 把 base64 解碼、必要時轉檔（例如 mp3 不能塞進 `.m4a`/MP4 容器,要嘛保留 `.mp3` 副檔名,要嘛重新編碼),再放到 `tmp/{stock_id}_{year}_q{quarter}.{ext}`。
+5. 呼叫 `ingest.py <stock_id> <year> <quarter> --push`（若目標路徑與 `tmp/{stem}.m4a` 快取命中會跳過重新下載),或直接 `import ingest; ingest.commit_push_files(...)` 走完 checksum/上傳/README/commit 流程。
+
+> [!IMPORTANT]
+> 這是**人工協助的一次性補齊流程**，不是可自動化的 pipeline 步驟。`daily-ingest.yml` 在 GitHub Actions headless runner 上執行，沒有 chrome-devtools MCP 可用，Akamai 擋下的來源在排程裡仍會持續失敗——需要使用者在互動 session 中手動觸發這個 escalation。
 
 ### 錯誤/重複音檔的 re-ingest 前置清理
 
