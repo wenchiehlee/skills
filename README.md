@@ -37,6 +37,7 @@
 | [skill-finmind-fetch](common/skill-finmind-fetch) | common | financial-data | 1.0.1 | Fetch Taiwan stock margin and price data from FinMind API and export/merge to stage1 raw CSV. | 2026-08-07 |
 | [skill-google-alert-fetch](common/skill-google-alert-fetch) | common | financial-data | 1.0.1 | 維運 GoogleAlertManager 的 Google Alerts 抓取管線：更新 GoPublic 股票觀察/專注清單 CSV、同步 Google Alert RSS、匯出 fallback RSS、抓取文章、依 focus CSV 更新 README，並排查 fetch/analyze workflows。 | 2026-08-07 |
 | [skill-google-analytics-monitor](common/skill-google-analytics-monitor) | common | analytics | 1.0.1 | 使用 google-analytics-cli 產生 GA4 網站監控 Markdown/README 報告，包含 YAML daily metadata、即時活躍人數、近 7/28 天短期趨勢、近 3 個月流量趨勢、來源/媒介、Top 10 URL、熱門頁面、事件與異常觀察。 | 2026-08-07 |
+| [skill-investment-decision-coach](common/skill-investment-decision-coach) | common | financial-strategy | 1.0.0 | Provide Traditional Chinese expert-level investment decision coaching based on digested book knowledge, helping users build daily practical investment systems, evaluate opportunities, manage risk, avoid behavioral mistakes, and maintain coherent naming/category taxonomy for finance-related skills. | 2026-08-14 |
 | [skill-miz-fetch](common/skill-miz-fetch) | common | document | 1.0.0 | Fetch book content from the self-hosted Calibre-Web epub reader at books.miz.com.tw via browser automation (epub.js book.spine/book.load), and export as Markdown into Miz.Fetch's books/ folder convention. | 2026-08-12 |
 | [skill-mlx-api-client-ocr](common/skill-mlx-api-client-ocr) | common | document | 1.6.0 | 呼叫 Mac-mini MLX API Server 的 OCR 客戶端（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-08-09 |
 | [skill-mlx-api-client-whisper](common/skill-mlx-api-client-whisper) | common | document | 1.0.2 | 以 GitHub issue 觸發 Mac-mini 上的 whisper 轉錄 pipeline（skill-mlx-api-server-whisper），並輪詢結果是否已同步回本 repo。支援法說會音訊、YouTube 財經影片等多種來源。 | 2026-08-13 |
@@ -64,7 +65,7 @@
 | [skill-youtube-channel-fetch](common/skill-youtube-channel-fetch) | common | document | 1.0.0 | 從 YouTube 財經頻道下載最新影片的音訊，發佈為本 repo 的 GitHub Release 附件，並寫入 audio_manifest.json，供 skill-mlx-api-client-whisper 觸發轉錄。 | 2026-08-12 |
 | [skill-youtube-channel-srt-keyframe-extract](common/skill-youtube-channel-srt-keyframe-extract) | common | document | 1.0.0 | 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡報／數字等視覺重點的時間點，下載對應影片並擷取該時間點的畫面存成帶時間碼的 PNG。 | 2026-08-12 |
 
-最後產生日期：2026-08-13
+最後產生日期：2026-08-14
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理

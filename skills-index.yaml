@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-08-13'
+generated_at: '2026-08-14'
 skills:
 - name: skill-android-adb-gadget
   group: common
@@ -202,6 +202,19 @@ skills:
   source: https://pypi.org/project/google-analytics-cli/
   updated_at: '2026-07-18'
   revised_at: '2026-08-07'
+- name: skill-investment-decision-coach
+  group: common
+  path: common/skill-investment-decision-coach
+  version: 1.0.0
+  description: Provide Traditional Chinese expert-level investment decision coaching
+    based on digested book knowledge, helping users build daily practical investment
+    systems, evaluate opportunities, manage risk, avoid behavioral mistakes, and maintain
+    coherent naming/category taxonomy for finance-related skills.
+  category: financial-strategy
+  maintainer: wenchiehlee-money
+  source: https://github.com/wenchiehlee-money/Miz.Fetch
+  updated_at: '2026-08-14'
+  revised_at: '2026-08-14'
 - name: skill-miz-fetch
   group: common
   path: common/skill-miz-fetch
