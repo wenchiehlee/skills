@@ -65,7 +65,7 @@
 | [skill-youtube-channel-fetch](common/skill-youtube-channel-fetch) | common | document | 1.0.0 | 從 YouTube 財經頻道下載最新影片的音訊，發佈為本 repo 的 GitHub Release 附件，並寫入 audio_manifest.json，供 skill-mlx-api-client-whisper 觸發轉錄。 | 2026-08-12 |
 | [skill-youtube-channel-srt-keyframe-extract](common/skill-youtube-channel-srt-keyframe-extract) | common | document | 1.0.0 | 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡報／數字等視覺重點的時間點，下載對應影片並擷取該時間點的畫面存成帶時間碼的 PNG。 | 2026-08-12 |
 
-最後產生日期：2026-08-15
+最後產生日期：2026-08-16
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理
