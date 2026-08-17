@@ -361,16 +361,6 @@ skills:
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
   updated_at: '2026-08-10'
   revised_at: '2026-08-11'
-- name: skill-stock-market-cost-distribution
-  group: common
-  path: common/skill-stock-market-cost-distribution
-  version: 1.0.2
-  description: 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。
-  category: financial-forecasting
-  maintainer: wenchiehlee
-  source: https://github.com/wenchiehlee/MarketCostDistribution
-  updated_at: '2026-07-15'
-  revised_at: '2026-08-07'
 - name: skill-stock-TopCrash
   group: common
   path: common/skill-stock-TopCrash
@@ -381,6 +371,16 @@ skills:
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
   updated_at: '2026-08-10'
   revised_at: '2026-08-11'
+- name: skill-stock-market-cost-distribution
+  group: common
+  path: common/skill-stock-market-cost-distribution
+  version: 1.0.2
+  description: 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。
+  category: financial-forecasting
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee/MarketCostDistribution
+  updated_at: '2026-07-15'
+  revised_at: '2026-08-07'
 - name: skill-stock-universe-onboarding
   group: common
   path: common/skill-stock-universe-onboarding
