@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-08-16'
+generated_at: '2026-08-17'
 skills:
 - name: skill-android-adb-gadget
   group: common
@@ -476,6 +476,18 @@ skills:
   source: wj-lee_Barco.github.com/gadget/debug_wasapi.py
   updated_at: '2026-07-21'
   revised_at: '2026-08-07'
+- name: skill-yahoo-finance-fetch
+  group: common
+  path: common/skill-yahoo-finance-fetch
+  version: 1.0.0
+  description: Fetch Yahoo Finance analyst estimates, daily/60-minute price history,
+    and Wayback Machine historical consensus for Taiwan and US stocks into long-format
+    raw CSVs.
+  category: financial-data
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee/Yahoo.Finance
+  updated_at: '2026-08-17'
+  revised_at: '2026-08-17'
 - name: skill-youtube-channel-fetch
   group: common
   path: common/skill-youtube-channel-fetch
