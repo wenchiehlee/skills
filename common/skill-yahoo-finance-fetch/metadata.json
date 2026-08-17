@@ -1,0 +1,32 @@
+{
+  "name": "skill-yahoo-finance-fetch",
+  "description": "Fetch Yahoo Finance analyst estimates, daily/60-minute price history, and Wayback Machine historical consensus for Taiwan and US stocks into long-format raw CSVs.",
+  "category": "financial-data",
+  "version": "1.0.0",
+  "maintainer": "wenchiehlee",
+  "source": "https://github.com/wenchiehlee/Yahoo.Finance",
+  "updated_at": "2026-08-17",
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-yahoo-finance-fetch",
+  "files": [
+    "metadata.json",
+    "self_update.py",
+    "SKILL.md",
+    "scripts/yahoo_client.py",
+    "scripts/fetch_cli.py",
+    "scripts/fetch_daily_price.py",
+    "scripts/fetch_intraday_60m.py",
+    "scripts/fetch_wayback_consensus.py"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-yahoo-finance-fetch"
+    },
+    {
+      "repo": "wenchiehlee/Yahoo.Finance",
+      "role": "consumer",
+      "local_path": "github.com/Yahoo.Finance/skills/skill-yahoo-finance-fetch"
+    }
+  ]
+}
