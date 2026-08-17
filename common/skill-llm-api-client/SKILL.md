@@ -43,6 +43,16 @@ skill-llm-api-client/
 
 > 部署時 `scripts/` 底下的內容對應到消費專案（如 `llm` repo）的 `llm/` package 根目錄，即 `scripts/client.py` → `llm/client.py`，`scripts/providers/*` → `llm/providers/*`，以此類推。
 
+### ⚠️ 與 `skill-llm-api-server` 不同：`llm` repo 內刻意保留兩份程式碼
+
+`skill-llm-api-server` 的消費端（`Llm-Cli-APIServer`）已將 `main.py` 完全搬進 `skills/skill-llm-api-server/scripts/`，根目錄不再有副本。**`llm` repo 無法比照辦理**：`pyproject.toml` 的 `[tool.hatch.build.targets.wheel]` 規定 `packages = ["llm"]`，也就是說 `llm/` package **必須留在 repo 根目錄**，`pip install`（無論是 `llm @ file:///.../llm` 本地路徑安裝，或 `llm @ git+https://github.com/wenchiehlee/llm.git`）都是直接從這個根目錄路徑建置 wheel。若把 `llm/` 搬進 `skills/skill-llm-api-client/scripts/`，會讓所有依賴此套件的其他 repo（凡是 `pyproject.toml` 內有 `llm @ file:///...` 或 `llm @ git+...` 這行的專案）的安裝失效。
+
+因此 `llm` repo 內同時存在兩份程式碼，是**刻意並存、非自動同步**的快照，而非該修的重複：
+- **根目錄 `llm/`** —— 唯一真實來源，`pip install` 永遠讀這裡，程式改動應直接在這裡進行
+- **`skills/skill-llm-api-client/scripts/`** —— 對應登錄庫 `common/skill-llm-api-client` 的某個時間點快照，用途是讓 skills 登錄庫追蹤版本、以及供「未來可能直接 vendor 程式碼而非透過 pip 安裝」的其他 consumer repo 參考
+
+修改 `llm/` 套件邏輯後，若要讓此快照跟上，需手動把變更同步進 `skills/skill-llm-api-client/scripts/`（或執行 `self_update.py --deploy-all` 從登錄庫推送），`self_update.py` 不會自動偵測根目錄 `llm/` 的變化。
+
 ## ⚙️ 前置環境配置
 
 ### 1. 安裝
