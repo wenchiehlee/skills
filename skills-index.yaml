@@ -215,6 +215,29 @@ skills:
   source: https://github.com/wenchiehlee-money/Miz.Fetch
   updated_at: '2026-08-14'
   revised_at: '2026-08-14'
+- name: skill-llm-api-client
+  group: common
+  path: common/skill-llm-api-client
+  version: 1.0.0
+  description: 統一的 LLM 客戶端函式庫（llm），封裝 Gemini API 金鑰輪轉、skill-llm-api-server 的 codex-cli/gemini-cli
+    橋接、以及本地 MLX 推論，內建 codex → gemini → mlx 自動備援鏈與智慧路由（Smart Routing）。
+  category: library
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee/llm
+  updated_at: '2026-08-17'
+  revised_at: '2026-08-17'
+- name: skill-llm-api-server
+  group: common
+  path: common/skill-llm-api-server
+  version: 1.1.0
+  description: 在 Synology NAS Docker 容器中運行的 LLM CLI 橋接伺服器，將 OpenAI codex-cli（ChatGPT
+    Pro）與 Google gemini-cli 封裝為 Flask/Waitress HTTP API（/exec、/gemini/exec、/smart/exec），供
+    llm 函式庫的 CodexProvider 遠端呼叫。
+  category: server
+  maintainer: wenchiehlee
+  source: https://github.com/ZhongZheng782/Llm-Cli-APIServer
+  updated_at: '2026-08-17'
+  revised_at: '2026-08-17'
 - name: skill-miz-fetch
   group: common
   path: common/skill-miz-fetch
