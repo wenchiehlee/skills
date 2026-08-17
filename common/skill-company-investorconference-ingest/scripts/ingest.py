@@ -2220,10 +2220,13 @@ def update_readme() -> None:
             fin = pdf_link if fin == "-" else f"{fin} / {pdf_link}"
         return fin, gt
 
-    # Pre-scan: collect (sid, year, quarter) keys that already have a genuine
-    # 法說會/受邀法說 CSV event, so a separate same-quarter 財報 event doesn't
-    # inject a duplicate call-materials row under its own (different) date.
-    genuine_call_keys = set()
+    # Pre-scan: collect (sid, year, quarter) -> [dates] for genuine 法說會/受邀法說
+    # CSV events, so a separate same-quarter 財報 event doesn't inject a duplicate
+    # call-materials row under its own (different) date. Dates are kept (not just
+    # the key) because a 受邀法說 can be a distinct, later investor-forum
+    # appearance that has nothing to do with the regular earnings-day call --
+    # in that case the earnings-day call materials must still get their own row.
+    genuine_call_dates = {}
     for ev in upcoming_ir:
         ev_class = ev.get("類別", "")
         if ev_class in ("財報", "財報公告"):
@@ -2234,7 +2237,31 @@ def update_readme() -> None:
             continue
         y_pre, q_pre = _csv_row_yq(ev.get("事件名稱", ""), ev.get("備註", ""), ev.get("開始日期", ""))
         if y_pre and q_pre:
-            genuine_call_keys.add((sid_pre, y_pre, q_pre))
+            genuine_call_dates.setdefault((sid_pre, y_pre, q_pre), []).append(ev.get("開始日期", ""))
+
+    # Pre-scan: (sid, year, quarter) -> 財報 date. Used as a proxy for "the date
+    # the already-ingested call materials actually belong to", since the earnings
+    # report and the regular quarterly call are almost always released same-day.
+    earnings_date_by_key = {}
+    for ev in upcoming_ir:
+        if ev.get("類別", "") not in ("財報", "財報公告"):
+            continue
+        m = re.search(r'[（(](\w+)[）)]', ev.get("事件名稱", ""))
+        sid_pre = m.group(1) if m else None
+        if not sid_pre:
+            continue
+        y_pre, q_pre = _csv_row_yq(ev.get("事件名稱", ""), ev.get("備註", ""), ev.get("開始日期", ""))
+        if y_pre and q_pre:
+            earnings_date_by_key[(sid_pre, y_pre, q_pre)] = ev.get("開始日期", "")
+
+    NEARBY_CALL_DAYS = 14  # window within which a 法說會/受邀法說 date is assumed
+                           # to describe the same session as the 財報 release.
+
+    def _dates_nearby(d1: str, d2: str, days: int = NEARBY_CALL_DAYS) -> bool:
+        try:
+            return abs((_date.fromisoformat(d1) - _date.fromisoformat(d2)).days) <= days
+        except (ValueError, TypeError):
+            return False
 
     for ev in upcoming_ir:
         ev_name  = ev.get("事件名稱", "")
@@ -2311,7 +2338,19 @@ def update_readme() -> None:
         # Associate with ingested files if available.
         if sid and exp_year:
             key = (sid, exp_year, exp_q)
+            # A 受邀法說 whose date is far from the same-quarter 財報 date is a
+            # distinct extra appearance (investor forum), not the regular
+            # earnings-day call -- don't let it silently claim materials that
+            # actually belong to the earnings-day call (see 2301 2026 Q2: a
+            # 09-16 受邀法說 row was swallowing the real 07-31 call's audio/PDF).
+            earn_date = earnings_date_by_key.get(key)
+            skip_match = (
+                ev_type == "受邀法說" and earn_date and date
+                and not _dates_nearby(date, earn_date)
+            )
             for r in rows:
+                if skip_match:
+                    break
                 if (r["stock_id"], r["year"], r["quarter"]) == key:
                     # For financial reports, match on either the financial report
                     # itself or on investor-conference evidence (so a same-day
@@ -2402,8 +2441,12 @@ def update_readme() -> None:
             "mops": _get_mops_link(sid, link1),
         })
 
+        _call_key = (ingested["stock_id"], ingested["year"], ingested["quarter"]) if ingested else None
+        _has_nearby_genuine_call = ingested and any(
+            _dates_nearby(date, gd) for gd in genuine_call_dates.get(_call_key, [])
+        )
         if (ev_type == "財報" and sid and ingested
-                and (ingested["stock_id"], ingested["year"], ingested["quarter"]) not in genuine_call_keys
+                and not _has_nearby_genuine_call
                 and (ingested.get("audio_path") or ingested.get("webcast_url") or ingested.get("pdf_cn") or ingested.get("pdf_en") or ingested.get("transcript_pdf"))):
             matched_keys.add((ingested["stock_id"], ingested["year"], ingested["quarter"]))
             call_audio = _webcast_cell(ingested)

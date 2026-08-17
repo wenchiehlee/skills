@@ -283,7 +283,20 @@ python skills/skill-company-investorconference-ingest/scripts/ingest.py <stock_i
 
 # 更新 README 表格與持續更新
 python skills/skill-company-investorconference-ingest/scripts/ingest.py --update-readme
+```
 
+### README `--update-readme` 合併規則：法說會 vs 受邀法說 vs 財報
+
+`raw_event_upcoming_earnings.csv`（同步自 `wenchiehlee-investment/InvestorEvents`，該 repo 即時爬 MOPS）對同一 `(股票, 年, 季)` 可能同時出現多筆非財報事件——例行季度法說會，以及公司另外受邀參加、與該季財報公布日相隔甚遠的投資論壇。`--update-readme` 用以下規則區分並合併已 ingest 的素材，避免把某一場的音檔/逐字稿/PDF 誤貼到另一場的日期上：
+
+1. **例行 vs 受邀分類**：事件日期距「該季季底」超過 50 天（`INVITED_MEETING_THRESHOLD_DAYS`，同時定義於本 skill 的 `fetch_upcoming_earnings.py` 與 `ingest.py`），標為 `受邀法說`；否則為 `法說會`。
+2. **素材認領需日期相近**：`ingest.py` 會用同一季 `財報` CSV 事件的日期，當作「已下載素材真正對應日期」的代理值（因為台股法說會與財報公布幾乎都是同日）。只有當 `法說會`/`受邀法說` CSV 事件日期與該財報日期相差 **14 天以內**（`NEARBY_CALL_DAYS`），才允許該 CSV 列直接繼承已 ingest 的音檔/FIN/GT/PDF；相差過遠則視為不同場次，不得認領既有素材。
+3. **不得靜默壓制真正的法說會列**：即使同季已有一筆日期很遠的 `受邀法說` CSV 事件，只要已 ingest 的素材日期（財報日期）與該事件對不上，仍必須另外輸出一筆以財報日期為準、type 為 `法說會` 的列，讓真正的素材有正確歸屬。
+4. 若 CSV 事件因此變成「無素材可認領」的未來事件，僅在其日期落在 `today` 起算 4 週內才顯示（CSV-only 佔位列，音檔/FIN/GT/PDF 皆為 `-`）；超出視窗則暫不顯示，待接近時自然出現。
+
+> 反例：2301 光寶科 2026 Q2 的 07-31 例行法說會材料曾被誤貼到 CSV 另一筆 09-16「受邀法說」事件上（兩者相差 47 天，超過 14 天窗口），README 因而顯示「受邀法說 2026-09-16」卻附著 07-31 的音檔/簡報。修正後兩者會分開列出，且 09-16 那筆在超出 4 週視窗前不顯示。
+
+```bash
 # 稽核 release 音檔 checksum 與 duration
 python skills/skill-company-investorconference-ingest/scripts/audit_audio_metadata.py --stems <stem...> --update-durations
 
