@@ -51,8 +51,8 @@
 | [skill-my-tw-coverage-theme-groups](common/skill-my-tw-coverage-theme-groups) | common | financial-strategy | 0.1.0 | 維護 data/themes/*.json 的 competitive_groups 與 extra_entities，讓 output/themes/*.md 主題頁面依真實產品/商業模式競爭關係分組，並與 data/enrichment_all/*.json 的 relationships.competitors 交叉比對一致性。 | 2026-08-13 |
 | [skill-pptx-to-md](common/skill-pptx-to-md) | common | document | 1.0.1 | 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。 | 2026-08-07 |
 | [skill-stock-MA-RSI-BBand-MACD](common/skill-stock-MA-RSI-BBand-MACD) | common | financial-strategy | 1.3.1 | 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MACD）與歷史回測（單日急跌/跌破均線/RSI超賣/z-score偏離/創新高新低，多horizon）。可選Fugle API還原股價（自動回溯調整除息+分割/減資）或yfinance為主要來源，前者可額外交叉比對後者。 | 2026-08-11 |
-| [skill-stock-market-cost-distribution](common/skill-stock-market-cost-distribution) | common | financial-forecasting | 1.0.2 | 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。 | 2026-08-07 |
 | [skill-stock-TopCrash](common/skill-stock-TopCrash) | common | financial-strategy | 1.0.1 | 任意指數/股票在指定年份範圍內的「崩盤Top N」清單——1/3/5/7/9/11日跌幅、事件標籤、VIX/CNN恐慌貪婪情境、恢復天數與形態(V/U修復)，輸出CSV。 | 2026-08-11 |
+| [skill-stock-market-cost-distribution](common/skill-stock-market-cost-distribution) | common | financial-forecasting | 1.0.2 | 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。 | 2026-08-07 |
 | [skill-stock-universe-onboarding](common/skill-stock-universe-onboarding) | common | financial-data | 1.0.1 | Add stocks or tickers to upstream ConceptStocks and TAIEX monitor/focus source lists without editing generated downstream outputs. | 2026-08-07 |
 | [skill-taiex-compare](common/skill-taiex-compare) | common | financial-accounting | 1.0.1 | 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異 | 2026-08-07 |
 | [skill-taiex-monitor](common/skill-taiex-monitor) | common | financial-data | 1.0.1 | 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板 | 2026-08-07 |
