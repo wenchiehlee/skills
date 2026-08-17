@@ -1,0 +1,58 @@
+{
+  "name": "skill-llm-api-server",
+  "description": "在 Synology NAS Docker 容器中運行的 LLM CLI 橋接伺服器，將 OpenAI codex-cli（ChatGPT Pro）與 Google gemini-cli 封裝為 Flask/Waitress HTTP API（/exec、/gemini/exec、/smart/exec），供 llm 函式庫的 CodexProvider 遠端呼叫。",
+  "category": "server",
+  "version": "1.1.0",
+  "author": "wenchiehlee",
+  "maintainer": "wenchiehlee",
+  "source": "https://github.com/ZhongZheng782/Llm-Cli-APIServer",
+  "updated_at": "2026-08-17",
+  "license": "MIT",
+  "tags": [
+    "server",
+    "llm",
+    "codex-cli",
+    "gemini-cli",
+    "chatgpt-pro",
+    "flask",
+    "docker",
+    "synology-nas",
+    "smart-routing",
+    "amplitude"
+  ],
+  "compatibility": {
+    "platform": "Docker (linux/amd64, Synology NAS)",
+    "python": ">=3.11",
+    "env": [
+      "SSH_ROOT_PASSWORD",
+      "CODEX_API_KEY",
+      "CODEX_TIMEOUT",
+      "GEMINI_TIMEOUT"
+    ]
+  },
+  "files": [
+    "SKILL.md",
+    "metadata.json",
+    "self_update.py",
+    "scripts/main.py",
+    "scripts/check_codex_cli.py",
+    "scripts/check_gemini_cli.py",
+    "scripts/test_codex.py",
+    "scripts/test_gemini.py",
+    "scripts/Renew-GeminiAuth.ps1",
+    "scripts/renew-gemini-auth.sh"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "local_path": "github.com/skills/common/skill-llm-api-server",
+      "role": "registry"
+    },
+    {
+      "repo": "ZhongZheng782/Llm-Cli-APIServer",
+      "local_path": "github.com/Llm-Cli-APIServer/skills/skill-llm-api-server",
+      "role": "consumer"
+    }
+  ],
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-llm-api-server"
+}
