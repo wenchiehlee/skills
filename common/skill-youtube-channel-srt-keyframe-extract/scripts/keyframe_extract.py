@@ -21,6 +21,7 @@ Usage (module):
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import subprocess
 import sys
@@ -42,8 +43,18 @@ from llm import LLMClient
 # signature-deciphering JS YouTube now requires, silently limiting extraction to the
 # legacy 640x360 muxed format (so captured frames come out far below 1080p) and, for
 # some videos, failing downloads outright with a plain 403. Node is a much more
-# commonly pre-installed runtime than deno, so use it explicitly.
-YT_DLP_JS_RUNTIME_ARGS = ["--js-runtimes", "node"]
+# commonly pre-installed runtime than deno, so use it explicitly. --remote-components
+# ejs:github fetches yt-dlp's own n/sig challenge-solver script from GitHub instead of
+# relying on the one bundled in the current release, which cuts down (but doesn't fully
+# eliminate — YouTube's anti-bot behavior is itself flaky) the plain 403s seen without it.
+YT_DLP_JS_RUNTIME_ARGS = ["--js-runtimes", "node", "--remote-components", "ejs:github"]
+
+
+def yt_dlp_cookie_args() -> list[str]:
+    cookies_file = os.environ.get("YOUTUBE_COOKIES_FILE")
+    if cookies_file:
+        return ["--cookies", cookies_file]
+    return []
 
 # Despite the ".srt" filename, skill-mlx-api-server-whisper's FIN.srt/GT.srt is NOT
 # standard SubRip: an optional "[METADATA]\n...\n---\n" header, then one cue per line
@@ -82,6 +93,23 @@ def _format_hhmmss(total_seconds: float) -> str:
     h, rem = divmod(total, 3600)
     m, s = divmod(rem, 60)
     return f"{h:02d}:{m:02d}:{s:02d}"
+
+
+def _hhmmss_to_seconds(ts: str) -> float:
+    h, m, s = ts.split(":")
+    return int(h) * 3600 + int(m) * 60 + int(s)
+
+
+# Fallback window (seconds) for the last kept moment's transcript excerpt, which has no
+# next moment to bound it — long enough to capture a few sentences, short enough not to
+# dump the rest of the transcript into one row.
+LAST_MOMENT_EXCERPT_WINDOW = 90
+
+# Display width (px) for each keyframes.md thumbnail. Source PNGs are 1920x1080; this is
+# roughly 1/3 of that. (Note: a first attempt at 320 rendered *smaller* than the original
+# bare `![alt](path)` markdown image did — GitHub doesn't squeeze those down inside a wide
+# table cell the way assumed — so don't drop this below ~480 without checking on GitHub.)
+THUMBNAIL_WIDTH = 640
 
 
 def parse_srt(path: Path) -> list[SrtCue]:
@@ -154,7 +182,7 @@ class KeyframeExtractor:
     def download_video(self, video_url: str, dest_dir: Path) -> Path:
         out_template = str(dest_dir / "video.%(ext)s")
         proc = subprocess.run(
-            ["yt-dlp", *YT_DLP_JS_RUNTIME_ARGS,
+            ["yt-dlp", *YT_DLP_JS_RUNTIME_ARGS, *yt_dlp_cookie_args(),
              "-f", "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best",
              "--merge-output-format", "mp4", "-o", out_template, video_url],
             capture_output=True, text=True, encoding="utf-8", errors="replace",
@@ -179,43 +207,47 @@ class KeyframeExtractor:
     def extract(self, stem: str, srt_path: str | Path, video_url: str, out_dir: str | Path | None = None) -> list[Path]:
         srt_path = Path(srt_path)
         cues = parse_srt(srt_path)
-        moments = self.find_key_moments(cues)
-        if not moments:
-            print(f"[keyframe_extract] no key visual moments found in {srt_path}")
-            return []
-        moments = sorted(moments, key=lambda m: m["timestamp"])
+        moments = sorted(self.find_key_moments(cues), key=lambda m: m["timestamp"])
 
         out_dir = Path(out_dir) if out_dir else srt_path.parent / f"{stem}_keyframes"
-        out_dir.mkdir(parents=True, exist_ok=True)
 
         saved: list[Path] = []
         kept_moments: list[dict] = []
         skipped_duplicates = 0
-        with tempfile.TemporaryDirectory(prefix="keyframe_extract_") as tmp:
-            tmp_dir = Path(tmp)
-            print(f"[keyframe_extract] downloading video for {stem} ({len(moments)} moment(s) to capture)")
-            video_path = self.download_video(video_url, tmp_dir)
-            last_hash: int | None = None
-            for moment in moments:
-                ts = moment["timestamp"]
-                ts_compact = ts.replace(":", "")
-                out_path = out_dir / f"{stem}_{ts_compact}.png"
-                self.grab_frame(video_path, ts, out_path)
+        if moments:
+            out_dir.mkdir(parents=True, exist_ok=True)
+            with tempfile.TemporaryDirectory(prefix="keyframe_extract_") as tmp:
+                tmp_dir = Path(tmp)
+                print(f"[keyframe_extract] downloading video for {stem} ({len(moments)} moment(s) to capture)")
+                video_path = self.download_video(video_url, tmp_dir)
+                last_hash: int | None = None
+                for moment in moments:
+                    ts = moment["timestamp"]
+                    ts_compact = ts.replace(":", "")
+                    out_path = out_dir / f"{stem}_{ts_compact}.png"
+                    self.grab_frame(video_path, ts, out_path)
 
-                frame_hash = _average_hash(out_path)
-                if last_hash is not None and _hamming_distance(frame_hash, last_hash) <= DUPLICATE_HASH_THRESHOLD:
-                    print(f"[keyframe_extract]   {ts} — skipped (duplicate of previous kept frame)")
-                    out_path.unlink(missing_ok=True)
-                    skipped_duplicates += 1
-                    continue
+                    frame_hash = _average_hash(out_path)
+                    if last_hash is not None and _hamming_distance(frame_hash, last_hash) <= DUPLICATE_HASH_THRESHOLD:
+                        print(f"[keyframe_extract]   {ts} — skipped (duplicate of previous kept frame)")
+                        out_path.unlink(missing_ok=True)
+                        skipped_duplicates += 1
+                        continue
 
-                last_hash = frame_hash
-                print(f"[keyframe_extract]   {ts} — {moment.get('reason', '')}")
-                saved.append(out_path)
-                kept_moments.append(moment)
-            # video_path lives in the TemporaryDirectory; it is removed on context exit.
+                    last_hash = frame_hash
+                    print(f"[keyframe_extract]   {ts} — {moment.get('reason', '')}")
+                    saved.append(out_path)
+                    kept_moments.append(moment)
+                # video_path lives in the TemporaryDirectory; it is removed on context exit.
+        else:
+            print(f"[keyframe_extract] no key visual moments found in {srt_path}")
 
-        index_path = self._write_index_md(stem, srt_path, video_url, out_dir, kept_moments, saved)
+        # Always write the index, even with zero screenshots — this stem's *_keyframes.md
+        # is the daily workflow's and generate_readme_index.py's "already processed" marker.
+        # Returning early here (as a previous version did) left "boring" videos (no LLM-detected
+        # chart moments) permanently missing from README: the workflow retries any stem without
+        # a _keyframes.md every single day, forever, and it never gets one.
+        index_path = self._write_index_md(stem, srt_path, video_url, out_dir, kept_moments, saved, cues)
         print(
             f"[keyframe_extract] done. saved {len(saved)} PNG(s) "
             f"({skipped_duplicates} duplicate(s) skipped) to {out_dir}; index: {index_path}"
@@ -230,26 +262,53 @@ class KeyframeExtractor:
         out_dir: Path,
         moments: list[dict],
         saved: list[Path],
+        cues: list[SrtCue],
     ) -> Path:
-        """Write a per-video Markdown mapping of each kept snapshot to its timestamp
-        and reason, so the PNGs can be browsed/cross-referenced without re-running
-        the LLM pass."""
+        """Write a per-video Markdown mapping of each kept snapshot to its timestamp,
+        an actual transcript excerpt (verbatim text from srt_path spoken between this
+        moment and the next — precise and keyword-searchable, unlike the LLM's one-line
+        guess about what's likely on screen), and that LLM guess as extra context.
+        Lets the PNGs be browsed/cross-referenced without re-running the LLM pass.
+
+        One block per moment (heading + full-width image + excerpt/reason as plain
+        text below it) rather than a table row — a table forces the image into a
+        narrow cell once any other column (the transcript excerpt in particular) has
+        long content, since GitHub applies max-width:100% to <img> *relative to its
+        cell*, not to the explicit width= attribute. Plain text blocks stay just as
+        keyword-searchable (Ctrl+F / grep) as a table would be."""
         index_path = out_dir.parent / f"{stem}_keyframes.md"
         lines = [
             f"# {stem} — 關鍵畫面索引",
             "",
-            f"- 來源逐字稿：`{srt_path.name}`",
+            f"- 來源逐字稿：[{srt_path.name}]({srt_path.name})",
             f"- 影片：{video_url}",
             f"- 截圖數：{len(saved)}",
             "",
-            "| 時間碼 | 畫面 | 說明 |",
-            "| --- | --- | --- |",
         ]
-        for moment, path in zip(moments, saved):
+        for i, (moment, path) in enumerate(zip(moments, saved)):
             rel_path = f"{out_dir.name}/{path.name}"
-            reason = moment.get("reason", "").replace("|", "\\|")
-            lines.append(f"| {moment['timestamp']} | ![{path.name}]({rel_path}) | {reason} |")
-        index_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            start = _hhmmss_to_seconds(moment["timestamp"])
+            end = (
+                _hhmmss_to_seconds(moments[i + 1]["timestamp"])
+                if i + 1 < len(moments)
+                else start + LAST_MOMENT_EXCERPT_WINDOW
+            )
+            excerpt = " ".join(c.text for c in cues if start <= c.start_seconds < end)
+            excerpt = excerpt or "（無對應逐字稿內容）"
+            reason = moment.get("reason", "")
+            lines += [
+                f"## {moment['timestamp']}",
+                "",
+                f'<img src="{rel_path}" alt="{path.name}" width="{THUMBNAIL_WIDTH}">',
+                "",
+                f"**逐字稿片段：** {excerpt}",
+                "",
+                f"**話題推測：** {reason}",
+                "",
+                "---",
+                "",
+            ]
+        index_path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
         return index_path
 
 
