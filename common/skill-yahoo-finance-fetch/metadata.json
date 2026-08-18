@@ -2,10 +2,10 @@
   "name": "skill-yahoo-finance-fetch",
   "description": "Fetch Yahoo Finance analyst estimates, daily/60-minute price history, and Wayback Machine historical consensus for Taiwan and US stocks into long-format raw CSVs.",
   "category": "financial-data",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee/Yahoo.Finance",
-  "updated_at": "2026-08-17",
+  "updated_at": "2026-08-18",
   "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-yahoo-finance-fetch",
   "files": [
     "metadata.json",

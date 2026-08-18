@@ -82,6 +82,20 @@ python scripts/fetch_wayback_consensus.py --backfill
 - `--no-merge`：只寫 `--output-csv`，不合併進 `--history-csv`。
 - `--output-csv` / `--coverage-csv` / `--history-csv`：分別覆蓋批次輸出、快照涵蓋矩陣、下游合併歷史 CSV 的路徑，預設對應 `configs/default.yaml` 的 `output.wayback_consensus_csv` / `output.wayback_coverage_matrix_csv` / `output.wayback_consensus_history_csv`。
 
+#### Wayback 連線韌性（archive.org 對雲端 CI IP 的節流/封鎖）
+
+archive.org 已知會對共用雲端 CI（例如 GitHub Actions runner）的來源 IP 做節流或封鎖（`Connection refused` / SSL handshake timeout / HTTP 429 / 503）。這種情況下重試同一個請求沒有意義——同一個 IP 打過去還是會被拒絕，過去曾發生過整支腳本連續數週在 GitHub Actions 上跑滿 5 小時、實際上一筆資料都沒抓到，卻因為 `continue-on-error: true` 加上「找不到新資料就順手更新歷史 CSV 最後一列 process_timestamp」的 fallback，讓每天的 commit 看起來像有成功執行。
+
+從 v1.1.0 起加入以下機制：
+
+- **啟動前連線探測**：`main()` 執行前會先對 CDX API 做一次探測（`check_wayback_connectivity()`）。如果連續 3 次都是網路層錯誤（非「合法的空結果」），會印出 `::error::` GitHub Actions annotation 並以 exit code 1 結束，不會跑完整份股票清單、也不會產生假的「成功」commit。
+- **執行中斷路器**：即使探測時連線正常，若執行途中連續 `NETWORK_BLOCK_STREAK_LIMIT`（預設 15）次請求都是網路層錯誤，會視為連線在執行途中被節流，提前中止並 checkpoint 已抓到的資料，同樣印出 `::error::` annotation。
+- **分辨「網路層失敗」vs「合法空結果」**：CDX 查詢回傳格式正確但沒有快照（例如該股票這段期間本來就沒有存檔）不算失敗，不會觸發上述機制；只有 `ConnectionError` / SSL 錯誤 / timeout / HTTP 429 / 503 才算。
+- **重試改用指數退避 + 隨機抖動 + 尊重 `Retry-After`**：CDX 查詢與快照下載的重試間隔從固定 3 秒改為 `3 * 2^attempt` 秒（上限 30 秒）加上隨機抖動；遇到 HTTP 503 且伺服器帶有 `Retry-After` header 時優先採用該值。
+- **降低單支股票的請求量**：原本每支股票固定查詢 3 個 Yahoo 鏡像網域（finance.yahoo.com / hk.finance.yahoo.com / sg.finance.yahoo.com），現在只要累積到的月度快照數已達 `limit_months`，就會提前跳過剩餘網域，減少對 CDX API 的請求量。
+
+這些機制解決的是「讓失敗立即可見、減少無謂的請求量」；如果 archive.org 真的是針對 GitHub Actions 的 IP 段做硬性封鎖，唯一保證有效的做法是把這個步驟改到不同來源 IP 的環境執行（例如 self-hosted runner 或透過 proxy）。
+
 ## 設定檔（`configs/default.yaml`）
 
 腳本共用同一份設定檔，需在消費端專案根目錄提供，範例：

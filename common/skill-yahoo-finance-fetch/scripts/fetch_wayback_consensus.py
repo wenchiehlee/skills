@@ -12,8 +12,12 @@ import re
 import time
 import csv
 import datetime
+import random
+import socket
+import ssl
 import urllib.parse
 import urllib.request
+import urllib.error
 import json
 import argparse
 import numpy as np
@@ -126,66 +130,118 @@ def parse_val_with_suffix(val_str):
     except ValueError:
         return np.nan
 
+WAYBACK_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+
+
+def _is_network_level_error(exc: BaseException) -> bool:
+    """True for connection-level failures (refused/timed-out/SSL/429/503) that
+    are the signature of an IP-based rate-limit or block by archive.org, as
+    opposed to a well-formed HTTP response that simply had no data (e.g. a
+    genuine empty CDX result). Distinguishing the two matters: the former
+    means retrying the same request from the same IP is pointless and the
+    run should fail fast; the latter is normal and should not be treated as
+    an outage."""
+    if isinstance(exc, (ConnectionError, socket.timeout, TimeoutError, ssl.SSLError)):
+        return True
+    if isinstance(exc, urllib.error.HTTPError):
+        return exc.code in (429, 503)
+    if isinstance(exc, urllib.error.URLError):
+        # Covers things like "[Errno 111] Connection refused" and
+        # "_ssl.c:999: The handshake operation timed out".
+        return True
+    return False
+
+
+def _retry_delay(attempt: int, exc: BaseException) -> float:
+    """Exponential backoff with jitter, honoring Retry-After on 503s so we
+    give archive.org's rate limiter a real chance to reset instead of
+    hammering it again after a fixed 3s."""
+    if isinstance(exc, urllib.error.HTTPError) and exc.code == 503:
+        retry_after = exc.headers.get("Retry-After") if exc.headers else None
+        if retry_after:
+            try:
+                return min(float(retry_after), 30.0)
+            except ValueError:
+                pass
+    base = 3.0 * (2 ** attempt)
+    return min(base + random.uniform(0, base * 0.5), 30.0)
+
+
 def fetch_wayback_snapshots(url, limit_months=24):
-    """Query Wayback CDX API for historical snapshot timestamps of the URL."""
+    """Query Wayback CDX API for historical snapshot timestamps of the URL.
+
+    Returns (snapshots, network_blocked). network_blocked is True only when
+    every retry failed with a network-level error (see
+    _is_network_level_error) — i.e. archive.org was unreachable/throttling,
+    not merely "no snapshots exist for this URL"."""
     encoded_url = urllib.parse.quote_plus(url)
     cdx_url = f"https://web.archive.org/cdx/search/cdx?url={encoded_url}&output=json&statuscode=200"
-    
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+
+    headers = {"User-Agent": WAYBACK_USER_AGENT}
     req = urllib.request.Request(cdx_url, headers=headers)
-    
+
+    last_exc = None
     for attempt in range(3):
         try:
             with urllib.request.urlopen(req, timeout=45) as response:
                 data = json.loads(response.read().decode("utf-8"))
                 if len(data) <= 1:
-                    return []
-                
+                    return [], False
+
                 header = data[0]
                 rows = data[1:]
-                
+
                 ts_idx = header.index("timestamp")
                 orig_idx = header.index("original")
-                
+
                 snapshots = []
                 for r in rows:
                     snapshots.append({
                         "timestamp": r[ts_idx],
                         "original": r[orig_idx]
                     })
-                
+
                 monthly_snapshots = {}
                 for snap in snapshots:
                     ts = snap["timestamp"]
                     year_month = ts[:6]
                     if year_month not in monthly_snapshots or ts > monthly_snapshots[year_month]["timestamp"]:
                         monthly_snapshots[year_month] = snap
-                
+
                 sorted_snaps = sorted(list(monthly_snapshots.values()), key=lambda x: x["timestamp"])
-                return sorted_snaps[-limit_months:]
-                
+                return sorted_snaps[-limit_months:], False
+
         except Exception as e:
+            last_exc = e
             print(f"Attempt {attempt+1} failed to call Wayback CDX API: {e}")
             if attempt < 2:
-                time.sleep(3.0)
-                
-    return []
+                time.sleep(_retry_delay(attempt, e))
+
+    network_blocked = last_exc is not None and _is_network_level_error(last_exc)
+    return [], network_blocked
 
 def download_html(timestamp, original_url):
-    """Download archived HTML page from Wayback Machine."""
+    """Download archived HTML page from Wayback Machine.
+
+    Returns (html_or_None, network_blocked) — see fetch_wayback_snapshots
+    for what network_blocked means."""
     wayback_url = f"https://web.archive.org/web/{timestamp}/{original_url}"
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    headers = {"User-Agent": WAYBACK_USER_AGENT}
     req = urllib.request.Request(wayback_url, headers=headers)
-    
-    # Retry logic
+
+    last_exc = None
     for attempt in range(3):
         try:
             with urllib.request.urlopen(req, timeout=20) as response:
-                return response.read().decode("utf-8", errors="ignore")
+                return response.read().decode("utf-8", errors="ignore"), False
         except Exception as e:
+            last_exc = e
             print(f"Attempt {attempt+1} failed to download snapshot {timestamp}: {e}")
-            time.sleep(3.0)
-    return None
+            if attempt < 2:
+                time.sleep(_retry_delay(attempt, e))
+
+    network_blocked = last_exc is not None and _is_network_level_error(last_exc)
+    return None, network_blocked
 
 def parse_consensus_from_json(html_text):
     """Fallback parser that extracts and processes window.App.main or window.__PRELOADED_STATE__ JSON."""
@@ -591,6 +647,48 @@ def time_budget_exhausted(deadline: float | None) -> bool:
     return deadline is not None and time.monotonic() >= deadline
 
 
+NETWORK_BLOCK_STREAK_LIMIT = 15  # consecutive network-level failures before we bail out mid-run
+
+
+def _emit_gh_error(message: str) -> None:
+    """Print a GitHub Actions error annotation (shows up in the Actions UI /
+    job summary, unlike a plain print) in addition to a normal log line, so
+    a connectivity outage is visible even though this workflow step runs
+    with continue-on-error: true and would otherwise look identical to a
+    normal successful (if quiet) run."""
+    print(f"::error::{message}")
+    print(message)
+
+
+def check_wayback_connectivity() -> bool:
+    """One cheap CDX probe before looping over the whole stock list.
+
+    archive.org is known to rate-limit/block requests from shared cloud CI
+    IP ranges (connection refused / SSL handshake timeout / HTTP 503) — when
+    that happens every single per-stock query fails the same way, so there's
+    no point burning the full multi-hour runtime budget rediscovering that
+    on every stock. Returns False only when the failure is network-level
+    (see _is_network_level_error); a well-formed response (even an
+    unexpected one) counts as reachable."""
+    probe_url = "https://web.archive.org/cdx/search/cdx?url=example.com&output=json&limit=1"
+    headers = {"User-Agent": WAYBACK_USER_AGENT}
+    for attempt in range(3):
+        try:
+            req = urllib.request.Request(probe_url, headers=headers)
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                resp.read()
+            return True
+        except Exception as e:
+            if not _is_network_level_error(e):
+                return True
+            print(f"Connectivity probe attempt {attempt+1} failed: {e}")
+            if attempt < 2:
+                time.sleep(_retry_delay(attempt, e))
+    # All 3 attempts failed with a network-level error (connection
+    # refused/SSL timeout/429/503) — treat as unreachable from this runner.
+    return False
+
+
 def main():
     parser = argparse.ArgumentParser(description="Fetch Wayback Machine Yahoo Finance consensus")
     parser.add_argument("--config", default=str(CONFIG_PATH), help="YAML config path")
@@ -637,6 +735,19 @@ def main():
         max_runtime = float(config.get("wayback", {}).get("max_runtime_minutes", 300))
     deadline = time.monotonic() + max_runtime * 60 if max_runtime > 0 else None
 
+    print("Checking Wayback Machine connectivity before starting...")
+    if not check_wayback_connectivity():
+        _emit_gh_error(
+            "Wayback Machine (archive.org) is unreachable from this runner "
+            "(connection refused / SSL timeout / 429 / 503 on every probe attempt). "
+            "This is the signature of an IP-level rate-limit or block on the "
+            "runner's network, not a code issue -- retrying the full stock list "
+            "would just repeat the same failure for hours. Skipping this run; "
+            "no fake 'heartbeat' commit will be produced."
+        )
+        sys.exit(1)
+    print("Wayback Machine is reachable. Proceeding.")
+
     if args.limit_months:
         focus_limit = standard_limit = args.limit_months
     elif args.backfill:
@@ -656,11 +767,22 @@ def main():
     already_covered.update(load_coverage(output_csv))
     covered_snapshots = load_covered_snapshots(coverage_csv, args.retry_failed_attempts)
     all_records: list[dict] = []
+    network_block_streak = 0
 
     for t in targets:
         if time_budget_exhausted(deadline):
             print("Runtime budget reached before next stock. Exiting gracefully.")
             break
+
+        if network_block_streak >= NETWORK_BLOCK_STREAK_LIMIT:
+            _emit_gh_error(
+                f"{network_block_streak} consecutive network-level failures against "
+                "Wayback Machine -- connectivity degraded mid-run (past the initial "
+                "probe). Aborting the remaining stock list instead of burning the "
+                "rest of the runtime budget on requests that will keep failing."
+            )
+            checkpoint_records(all_records, output_csv, history_csv if not args.no_merge else None)
+            sys.exit(1)
 
         code = t["code"]
         name = t["name"]
@@ -685,9 +807,19 @@ def main():
                 print("Runtime budget reached during CDX queries. Exiting gracefully.")
                 break
             print(f"  Querying: {url}")
-            snaps = fetch_wayback_snapshots(url, limit_months=limit_months)
+            snaps, network_blocked = fetch_wayback_snapshots(url, limit_months=limit_months)
             print(f"    Found {len(snaps)} snapshots.")
             all_snapshots.extend(snaps)
+            network_block_streak = network_block_streak + 1 if network_blocked else 0
+            if network_block_streak >= NETWORK_BLOCK_STREAK_LIMIT:
+                break
+            months_so_far = len({snap["timestamp"][:6] for snap in all_snapshots})
+            if months_so_far >= limit_months:
+                # Already have enough monthly coverage from earlier mirror
+                # domain(s) -- skip querying the rest to cut CDX request
+                # volume (this is the traffic pattern most likely to trigger
+                # archive.org's rate limiting in the first place).
+                break
             time.sleep(1.0)
 
         monthly_snaps = {}
@@ -723,7 +855,8 @@ def main():
                 continue
 
             print(f"  [{idx}/{len(snapshots)}] Downloading snapshot as of {asof_date} (gap to fill)...")
-            html = download_html(ts, snap["original"])
+            html, network_blocked = download_html(ts, snap["original"])
+            network_block_streak = network_block_streak + 1 if network_blocked else 0
             if not html:
                 message = "Failed to download HTML"
                 print(f"    {message}.")
@@ -732,7 +865,11 @@ def main():
                     make_coverage_row(t, yahoo_symbol, snap, asof_date, "download_failed", message),
                 )
                 covered_snapshots.add(attempt_key)
+                if network_block_streak >= NETWORK_BLOCK_STREAK_LIMIT:
+                    break
                 continue
+
+            network_block_streak = 0
 
             metrics = parse_consensus_from_html(html)
             if not metrics:
