@@ -526,14 +526,18 @@ skills:
 - name: skill-youtube-channel-fetch
   group: common
   path: common/skill-youtube-channel-fetch
-  version: 1.0.0
-  description: 從 YouTube 財經頻道下載最新影片的音訊，發佈為本 repo 的 GitHub Release 附件，並寫入 audio_manifest.json，供
-    skill-mlx-api-client-whisper 觸發轉錄。
+  version: 1.4.0
+  description: 從 YouTube 財經頻道下載影片（裸頻道網址會合併 /videos+/streams 兩個 tab，網址已指定 /videos 或
+    /streams 則只查那一個 tab；支援「最新 N 支」或「日期區間」兩種模式），優先嘗試官方逐字稿（youtube-transcript-api）：自動字幕直接寫成
+    FIN.srt，手動字幕只寫成 GT.srt（不寫 FIN.srt——GT-only 本身就是完整狀態，下游步驟找不到 FIN.srt 時會改用 GT.srt），可用
+    refine 子指令針對有 GT.srt 但無 FIN.srt 的 stem 補觸發 whisper pipeline 的 refine_fin_srt；沒有逐字稿的才下載音訊、發佈為本
+    repo 的 GitHub Release 附件並寫入 audio_manifest.json，供 skill-mlx-api-client-whisper
+    觸發轉錄。
   category: document
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/YoutubeAudio.Fetch
-  updated_at: '2026-08-11'
-  revised_at: '2026-08-12'
+  updated_at: '2026-08-18'
+  revised_at: '2026-08-18'
 - name: skill-youtube-channel-srt-keyframe-extract
   group: common
   path: common/skill-youtube-channel-srt-keyframe-extract
