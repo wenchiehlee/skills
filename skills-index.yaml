@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-08-17'
+generated_at: '2026-08-18'
 skills:
 - name: skill-android-adb-gadget
   group: common
@@ -537,11 +537,11 @@ skills:
 - name: skill-youtube-channel-srt-keyframe-extract
   group: common
   path: common/skill-youtube-channel-srt-keyframe-extract
-  version: 1.0.0
+  version: 1.1.2
   description: 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡報／數字等視覺重點的時間點，下載對應影片並擷取該時間點的畫面存成帶時間碼的
-    PNG。
+    PNG，索引 md 裡每張截圖都附上該時間區段的實際逐字稿片段（可關鍵字搜尋）與 LLM 話題推測。
   category: document
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/YoutubeAudio.Fetch
-  updated_at: '2026-08-11'
-  revised_at: '2026-08-12'
+  updated_at: '2026-08-18'
+  revised_at: '2026-08-18'

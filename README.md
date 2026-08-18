@@ -67,9 +67,9 @@
 | [skill-usb-wasapi-capture-debug](common/skill-usb-wasapi-capture-debug) | common | basic | 1.0.2 | Enumerate Windows WASAPI capture endpoints via COM IMMDeviceEnumerator to verify UAC2 speakerphone visibility, device state, and active audio sessions. | 2026-08-07 |
 | [skill-yahoo-finance-fetch](common/skill-yahoo-finance-fetch) | common | financial-data | 1.0.0 | Fetch Yahoo Finance analyst estimates, daily/60-minute price history, and Wayback Machine historical consensus for Taiwan and US stocks into long-format raw CSVs. | 2026-08-17 |
 | [skill-youtube-channel-fetch](common/skill-youtube-channel-fetch) | common | document | 1.0.0 | 從 YouTube 財經頻道下載最新影片的音訊，發佈為本 repo 的 GitHub Release 附件，並寫入 audio_manifest.json，供 skill-mlx-api-client-whisper 觸發轉錄。 | 2026-08-12 |
-| [skill-youtube-channel-srt-keyframe-extract](common/skill-youtube-channel-srt-keyframe-extract) | common | document | 1.0.0 | 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡報／數字等視覺重點的時間點，下載對應影片並擷取該時間點的畫面存成帶時間碼的 PNG。 | 2026-08-12 |
+| [skill-youtube-channel-srt-keyframe-extract](common/skill-youtube-channel-srt-keyframe-extract) | common | document | 1.1.2 | 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡報／數字等視覺重點的時間點，下載對應影片並擷取該時間點的畫面存成帶時間碼的 PNG，索引 md 裡每張截圖都附上該時間區段的實際逐字稿片段（可關鍵字搜尋）與 LLM 話題推測。 | 2026-08-18 |
 
-最後產生日期：2026-08-17
+最後產生日期：2026-08-18
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理
