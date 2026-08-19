@@ -1,0 +1,7 @@
+interface:
+  display_name: "Institutional Thesis Research"
+  short_description: "Audit institutional thesis research"
+  default_prompt: "Use $skill-investment-institutional-thesis-research to add or update an institutional thesis source, forecast ledger, and comparison report."
+
+policy:
+  allow_implicit_invocation: true
