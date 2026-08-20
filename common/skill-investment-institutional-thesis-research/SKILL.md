@@ -75,13 +75,33 @@ Institution lens shortcuts：
 
 ## Repository Maturity Map
 
-- Goldman Sachs 是 pilot，已有 article records、multiple thesis files、forecast ledger、forecast summary、open questions 與 deeper reports。
-- Morgan Stanley、J.P. Morgan、Bank of America、UBS 是 first-touch institutions；在更多 primary sources 累積前，confidence 應較保守。
+用 maturity 判斷輸出語氣與 confidence。不要把 first-touch institution 寫得像 Goldman pilot 一樣成熟。
+
+| Institution | Maturity | Current Coverage | How To Use The Lens |
+|---|---|---|---|
+| Goldman Sachs | `pilot / reference implementation` | 13 article records、3 thesis files、forecast ledger、forecast summary、open questions、deeper reports | 可作為最成熟的 AI capex / power-grid / demand-validation reference lens；仍需區分 Goldman forecast、cited consensus and market commentary。 |
+| Morgan Stanley | `first-touch plus / industrial-buildout lens` | 4 article records、1 umbrella thesis、forecast ledger、first-touch report | 適合解讀 industrial buildout、macro variable、financing absorption、time-to-power；不宜拆太多子 thesis。 |
+| J.P. Morgan | `first-touch plus / capex-financing lens` | 4 source records、1 umbrella thesis、forecast ledger、first-touch report | 適合解讀 multiyear capex wave、growth engine、bond issuance、private credit、leverage containment；Global Research formal model 仍待補。 |
+| UBS | `first-touch plus / capex-discipline lens` | 3 article records、1 umbrella thesis、forecast ledger、first-touch report | 適合解讀 capex discipline、cash capex vs. operating cash flow、capex taper tantrum、valuation selectivity；`USD 820bn` / `USD 990bn` capex scope 需查證。 |
+| Bank of America | `directional first-touch / physical-AI-power lens` | 2 article records、1 umbrella thesis、forecast ledger、first-touch report | 適合解讀 physical AI、manufacturing productivity、data-center power reliability、grid / energy investment；不要強行給可比 hyperscaler capex forecast。 |
+
+Maturity 使用規則：
+
+- `pilot / reference implementation`：可支撐 thesis update、comparison update、forecast-summary update；但仍不可捏造未入庫來源。
+- `first-touch plus`：可用於 institutional lens analysis 與 provisional comparison；建立新子 thesis 前要有更多 direct evidence。
+- `directional first-touch`：可用於補充 transmission / framing；除非來源有明確數字，不納入 capex forecast range。
 - 目前 five-institution AI capex overview 使用 Goldman Sachs、Morgan Stanley、J.P. Morgan、Bank of America、UBS。
 - 目前 focus themes 包含 `AI_CAPEX`、`AI_INFRASTRUCTURE`、`POWER_DEMAND`、`POWER_GRID`、`DATA_CENTERS`、`AI_ROI`、`PHYSICAL_AI`、`PRIVATE_CREDIT`、`RELEVERAGING`、`HALO_REAL_ASSETS`。
-- BofA 目前支持 power / physical-AI transmission layer，但本 repo 尚未保存可比 hyperscaler capex point forecast。
-- UBS 目前提供 explicit AI capex anchors，以及 capex-discipline / capex-taper-tantrum lens；與較窄的 hyperscaler estimates 平均前必須先確認 scope。
 - `POWER_EQUIPMENT`、cooling、networking and AI infrastructure financing 仍是 candidate sub-theses；必須等 direct evidence 足夠後才能拆 thesis。
+
+Maturity upgrade criteria：
+
+- `directional first-touch` -> `first-touch plus`：至少 3 個 primary sources，包含 1 個清楚 thesis anchor、1 個 quantitative observation / forecast ledger entry，以及可寫入 institution index 的 open questions。
+- `first-touch plus` -> `validated thesis lens`：至少 5-7 個 primary sources，跨 2 個以上 publication dates，umbrella thesis 有 forecast ledger、invalidation conditions、evolution history，且能穩定解讀新 article/news。
+- `validated thesis lens` -> `pilot candidate`：至少 2 個可分辨的 recurring theses，forecast revisions 或 stance changes 有 chronology，並已有 cross-institution comparison update。
+- `pilot candidate` -> `pilot / reference implementation`：接近 Goldman 標準，包含 multiple thesis files、article history、forecast summary、open-question backlog、comparison links and mature thesis boundaries。
+- 不因為機構名氣、文章數量或單一強句自動升級；升級必須由 direct evidence、forecast history、thesis recurrence and invalidation conditions 支撐。
+- 降級也允許：若後續查證發現 source scope 不清、secondary-only、或 thesis 無法重複出現，應把 maturity 調回較低層級。
 
 ## Output Patterns
 
