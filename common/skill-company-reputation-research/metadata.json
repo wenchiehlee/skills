@@ -1,0 +1,15 @@
+{
+  "name": "skill-company-reputation-research",
+  "description": "Collect Taiwan and global public jobseeker intelligence for a specified company, including employer reviews, interview/salary transparency, workplace reputation, labor/legal signals, layoffs, and recurring red flags.",
+  "category": "basic",
+  "version": "0.1.1",
+  "maintainer": "wenchiehlee",
+  "source": "",
+  "updated_at": "2026-08-20",
+  "files": [
+    "metadata.json",
+    "SKILL.md",
+    "references/source-map.md",
+    "README.md"
+  ]
+}

@@ -125,6 +125,18 @@ skills:
   source: https://github.com/wenchiehlee-money/MOPS
   updated_at: '2026-07-19'
   revised_at: '2026-08-07'
+- name: skill-company-reputation-research
+  group: common
+  path: common/skill-company-reputation-research
+  version: 0.1.1
+  description: Collect Taiwan and global public jobseeker intelligence for a specified
+    company, including employer reviews, interview/salary transparency, workplace
+    reputation, labor/legal signals, layoffs, and recurring red flags.
+  category: basic
+  maintainer: wenchiehlee
+  source: ''
+  updated_at: '2026-08-20'
+  revised_at: '2026-08-20'
 - name: skill-company-revenue-expense-profit-predict
   group: common
   path: common/skill-company-revenue-expense-profit-predict
