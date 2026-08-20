@@ -39,17 +39,20 @@ Before editing, read the local repository guidance that matches the task:
 
 ## Repository Maturity Map
 
-- Goldman Sachs is the pilot with article records, thesis files, forecast ledger, and deeper reports.
-- Morgan Stanley and J.P. Morgan are first-touch institutions; keep confidence lower until more primary sources accumulate.
-- Current focus themes include `AI_CAPEX`, `AI_INFRASTRUCTURE`, and `POWER_DEMAND`.
-- Treat `POWER_EQUIPMENT`, cooling, networking, and financing as candidate sub-theses until enough direct evidence supports separate thesis files.
+- Goldman Sachs is the pilot with article records, multiple thesis files, forecast ledger, forecast summary, open questions and deeper reports.
+- Morgan Stanley, J.P. Morgan, Bank of America and UBS are first-touch institutions; keep confidence lower until more primary sources accumulate.
+- The current five-institution AI capex overview uses Goldman Sachs, Morgan Stanley, J.P. Morgan, Bank of America and UBS.
+- Current focus themes include `AI_CAPEX`, `AI_INFRASTRUCTURE`, `POWER_DEMAND`, `POWER_GRID`, `DATA_CENTERS`, `AI_ROI`, `PHYSICAL_AI`, `PRIVATE_CREDIT`, `RELEVERAGING` and `HALO_REAL_ASSETS`.
+- BofA currently supports the power / physical-AI transmission layer but does not yet provide a comparable hyperscaler capex point forecast in this repo.
+- UBS currently provides explicit AI capex anchors and the capex-discipline / capex-taper-tantrum lens; verify scope before averaging with narrower hyperscaler estimates.
+- Treat `POWER_EQUIPMENT`, cooling, networking and AI infrastructure financing as candidate sub-theses until enough direct evidence supports separate thesis files.
 
 ## Output Patterns
 
 - Article records: one source per Markdown file, preserving official metadata and separating claims from inference.
 - Thesis records: recurring institutional interpretation with evidence, status, conviction, invalidation conditions, history, and taxonomy mapping.
 - Forecast ledgers: append-only dated observations. Use `templates/forecast-ledger-template.yaml` for new ledgers.
-- Comparisons: state scope mismatches clearly before presenting consensus or ranges.
+- Comparisons: state scope mismatches clearly before presenting consensus or ranges; do not average Goldman, Morgan Stanley, J.P. Morgan and UBS capex anchors unless the metric scope is comparable.
 - TODOs: use when evidence is missing, ambiguous, or not yet sufficient for a thesis split.
 
 ## Validation
@@ -57,7 +60,7 @@ Before editing, read the local repository guidance that matches the task:
 Run the bundled script after editing forecast ledgers:
 
 ```bash
-python3 skills/skill-investment-institutional-thesis-research/scripts/check_forecast_ledger.py data/*.yaml
+python3 skills/skill-investment-institutional-thesis-research/scripts/check_forecast_ledger.py data/goldman-forecasts.yaml data/morgan-stanley-forecasts.yaml data/jpmorgan-forecasts.yaml data/bank-of-america-forecasts.yaml data/ubs-forecasts.yaml
 ```
 
 Also run `git diff --check` before committing Markdown/YAML changes.
