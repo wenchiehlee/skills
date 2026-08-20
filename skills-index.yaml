@@ -230,10 +230,9 @@ skills:
 - name: skill-investment-institutional-thesis-research
   group: common
   path: common/skill-investment-institutional-thesis-research
-  version: 1.0.1
-  description: Maintain auditable five-institution investment thesis research for
-    TW-institutional-investment-theses, including sources, theses, forecast ledgers,
-    taxonomy mapping, and Traditional Chinese comparison reports.
+  version: 1.1.0
+  description: Maintain auditable five-institution investment thesis research and
+    interpret articles/news through selected institutional lenses for TW-institutional-investment-theses.
   category: financial-strategy
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/TW-institutional-investment-theses
