@@ -1,6 +1,6 @@
 # skill-stock-MA-RSI-BBand-MACD-PEBand
 
-台股個股/ETF技術指標快照技能（MA/STD/布林通道、RSI(14)、MACD）加上 common market PE band 估值帶。Fugle API 還原股價為權威來源，yfinance 版本保留供 `--verify` 交叉比對；PEBand 需要呼叫端明確提供 EPS CSV，並明確區分 `trailing_eps`、`forward_eps`、`forward_consensus_eps`。詳細指令與輸出契約見 [SKILL.md](SKILL.md)。
+台股個股/ETF技術指標快照技能（MA/STD/布林通道、RSI(14)、MACD）加上標準 common market PE band。Fugle API 還原股價為權威來源，yfinance 版本保留供 `--verify` 交叉比對；PEBand 需要呼叫端提供 dated EPS CSV，並明確區分 `trailing_eps`、`forward_eps`、`forward_consensus_eps`。詳細指令與輸出契約見 [SKILL.md](SKILL.md)。
 
 ## 快速開始
 
@@ -35,8 +35,9 @@ skill-stock-MA-RSI-BBand-MACD-PEBand/
 
 ## 版本
 
+- 1.6.0 (2026-08-24)：PEBand 改成標準 historical PE series 定義：EPS CSV 預設必須有 `date` / `asof_date` / `forecast_asof_date`，逐日計算 `PE_t = adjusted_close_t / EPS_t` 後再算 μ、樣本 σ、μ±1σ/±2σ；沒有日期欄的固定 EPS 只能用 `--pe-allow-static-eps-band` 作為非標準 fallback。
 - 1.5.0 (2026-08-24)：PEBand EPS 輸入新增明確 scope：`trailing_eps`、`forward_eps`、`forward_consensus_eps`。新增 `--pe-eps-scope`、`--pe-eps-columns`、`--pe-eps-horizon`、`--pe-eps-source`，可在同一輸出同時計算多組 PE band，避免 TTM / 單一 forward / consensus forward EPS 混算。
-- 1.4.0 (2026-08-24)：建立 renamed skill `skill-stock-MA-RSI-BBand-MACD-PEBand`，新增可選 `--pe-eps-file` / `--pe-eps-column` / `--pe-period`。PEBand 採 common market PE band 口徑：以 daily close / EPS 建立 PE 分布，輸出 μ、樣本 σ、μ±1σ/±2σ 與對應價格帶；EPS 必須由呼叫端資料層提供，可為固定 EPS 或含日期的 daily/as-of EPS 序列。
+- 1.4.0 (2026-08-24)：建立 renamed skill `skill-stock-MA-RSI-BBand-MACD-PEBand`，新增可選 `--pe-eps-file` / `--pe-eps-column` / `--pe-period`。PEBand 採 common market PE band 口徑：每個交易日先算 `PE_t = adjusted_close_t / EPS_t`，再對最近 N 個有效 `PE_t` 算 μ 與樣本 σ（ddof=1），輸出 μ、μ±1σ/±2σ 與用同一 scope latest EPS 換算的價格帶；EPS 必須由呼叫端資料層提供；標準模式必須是含日期的 daily/as-of EPS 序列，固定 EPS 只屬非標準 fallback。
 
 - 1.3.1 (2026-08-11)：修正Python 3.8相容性——`list[dict]`/`X | None`這類PEP585/604型別
   標註語法在3.8會直接讓import炸掉（`TypeError: 'type' object is not subscriptable`），

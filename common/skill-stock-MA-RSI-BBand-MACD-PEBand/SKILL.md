@@ -1,6 +1,6 @@
 ---
 name: skill-stock-MA-RSI-BBand-MACD-PEBand
-description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MACD）與 common market PE band 估值帶；PEBand 明確區分 trailing EPS、forward EPS、forward consensus EPS。
+description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MACD）與標準 common market PE band；PEBand 用 dated EPS historical PE series，並區分 trailing EPS、forward EPS、forward consensus EPS。
 ---
 
 # Stock MA / RSI / BBand / MACD / PEBand Skill
@@ -15,7 +15,7 @@ description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MA
 
 ## PEBand 估值帶
 
-PEBand 是可選功能，不會自行推估 EPS，也不會把研究報告或 consensus 直接混進技術指標層。呼叫端必須用 `--pe-eps-file` 明確提供 EPS CSV；該 CSV 至少需要一個代號欄（`symbol` / `stock_code` / `代號`）與 EPS 欄。若 EPS CSV 同時有 `date` / `asof_date` / `forecast_asof_date`，會把 EPS 當作 dated series，對齊交易日後向前填補；否則每檔每個 scope 使用最後一筆 EPS 作為固定 EPS。
+PEBand 是可選功能，不會自行推估 EPS，也不會把研究報告或 consensus 直接混進技術指標層。呼叫端必須用 `--pe-eps-file` 明確提供 EPS CSV；該 CSV 至少需要一個代號欄（`symbol` / `stock_code` / `代號`）與 EPS 欄。標準 PEBand 需要 EPS CSV 有 `date` / `asof_date` / `forecast_asof_date`，把 EPS 當作 dated series，對齊交易日後向前填補。沒有日期欄時預設報錯；只有明確加 `--pe-allow-static-eps-band` 時，才允許用最後一筆 EPS 除整段價格，這是非標準 fallback。
 
 EPS scope 定義：
 
@@ -30,12 +30,25 @@ EPS scope 定義：
 計算口徑：
 
 ```text
-PE series = daily adjusted close / EPS
-μ = PE series rolling/window sample mean
-σ = PE series rolling/window sample standard deviation (ddof=1)
-PE band = μ, μ±1σ, μ±2σ
-price band = PE band × latest EPS
+對每個 EPS scope 分開計算，不可混用：
+
+PE_t = adjusted_close_t / EPS_t
+window = 最近 N 個有效交易日的 PE_t（N 由 --pe-period 指定，預設 240）
+
+μ = mean(window)
+σ = sample_std(window) = sqrt(Σ(PE_t - μ)^2 / (n - 1))
+
+PE band multiples:
+  μ - 2σ
+  μ - 1σ
+  μ
+  μ + 1σ
+  μ + 2σ
+
+price band = PE band multiple × latest EPS in the same scope
 ```
+
+標準模式下，EPS_t 必須是交易日當時可得的 trailing EPS、forward EPS 或 forward consensus EPS；skill 會先把 EPS 依日期對齊交易日並 forward-fill，再逐日計算 `PE_t`。若使用 `--pe-allow-static-eps-band`，則只是非標準 fallback，不應稱為標準 PE band。
 
 範例：
 

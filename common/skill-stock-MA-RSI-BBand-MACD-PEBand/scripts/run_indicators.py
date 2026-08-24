@@ -139,12 +139,13 @@ def parse_pe_eps_columns(spec: str | None, eps_column: str, eps_scope: str) -> l
     return mappings
 
 
-def load_pe_eps_inputs(path: str | None, eps_mappings: list[tuple[str, str]]) -> dict:
+def load_pe_eps_inputs(path: str | None, eps_mappings: list[tuple[str, str]], args) -> dict:
     """讀取 PEBand EPS 輸入。
 
     CSV 至少需要 symbol/stock_code/代號 其中一欄，以及 mappings 指定的 EPS 欄。
-    若有 date/asof_date/forecast_asof_date 欄，會建立 daily EPS Series 並在交易日向前填補；
-    否則每檔每個 scope 使用最後一筆非空 EPS 作為固定 EPS。
+    標準 PE band 需要 date/asof_date/forecast_asof_date 欄，建立 dated EPS Series
+    並在交易日向前填補。沒有日期欄時預設報錯；只有明確加
+    --pe-allow-static-eps-band 時，才允許用最後一筆 EPS 作為非標準 fallback。
     """
     if not path:
         return {}
@@ -157,6 +158,12 @@ def load_pe_eps_inputs(path: str | None, eps_mappings: list[tuple[str, str]]) ->
         raise SystemExit(f"--pe-eps-file {path} 找不到 EPS 欄位：{', '.join(missing)}")
 
     date_col = next((c for c in ["date", "asof_date", "forecast_asof_date"] if c in df.columns), None)
+    if date_col is None and not getattr(args, "pe_allow_static_eps_band", False):
+        raise SystemExit(
+            "標準 PE band 需要 dated EPS series：--pe-eps-file 必須包含 "
+            "date/asof_date/forecast_asof_date。若要用最新 EPS 除整段價格作為非標準 fallback，"
+            "請顯式加 --pe-allow-static-eps-band。"
+        )
     out = {}
     for _, column in eps_mappings:
         df[column] = pd.to_numeric(df[column], errors="coerce")
@@ -331,6 +338,7 @@ def main():
     parser.add_argument("--pe-eps-columns", help="多 EPS scope 模式：逗號清單，例如 trailing_eps=eps_ttm,forward_eps=eps_2027e,forward_consensus_eps=consensus_eps_2027e")
     parser.add_argument("--pe-eps-horizon", default="", help="可選：EPS horizon/period metadata，例如 TTM、FY2027E、NTM")
     parser.add_argument("--pe-eps-source", default="", help="可選：EPS source metadata，例如 company_report、internal_model、yahoo_consensus")
+    parser.add_argument("--pe-allow-static-eps-band", action="store_true", help="非標準fallback：允許沒有date欄的EPS檔，用最後一筆EPS除整段價格；標準PEBand不建議使用")
     parser.add_argument("--pe-period", type=int, default=240, help="PE band 樣本視窗交易日數（預設240，約一年）")
     args = parser.parse_args()
 
@@ -343,7 +351,7 @@ def main():
     targets = load_symbol_list(args)
     eps_mappings = parse_pe_eps_columns(args.pe_eps_columns, args.pe_eps_column, args.pe_eps_scope)
     single_scope_mode = args.pe_eps_columns is None
-    pe_inputs = load_pe_eps_inputs(args.pe_eps_file, eps_mappings)
+    pe_inputs = load_pe_eps_inputs(args.pe_eps_file, eps_mappings, args)
     print(f"共 {len(targets)} 檔代號，回溯 {args.years} 年，來源：{'Fugle API' if args.source == 'fugle' else 'yfinance'}")
     if args.pe_eps_file:
         mapping_text = ", ".join(f"{scope}={column}" for scope, column in eps_mappings)
