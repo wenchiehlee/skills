@@ -388,7 +388,8 @@ skills:
   group: common
   path: common/skill-stock-MA-RSI-BBand-MACD-PEBand
   version: 1.5.0
-  description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MACD）與 common market PE band 估值帶；PEBand 明確區分 trailing EPS、forward EPS、forward consensus EPS。
+  description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MACD）與 common market PE band 估值帶；PEBand
+    明確區分 trailing EPS、forward EPS、forward consensus EPS。
   category: financial-strategy
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
