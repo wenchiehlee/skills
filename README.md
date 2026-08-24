@@ -53,6 +53,7 @@
 | [skill-my-tw-coverage-theme-groups](common/skill-my-tw-coverage-theme-groups) | common | financial-strategy | 0.1.0 | 維護 data/themes/*.json 的 competitive_groups 與 extra_entities，讓 output/themes/*.md 主題頁面依真實產品/商業模式競爭關係分組，並與 data/enrichment_all/*.json 的 relationships.competitors 交叉比對一致性。 | 2026-08-13 |
 | [skill-pptx-to-md](common/skill-pptx-to-md) | common | document | 1.0.1 | 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。 | 2026-08-07 |
 | [skill-stock-MA-RSI-BBand-MACD](common/skill-stock-MA-RSI-BBand-MACD) | common | financial-strategy | 1.3.1 | 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MACD）與歷史回測（單日急跌/跌破均線/RSI超賣/z-score偏離/創新高新低，多horizon）。可選Fugle API還原股價（自動回溯調整除息+分割/減資）或yfinance為主要來源，前者可額外交叉比對後者。 | 2026-08-11 |
+| [skill-stock-MA-RSI-BBand-MACD-PEBand](common/skill-stock-MA-RSI-BBand-MACD-PEBand) | common | financial-strategy | 1.5.0 | 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MACD）與 common market PE band 估值帶；PEBand 明確區分 trailing EPS、forward EPS、forward consensus EPS。 | 2026-08-24 |
 | [skill-stock-TopCrash](common/skill-stock-TopCrash) | common | financial-strategy | 1.0.1 | 任意指數/股票在指定年份範圍內的「崩盤Top N」清單——1/3/5/7/9/11日跌幅、事件標籤、VIX/CNN恐慌貪婪情境、恢復天數與形態(V/U修復)，輸出CSV。 | 2026-08-11 |
 | [skill-stock-market-cost-distribution](common/skill-stock-market-cost-distribution) | common | financial-forecasting | 1.0.2 | 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。 | 2026-08-07 |
 | [skill-stock-universe-onboarding](common/skill-stock-universe-onboarding) | common | financial-data | 1.0.1 | Add stocks or tickers to upstream ConceptStocks and TAIEX monitor/focus source lists without editing generated downstream outputs. | 2026-08-07 |
@@ -71,7 +72,7 @@
 | [skill-youtube-channel-fetch](common/skill-youtube-channel-fetch) | common | document | 1.4.0 | 從 YouTube 財經頻道下載影片（裸頻道網址會合併 /videos+/streams 兩個 tab，網址已指定 /videos 或 /streams 則只查那一個 tab；支援「最新 N 支」或「日期區間」兩種模式），優先嘗試官方逐字稿（youtube-transcript-api）：自動字幕直接寫成 FIN.srt，手動字幕只寫成 GT.srt（不寫 FIN.srt——GT-only 本身就是完整狀態，下游步驟找不到 FIN.srt 時會改用 GT.srt），可用 refine 子指令針對有 GT.srt 但無 FIN.srt 的 stem 補觸發 whisper pipeline 的 refine_fin_srt；沒有逐字稿的才下載音訊、發佈為本 repo 的 GitHub Release 附件並寫入 audio_manifest.json，供 skill-mlx-api-client-whisper 觸發轉錄。 | 2026-08-18 |
 | [skill-youtube-channel-srt-keyframe-extract](common/skill-youtube-channel-srt-keyframe-extract) | common | document | 1.1.2 | 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡報／數字等視覺重點的時間點，下載對應影片並擷取該時間點的畫面存成帶時間碼的 PNG，索引 md 裡每張截圖都附上該時間區段的實際逐字稿片段（可關鍵字搜尋）與 LLM 話題推測。 | 2026-08-18 |
 
-最後產生日期：2026-08-23
+最後產生日期：2026-08-24
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理
