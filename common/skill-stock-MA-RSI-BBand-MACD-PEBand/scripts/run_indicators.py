@@ -339,7 +339,7 @@ def main():
     parser.add_argument("--pe-eps-horizon", default="", help="可選：EPS horizon/period metadata，例如 TTM、FY2027E、NTM")
     parser.add_argument("--pe-eps-source", default="", help="可選：EPS source metadata，例如 company_report、internal_model、yahoo_consensus")
     parser.add_argument("--pe-allow-static-eps-band", action="store_true", help="非標準fallback：允許沒有date欄的EPS檔，用最後一筆EPS除整段價格；標準PEBand不建議使用")
-    parser.add_argument("--pe-period", type=int, default=240, help="PE band 樣本視窗交易日數（預設240，約一年）")
+    parser.add_argument("--pe-period", type=int, default=1200, help="PE band 樣本視窗交易日數（預設1200，約5年；60=短期季度regime，240=1Y，720=3Y）")
     args = parser.parse_args()
 
     if not args.symbols and not args.list:

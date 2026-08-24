@@ -1,9 +1,9 @@
 {
   "name": "skill-stock-MA-RSI-BBand-MACD-PEBand",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "source": "https://github.com/wenchiehlee-money/GoogleSheet.Banks",
   "maintainer": "wenchiehlee",
-  "description": "台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MACD）與標準 common market PE band；PEBand 用 dated EPS historical PE series，並區分 trailing EPS、forward EPS、forward consensus EPS。",
+  "description": "台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MACD）與標準 common market PE band；PEBand 用 dated EPS historical PE series，支援 trailing TTM EPS builder、forward EPS、forward consensus EPS。",
   "category": "financial-strategy",
   "updated_at": "2026-08-24",
   "compatibility": {
@@ -25,6 +25,7 @@
     "scripts/price_loader.py",
     "scripts/indicators.py",
     "scripts/run_indicators.py",
+    "scripts/build_trailing_ttm_eps.py",
     "scripts/backtest.py",
     "scripts/run_backtest.py"
   ],

@@ -15,7 +15,7 @@ python scripts/run_indicators.py --list StockID.csv --fugle-env-prefix USER1_ --
 python scripts/run_indicators.py --source yahoo --symbols 2330.TW --output out.csv \
   --pe-eps-file eps.csv \
   --pe-eps-columns trailing_eps=eps_ttm,forward_eps=model_eps_2027e,forward_consensus_eps=consensus_eps_2027e \
-  --pe-eps-horizon FY2027E --pe-period 240
+  --pe-eps-horizon FY2027E --pe-period 1200
 ```
 
 ## 檔案結構
@@ -27,6 +27,7 @@ skill-stock-MA-RSI-BBand-MACD-PEBand/
   self_update.py         # 通用技能自我更新工具（跟其他skill共用同一份，勿修改）
   scripts/
     run_indicators.py    # CLI進入點：批次算指標快照、寫CSV、選配--verify交叉比對
+    build_trailing_ttm_eps.py # utility：季度actual EPS -> trailing TTM EPS dated series
     run_backtest.py       # CLI進入點：(0)~(13b)條件分類法歷史回測，多horizon
     backtest.py            # 純邏輯：回測條件偵測+forward報酬/勝率統計
     price_loader.py         # Fugle還原股價（除息+分割回溯調整）+ yfinance交叉來源
@@ -35,6 +36,8 @@ skill-stock-MA-RSI-BBand-MACD-PEBand/
 
 ## 版本
 
+- 1.7.0 (2026-08-24)：新增 `scripts/build_trailing_ttm_eps.py`，把 quarterly actual EPS fact table 轉成 `trailing_eps` / TTM dated series，供標準 PEBand 使用；支援 official overlay row，並在缺少 historical disclosure date 時標示 `period_end_effective_for_historical_band_until_disclosure_dates_available`。
+- 1.6.1 (2026-08-24)：default `--pe-period` 改為 `1200`，對應常見 5Y normalized PE band；文件明確標示 `60`=季度短期 regime、`240`=1Y trading band、`720`=3Y、`1200`=5Y。
 - 1.6.0 (2026-08-24)：PEBand 改成標準 historical PE series 定義：EPS CSV 預設必須有 `date` / `asof_date` / `forecast_asof_date`，逐日計算 `PE_t = adjusted_close_t / EPS_t` 後再算 μ、樣本 σ、μ±1σ/±2σ；沒有日期欄的固定 EPS 只能用 `--pe-allow-static-eps-band` 作為非標準 fallback。
 - 1.5.0 (2026-08-24)：PEBand EPS 輸入新增明確 scope：`trailing_eps`、`forward_eps`、`forward_consensus_eps`。新增 `--pe-eps-scope`、`--pe-eps-columns`、`--pe-eps-horizon`、`--pe-eps-source`，可在同一輸出同時計算多組 PE band，避免 TTM / 單一 forward / consensus forward EPS 混算。
 - 1.4.0 (2026-08-24)：建立 renamed skill `skill-stock-MA-RSI-BBand-MACD-PEBand`，新增可選 `--pe-eps-file` / `--pe-eps-column` / `--pe-period`。PEBand 採 common market PE band 口徑：每個交易日先算 `PE_t = adjusted_close_t / EPS_t`，再對最近 N 個有效 `PE_t` 算 μ 與樣本 σ（ddof=1），輸出 μ、μ±1σ/±2σ 與用同一 scope latest EPS 換算的價格帶；EPS 必須由呼叫端資料層提供；標準模式必須是含日期的 daily/as-of EPS 序列，固定 EPS 只屬非標準 fallback。

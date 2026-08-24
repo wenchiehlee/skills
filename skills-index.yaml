@@ -288,7 +288,7 @@ skills:
 - name: skill-mlx-api-client-ocr
   group: common
   path: common/skill-mlx-api-client-ocr
-  version: 1.6.0
+  version: 1.7.0
   description: 呼叫 Mac-mini MLX API Server 的 OCR 客戶端（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown
     格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。
   category: document
@@ -376,7 +376,7 @@ skills:
 - name: skill-stock-MA-RSI-BBand-MACD-PEBand
   group: common
   path: common/skill-stock-MA-RSI-BBand-MACD-PEBand
-  version: 1.6.0
+  version: 1.7.0
   description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MACD）與標準 common market PE band；PEBand
     用 dated EPS historical PE series，並區分 trailing EPS、forward EPS、forward consensus
     EPS。

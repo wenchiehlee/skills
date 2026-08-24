@@ -33,7 +33,7 @@ EPS scope 定義：
 對每個 EPS scope 分開計算，不可混用：
 
 PE_t = adjusted_close_t / EPS_t
-window = 最近 N 個有效交易日的 PE_t（N 由 --pe-period 指定，預設 240）
+window = 最近 N 個有效交易日的 PE_t（N 由 --pe-period 指定，預設 1200）
 
 μ = mean(window)
 σ = sample_std(window) = sqrt(Σ(PE_t - μ)^2 / (n - 1))
@@ -47,6 +47,15 @@ PE band multiples:
 
 price band = PE band multiple × latest EPS in the same scope
 ```
+
+建議視窗：
+
+| `--pe-period` | 約略期間 | 用途 |
+|---:|---|---|
+| `60` | 一季交易日 | 短期 market regime / post-event trading band |
+| `240` | 一年交易日 | 1Y trading PE band |
+| `720` | 三年交易日 | 中期 valuation regime |
+| `1200` | 五年交易日 | 預設 normalized PE band，較接近常見 5Y historical PE band 做法 |
 
 標準模式下，EPS_t 必須是交易日當時可得的 trailing EPS、forward EPS 或 forward consensus EPS；skill 會先把 EPS 依日期對齊交易日並 forward-fill，再逐日計算 `PE_t`。若使用 `--pe-allow-static-eps-band`，則只是非標準 fallback，不應稱為標準 PE band。
 
@@ -62,7 +71,7 @@ python <SKILL_DIR>/scripts/run_indicators.py \
   --pe-eps-scope forward_consensus_eps \
   --pe-eps-horizon FY2027E \
   --pe-eps-source yahoo_consensus \
-  --pe-period 240
+  --pe-period 1200
 
 # 同時輸出 trailing / forward / forward consensus 三組 PEBand
 python <SKILL_DIR>/scripts/run_indicators.py \
@@ -73,7 +82,7 @@ python <SKILL_DIR>/scripts/run_indicators.py \
   --pe-eps-columns trailing_eps=eps_ttm,forward_eps=model_eps_2027e,forward_consensus_eps=consensus_eps_2027e \
   --pe-eps-horizon FY2027E \
   --pe-eps-source mixed_inputs \
-  --pe-period 240
+  --pe-period 1200
 ```
 
 ## 歷史回測（`scripts/backtest.py` + `scripts/run_backtest.py`）
@@ -224,3 +233,12 @@ forward_consensus_eps_PE_eps, forward_consensus_eps_PE_current, forward_consensu
   不建議直接採用yfinance版本的數字。
 - 需要有效的台新/複委託帳號憑證才能用Fugle來源；沒有憑證時可用 `--source yahoo` 退化成純 yfinance 模式，但 yfinance 對部分台股除權息/分割事件可能不完整。
 - PEBand 只計算呼叫端提供的 EPS；skill 會保留 `trailing_eps` / `forward_eps` / `forward_consensus_eps` scope，但不替呼叫端判斷 EPS 數字本身是否正確、可比較或可進 consensus。
+
+### Trailing TTM EPS Builder
+
+Use `scripts/build_trailing_ttm_eps.py` when the consumer repo has quarterly actual EPS facts but still needs a dated `trailing_eps` input for PEBand. The builder writes two separate layers:
+
+- `quarterly_actual_eps.csv`: company-fact EPS rows by fiscal quarter.
+- `trailing_ttm_eps_series.csv`: derived TTM EPS rows calculated as the sum of the latest four quarterly actual EPS values.
+
+For standard no-lookahead PE band work, prefer a real `disclosure_date` / availability date. If historical rows lack disclosure dates, the builder uses quarter-end as an interim effective date and marks `date_policy=period_end_effective_for_historical_band_until_disclosure_dates_available`; treat those bands as preliminary.
