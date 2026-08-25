@@ -1,5 +1,5 @@
 ---
-name: tw-land-realty-comps
+name: skill-tw-land-realty-comps
 description: 下載並彙整內政部實價登錄季資料，篩選指定地號/門牌周邊的土地或房屋成交紀錄，輸出近鄰統計、同棟/同段明細、年度活動與加權估值，供土地資產分析使用。
 ---
 

@@ -1,5 +1,5 @@
 {
-  "name": "mlx-api-server-whisper",
+  "name": "skill-mlx-api-server-whisper",
   "description": "Mac-mini 上以 self-hosted GitHub Actions runner 執行的語音轉錄 pipeline（whisper 轉錄 → LLM postprocess → CER 校驗 → GT 校正迴圈），透過 issue 驅動、支援多種音訊來源（法說會、YouTube 財經影片…）。",
   "category": "server",
   "version": "2.0.1",

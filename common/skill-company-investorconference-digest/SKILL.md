@@ -1,5 +1,5 @@
 ---
-name: conference-digest
+name: skill-company-investorconference-digest
 description: 法說會/earnings call 與財報結果 digest。當使用者要求分析台股/美股法說會、從 FIN/GT/IR/Q&A 修正 GT，或針對 README 類型=財報 的事件使用 Skills/公司財報文件/Yahoo consensus 產出 earnings-result digest 時使用；找出預期差、模型修正路徑、管理層可信度、股價影響因素，並在美股案例列出台股 read-through。
 ---
 

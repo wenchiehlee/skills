@@ -1,5 +1,5 @@
 {
-  "name": "tw-land-realty-comps",
+  "name": "skill-tw-land-realty-comps",
   "description": "下載並彙整內政部不動產成交案件實際資訊資料供應系統（實價登錄）季資料，篩選指定地號/門牌周邊的土地或房屋成交紀錄，輸出近鄰統計、同棟/同段明細、年度活動與加權估值，供土地或房屋資產分析使用。",
   "category": "financial-data",
   "version": "1.1.1",
