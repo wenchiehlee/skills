@@ -373,9 +373,9 @@ skills:
   source: ''
   updated_at: '2026-07-09'
   revised_at: '2026-08-07'
-- name: skill-stock-MA-RSI-BBand-MACD-PEBand
+- name: skill-stock-ma-rsi-bband-macd-peband
   group: common
-  path: common/skill-stock-MA-RSI-BBand-MACD-PEBand
+  path: common/skill-stock-ma-rsi-bband-macd-peband
   version: 1.7.0
   description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MACD）與標準 common market PE band；PEBand
     用 dated EPS historical PE series，支援 trailing TTM EPS builder、forward EPS、forward

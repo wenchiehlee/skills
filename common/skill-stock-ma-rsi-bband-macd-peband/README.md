@@ -1,4 +1,4 @@
-# skill-stock-MA-RSI-BBand-MACD-PEBand
+# skill-stock-ma-rsi-bband-macd-peband
 
 台股個股/ETF技術指標快照技能（MA/STD/布林通道、RSI(14)、MACD）加上標準 common market PE band。Fugle API 還原股價為權威來源，yfinance 版本保留供 `--verify` 交叉比對；PEBand 需要呼叫端提供 dated EPS CSV，並明確區分 `trailing_eps`、`forward_eps`、`forward_consensus_eps`。詳細指令與輸出契約見 [SKILL.md](SKILL.md)。
 
@@ -21,7 +21,7 @@ python scripts/run_indicators.py --source yahoo --symbols 2330.TW --output out.c
 ## 檔案結構
 
 ```
-skill-stock-MA-RSI-BBand-MACD-PEBand/
+skill-stock-ma-rsi-bband-macd-peband/
   SKILL.md              # 技能指令與輸出契約
   metadata.json         # 版本與來源 metadata
   self_update.py         # 通用技能自我更新工具（跟其他skill共用同一份，勿修改）

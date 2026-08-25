@@ -1,5 +1,5 @@
 ---
-name: skill-stock-MA-RSI-BBand-MACD-PEBand
+name: skill-stock-ma-rsi-bband-macd-peband
 description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MACD）與標準 common market PE band；PEBand 用 dated EPS historical PE series，並區分 trailing EPS、forward EPS、forward consensus EPS。
 ---
 
@@ -168,7 +168,7 @@ yfinance auto_adjust），下游程式不用因為換來源改讀取邏輯。
 
 ```bash
 # 從consumer repo根目錄執行（.env裡的FUGLE_USER1_*會被自動讀到）
-python skills/skill-stock-MA-RSI-BBand-MACD-PEBand/scripts/run_indicators.py \
+python skills/skill-stock-ma-rsi-bband-macd-peband/scripts/run_indicators.py \
   --symbols 0050 0052 2330 2357 \
   --fugle-env-prefix USER1_ \
   --output output/ma_rsi_bband_macd.csv \
