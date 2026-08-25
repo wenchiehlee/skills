@@ -385,9 +385,9 @@ skills:
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
   updated_at: '2026-08-24'
   revised_at: '2026-08-24'
-- name: skill-stock-TopCrash
+- name: skill-stock-topcrash
   group: common
-  path: common/skill-stock-TopCrash
+  path: common/skill-stock-topcrash
   version: 1.0.1
   description: 任意指數/股票在指定年份範圍內的「崩盤Top N」清單——1/3/5/7/9/11日跌幅、事件標籤、VIX/CNN恐慌貪婪情境、恢復天數與形態(V/U修復)，輸出CSV。
   category: financial-strategy

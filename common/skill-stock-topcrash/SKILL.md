@@ -1,5 +1,5 @@
 ---
-name: skill-stock-TopCrash
+name: skill-stock-topcrash
 description: 任意指數/股票在指定年份範圍內的「崩盤Top N」清單——1/3/5/7/9/11日跌幅、事件標籤、VIX/CNN恐慌貪婪情境、恢復天數與形態(V/U修復)，輸出CSV。
 ---
 
@@ -41,7 +41,7 @@ N 次崩盤事件，附完整情境 metadata，輸出成一個CSV。
 
 ```bash
 # TAIEX 近10年崩盤Top50，含VIX情境跟具名事件
-python skills/skill-stock-TopCrash/scripts/run_topcrash.py \
+python skills/skill-stock-topcrash/scripts/run_topcrash.py \
   --symbol ^TWII --years 10 --top-n 50 --min-drop -3.0 \
   --vix-csv data/VIX/raw_vix_merged.csv \
   --events-csv data/InvestorEvents/raw_event_historical_crashes.csv \
@@ -49,7 +49,7 @@ python skills/skill-stock-TopCrash/scripts/run_topcrash.py \
   --output output/crash_top50.csv
 
 # 任意個股（例如0050），不需要VIX/事件輸入，純技術面偵測
-python skills/skill-stock-TopCrash/scripts/run_topcrash.py \
+python skills/skill-stock-topcrash/scripts/run_topcrash.py \
   --symbol 0050.TW --start 2016-01-01 --top-n 20 --output output/0050_crash.csv
 ```
 

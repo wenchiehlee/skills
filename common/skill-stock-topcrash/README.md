@@ -1,4 +1,4 @@
-# skill-stock-TopCrash
+# skill-stock-topcrash
 
 任意指數/股票在指定年份範圍內的「崩盤Top N」清單技能。詳細指令與輸出契約見 [SKILL.md](SKILL.md)。
 
@@ -11,7 +11,7 @@ python scripts/run_topcrash.py --symbol ^TWII --years 10 --top-n 50 --output cra
 ## 檔案結構
 
 ```
-skill-stock-TopCrash/
+skill-stock-topcrash/
   SKILL.md              # 技能指令與輸出契約
   metadata.json         # 版本與來源 metadata
   self_update.py         # 通用技能自我更新工具（跟其他skill共用同一份，勿修改）
