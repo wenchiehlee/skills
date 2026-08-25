@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-08-24'
+generated_at: '2026-08-25'
 skills:
 - name: skill-android-adb-gadget
   group: common
@@ -206,15 +206,15 @@ skills:
 - name: skill-google-alert-fetch
   group: common
   path: common/skill-google-alert-fetch
-  version: 1.0.1
-  description: 維運 GoogleAlertManager 的 Google Alerts 抓取管線：更新 GoPublic 股票觀察/專注清單 CSV、同步
-    Google Alert RSS、匯出 fallback RSS、抓取文章、依 focus CSV 更新 README，並排查 fetch/analyze
-    workflows。
+  version: 1.2.0
+  description: 維運 GoogleAlertManager 的 Google Alerts 抓取管線，並提供內建 scripts/google_alert_fetch.py
+    以更新股票觀察/專注清單 CSV、檢查 README/focus CSV 一致性、依 focus CSV 重建 README、同步/匯出 RSS、抓取文章、LLM
+    分析評分、人工標註與 sync-stale issue 自動化。
   category: financial-data
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/GoogleAlertManager
-  updated_at: '2026-07-22'
-  revised_at: '2026-08-07'
+  updated_at: '2026-08-25'
+  revised_at: '2026-08-25'
 - name: skill-google-analytics-monitor
   group: common
   path: common/skill-google-analytics-monitor
