@@ -1,9 +1,9 @@
 ---
-name: skill-taiex-viz
+name: skill-company-segment-viz
 description: 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖
 ---
 
-# TAIEX.TW Viz Skill
+# Company Segment Viz Skill
 
 此技能提供不依賴 LLM 的純靜態圖形渲染功能。主要使用 Matplotlib 讀取 ConceptStocks 損益與分部數據，為指定股票（目前特別優化 NVDA）繪製高解析度（300 DPI）的分部季度營收堆疊柱狀圖。
 
@@ -16,5 +16,5 @@ description: 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PN
 ## 使用範例
 
 ```bash
-python skills/common/skill-taiex-viz/scripts/generate_revenue_breakdown.py NVDA
+python skills/common/skill-company-segment-viz/scripts/generate_revenue_breakdown.py NVDA
 ```

@@ -23,7 +23,7 @@ def setup_sys_path():
     p1 = os.path.join(repo_root, "scripts")
     if p1 not in sys.path and os.path.exists(p1):
         sys.path.append(p1)
-    p2 = os.path.join(repo_root, "skills", "skill-taiex-report", "scripts")
+    p2 = os.path.join(repo_root, "skills", "skill-company-decision-report", "scripts")
     if p2 not in sys.path and os.path.exists(p2):
         sys.path.append(p2)
     temp = curr
@@ -33,7 +33,7 @@ def setup_sys_path():
             break
         temp = parent
     if os.path.basename(temp) == "skills":
-        p3 = os.path.join(temp, "common", "skill-taiex-report", "scripts")
+        p3 = os.path.join(temp, "common", "skill-company-decision-report", "scripts")
         if p3 not in sys.path and os.path.exists(p3):
             sys.path.append(p3)
 

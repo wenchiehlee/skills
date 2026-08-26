@@ -55,11 +55,11 @@
 | [skill-stock-market-cost-distribution](common/skill-stock-market-cost-distribution) | common | financial-forecasting | 1.0.2 | 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。 | 2026-08-07 |
 | [skill-stock-topcrash](common/skill-stock-topcrash) | common | financial-strategy | 1.0.1 | 任意指數/股票在指定年份範圍內的「崩盤Top N」清單——1/3/5/7/9/11日跌幅、事件標籤、VIX/CNN恐慌貪婪情境、恢復天數與形態(V/U修復)，輸出CSV。 | 2026-08-25 |
 | [skill-stock-universe-onboarding](common/skill-stock-universe-onboarding) | common | financial-data | 1.0.1 | Add stocks or tickers to upstream ConceptStocks and TAIEX monitor/focus source lists without editing generated downstream outputs. | 2026-08-07 |
-| [skill-taiex-compare](common/skill-taiex-compare) | common | financial-accounting | 1.0.1 | 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異 | 2026-08-07 |
-| [skill-taiex-monitor](common/skill-taiex-monitor) | common | financial-data | 1.0.1 | 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板 | 2026-08-07 |
-| [skill-taiex-report](common/skill-taiex-report) | common | financial-strategy | 1.0.1 | 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖） | 2026-08-07 |
-| [skill-taiex-sync](common/skill-taiex-sync) | common | financial-data | 1.0.1 | 更新本地資料目錄索引，生成批次處理所需的投資標的清單 | 2026-08-07 |
-| [skill-taiex-viz](common/skill-taiex-viz) | common | financial-accounting | 1.0.1 | 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖 | 2026-08-07 |
+| [skill-company-earnings-compare](common/skill-company-earnings-compare) | common | financial-accounting | 1.0.1 | 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異 | 2026-08-07 |
+| [skill-company-earnings-monitor](common/skill-company-earnings-monitor) | common | financial-data | 1.0.1 | 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板 | 2026-08-07 |
+| [skill-company-decision-report](common/skill-company-decision-report) | common | financial-strategy | 1.0.1 | 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖） | 2026-08-07 |
+| [skill-company-data-index-sync](common/skill-company-data-index-sync) | common | financial-data | 1.0.1 | 更新本地資料目錄索引，生成批次處理所需的投資標的清單 | 2026-08-07 |
+| [skill-company-segment-viz](common/skill-company-segment-viz) | common | financial-accounting | 1.0.1 | 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖 | 2026-08-07 |
 | [skill-theme-competitor-groups-curate](common/skill-theme-competitor-groups-curate) | common | financial-strategy | 0.1.0 | 維護 data/themes/*.json 的 competitive_groups 與 extra_entities，讓 output/themes/*.md 主題頁面依真實產品/商業模式競爭關係分組，並與 data/enrichment_all/*.json 的 relationships.competitors 交叉比對一致性。 | 2026-08-26 |
 | [skill-theme-cycle-coverage](common/skill-theme-cycle-coverage) | common | basic | 0.2.3 | Build AI trend coverage, validity, issue register, and inference quality-gate outputs from company canonical cycle data. | 2026-08-26 |
 | [skill-theme-cycle-index](common/skill-theme-cycle-index) | common | financial-strategy | 1.3.2 | 套用已審核或已結構化的 company revenue segment weights 到 canonical cycle model；支援 Taiwan 與 United_States pipeline，US 對齊 canonical_cycle_specification 並用 latest-mix proxy 補齊缺 segment quarters，生成對應 company_cycle_index_*.png 並更新 README。 | 2026-08-26 |

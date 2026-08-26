@@ -1,9 +1,9 @@
 ---
-name: skill-taiex-monitor
+name: skill-company-earnings-monitor
 description: 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板
 ---
 
-# TAIEX.TW Monitor Skill
+# Company Earnings Monitor Skill
 
 此技能包含兩個主要任務：
 1. `check_calendar_gaps.py`：掃描 README.md 財報行事曆，對於在時間範圍內已公布財報但本地 CSV 資料尚未準備完成的標的，自動在對應的 upstream repo 提交「Data Lag」GitHub Issue 催更數據。
@@ -20,7 +20,7 @@ description: 財報行事曆監控：偵測資料缺漏並自動開 Issue，更�
 
 ```bash
 # 偵測並開 Issue 催更數據
-python skills/common/skill-taiex-monitor/scripts/check_calendar_gaps.py
+python skills/common/skill-company-earnings-monitor/scripts/check_calendar_gaps.py
 # 刷新 README 看板
-python skills/common/skill-taiex-monitor/scripts/update_readme.py
+python skills/common/skill-company-earnings-monitor/scripts/update_readme.py
 ```

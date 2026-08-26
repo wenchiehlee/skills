@@ -1,9 +1,9 @@
 ---
-name: skill-taiex-report
+name: skill-company-decision-report
 description: 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖）
 ---
 
-# TAIEX.TW Report Skill
+# Company Decision Report Skill
 
 此技能可用於生成個股（台股/美股）的 SVG 財務儀表板卡片與營收歷史趨勢圖。它會從本地 `data/` 下讀取相關的財務 CSV 數據，呼叫 LLMClient 進行排版與文本填充，並更新 README.md 中最新的狀態。
 
@@ -19,5 +19,5 @@ description: 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營
 
 ```bash
 # 生成台積電 (2330) 2026 Q1 的完整報告
-python skills/common/skill-taiex-report/scripts/generate_reports.py "2330" "gemini-cli" "2026_Q1"
+python skills/common/skill-company-decision-report/scripts/generate_reports.py "2330" "gemini-cli" "2026_Q1"
 ```

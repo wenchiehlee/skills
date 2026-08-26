@@ -1,12 +1,12 @@
 {
-  "name": "skill-taiex-report",
+  "name": "skill-company-decision-report",
   "description": "生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖）",
   "category": "financial-strategy",
   "version": "1.0.1",
   "maintainer": "wenchiehlee",
   "source": "TAIEX.TW",
   "updated_at": "2026-07-07",
-  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-taiex-report",
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-company-decision-report",
   "files": [
     "metadata.json",
     "scripts/assembler_finguider.py",
@@ -19,12 +19,12 @@
     {
       "repo": "wenchiehlee/skills",
       "role": "registry",
-      "local_path": "github.com/skills/common/skill-taiex-report"
+      "local_path": "github.com/skills/common/skill-company-decision-report"
     },
     {
       "repo": "wenchiehlee/TAIEX.TW",
       "role": "consumer",
-      "local_path": "github.com/TAIEX.TW/skills/skill-taiex-report"
+      "local_path": "github.com/TAIEX.TW/skills/skill-company-decision-report"
     }
   ]
 }

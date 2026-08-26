@@ -23,7 +23,7 @@ def setup_sys_path():
     p1 = os.path.join(repo_root, "scripts")
     if p1 not in sys.path and os.path.exists(p1):
         sys.path.append(p1)
-    p2 = os.path.join(repo_root, "skills", "skill-taiex-report", "scripts")
+    p2 = os.path.join(repo_root, "skills", "skill-company-decision-report", "scripts")
     if p2 not in sys.path and os.path.exists(p2):
         sys.path.append(p2)
     temp = curr
@@ -33,7 +33,7 @@ def setup_sys_path():
             break
         temp = parent
     if os.path.basename(temp) == "skills":
-        p3 = os.path.join(temp, "common", "skill-taiex-report", "scripts")
+        p3 = os.path.join(temp, "common", "skill-company-decision-report", "scripts")
         if p3 not in sys.path and os.path.exists(p3):
             sys.path.append(p3)
 
@@ -57,14 +57,14 @@ def find_script(script_name):
         return p2
         
     skills_map = {
-        "assembler_finguider.py": "skill-taiex-report",
-        "assembler_revenue_history.py": "skill-taiex-report",
-        "generate_reports.py": "skill-taiex-report",
-        "data_collector.py": "skill-taiex-sync",
-        "compare_references.py": "skill-taiex-compare",
-        "check_calendar_gaps.py": "skill-taiex-monitor",
-        "update_readme.py": "skill-taiex-monitor",
-        "generate_revenue_breakdown.py": "skill-taiex-viz"
+        "assembler_finguider.py": "skill-company-decision-report",
+        "assembler_revenue_history.py": "skill-company-decision-report",
+        "generate_reports.py": "skill-company-decision-report",
+        "data_collector.py": "skill-company-data-index-sync",
+        "compare_references.py": "skill-company-earnings-compare",
+        "check_calendar_gaps.py": "skill-company-earnings-monitor",
+        "update_readme.py": "skill-company-earnings-monitor",
+        "generate_revenue_breakdown.py": "skill-company-segment-viz"
     }
     target_skill = skills_map.get(script_name)
     if target_skill:
