@@ -61,8 +61,10 @@
 | [skill-taiex-report](common/skill-taiex-report) | common | financial-strategy | 1.0.1 | 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖） | 2026-08-07 |
 | [skill-taiex-sync](common/skill-taiex-sync) | common | financial-data | 1.0.1 | 更新本地資料目錄索引，生成批次處理所需的投資標的清單 | 2026-08-07 |
 | [skill-taiex-viz](common/skill-taiex-viz) | common | financial-accounting | 1.0.1 | 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖 | 2026-08-07 |
+| [skill-tw-court-records-search](common/skill-tw-court-records-search) | common | legal-research | 1.0.0 | 依人名、公司名或一篇新聞的內容，查詢台灣司法院裁判書查詢系統與相關公開判決資料，找出可能相關的訴訟/判決紀錄，並標註身分比對信心與審級/確定狀態。 | 2026-08-26 |
 | [skill-tw-land-geo-signal](common/skill-tw-land-geo-signal) | common | geo-data | 1.0.1 | 查詢桃園市 TY_UPGIS 圖層（甲乙工/容移/都市設計審議等案件位置）與內政部 easymap 地號官方地圖，彙整地號周邊指定半徑的城市信號 CSV 與疊圖 PNG，供土地資產分析使用。 | 2026-08-25 |
 | [skill-tw-land-realty-comps](common/skill-tw-land-realty-comps) | common | financial-data | 1.1.1 | 下載並彙整內政部不動產成交案件實際資訊資料供應系統（實價登錄）季資料，篩選指定地號/門牌周邊的土地或房屋成交紀錄，輸出近鄰統計、同棟/同段明細、年度活動與加權估值，供土地或房屋資產分析使用。 | 2026-08-25 |
+| [skill-tw-person-legal-check](common/skill-tw-person-legal-check) | common | legal-research | 1.0.0 | 針對指定人物（例如公司負責人、經營層、合作對象）彙整台灣公開的法律/訴訟風險資訊——結合裁判書查詢、新聞報導與公開資訊觀測站重大訊息，產出身分核實、風險分級與佐證來源的法律查核報告。 | 2026-08-26 |
 | [skill-usb-gadget-debug](common/skill-usb-gadget-debug) | common | basic | 1.0.2 | Enumerate Windows USB devices via SetupAPI to verify USB composite gadget (VID:046D) enumeration, interface presence, and device node status. | 2026-08-07 |
 | [skill-usb-gadget-monitor](common/skill-usb-gadget-monitor) | common | analytics | 1.0.2 | Real-time Tkinter GUI monitor for USB composite gadget (Wired RoomDock) on Windows — tracks USB device status, UVC stream resolution/fps, UAC2 call state, display topology (single/clone/extend), UC app presence, and HID vendor report exchange. | 2026-08-07 |
 | [skill-usb-uvc-4k-capture](common/skill-usb-uvc-4k-capture) | common | basic | 1.0.1 | Enable camera-agnostic 4K UVC capture on Android BaseUnit: setup_uvc.sh advertises 4K frame descriptor, uvc_camera_forward detects camera max MJPEG resolution at runtime and clamps negotiation — Jieli U20 stays at 1080p, Logitech MeetUp unlocks 3840×2160@30fps. | 2026-08-07 |
@@ -71,7 +73,7 @@
 | [skill-youtube-channel-fetch](common/skill-youtube-channel-fetch) | common | document | 1.4.0 | 從 YouTube 財經頻道下載影片（裸頻道網址會合併 /videos+/streams 兩個 tab，網址已指定 /videos 或 /streams 則只查那一個 tab；支援「最新 N 支」或「日期區間」兩種模式），優先嘗試官方逐字稿（youtube-transcript-api）：自動字幕直接寫成 FIN.srt，手動字幕只寫成 GT.srt（不寫 FIN.srt——GT-only 本身就是完整狀態，下游步驟找不到 FIN.srt 時會改用 GT.srt），可用 refine 子指令針對有 GT.srt 但無 FIN.srt 的 stem 補觸發 whisper pipeline 的 refine_fin_srt；沒有逐字稿的才下載音訊、發佈為本 repo 的 GitHub Release 附件並寫入 audio_manifest.json，供 skill-mlx-api-client-whisper 觸發轉錄。 | 2026-08-18 |
 | [skill-youtube-channel-srt-keyframe-extract](common/skill-youtube-channel-srt-keyframe-extract) | common | document | 1.1.2 | 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡報／數字等視覺重點的時間點，下載對應影片並擷取該時間點的畫面存成帶時間碼的 PNG，索引 md 裡每張截圖都附上該時間區段的實際逐字稿片段（可關鍵字搜尋）與 LLM 話題推測。 | 2026-08-18 |
 
-最後產生日期：2026-08-25
+最後產生日期：2026-08-26
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理

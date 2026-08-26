@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-08-25'
+generated_at: '2026-08-26'
 skills:
 - name: skill-android-adb-gadget
   group: common
@@ -466,6 +466,16 @@ skills:
   source: TAIEX.TW
   updated_at: '2026-07-07'
   revised_at: '2026-08-07'
+- name: skill-tw-court-records-search
+  group: common
+  path: common/skill-tw-court-records-search
+  version: 1.0.0
+  description: 依人名、公司名或一篇新聞的內容，查詢台灣司法院裁判書查詢系統與相關公開判決資料，找出可能相關的訴訟/判決紀錄，並標註身分比對信心與審級/確定狀態。
+  category: legal-research
+  maintainer: wenchiehlee
+  source: ''
+  updated_at: '2026-08-26'
+  revised_at: '2026-08-26'
 - name: skill-tw-land-geo-signal
   group: common
   path: common/skill-tw-land-geo-signal
@@ -487,6 +497,16 @@ skills:
   source: https://github.com/wenchiehlee-money/LandAsset
   updated_at: '2026-07-25'
   revised_at: '2026-08-25'
+- name: skill-tw-person-legal-check
+  group: common
+  path: common/skill-tw-person-legal-check
+  version: 1.0.0
+  description: 針對指定人物（例如公司負責人、經營層、合作對象）彙整台灣公開的法律/訴訟風險資訊——結合裁判書查詢、新聞報導與公開資訊觀測站重大訊息，產出身分核實、風險分級與佐證來源的法律查核報告。
+  category: legal-research
+  maintainer: wenchiehlee
+  source: ''
+  updated_at: '2026-08-26'
+  revised_at: '2026-08-26'
 - name: skill-usb-gadget-debug
   group: common
   path: common/skill-usb-gadget-debug
