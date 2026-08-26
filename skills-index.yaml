@@ -238,7 +238,7 @@ skills:
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/Miz.Fetch
   updated_at: '2026-08-14'
-  revised_at: '2026-08-14'
+  revised_at: '2026-08-26'
 - name: skill-investment-institutional-thesis-research
   group: common
   path: common/skill-investment-institutional-thesis-research
