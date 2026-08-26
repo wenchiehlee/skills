@@ -81,10 +81,19 @@ skill-<domain>-<object>-<action>
 
 四者常被混用，判斷時用「輸出的主體是誰、資料來源是誰」來拆分：
 
-- **company vs. theme**：`company` 的輸出永遠收斂回一家公司（即使內容包含競爭者比較，目的仍是理解這家公司）；`theme` 的輸出是「一組公司」本身的分類與關係，沒有單一主角。例如整理某供應鏈族群內誰跟誰是真競爭者、誰該被排除，屬於 `theme`，不屬於 `company`。
+- **company vs. theme**：`company` 的輸出永遠收斂回一家公司（即使內容包含競爭者比較，目的仍是理解這家公司）；`theme` 的輸出是「一組公司」本身的分類與關係，沒有單一主角。判斷方法可以看輸出的資料形狀（output shape）：`company` skill 的輸出是「一家公司 → 多個欄位」（例如營收、毛利、法說重點），主鍵是公司；`theme` skill 的輸出是「一個主題 → 多個公司分組」，主鍵是主題。以 `skill-theme-competitor-groups-curate` 為例，它的輸出結構是每個主題一列，欄位為：
+
+  | 欄位 | 意義 |
+  |---|---|
+  | 主題（Theme） | 主鍵，例如「AI 伺服器」「資料中心」 |
+  | 公司數 | 該主題涵蓋的公司總數 |
+  | competitive_groups | 主題內依真實產品/商業模式切出的競爭者分組數，每組是「一群互為競爭者的公司」 |
+  | extra_entities | 原始分類（IC-taxonomy/GICS）漏收、需手動補進主題的公司清單 |
+
+  只要輸出是這種「主題為主鍵、公司分組為欄位值」的形狀，就屬於 `theme` domain；反過來，若輸出是「公司為主鍵、其競爭者清單為欄位值」（例如某公司的 `relationships.competitors`），即使同樣談競爭者，主體仍是單一公司，屬於 `company` domain。
 - **competitor 是 company 底下的一個 action，不是獨立 domain**：以單一公司為錨點找出其競爭者/同業（例如 `skill-company-competitor-analysis`），屬於 `company-competitor-analysis`；但「跨主題頁維護一群公司的競爭關係分組」（例如 `skill-theme-competitor-groups-curate`）主體是主題頁而非單一公司，命名應改用 `theme` domain，而非 `my-tw` 這類未定義的 domain。
 - **company vs. institutional**：`company` 的資料來源是公司自身（財報、法說、MOPS、IR）；`institutional` 的資料來源是外部第三方（外資、投顧、券商研究報告的評等/目標價/預估），即使分析對象是同一家公司，只要主體資料是「別人怎麼看這家公司」，就該歸入 `institutional`，不歸入 `company`。
-- **institutional 內部也要統一**：目前同時存在 `skill-investment-institutional-thesis-research`（investment domain）與 `skill-tw-institutional-report-research`（未定義的 tw domain），兩者範疇高度重疊（法人觀點、論述、評等、報告修正）。新增或重構此類 skill 時，統一收斂到 `institutional` domain（例如 `skill-institutional-thesis-research`、`skill-institutional-report-research`），台灣特化的部分用 `taiex` 修飾詞而非把 `tw` 當 domain 前綴。
+- **institutional 內部依 object 區分 thesis 與 report，不要合併**：`skill-institutional-thesis-research` 處理的是全球投行（Goldman Sachs、Morgan Stanley、JPM、BofA、UBS 等）的敘事型論述/thesis/consensus，不限定台灣；`skill-institutional-tw-report-research` 處理的是台灣上市櫃公司的結構化券商報告數字（rating、target price、EPS 預估），並與 TWSE/TPEx 法人買賣超 flow 比對。兩者輸出形狀不同（敘事 vs. 結構化數字），object 分別用 `thesis` 與 `tw-report` 區隔；`tw` 放在 object 位置（而非當 domain 前綴）用來標示範疇限定於台灣上市櫃公司，不違反「不要用 `tw` 當 domain」的規則。
 
 ### 分類規則
 

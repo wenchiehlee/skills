@@ -1,5 +1,5 @@
 ---
-name: skill-tw-institutional-report-research
+name: skill-institutional-tw-report-research
 description: 維護台灣上市櫃公司法人研究情報；蒐集與正規化外資券商、國內券商、投顧等研究報告的 rating、target price、EPS/營運預估與 thesis revisions，串接公司法說會正式資料，並與 TWSE/TPEx 外資、投信、自營商交易 flow 比較。嚴格區分 research publisher view、company fact、market flow fact 與 repository inference。
 ---
 
@@ -73,6 +73,6 @@ Flow source 優先 TWSE / TPEx official。rolling windows：1D、5D、10D、20D�
 ## Validation
 
 ```bash
-python3 skills/skill-tw-institutional-report-research/scripts/validate_records.py
+python3 skills/skill-institutional-tw-report-research/scripts/validate_records.py
 git diff --check
 ```

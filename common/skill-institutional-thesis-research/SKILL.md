@@ -1,5 +1,5 @@
 ---
-name: skill-investment-institutional-thesis-research
+name: skill-institutional-thesis-research
 description: Maintain and extend the TW-institutional-investment-theses repository in Traditional Chinese. Use when Codex needs to add or update institutional sources, articles, theses, forecast ledgers, taxonomy mappings, comparisons, consensus reports, research TODOs, or interpret an article/news item through selected institutional lenses such as Goldman Sachs, Morgan Stanley, J.P. Morgan, Bank of America, and UBS.
 ---
 
@@ -116,7 +116,7 @@ Maturity upgrade criteria：
 編輯 forecast ledgers 後，執行：
 
 ```bash
-python3 skills/skill-investment-institutional-thesis-research/scripts/check_forecast_ledger.py data/goldman-forecasts.yaml data/morgan-stanley-forecasts.yaml data/jpmorgan-forecasts.yaml data/bank-of-america-forecasts.yaml data/ubs-forecasts.yaml
+python3 skills/skill-institutional-thesis-research/scripts/check_forecast_ledger.py data/goldman-forecasts.yaml data/morgan-stanley-forecasts.yaml data/jpmorgan-forecasts.yaml data/bank-of-america-forecasts.yaml data/ubs-forecasts.yaml
 ```
 
 commit Markdown / YAML 前，執行：
