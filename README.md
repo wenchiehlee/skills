@@ -61,6 +61,7 @@
 | [skill-taiex-report](common/skill-taiex-report) | common | financial-strategy | 1.0.1 | 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖） | 2026-08-07 |
 | [skill-taiex-sync](common/skill-taiex-sync) | common | financial-data | 1.0.1 | 更新本地資料目錄索引，生成批次處理所需的投資標的清單 | 2026-08-07 |
 | [skill-taiex-viz](common/skill-taiex-viz) | common | financial-accounting | 1.0.1 | 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖 | 2026-08-07 |
+| [skill-tw-institutional-report-research](common/skill-tw-institutional-report-research) | common | financial-strategy | 0.1.1 | Maintain auditable Taiwan listed/OTC institutional research intelligence: broker/advisory reports, ratings, target prices, EPS revisions, investor-conference linkage, consensus, and TWSE/TPEx institutional-flow comparison. | 2026-08-26 |
 | [skill-tw-land-geo-signal](common/skill-tw-land-geo-signal) | common | geo-data | 1.0.1 | 查詢桃園市 TY_UPGIS 圖層（甲乙工/容移/都市設計審議等案件位置）與內政部 easymap 地號官方地圖，彙整地號周邊指定半徑的城市信號 CSV 與疊圖 PNG，供土地資產分析使用。 | 2026-08-25 |
 | [skill-tw-land-realty-comps](common/skill-tw-land-realty-comps) | common | financial-data | 1.1.1 | 下載並彙整內政部不動產成交案件實際資訊資料供應系統（實價登錄）季資料，篩選指定地號/門牌周邊的土地或房屋成交紀錄，輸出近鄰統計、同棟/同段明細、年度活動與加權估值，供土地或房屋資產分析使用。 | 2026-08-25 |
 | [skill-usb-gadget-debug](common/skill-usb-gadget-debug) | common | basic | 1.0.2 | Enumerate Windows USB devices via SetupAPI to verify USB composite gadget (VID:046D) enumeration, interface presence, and device node status. | 2026-08-07 |

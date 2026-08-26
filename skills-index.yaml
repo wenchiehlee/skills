@@ -466,6 +466,18 @@ skills:
   source: TAIEX.TW
   updated_at: '2026-07-07'
   revised_at: '2026-08-07'
+- name: skill-tw-institutional-report-research
+  group: common
+  path: common/skill-tw-institutional-report-research
+  version: 0.1.1
+  description: 'Maintain auditable Taiwan listed/OTC institutional research intelligence:
+    broker/advisory reports, ratings, target prices, EPS revisions, investor-conference
+    linkage, consensus, and TWSE/TPEx institutional-flow comparison.'
+  category: financial-strategy
+  maintainer: wenchiehlee-money
+  source: https://github.com/wenchiehlee-money/TW-institutional-research
+  updated_at: '2026-08-26'
+  revised_at: '2026-08-26'
 - name: skill-tw-land-geo-signal
   group: common
   path: common/skill-tw-land-geo-signal
