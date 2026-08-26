@@ -14,18 +14,6 @@ skills:
   source: wj-lee_Barco.github.com/gadget/skills/Android BaseUnit-adb
   updated_at: '2026-07-21'
   revised_at: '2026-08-07'
-- name: skill-company-competitor-analysis
-  group: common
-  path: common/skill-company-competitor-analysis
-  version: 0.1.1
-  description: 依指定 stock id，使用 supply-chain product peer seed 與 relationship rules
-    區分 brand competitor、ODM peer、server peer 與 supplier/component，並輸出最近三年季度 Revenue、Revenue
-    YoY、Profit、Profit YoY、GM 競爭者分析表。
-  category: financial-strategy
-  maintainer: wenchiehlee
-  source: biztrends.TW
-  updated_at: '2026-07-22'
-  revised_at: '2026-08-07'
 - name: skill-company-data-index-sync
   group: common
   path: common/skill-company-data-index-sync
@@ -97,7 +85,7 @@ skills:
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
   updated_at: '2026-07-31'
-  revised_at: '2026-08-26'
+  revised_at: '2026-08-27'
 - name: skill-company-investorconference-digest
   group: common
   path: common/skill-company-investorconference-digest
@@ -313,7 +301,7 @@ skills:
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/Miz.Fetch
   updated_at: '2026-08-14'
-  revised_at: '2026-08-26'
+  revised_at: '2026-08-27'
 - name: skill-llm-api-client
   group: common
   path: common/skill-llm-api-client
@@ -457,6 +445,18 @@ skills:
   source: biztrends.TW / ConceptStocks / Selenium-Actions.Auction
   updated_at: '2026-07-22'
   revised_at: '2026-08-07'
+- name: skill-theme-competitor-analysis
+  group: common
+  path: common/skill-theme-competitor-analysis
+  version: 0.1.1
+  description: 依指定 stock id，使用 supply-chain product peer seed 與 relationship rules
+    區分 brand competitor、ODM peer、server peer 與 supplier/component，並輸出最近三年季度 Revenue、Revenue
+    YoY、Profit、Profit YoY、GM 競爭者分析表。
+  category: financial-strategy
+  maintainer: wenchiehlee
+  source: biztrends.TW
+  updated_at: '2026-07-22'
+  revised_at: '2026-08-27'
 - name: skill-theme-competitor-groups-curate
   group: common
   path: common/skill-theme-competitor-groups-curate
@@ -468,7 +468,7 @@ skills:
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
   updated_at: '2026-08-04'
-  revised_at: '2026-08-26'
+  revised_at: '2026-08-27'
 - name: skill-theme-cycle-coverage
   group: common
   path: common/skill-theme-cycle-coverage
