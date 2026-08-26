@@ -69,11 +69,22 @@ skill-<domain>-<object>-<action>
 
 常用 domain：
 
-- `company`：單一公司基本面、營收、競爭者、財報、法說。
+- `company`：單一公司自身資料——基本面、營收、財報、法說、以「該公司」為中心找出的競爭者/同業清單。判斷準則是輸出結果是否只圍繞一家公司展開。
+- `theme`：跨公司的主題、類股、供應鏈或族群分組。輸出是「一群公司」的分類與關係，不是單一公司的深度分析。
+- `institutional`：法人／外資／投顧等第三方研究觀點——評等、目標價、EPS 預估、投資論述、研究報告修正。核心是「外部研究者怎麼看」，資料來源是券商/投顧報告，而非公司自身揭露。
 - `stock`：股票、ETF、價格、市場技術指標、籌碼或交易層資料。
 - `investment`：投資決策、資產配置、風險、策略、教練與框架。
 - `book`：書籍摘要、概念提煉、知識框架。
-- `taiex`：台股市場或台灣交易所生態專屬流程。
+- `taiex`：台股市場或台灣交易所生態專屬流程（不要用 `tw`、`my-tw` 等未列入清單的 domain 名稱；台灣市場相關一律歸入 `taiex`）。
+
+### company vs. theme vs. competitor vs. institutional 的界線
+
+四者常被混用，判斷時用「輸出的主體是誰、資料來源是誰」來拆分：
+
+- **company vs. theme**：`company` 的輸出永遠收斂回一家公司（即使內容包含競爭者比較，目的仍是理解這家公司）；`theme` 的輸出是「一組公司」本身的分類與關係，沒有單一主角。例如整理某供應鏈族群內誰跟誰是真競爭者、誰該被排除，屬於 `theme`，不屬於 `company`。
+- **competitor 是 company 底下的一個 action，不是獨立 domain**：以單一公司為錨點找出其競爭者/同業（例如 `skill-company-competitor-analysis`），屬於 `company-competitor-analysis`；但「跨主題頁維護一群公司的競爭關係分組」（例如 `skill-my-tw-coverage-theme-groups`）主體是主題頁而非單一公司，命名應改用 `theme` domain，而非 `my-tw` 這類未定義的 domain。
+- **company vs. institutional**：`company` 的資料來源是公司自身（財報、法說、MOPS、IR）；`institutional` 的資料來源是外部第三方（外資、投顧、券商研究報告的評等/目標價/預估），即使分析對象是同一家公司，只要主體資料是「別人怎麼看這家公司」，就該歸入 `institutional`，不歸入 `company`。
+- **institutional 內部也要統一**：目前同時存在 `skill-investment-institutional-thesis-research`（investment domain）與 `skill-tw-institutional-report-research`（未定義的 tw domain），兩者範疇高度重疊（法人觀點、論述、評等、報告修正）。新增或重構此類 skill 時，統一收斂到 `institutional` domain（例如 `skill-institutional-thesis-research`、`skill-institutional-report-research`），台灣特化的部分用 `taiex` 修飾詞而非把 `tw` 當 domain 前綴。
 
 ### 分類規則
 
