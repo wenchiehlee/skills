@@ -75,7 +75,8 @@ skill-<domain>-<object>-<action>
 - `stock`：股票、ETF、價格、市場技術指標、籌碼或交易層資料。
 - `investment`：投資決策、資產配置、風險、策略、教練與框架。
 - `book`：書籍摘要、概念提煉、知識框架。
-- `taiex`：台股市場或台灣交易所生態專屬流程（不要用 `tw`、`my-tw` 等未列入清單的 domain 名稱；台灣市場相關一律歸入 `taiex`）。
+
+台灣市場相關 skill 不要用 `tw`、`taiex`、`my-tw` 等額外 domain 前綴；依上述判準歸入 `company`/`theme`/`stock`/`institutional` 等既有 domain，台灣限定範疇改用 object 修飾（例如 `skill-institutional-tw-report-research`）。
 
 ### company vs. theme vs. competitor vs. institutional 的界線
 
