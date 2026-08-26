@@ -29,9 +29,22 @@ This skill curates `data/themes/*.json`'s `competitive_groups` (regroup companie
 the theme's dataset by real competitive segment) and `extra_entities` (inject a company the
 source taxonomy omits entirely) so the rendered page groups true competitors together, and
 keeps that grouping consistent with each company's own canonical competitor list maintained by
-[skill-company-competitor-analysis](../skill-company-competitor-analysis/SKILL.md) /
+[skill-theme-competitor-analysis](../skill-theme-competitor-analysis/SKILL.md) /
 [skill-company-enrichment-json](../skill-company-enrichment-json/SKILL.md)
 (`data/enrichment_all/{ticker}.json` → `relationships.competitors`).
+
+**Alignment requirement**: every theme's `competitive_groups` boundaries must agree with the
+`relationship_type` classification (`brand_competitor`/`foundry_competitor`/`odm_peer`/
+`server_peer`/`chip_competitor`) that `skill-theme-competitor-analysis` produces per stock in
+`output/focus/{stock}/company_competitor_analysis_{stock}.csv`. Today `check_group_consistency.py`
+only cross-checks against `relationships.competitors` in `data/enrichment_all/*.json` — a
+separate, text-extracted competitor list that is not guaranteed to be derived from
+`skill-theme-competitor-analysis`'s own output. Treat that as an indirect proxy, not proof of
+alignment: when curating a theme, spot-check disputed group members against
+`skill-theme-competitor-analysis`'s actual `relationship_type` output for that stock, and prefer
+its rule-based classification over `relationships.competitors` when the two disagree. Extending
+`check_group_consistency.py` to diff directly against `skill-theme-competitor-analysis`'s CSV
+output is a known follow-up, not yet implemented.
 
 ## Standard Workflow
 
@@ -93,7 +106,7 @@ Run from the My-TW-Coverage repository root.
 
    It also prints a third, purely informational section — AI-canonical-cycle segment weights
    (from `../biztrends.TW/output/company_cycle_major_weights.csv`, the same data
-   `skill-company-competitor-analysis` uses) for any curated group member that happens to have
+   `skill-theme-competitor-analysis` uses) for any curated group member that happens to have
    them. This is context only, never a grouping signal: coverage is far too sparse (a handful
    of tickers total have disclosed that granularity of revenue mix) and there is no reliable
    theme-level revenue total to normalize against, so a missing or low weight does not mean a

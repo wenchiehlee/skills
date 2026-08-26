@@ -22,7 +22,7 @@ Use this skill to render canonical enrichment JSON into Markdown for review or p
 - Revenue mix source when available: `../biztrends.TW/data/company_segment_weights.csv`
 - Revenue amount fallback source: `../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv`
 - Normalized consensus source: `../biztrends.TW/data/market_expectations/normalized_consensus.csv`
-- Competitor financial source: repo-local `skills/skill-company-competitor-analysis` adapter, backed by `../biztrends.TW` financial CSVs
+- Competitor financial source: repo-local `skills/skill-theme-competitor-analysis` adapter, backed by `../biztrends.TW` financial CSVs
 - Archived/legacy material: `Pilot_Reports/`
 
 Do not use `Pilot_Reports/` as an active render source. Read it only for explicit comparison or migration audits. The intended future state is that `Pilot_Reports/` can be renamed or moved to an archived folder without breaking rendering.

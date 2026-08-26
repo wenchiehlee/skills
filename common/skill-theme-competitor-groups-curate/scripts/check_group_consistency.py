@@ -45,7 +45,7 @@ from scripts.build_themes import (  # noqa: E402
 
 WIKILINK_RE = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]+)?\]\]")
 
-# Same AI-related canonical cycles skill-company-competitor-analysis/SKILL.md documents.
+# Same AI-related canonical cycles skill-theme-competitor-analysis/SKILL.md documents.
 # Informational only — segment-weight coverage is sparse (only a handful of tickers have
 # disclosed revenue-platform data at all), so this is never used to gate/decide a grouping,
 # only to add context when it happens to exist for a member already in a curated group.

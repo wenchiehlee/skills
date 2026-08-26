@@ -20,7 +20,7 @@
 | 技能 | 群組 | 分類 | 版本 | 說明 | 修訂日期 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | [skill-android-adb-gadget](common/skill-android-adb-gadget) | common | basic | 1.0.2 | PowerShell module for managing dual ADB transports (USB + Ethernet) on an embedded Android device that exposes a USB composite gadget — handles state detection, Ethernet bootstrapping, safe reboot/recovery, gadget mount, and HID function control. | 2026-08-07 |
-| [skill-company-competitor-analysis](common/skill-company-competitor-analysis) | common | financial-strategy | 0.1.1 | 依指定 stock id，使用 supply-chain product peer seed 與 relationship rules 區分 brand competitor、ODM peer、server peer 與 supplier/component，並輸出最近三年季度 Revenue、Revenue YoY、Profit、Profit YoY、GM 競爭者分析表。 | 2026-08-07 |
+| [skill-theme-competitor-analysis](common/skill-theme-competitor-analysis) | common | financial-strategy | 0.1.1 | 依指定 stock id，使用 supply-chain product peer seed 與 relationship rules 區分 brand competitor、ODM peer、server peer 與 supplier/component，並輸出最近三年季度 Revenue、Revenue YoY、Profit、Profit YoY、GM 競爭者分析表。 | 2026-08-07 |
 | [skill-company-data-index-sync](common/skill-company-data-index-sync) | common | financial-data | 1.0.1 | 更新本地資料目錄索引，生成批次處理所需的投資標的清單 | 2026-08-26 |
 | [skill-company-decision-report](common/skill-company-decision-report) | common | financial-strategy | 1.0.1 | 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖） | 2026-08-26 |
 | [skill-company-download-logo](common/skill-company-download-logo) | common | basic | 1.0.1 | 指定台灣股票代碼或美股概念股 Ticker，自動下載高解析度公司官方 Logo PNG，並限制在固定大小。 | 2026-08-07 |

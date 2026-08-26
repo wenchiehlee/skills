@@ -1,7 +1,7 @@
 interface:
   display_name: "Company Competitor Analysis"
   short_description: "Peer financials by stock id"
-  default_prompt: "Use $skill-company-competitor-analysis to analyze competitors for stock 2357 over the latest three years."
+  default_prompt: "Use $skill-theme-competitor-analysis to analyze competitors for stock 2357 over the latest three years."
 
 policy:
   allow_implicit_invocation: true

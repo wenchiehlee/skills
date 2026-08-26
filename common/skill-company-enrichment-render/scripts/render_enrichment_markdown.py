@@ -131,7 +131,7 @@ def render_data_health_summary(biztrends_root: Path) -> tuple[str, list[str]]:
 
 
 def load_competitor_financial_adapter(coverage_root: Path):
-    adapter_path = coverage_root / "skills/skill-company-competitor-analysis/scripts/render_competitor_financial_section.py"
+    adapter_path = coverage_root / "skills/skill-theme-competitor-analysis/scripts/render_competitor_financial_section.py"
     if not adapter_path.is_file():
         return None
     spec = importlib.util.spec_from_file_location("my_tw_competitor_financial_section", adapter_path)
