@@ -1,5 +1,5 @@
 ---
-name: skill-my-tw-coverage-render-markdown
+name: skill-company-enrichment-render
 description: >-
   Render My-TW-Coverage canonical enrichment JSON into organized Markdown output.
   Use when the user asks to generate, regenerate, compare, or debug Markdown files
@@ -8,7 +8,7 @@ description: >-
   comparison material when explicitly needed.
 ---
 
-# My-TW-Coverage Render Markdown Skill
+# Company Enrichment Render Skill
 
 Use this skill to render canonical enrichment JSON into Markdown for review or publication.
 
@@ -34,7 +34,7 @@ Run from the My-TW-Coverage repository root.
 Render one ticker:
 
 ```bash
-python3 skills/skill-my-tw-coverage-render-markdown/scripts/render_enrichment_markdown.py \
+python3 skills/skill-company-enrichment-render/scripts/render_enrichment_markdown.py \
   --json-dir data/enrichment_all \
   --out output/enrichment_all_rendered \
   --compare output/enrichment_all_render_compare.csv \
@@ -48,7 +48,7 @@ python3 skills/skill-my-tw-coverage-render-markdown/scripts/render_enrichment_ma
 Render all canonical JSON files:
 
 ```bash
-python3 skills/skill-my-tw-coverage-render-markdown/scripts/render_enrichment_markdown.py \
+python3 skills/skill-company-enrichment-render/scripts/render_enrichment_markdown.py \
   --json-dir data/enrichment_all \
   --out output/enrichment_all_rendered \
   --compare output/enrichment_all_render_compare.csv \
@@ -61,7 +61,7 @@ python3 skills/skill-my-tw-coverage-render-markdown/scripts/render_enrichment_ma
 Rebuild theme pages through the same render skill:
 
 ```bash
-python3 skills/skill-my-tw-coverage-render-markdown/scripts/build_themes.py
+python3 skills/skill-company-enrichment-render/scripts/build_themes.py
 ```
 
 After rendering, inspect key files with `rg` or `sed` before committing:
@@ -94,7 +94,7 @@ git diff -- output/enrichment_all_rendered data/enrichment_all_render_compare.cs
 - Normalize entity alias lookup for stable display variants such as spaces, underscores, hyphens, and case differences, so `[[LINE Pay]]` can resolve to `7722_LINEPAY.md` while unresolved real concepts remain wikilinks. Maintain a small curated alias table for high-confidence company short/full-name pairs such as `中華電信` -> `中華電`, `世界先進` -> `世界`, and `臻鼎` -> `臻鼎-KY`.
 - Theme badges are separate from entity badges and evidence badges. Convert only wikilinks that resolve to `data/themes/*.json` theme `tag` or `aliases` into badges linking to `../themes/{output_filename}`.
 - Do not use theme `anchor_entities` for badge conversion. `[[NVIDIA]]` is an entity/company mention; `[[NVIDIA 供應鏈]]` is a theme mention.
-- Render theme pages with `python3 skills/skill-my-tw-coverage-render-markdown/scripts/build_themes.py`. The skill entry delegates to the repo-local `scripts/build_themes.py` implementation so theme rendering has one code path. Theme pages must be generated from `data/themes/*.json` plus `data/enrichment_all/*.json`, not from `Pilot_Reports/`.
+- Render theme pages with `python3 skills/skill-company-enrichment-render/scripts/build_themes.py`. The skill entry delegates to the repo-local `scripts/build_themes.py` implementation so theme rendering has one code path. Theme pages must be generated from `data/themes/*.json` plus `data/enrichment_all/*.json`, not from `Pilot_Reports/`.
 - In rendered theme pages, company entries must use entity-style badge links to `output/enrichment_all_rendered/*.md`. Keep internal matching metadata such as `Theme ID`, `source_path`, and `match` out of presentation Markdown.
 
 - Theme pages may define `theme_supply_chain` in `data/themes/*.json`. When present, `上游`, `中游`, and `下游/客戶關係` must be rendered from explicit criteria backed by `../biztrends.TW/data/ic.tpex.org.tw/raw_SupplyChain_*.csv`; free-text matches from company JSON should only contribute to `相關公司` so they do not distort the structured theme layers.
@@ -119,13 +119,13 @@ Before reporting completion:
 1. Run Python syntax validation on the renderer:
 
 ```bash
-python3 -m py_compile skills/skill-my-tw-coverage-render-markdown/scripts/render_enrichment_markdown.py
+python3 -m py_compile skills/skill-company-enrichment-render/scripts/render_enrichment_markdown.py
 ```
 
 2. Render a known sample, usually `2330`, and rebuild themes when theme behavior changed:
 
 ```bash
-python3 skills/skill-my-tw-coverage-render-markdown/scripts/build_themes.py
+python3 skills/skill-company-enrichment-render/scripts/build_themes.py
 ```
 
 3. Confirm the rendered output comes from JSON and contains expected JSON-backed sections:

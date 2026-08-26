@@ -1,10 +1,10 @@
 {
-  "name": "skill-my-tw-coverage-enrichment-json",
+  "name": "skill-company-enrichment-json",
   "description": "Extract and review My-TW-Coverage Markdown enrichment as atomic JSON using the biztrends.TW focus list.",
   "version": "0.1.1",
   "dependencies": [
     {
-      "name": "skill-my-tw-coverage-render-markdown",
+      "name": "skill-company-enrichment-render",
       "version": ">=1.0.0"
     }
   ],

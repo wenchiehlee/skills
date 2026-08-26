@@ -1,3 +1,8 @@
+---
+name: skill-company-revenue-expense-profit-predict
+description: 季度損益三線（營業收入 / 總支出 / 營業利益）底部加總預測 SOP
+---
+
 # 季度損益預測 SOP (Quarterly Revenue · Expense · Profit Bottom-Up Forecast)
 
 本文件定義 `biztrends.TW` 框架下，針對任意台灣上市櫃股票執行「**季度損益三線（營業收入 / 總支出 / 營業利益）預測、滾動回測、產業週期分段修正與視覺化**」的標準作業程序（SOP）。

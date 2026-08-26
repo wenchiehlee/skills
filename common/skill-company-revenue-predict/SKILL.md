@@ -1,3 +1,8 @@
+---
+name: skill-company-revenue-predict
+description: 營收預測與 10-Model 評估 SOP
+---
+
 # 營收預測與多模型評估標準作業程序 (Revenue Forecasting & 10-Model Benchmark SOP)
 
 本文件定義了 `biztrends.TW` 框架下，針對任意台灣上市櫃股票進行「月度營業收入預測、10-Model 滾動回測評估、模型適用性過濾、偏差修正與視覺化」的標準作業程序（SOP）。未來任何 Coding Agent 或數據分析人員在執行營收預測任務時，均應嚴格遵循此技能指引。

@@ -63,7 +63,7 @@ related-but-different phrase (e.g. 鴻海's summary says "AI 伺服器"/"雲端�
 already present — spot-check a handful of obviously-relevant companies from a sibling theme
 (e.g. companies already grouped in AI 伺服器) to see if they're missing here too, the way 鴻海/
 仁寶/和碩/華擎 were found. The durable fix is adding the missing wikilink to the company's own
-enrichment JSON (`skill-my-tw-coverage-enrichment-json`'s job); `extra_entities` is the
+enrichment JSON (`skill-company-enrichment-json`'s job); `extra_entities` is the
 immediate stopgap.
 
 ## Cross-theme reuse note

@@ -1,5 +1,5 @@
 ---
-name: skill-my-tw-coverage-enrichment-json
+name: skill-company-enrichment-json
 description: >-
   Extract, review, validate, and later render My-TW-Coverage Markdown enrichment as atomic JSON,
   prioritized by biztrends.TW/StockID_TWSE_TPEX_focus.csv. Use when converting
@@ -8,7 +8,7 @@ description: >-
   JSON-canonical enrichment migration.
 ---
 
-# My-TW-Coverage Enrichment JSON Skill
+# Company Enrichment JSON Skill
 
 ## Purpose
 
@@ -31,13 +31,13 @@ Target state:
 Run from `../My-TW-Coverage` root:
 
 ```bash
-python skills/skill-my-tw-coverage-enrichment-json/scripts/extract_enrichment_json.py
+python skills/skill-company-enrichment-json/scripts/extract_enrichment_json.py
 ```
 
 Equivalent explicit command:
 
 ```bash
-python skills/skill-my-tw-coverage-enrichment-json/scripts/extract_enrichment_json.py \
+python skills/skill-company-enrichment-json/scripts/extract_enrichment_json.py \
   --focus ../biztrends.TW/StockID_TWSE_TPEX_focus.csv \
   --coverage-root . \
   --out data/enrichment_all \
@@ -47,7 +47,7 @@ python skills/skill-my-tw-coverage-enrichment-json/scripts/extract_enrichment_js
 It can also run from `biztrends.TW` root:
 
 ```bash
-python skills/skill-my-tw-coverage-enrichment-json/scripts/extract_enrichment_json.py \
+python skills/skill-company-enrichment-json/scripts/extract_enrichment_json.py \
   --focus StockID_TWSE_TPEX_focus.csv \
   --coverage-root ../My-TW-Coverage \
   --out ../My-TW-Coverage/data/enrichment_all \
@@ -57,19 +57,19 @@ python skills/skill-my-tw-coverage-enrichment-json/scripts/extract_enrichment_js
 Useful scopes:
 
 ```bash
-python skills/skill-my-tw-coverage-enrichment-json/scripts/extract_enrichment_json.py --ticker 2330
-python skills/skill-my-tw-coverage-enrichment-json/scripts/extract_enrichment_json.py --limit 10
+python skills/skill-company-enrichment-json/scripts/extract_enrichment_json.py --ticker 2330
+python skills/skill-company-enrichment-json/scripts/extract_enrichment_json.py --limit 10
 ```
 
 All-report migration preview:
 
 ```bash
-python skills/skill-my-tw-coverage-enrichment-json/scripts/extract_enrichment_json.py \
+python skills/skill-company-enrichment-json/scripts/extract_enrichment_json.py \
   --all-reports \
   --out data/enrichment_all \
   --manifest data/enrichment_all_manifest.csv
 
-python skills/skill-my-tw-coverage-render-markdown/scripts/render_enrichment_markdown.py \
+python skills/skill-company-enrichment-render/scripts/render_enrichment_markdown.py \
   --json-dir data/enrichment_all \
   --out output/enrichment_all_rendered \
   --compare output/enrichment_all_render_compare.csv
@@ -116,7 +116,7 @@ Theme definitions are canonical in `data/themes/*.json`. Brand supply-chain them
 Backfill/review theme links from My-TW-Coverage root:
 
 ```bash
-python3 skills/skill-my-tw-coverage-enrichment-json/scripts/backfill_theme_links.py \
+python3 skills/skill-company-enrichment-json/scripts/backfill_theme_links.py \
   --json-dir data/enrichment_all \
   --themes-dir data/themes \
   --review-out output/theme_link_review_queue.csv
@@ -177,9 +177,9 @@ For each focus ticker:
 
 ## Boundaries
 
-- This skill does not render Markdown; use `skill-my-tw-coverage-render-markdown` for JSON-to-Markdown output.
+- This skill does not render Markdown; use `skill-company-enrichment-render` for JSON-to-Markdown output.
 - This skill does not update upstream financial CSVs.
 - This skill may define or backfill JSON `evidence` and `annotations`, but it does not render Markdown badges directly.
 - This skill does not directly update `biztrends.TW/data/company_segment_weights.csv`.
-- This skill does not render `output/themes`; use `skill-my-tw-coverage-render-markdown` / `skills/skill-my-tw-coverage-render-markdown/scripts/build_themes.py` after theme links are reviewed.
+- This skill does not render `output/themes`; use `skill-company-enrichment-render` / `skills/skill-company-enrichment-render/scripts/build_themes.py` after theme links are reviewed.
 - Do not treat legacy `source_text.*_md` as final storage for evidence; use it only as transitional non-lossy preservation until atomic evidence is complete.
