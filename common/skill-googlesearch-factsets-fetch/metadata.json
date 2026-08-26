@@ -1,0 +1,12 @@
+{
+  "name": "skill-googlesearch-factsets-fetch",
+  "description": "維運 GoogleSearch.Factset 兩階段管線：Stage 0 觀察名單更新（Get觀察名單.py）、Stage 1 Search Group（API key 輪替 + 4 層內容驗證產生 data/md/*.md）、Stage 2 Process Group（品質評分 + 報表 + Google Sheets 上傳），涵蓋 Actions-update-lists.yaml / Actions-search.yaml / Actions-quarantine-files.yaml / Actions-process.yaml 四個 workflow 的手動觸發與除錯，並負責處理與解決 GitHub Issues（每日自動產生的 Quarantine Alert 資料品質議題）。",
+  "category": "financial-data",
+  "version": "1.0.0",
+  "maintainer": "wenchiehlee",
+  "source": "https://github.com/wenchiehlee/GoogleSearch.Factset",
+  "updated_at": "2026-08-25",
+  "files": [
+    "scripts/analyze_quarantine_issues.py"
+  ]
+}
