@@ -1,5 +1,5 @@
 ---
-name: skill-my-tw-coverage-theme-groups
+name: skill-theme-competitor-groups-curate
 description: >-
   Curate accurate within-theme competitor groupings for output/themes/*.md by editing
   data/themes/*.json (`competitive_groups`, `extra_entities`). Use when a theme page groups
@@ -9,7 +9,7 @@ description: >-
   with a company's own `relationships.competitors` in data/enrichment_all/*.json.
 ---
 
-# My-TW-Coverage Theme Groups Skill
+# Theme Competitor Groups Curate Skill
 
 ## Purpose
 
@@ -79,7 +79,7 @@ Run from the My-TW-Coverage repository root.
 4. **Cross-check against canonical competitor data before finalizing.** Run:
 
    ```bash
-   python skills/skill-my-tw-coverage-theme-groups/scripts/check_group_consistency.py --theme "<theme tag>"
+   python skills/skill-theme-competitor-groups-curate/scripts/check_group_consistency.py --theme "<theme tag>"
    ```
 
    This is a pure comparison tool — it never edits anything. It flags two kinds of findings:
@@ -141,7 +141,7 @@ Run from the My-TW-Coverage repository root.
 
    ```bash
    python -m py_compile scripts/build_themes.py
-   python skills/skill-my-tw-coverage-theme-groups/scripts/check_group_consistency.py --theme "<theme tag>"
+   python skills/skill-theme-competitor-groups-curate/scripts/check_group_consistency.py --theme "<theme tag>"
    git status --short output/themes/
    ```
 
@@ -192,6 +192,6 @@ After editing theme JSON or the consistency checker:
 ```bash
 python -c "import json; json.load(open('data/themes/<theme>.json', encoding='utf-8'))"
 python scripts/build_themes.py
-python skills/skill-my-tw-coverage-theme-groups/scripts/check_group_consistency.py --all
+python skills/skill-theme-competitor-groups-curate/scripts/check_group_consistency.py --all
 git status --short data/themes/ output/themes/
 ```

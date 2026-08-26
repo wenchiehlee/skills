@@ -4,11 +4,11 @@ company's own canonical `relationships.competitors` in data/enrichment_all/*.jso
 
 This is a pure comparison tool. It never edits data — it only reports where the
 two sources disagree so a human (or an agent following
-skill-my-tw-coverage-theme-groups/SKILL.md) can decide how to reconcile them.
+skill-theme-competitor-groups-curate/SKILL.md) can decide how to reconcile them.
 
 Usage:
-  python3 skills/skill-my-tw-coverage-theme-groups/scripts/check_group_consistency.py --theme "AI 伺服器"
-  python3 skills/skill-my-tw-coverage-theme-groups/scripts/check_group_consistency.py --all
+  python3 skills/skill-theme-competitor-groups-curate/scripts/check_group_consistency.py --theme "AI 伺服器"
+  python3 skills/skill-theme-competitor-groups-curate/scripts/check_group_consistency.py --all
 """
 
 from __future__ import annotations
