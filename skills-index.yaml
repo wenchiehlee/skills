@@ -226,6 +226,29 @@ skills:
   source: https://pypi.org/project/google-analytics-cli/
   updated_at: '2026-07-18'
   revised_at: '2026-08-07'
+- name: skill-institutional-thesis-research
+  group: common
+  path: common/skill-institutional-thesis-research
+  version: 1.1.1
+  description: Maintain auditable five-institution investment thesis research and
+    interpret articles/news through selected institutional lenses for TW-institutional-investment-theses.
+  category: financial-strategy
+  maintainer: wenchiehlee-money
+  source: https://github.com/wenchiehlee-money/TW-institutional-investment-theses
+  updated_at: '2026-08-20'
+  revised_at: '2026-08-26'
+- name: skill-institutional-tw-report-research
+  group: common
+  path: common/skill-institutional-tw-report-research
+  version: 0.1.1
+  description: 'Maintain auditable Taiwan listed/OTC institutional research intelligence:
+    broker/advisory reports, ratings, target prices, EPS revisions, investor-conference
+    linkage, consensus, and TWSE/TPEx institutional-flow comparison.'
+  category: financial-strategy
+  maintainer: wenchiehlee-money
+  source: https://github.com/wenchiehlee-money/TW-institutional-research
+  updated_at: '2026-08-26'
+  revised_at: '2026-08-26'
 - name: skill-investment-decision-coach
   group: common
   path: common/skill-investment-decision-coach
@@ -239,17 +262,6 @@ skills:
   source: https://github.com/wenchiehlee-money/Miz.Fetch
   updated_at: '2026-08-14'
   revised_at: '2026-08-26'
-- name: skill-investment-institutional-thesis-research
-  group: common
-  path: common/skill-investment-institutional-thesis-research
-  version: 1.1.1
-  description: Maintain auditable five-institution investment thesis research and
-    interpret articles/news through selected institutional lenses for TW-institutional-investment-theses.
-  category: financial-strategy
-  maintainer: wenchiehlee-money
-  source: https://github.com/wenchiehlee-money/TW-institutional-investment-theses
-  updated_at: '2026-08-20'
-  revised_at: '2026-08-20'
 - name: skill-llm-api-client
   group: common
   path: common/skill-llm-api-client
@@ -465,18 +477,6 @@ skills:
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
   updated_at: '2026-08-04'
-  revised_at: '2026-08-26'
-- name: skill-tw-institutional-report-research
-  group: common
-  path: common/skill-tw-institutional-report-research
-  version: 0.1.1
-  description: 'Maintain auditable Taiwan listed/OTC institutional research intelligence:
-    broker/advisory reports, ratings, target prices, EPS revisions, investor-conference
-    linkage, consensus, and TWSE/TPEx institutional-flow comparison.'
-  category: financial-strategy
-  maintainer: wenchiehlee-money
-  source: https://github.com/wenchiehlee-money/TW-institutional-research
-  updated_at: '2026-08-26'
   revised_at: '2026-08-26'
 - name: skill-tw-land-geo-signal
   group: common
