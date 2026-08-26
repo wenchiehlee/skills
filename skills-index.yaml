@@ -25,16 +25,6 @@ skills:
   source: ''
   updated_at: ''
   revised_at: '2026-08-07'
-- name: skill-company-all-models-benchmark
-  group: common
-  path: common/skill-company-all-models-benchmark
-  version: 1.0.1
-  description: 多模型與分析師共識效能評估標準作業程序。
-  category: financial-forecasting
-  maintainer: WJLEE
-  source: biztrends.TW/Skills/skill-company-all-models-benchmark.md
-  updated_at: '2026-07-05'
-  revised_at: '2026-08-07'
 - name: skill-company-competitor-analysis
   group: common
   path: common/skill-company-competitor-analysis
@@ -147,6 +137,16 @@ skills:
   source: ''
   updated_at: ''
   revised_at: '2026-08-07'
+- name: skill-company-revenue-forecast-benchmark
+  group: common
+  path: common/skill-company-revenue-forecast-benchmark
+  version: 1.0.1
+  description: 多模型與分析師共識效能評估標準作業程序。
+  category: financial-forecasting
+  maintainer: WJLEE
+  source: biztrends.TW/Skills/skill-company-revenue-forecast-benchmark.md
+  updated_at: '2026-07-05'
+  revised_at: '2026-08-26'
 - name: skill-company-revenue-predict
   group: common
   path: common/skill-company-revenue-predict
