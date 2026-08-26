@@ -1,4 +1,9 @@
-# 多模型與分析師共識效能評估標準作業程序 (Models vs Consensus Benchmarking SOP)
+---
+name: skill-company-revenue-forecast-benchmark
+description: 多模型與分析師共識效能評估標準作業程序。
+---
+
+# 公司營收預測效能評估標準作業程序 (Revenue Forecast vs Consensus Benchmarking SOP)
 
 本文件定義了 `biztrends.TW` 框架下，針對自建之 10 個統計預測模型與市場兩大共識指標（Yahoo Finance 與 FactSet）進行「歷史預測精準度對比、勝率統計、平均誤差縮減分析」的標準作業程序（SOP）。未來任何 Coding Agent 或數據分析人員在執行效能評估任務時，均應遵循此技能指引。
 
