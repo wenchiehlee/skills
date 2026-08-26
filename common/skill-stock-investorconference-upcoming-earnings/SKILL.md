@@ -1,5 +1,5 @@
 ---
-name: skill-company-investorconference-upcoming-earnings
+name: skill-stock-investorconference-upcoming-earnings
 description: >-
   Regenerate InvestorConference's raw_event_upcoming_earnings.csv locally from the repo's own
   Taiwan watchlists (StockID_TWSE_TPEX.csv / StockID_TWSE_TPEX_focus.csv) and the US watchlist
@@ -33,13 +33,13 @@ skill if they look stale.
 ## Standard Workflow
 
 ```bash
-python skills/skill-company-investorconference-upcoming-earnings/scripts/fetch_upcoming_earnings.py
+python skills/skill-stock-investorconference-upcoming-earnings/scripts/fetch_upcoming_earnings.py
 ```
 
 Optional explicit date window (default: today-30d ~ today+60d):
 
 ```bash
-python skills/skill-company-investorconference-upcoming-earnings/scripts/fetch_upcoming_earnings.py --start 2026-07-01 --end 2026-10-31
+python skills/skill-stock-investorconference-upcoming-earnings/scripts/fetch_upcoming_earnings.py --start 2026-07-01 --end 2026-10-31
 ```
 
 The script does this in order:
