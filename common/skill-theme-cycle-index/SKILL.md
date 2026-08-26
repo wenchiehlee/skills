@@ -1,5 +1,5 @@
 ---
-name: skill-company-cycle-index
+name: skill-theme-cycle-index
 description: >-
   Build company canonical cycle indexes by applying active company revenue segment weights to market revenue data.
   Current implementation supports Taiwan and United States company cycle indexes: read refreshed segment weights,
@@ -10,7 +10,7 @@ description: >-
   Role: professional institutional research analyst covering both Taiwan equities and US equities.
 ---
 
-# Company Cycle Index Skill
+# Theme Cycle Index Skill
 
 ## 角色定位
 
@@ -36,13 +36,13 @@ description: >-
 
 ```bash
 # Taiwan monthly revenue cycle index
-python skills/skill-company-cycle-index/scripts/run_company_cycle_index.py --market taiwan
+python skills/skill-theme-cycle-index/scripts/run_company_cycle_index.py --market taiwan
 
 # United States quarterly segment revenue cycle index
-python skills/skill-company-cycle-index/scripts/run_company_cycle_index.py --market united_states
+python skills/skill-theme-cycle-index/scripts/run_company_cycle_index.py --market united_states
 
 # Run both markets
-python skills/skill-company-cycle-index/scripts/run_company_cycle_index.py --market all
+python skills/skill-theme-cycle-index/scripts/run_company_cycle_index.py --market all
 ```
 
 `--market taiwan` 會：

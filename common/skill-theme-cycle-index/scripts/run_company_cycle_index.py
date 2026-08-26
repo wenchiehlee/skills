@@ -421,7 +421,7 @@ def replace_or_insert_section(content: str, start: str, end: str, section: str, 
 def update_readme(root: Path, raw_latest: str, raw_count: int) -> None:
     readme_path = root / "README.md"
     content = readme_path.read_text(encoding="utf-8")
-    command_line = "產出指令：`python skills/skill-company-cycle-index/scripts/run_company_cycle_index.py`"
+    command_line = "產出指令：`python skills/skill-theme-cycle-index/scripts/run_company_cycle_index.py`"
     content = content.replace("產出指令：`python scripts/plot_company_cycle_index_taiwan.py`", command_line)
 
     import datetime
@@ -452,7 +452,7 @@ def update_us_readme_command(root: Path) -> None:
     content = readme_path.read_text(encoding="utf-8")
     content = content.replace(
         "產出指令：`python scripts/plot_company_cycle_index_united_states.py`",
-        "產出指令：`python skills/skill-company-cycle-index/scripts/run_company_cycle_index.py --market united_states`",
+        "產出指令：`python skills/skill-theme-cycle-index/scripts/run_company_cycle_index.py --market united_states`",
     )
     readme_path.write_text(content, encoding="utf-8", newline="")
 

@@ -1,5 +1,5 @@
 ---
-name: skill-company-ai-trend-analytics
+name: skill-theme-cycle-coverage
 description: >-
   Build an auditable AI trend analytics layer from existing company segment weights,
   canonical cycle mappings, cycle performance tables, freshness reports, and research
@@ -9,7 +9,7 @@ description: >-
   cycle outputs into research-quality inference with explicit evidence chains.
 ---
 
-# AI Trend Analytics Skill
+# Theme Cycle Coverage Skill
 
 ## 角色定位
 
@@ -18,7 +18,7 @@ description: >-
 ## Skill 邊界
 
 - `skill-company-revenue-segment-weights` 負責 segment weight evidence、quarterly candidates、QA 與 active snapshot。
-- `skill-company-cycle-index` 負責套用 active weights 到 canonical cycle model，產生 cycle mapping、cycle intensity、PNG 與 performance。
+- `skill-theme-cycle-index` 負責套用 active weights 到 canonical cycle model，產生 cycle mapping、cycle intensity、PNG 與 performance。
 - 本 skill 消費上述 outputs，產生 coverage matrix、validity labels、issue register 與 inference quality gate；不直接抽取 IR/年報，也不直接產 cycle PNG。
 
 ## 標準流程
@@ -26,7 +26,7 @@ description: >-
 在 `biztrends.TW` 專案根目錄執行：
 
 ```bash
-python3 skills/skill-company-ai-trend-analytics/scripts/run_ai_trend_analytics.py
+python3 skills/skill-theme-cycle-coverage/scripts/run_ai_trend_analytics.py
 ```
 
 runner 會讀取：
@@ -80,6 +80,6 @@ runner 會讀取：
 - issue register open issue count 與 P0/P1/P2/P3 分布。
 - inference report 是否已產生，並摘要哪些 cycle 可以支持方向性推論、哪些只能視為 proxy。
 - 哪些 major AI cycles 仍被 fallback/proxy 或 stale data 主導。
-- 是否需要先回到 `skill-company-revenue-segment-weights` 補 evidence，或回到 `skill-company-cycle-index` 重算 cycle performance。
+- 是否需要先回到 `skill-company-revenue-segment-weights` 補 evidence，或回到 `skill-theme-cycle-index` 重算 cycle performance。
 
 若使用者要求 commit/push，應把 skill、runner 與 generated coverage/issue/inference outputs 一起 commit。

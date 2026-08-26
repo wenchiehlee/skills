@@ -12,7 +12,7 @@ description: >-
 
 ## 角色定位
 
-你是一位專業的跨台股與美股研究員，負責維護 company revenue segment weight evidence、quarterly candidate history、QA report 與 latest active snapshot。重點不是快速填權重，而是透過最新公司材料、Markdown evidence 與資料解讀 QA，讓使用者看見每家公司 segment mix 的季度變化，並降低 segment 權重缺漏、分類口徑誤讀與 AI/data center exposure proxy 被錯當成純 AI server revenue 的風險。正式 active snapshot 是跨市場 `data/company_segment_weights.csv`；目前本 skill 的 evidence/QA runner 支援 TW，US active rows 由 `skill-company-cycle-index` 的 United_States pipeline 根據 ConceptStocks quarterly segment revenue 轉換與回寫。本 skill 必須把兩者邊界講清楚：TW 是 evidence extraction / QA / review 後維護 active snapshot；US 是使用已結構化 quarterly segment revenue 轉成 active snapshot，原始 segment revenue 的取得與 canonical cycle aggregation 由 cycle-index pipeline 驗證。
+你是一位專業的跨台股與美股研究員，負責維護 company revenue segment weight evidence、quarterly candidate history、QA report 與 latest active snapshot。重點不是快速填權重，而是透過最新公司材料、Markdown evidence 與資料解讀 QA，讓使用者看見每家公司 segment mix 的季度變化，並降低 segment 權重缺漏、分類口徑誤讀與 AI/data center exposure proxy 被錯當成純 AI server revenue 的風險。正式 active snapshot 是跨市場 `data/company_segment_weights.csv`；目前本 skill 的 evidence/QA runner 支援 TW，US active rows 由 `skill-theme-cycle-index` 的 United_States pipeline 根據 ConceptStocks quarterly segment revenue 轉換與回寫。本 skill 必須把兩者邊界講清楚：TW 是 evidence extraction / QA / review 後維護 active snapshot；US 是使用已結構化 quarterly segment revenue 轉成 active snapshot，原始 segment revenue 的取得與 canonical cycle aggregation 由 cycle-index pipeline 驗證。
 
 ## 適用場景
 
@@ -49,8 +49,8 @@ python skills/skill-company-revenue-segment-weights/scripts/run_company_revenue_
    - `output/company_segment_weights_qa_taiwan.md`：列出完整公司 universe 與 focus universe 的 MD coverage、coverage gaps、source-period staleness、以及每家公司有哪些季度有候選 evidence。
    - `output/company_cycle_connection_evidence_taiwan.csv`：串接 `StockID_TWSE_TPEX.csv`、companyinfo concepts、`data/ic.tpex.org.tw/raw_SupplyChainMap.csv` / `raw_SupplyChain_*.csv`、正式 segment weights 與 segment-to-cycle mapping，產生可審核的 chain/cycle connection evidence；此檔只作 review queue，不直接覆蓋正式權重。
 10. 研究員依 Markdown evidence 審核季度/年度候選值後，才可決定是否更新 latest active snapshot `data/company_segment_weights.csv`，或建立正式歷史檔 `data/company_segment_weights_quarterly.csv`。
-11. 更新正式 Taiwan segment weights 後必須執行 `python skills/skill-company-cycle-index/scripts/run_company_cycle_index.py --market taiwan`，確認 segment weights 可正確映射至 cycle index。
-12. 若使用者 focus US stock segment weights，需確認 `scripts/build_company_cycle_index_united_states.py` 會從 ConceptStocks quarterly segment revenue 計算每個 symbol 最新 calendar quarter mix，並回寫 `data/company_segment_weights.csv` 的 `market=United_States` rows；接著執行 `python skills/skill-company-cycle-index/scripts/run_company_cycle_index.py --market united_states` 驗證 PNG 與 derived CSV。
+11. 更新正式 Taiwan segment weights 後必須執行 `python skills/skill-theme-cycle-index/scripts/run_company_cycle_index.py --market taiwan`，確認 segment weights 可正確映射至 cycle index。
+12. 若使用者 focus US stock segment weights，需確認 `scripts/build_company_cycle_index_united_states.py` 會從 ConceptStocks quarterly segment revenue 計算每個 symbol 最新 calendar quarter mix，並回寫 `data/company_segment_weights.csv` 的 `market=United_States` rows；接著執行 `python skills/skill-theme-cycle-index/scripts/run_company_cycle_index.py --market united_states` 驗證 PNG 與 derived CSV。
 
 ## 資料解讀 QA
 
@@ -99,5 +99,5 @@ market,stock_code,company_name,segment_name,weight_pct,source_type,source_period
 
 - 本 skill 產生 TW segment evidence/input 層：`output/company_segment_weights_quarterly_candidates_taiwan.csv`、`output/company_segment_weight_candidates_taiwan.csv`、`output/company_segment_weights_qa_taiwan.md`，並在研究員 review 後維護 `data/company_segment_weights.csv` 的 Taiwan rows。若要把 `data/ic.tpex.org.tw/raw_SupplyChainMap.csv` 與 `raw_SupplyChain_*.csv` 接到 canonical cycle，應由本 skill 產生可審核的 `output/company_cycle_connection_evidence_taiwan.csv`，作為 segment/cycle 分類 evidence，而不是在 cycle-index builder 裡加入隱含拆分。
 - 本 skill 不產生 cycle model/output 層，不直接產生 `output/company_cycle_mapping.csv`、`output/company_cycle_major_weights.csv`、`output/company_cycle_intensity_taiwan.csv`、`output/company_cycle_intensity_by_symbol_taiwan.csv`、`output/company_cycle_intensity_united_states.csv` 或任何 `company_cycle_index_*.png`。
-- United_States active rows 的計算來源是 ConceptStocks quarterly segment revenue；由 `skill-company-cycle-index` 的 US pipeline 轉換並寫入 `data/company_segment_weights.csv`，source 欄位必須可回溯到原始 segment revenue 或 TSM platform fallback。本 skill 只負責規範與 QA 這些 rows 的欄位意義，不把 US cycle PNG 視為 segment-evidence 產物。
-- 更新正式 segment weights 後，必須執行 `skill-company-cycle-index`，由 cycle-index skill 套用權重並產生 mapping/audit/index/PNG。
+- United_States active rows 的計算來源是 ConceptStocks quarterly segment revenue；由 `skill-theme-cycle-index` 的 US pipeline 轉換並寫入 `data/company_segment_weights.csv`，source 欄位必須可回溯到原始 segment revenue 或 TSM platform fallback。本 skill 只負責規範與 QA 這些 rows 的欄位意義，不把 US cycle PNG 視為 segment-evidence 產物。
+- 更新正式 segment weights 後，必須執行 `skill-theme-cycle-index`，由 cycle-index skill 套用權重並產生 mapping/audit/index/PNG。

@@ -1,0 +1,8 @@
+{
+  "name": "skill-theme-cycle-coverage",
+  "version": "0.2.3",
+  "description": "Build AI trend coverage, validity, issue register, and inference quality-gate outputs from company canonical cycle data.",
+  "files": [
+    "self_update.py"
+  ]
+}
