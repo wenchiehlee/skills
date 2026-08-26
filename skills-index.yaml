@@ -14,17 +14,6 @@ skills:
   source: wj-lee_Barco.github.com/gadget/skills/Android BaseUnit-adb
   updated_at: '2026-07-21'
   revised_at: '2026-08-07'
-- name: skill-company-ai-trend-analytics
-  group: common
-  path: common/skill-company-ai-trend-analytics
-  version: 0.2.3
-  description: Build AI trend coverage, validity, issue register, and inference quality-gate
-    outputs from company canonical cycle data.
-  category: basic
-  maintainer: ''
-  source: ''
-  updated_at: ''
-  revised_at: '2026-08-07'
 - name: skill-company-competitor-analysis
   group: common
   path: common/skill-company-competitor-analysis
@@ -36,18 +25,6 @@ skills:
   maintainer: wenchiehlee
   source: biztrends.TW
   updated_at: '2026-07-22'
-  revised_at: '2026-08-07'
-- name: skill-company-cycle-index
-  group: common
-  path: common/skill-company-cycle-index
-  version: 1.3.2
-  description: 套用已審核或已結構化的 company revenue segment weights 到 canonical cycle model；支援
-    Taiwan 與 United_States pipeline，US 對齊 canonical_cycle_specification 並用 latest-mix
-    proxy 補齊缺 segment quarters，生成對應 company_cycle_index_*.png 並更新 README。
-  category: financial-strategy
-  maintainer: wenchiehlee
-  source: biztrends.TW
-  updated_at: '2026-07-20'
   revised_at: '2026-08-07'
 - name: skill-company-download-logo
   group: common
@@ -190,7 +167,7 @@ skills:
   maintainer: wenchiehlee
   source: biztrends.TW
   updated_at: '2026-07-19'
-  revised_at: '2026-08-07'
+  revised_at: '2026-08-26'
 - name: skill-facebook-fetch
   group: common
   path: common/skill-facebook-fetch
@@ -477,6 +454,29 @@ skills:
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
   updated_at: '2026-08-04'
+  revised_at: '2026-08-26'
+- name: skill-theme-cycle-coverage
+  group: common
+  path: common/skill-theme-cycle-coverage
+  version: 0.2.3
+  description: Build AI trend coverage, validity, issue register, and inference quality-gate
+    outputs from company canonical cycle data.
+  category: basic
+  maintainer: ''
+  source: ''
+  updated_at: ''
+  revised_at: '2026-08-26'
+- name: skill-theme-cycle-index
+  group: common
+  path: common/skill-theme-cycle-index
+  version: 1.3.2
+  description: 套用已審核或已結構化的 company revenue segment weights 到 canonical cycle model；支援
+    Taiwan 與 United_States pipeline，US 對齊 canonical_cycle_specification 並用 latest-mix
+    proxy 補齊缺 segment quarters，生成對應 company_cycle_index_*.png 並更新 README。
+  category: financial-strategy
+  maintainer: wenchiehlee
+  source: biztrends.TW
+  updated_at: '2026-07-20'
   revised_at: '2026-08-26'
 - name: skill-tw-land-geo-signal
   group: common
