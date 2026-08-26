@@ -59,6 +59,28 @@ skills:
   source: ''
   updated_at: '2026-07-07'
   revised_at: '2026-08-07'
+- name: skill-company-enrichment-json
+  group: common
+  path: common/skill-company-enrichment-json
+  version: 0.1.1
+  description: Extract and review My-TW-Coverage Markdown enrichment as atomic JSON
+    using the biztrends.TW focus list.
+  category: basic
+  maintainer: ''
+  source: ''
+  updated_at: ''
+  revised_at: '2026-08-26'
+- name: skill-company-enrichment-render
+  group: common
+  path: common/skill-company-enrichment-render
+  version: 1.0.1
+  description: Render My-TW-Coverage canonical enrichment JSON into organized Markdown
+    without using Pilot_Reports as an active source.
+  category: financial-data
+  maintainer: wenchiehlee-money
+  source: https://github.com/wenchiehlee-money/My-TW-Coverage
+  updated_at: '2026-07-31'
+  revised_at: '2026-08-26'
 - name: skill-company-investorconference-digest
   group: common
   path: common/skill-company-investorconference-digest
@@ -136,7 +158,7 @@ skills:
   maintainer: ''
   source: ''
   updated_at: ''
-  revised_at: '2026-08-07'
+  revised_at: '2026-08-26'
 - name: skill-company-revenue-forecast-benchmark
   group: common
   path: common/skill-company-revenue-forecast-benchmark
@@ -156,7 +178,7 @@ skills:
   maintainer: ''
   source: ''
   updated_at: ''
-  revised_at: '2026-08-07'
+  revised_at: '2026-08-26'
 - name: skill-company-revenue-segment-weights
   group: common
   path: common/skill-company-revenue-segment-weights
@@ -341,28 +363,6 @@ skills:
   source: https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server-whisper/scripts
   updated_at: '2026-08-12'
   revised_at: '2026-08-25'
-- name: skill-my-tw-coverage-enrichment-json
-  group: common
-  path: common/skill-my-tw-coverage-enrichment-json
-  version: 0.1.1
-  description: Extract and review My-TW-Coverage Markdown enrichment as atomic JSON
-    using the biztrends.TW focus list.
-  category: basic
-  maintainer: ''
-  source: ''
-  updated_at: ''
-  revised_at: '2026-08-07'
-- name: skill-my-tw-coverage-render-markdown
-  group: common
-  path: common/skill-my-tw-coverage-render-markdown
-  version: 1.0.1
-  description: Render My-TW-Coverage canonical enrichment JSON into organized Markdown
-    without using Pilot_Reports as an active source.
-  category: financial-data
-  maintainer: wenchiehlee-money
-  source: https://github.com/wenchiehlee-money/My-TW-Coverage
-  updated_at: '2026-07-31'
-  revised_at: '2026-08-12'
 - name: skill-pptx-to-md
   group: common
   path: common/skill-pptx-to-md
@@ -577,11 +577,11 @@ skills:
 - name: skill-youtube-channel-srt-keyframe-extract
   group: common
   path: common/skill-youtube-channel-srt-keyframe-extract
-  version: 1.1.2
+  version: 1.2.0
   description: 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡報／數字等視覺重點的時間點，下載對應影片並擷取該時間點的畫面存成帶時間碼的
-    PNG，索引 md 裡每張截圖都附上該時間區段的實際逐字稿片段（可關鍵字搜尋）與 LLM 話題推測。
+    JPEG，索引 md 裡每張截圖都附上該時間區段的實際逐字稿片段（可關鍵字搜尋）與 LLM 話題推測。
   category: document
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/YoutubeAudio.Fetch
-  updated_at: '2026-08-18'
-  revised_at: '2026-08-18'
+  updated_at: '2026-08-26'
+  revised_at: '2026-08-26'
