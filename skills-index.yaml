@@ -92,17 +92,6 @@ skills:
   source: https://github.com/wenchiehlee-money/InvestorConference
   updated_at: '2026-07-19'
   revised_at: '2026-08-07'
-- name: skill-company-investorconference-upcoming-earnings
-  group: common
-  path: common/skill-company-investorconference-upcoming-earnings
-  version: 1.0.2
-  description: Regenerate raw_event_upcoming_earnings.csv from InvestorConference's
-    own TW/US watchlists, classifying every event as 財報, 法說會, or 受邀法說.
-  category: financial-data
-  maintainer: wenchiehlee
-  source: https://github.com/wenchiehlee-money/InvestorConference
-  updated_at: '2026-08-17'
-  revised_at: '2026-08-25'
 - name: skill-company-mops-financialreport-pdf-md
   group: common
   path: common/skill-company-mops-financialreport-pdf-md
@@ -350,6 +339,17 @@ skills:
   source: ''
   updated_at: '2026-07-09'
   revised_at: '2026-08-25'
+- name: skill-stock-investorconference-upcoming-earnings
+  group: common
+  path: common/skill-stock-investorconference-upcoming-earnings
+  version: 1.0.2
+  description: Regenerate raw_event_upcoming_earnings.csv from InvestorConference's
+    own TW/US watchlists, classifying every event as 財報, 法說會, or 受邀法說.
+  category: financial-data
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee-money/InvestorConference
+  updated_at: '2026-08-17'
+  revised_at: '2026-08-26'
 - name: skill-stock-ma-rsi-bband-macd-peband
   group: common
   path: common/skill-stock-ma-rsi-bband-macd-peband
