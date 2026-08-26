@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 keyframe_extract.py — Analyze a FIN.srt transcript for moments that likely show a
-chart/diagram/on-screen data (LLM semantic pass), then grab a PNG video frame at
+chart/diagram/on-screen data (LLM semantic pass), then grab a JPEG video frame at
 each timestamp.
 
 Requires `yt-dlp` and `ffmpeg` on PATH, plus the shared `llm` package (sibling repo
@@ -196,6 +196,8 @@ class KeyframeExtractor:
 
     def grab_frame(self, video_path: Path, timestamp: str, out_path: Path) -> None:
         out_path.parent.mkdir(parents=True, exist_ok=True)
+        # -q:v 2 on JPEG output (mjpeg encoder) is roughly quality ~95 — visually
+        # indistinguishable from the PNG this used to write, at a fraction of the size.
         proc = subprocess.run(
             ["ffmpeg", "-y", "-ss", timestamp, "-i", str(video_path),
              "-frames:v", "1", "-q:v", "2", str(out_path)],
@@ -224,7 +226,7 @@ class KeyframeExtractor:
                 for moment in moments:
                     ts = moment["timestamp"]
                     ts_compact = ts.replace(":", "")
-                    out_path = out_dir / f"{stem}_{ts_compact}.png"
+                    out_path = out_dir / f"{stem}_{ts_compact}.jpg"
                     self.grab_frame(video_path, ts, out_path)
 
                     frame_hash = _average_hash(out_path)
@@ -249,7 +251,7 @@ class KeyframeExtractor:
         # a _keyframes.md every single day, forever, and it never gets one.
         index_path = self._write_index_md(stem, srt_path, video_url, out_dir, kept_moments, saved, cues)
         print(
-            f"[keyframe_extract] done. saved {len(saved)} PNG(s) "
+            f"[keyframe_extract] done. saved {len(saved)} JPEG(s) "
             f"({skipped_duplicates} duplicate(s) skipped) to {out_dir}; index: {index_path}"
         )
         return saved
@@ -316,11 +318,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    extract_p = sub.add_parser("extract", help="Find key visual moments in a FIN.srt and save frame PNGs")
+    extract_p = sub.add_parser("extract", help="Find key visual moments in a FIN.srt and save frame JPEGs")
     extract_p.add_argument("stem", help="e.g. some-channel_dQw4w9WgXcQ")
     extract_p.add_argument("--srt", required=True, help="Path to the FIN.srt (or GT.srt) to analyze")
     extract_p.add_argument("--video-url", required=True, help="Original YouTube video URL (for frame download)")
-    extract_p.add_argument("--out-dir", default=None, help="Output directory for PNGs (default: <srt dir>/<stem>_keyframes)")
+    extract_p.add_argument("--out-dir", default=None, help="Output directory for JPEGs (default: <srt dir>/<stem>_keyframes)")
 
     args = parser.parse_args()
     if args.cmd == "extract":

@@ -1,13 +1,13 @@
 ---
 name: skill-youtube-channel-srt-keyframe-extract
-description: 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡報／數字等視覺重點的時間點，下載對應影片並擷取該時間點的畫面存成帶時間碼的 PNG，索引 md 每張截圖都附實際逐字稿片段（可關鍵字搜尋）與 LLM 話題推測。
+description: 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡報／數字等視覺重點的時間點，下載對應影片並擷取該時間點的畫面存成帶時間碼的 JPEG，索引 md 每張截圖都附實際逐字稿片段（可關鍵字搜尋）與 LLM 話題推測。
 ---
 
 # 逐字稿關鍵畫面擷取技能 (skill-youtube-channel-srt-keyframe-extract)
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.1.0（詳見 `metadata.json`） |
+| 版本 | 1.2.0（詳見 `metadata.json`） |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-youtube-channel-srt-keyframe-extract`） |
 | 維護者 | wenchiehlee |
 | 上游依賴 | `skill-mlx-api-client-whisper` 產出的 `FIN.srt`（或人工校正過的 `GT.srt`） |
@@ -25,7 +25,7 @@ description: 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡�
    對，Hamming distance ≤ 6（滿分 64）視為畫面沒真的切換（LLM 猜的話題邊界不一定對應到
    實際換頁），直接刪掉該張、不計入輸出——避免同一張投影片因為講者多講幾句話被連續截好
    幾張幾乎一樣的圖
-5. 去重後存成 `data/{channel}/{stem}_keyframes/{stem}_{HHMMSS}.png`，並產生一份
+5. 去重後存成 `data/{channel}/{stem}_keyframes/{stem}_{HHMMSS}.jpg`，並產生一份
    `data/{channel}/{stem}_keyframes.md` 索引，每個保留的時間碼對照四樣東西：縮圖連結、
    **該時間區段（到下一個保留時間點為止）的實際逐字稿片段**（逐字、可關鍵字搜尋——例如
    在多支影片的逐字稿裡搜關鍵字，找到談到的時間點後直接對到對應截圖）、以及 LLM 給的話題
@@ -34,7 +34,7 @@ description: 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡�
 ## ⚠️ 與 `skill-mlx-api-client-whisper` 的關係
 
 whisper pipeline 只下載/處理**音訊**；本技能是它的下游，需要**畫面**，因此會
-另外用 `yt-dlp` 抓一份影片（暫存於系統 temp 目錄，擷取完 PNG 後自動刪除，
+另外用 `yt-dlp` 抓一份影片（暫存於系統 temp 目錄，擷取完 JPEG 後自動刪除，
 不落地保存原始影片檔）。兩者互不影響——`FIN.srt` 是唯一輸入依賴。
 
 ## ⚙️ 前置環境配置
@@ -103,7 +103,7 @@ KeyframeExtractor().extract(
 若逐字稿中沒有找到值得截圖的視覺重點時刻，不會下載影片，直接回傳空清單，但仍會產生
 `{stem}_keyframes.md`（截圖數為 0）——確保每日排程的「還沒有 `_keyframes.md`」判斷條件
 會被滿足，該支影片才不會被永遠排除在 README 內容索引之外、也不會每天重複嘗試。
-去重後每個保留的時刻各存一張 PNG，檔名帶時間碼（`{stem}_{HHMMSS}.png`），方便對照原始
+去重後每個保留的時刻各存一張 JPEG（`-q:v 2`，畫質約 95），檔名帶時間碼（`{stem}_{HHMMSS}.jpg`），方便對照原始
 逐字稿的時間軸；同時在 `{stem}_keyframes/` 旁邊產生 `{stem}_keyframes.md`，用表格列出
 每張截圖的時間碼、縮圖、該時間區段的實際逐字稿片段（可關鍵字搜尋）與 LLM 話題推測，
 作為該影片的關鍵畫面索引。
