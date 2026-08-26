@@ -21,7 +21,11 @@
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | [skill-android-adb-gadget](common/skill-android-adb-gadget) | common | basic | 1.0.2 | PowerShell module for managing dual ADB transports (USB + Ethernet) on an embedded Android device that exposes a USB composite gadget — handles state detection, Ethernet bootstrapping, safe reboot/recovery, gadget mount, and HID function control. | 2026-08-07 |
 | [skill-company-competitor-analysis](common/skill-company-competitor-analysis) | common | financial-strategy | 0.1.1 | 依指定 stock id，使用 supply-chain product peer seed 與 relationship rules 區分 brand competitor、ODM peer、server peer 與 supplier/component，並輸出最近三年季度 Revenue、Revenue YoY、Profit、Profit YoY、GM 競爭者分析表。 | 2026-08-07 |
+| [skill-company-data-index-sync](common/skill-company-data-index-sync) | common | financial-data | 1.0.1 | 更新本地資料目錄索引，生成批次處理所需的投資標的清單 | 2026-08-26 |
+| [skill-company-decision-report](common/skill-company-decision-report) | common | financial-strategy | 1.0.1 | 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖） | 2026-08-26 |
 | [skill-company-download-logo](common/skill-company-download-logo) | common | basic | 1.0.1 | 指定台灣股票代碼或美股概念股 Ticker，自動下載高解析度公司官方 Logo PNG，並限制在固定大小。 | 2026-08-07 |
+| [skill-company-earnings-compare](common/skill-company-earnings-compare) | common | financial-accounting | 1.0.1 | 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異 | 2026-08-26 |
+| [skill-company-earnings-monitor](common/skill-company-earnings-monitor) | common | financial-data | 1.0.1 | 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板 | 2026-08-26 |
 | [skill-company-enrichment-json](common/skill-company-enrichment-json) | common | basic | 0.1.1 | Extract and review My-TW-Coverage Markdown enrichment as atomic JSON using the biztrends.TW focus list. | 2026-08-26 |
 | [skill-company-enrichment-render](common/skill-company-enrichment-render) | common | financial-data | 1.0.1 | Render My-TW-Coverage canonical enrichment JSON into organized Markdown without using Pilot_Reports as an active source. | 2026-08-26 |
 | [skill-company-investorconference-digest](common/skill-company-investorconference-digest) | common | basic | 2.4.6 | 法說會/earnings call 與財報結果 digest SOP；支援 FIN/GT/IR/Q&A、Skills 財報結果、公司財報文件、Yahoo consensus、預期差、模型修正路徑與美股對台股 read-through。 | 2026-08-25 |
@@ -33,6 +37,7 @@
 | [skill-company-revenue-forecast-benchmark](common/skill-company-revenue-forecast-benchmark) | common | financial-forecasting | 1.0.1 | 多模型與分析師共識效能評估標準作業程序。 | 2026-08-26 |
 | [skill-company-revenue-predict](common/skill-company-revenue-predict) | common | financial-forecasting | 1.0.1 | 營收預測與 10-Model 評估 SOP | 2026-08-26 |
 | [skill-company-revenue-segment-weights](common/skill-company-revenue-segment-weights) | common | financial-strategy | 1.3.1 | 更新與稽核 company revenue segment weights evidence、quarterly candidates、QA report 與 active snapshot；目前支援 biztrends.TW 台股 InvestorConference/MOPS/IR Markdown evidence，並在更新 company_segment_weights.csv 前產出資料解讀 QA。 | 2026-08-26 |
+| [skill-company-segment-viz](common/skill-company-segment-viz) | common | financial-accounting | 1.0.1 | 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖 | 2026-08-26 |
 | [skill-facebook-fetch](common/skill-facebook-fetch) | common | financial-data | 1.2.3 | 管理 Facebook.Fetch 專案的每日粉專/珍藏清單貼文抓取 — 本機執行與 GitHub Actions 共用同一支 run_daily_fetch.py，更新過期的 FB_COOKIE、手動觸發並監看 daily_fetch workflow、排查已知的資料夾命名衝突與 sync 觸發失敗問題。 | 2026-08-07 |
 | [skill-finmind-fetch](common/skill-finmind-fetch) | common | financial-data | 1.0.1 | Fetch Taiwan stock margin and price data from FinMind API and export/merge to stage1 raw CSV. | 2026-08-07 |
 | [skill-goodinfo-fetch](common/skill-goodinfo-fetch) | common | financial-data | 1.1.0 | Unified dispatcher across the GoodInfo.tw data pipeline: download raw XLS (Python-Actions.GoodInfo), convert to CSV via stage1 extraction (Python-Actions.GoodInfo.Analyzer), and enrich company-level metadata (Python-Actions.GoodInfo.CompanyInfo). | 2026-08-17 |
@@ -55,11 +60,6 @@
 | [skill-stock-market-cost-distribution](common/skill-stock-market-cost-distribution) | common | financial-forecasting | 1.0.2 | 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。 | 2026-08-07 |
 | [skill-stock-topcrash](common/skill-stock-topcrash) | common | financial-strategy | 1.0.1 | 任意指數/股票在指定年份範圍內的「崩盤Top N」清單——1/3/5/7/9/11日跌幅、事件標籤、VIX/CNN恐慌貪婪情境、恢復天數與形態(V/U修復)，輸出CSV。 | 2026-08-25 |
 | [skill-stock-universe-onboarding](common/skill-stock-universe-onboarding) | common | financial-data | 1.0.1 | Add stocks or tickers to upstream ConceptStocks and TAIEX monitor/focus source lists without editing generated downstream outputs. | 2026-08-07 |
-| [skill-company-earnings-compare](common/skill-company-earnings-compare) | common | financial-accounting | 1.0.1 | 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異 | 2026-08-07 |
-| [skill-company-earnings-monitor](common/skill-company-earnings-monitor) | common | financial-data | 1.0.1 | 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板 | 2026-08-07 |
-| [skill-company-decision-report](common/skill-company-decision-report) | common | financial-strategy | 1.0.1 | 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖） | 2026-08-07 |
-| [skill-company-data-index-sync](common/skill-company-data-index-sync) | common | financial-data | 1.0.1 | 更新本地資料目錄索引，生成批次處理所需的投資標的清單 | 2026-08-07 |
-| [skill-company-segment-viz](common/skill-company-segment-viz) | common | financial-accounting | 1.0.1 | 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖 | 2026-08-07 |
 | [skill-theme-competitor-groups-curate](common/skill-theme-competitor-groups-curate) | common | financial-strategy | 0.1.0 | 維護 data/themes/*.json 的 competitive_groups 與 extra_entities，讓 output/themes/*.md 主題頁面依真實產品/商業模式競爭關係分組，並與 data/enrichment_all/*.json 的 relationships.competitors 交叉比對一致性。 | 2026-08-26 |
 | [skill-theme-cycle-coverage](common/skill-theme-cycle-coverage) | common | basic | 0.2.3 | Build AI trend coverage, validity, issue register, and inference quality-gate outputs from company canonical cycle data. | 2026-08-26 |
 | [skill-theme-cycle-index](common/skill-theme-cycle-index) | common | financial-strategy | 1.3.2 | 套用已審核或已結構化的 company revenue segment weights 到 canonical cycle model；支援 Taiwan 與 United_States pipeline，US 對齊 canonical_cycle_specification 並用 latest-mix proxy 補齊缺 segment quarters，生成對應 company_cycle_index_*.png 並更新 README。 | 2026-08-26 |

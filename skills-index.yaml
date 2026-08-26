@@ -26,6 +26,26 @@ skills:
   source: biztrends.TW
   updated_at: '2026-07-22'
   revised_at: '2026-08-07'
+- name: skill-company-data-index-sync
+  group: common
+  path: common/skill-company-data-index-sync
+  version: 1.0.1
+  description: 更新本地資料目錄索引，生成批次處理所需的投資標的清單
+  category: financial-data
+  maintainer: wenchiehlee
+  source: TAIEX.TW
+  updated_at: '2026-07-07'
+  revised_at: '2026-08-26'
+- name: skill-company-decision-report
+  group: common
+  path: common/skill-company-decision-report
+  version: 1.0.1
+  description: 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖）
+  category: financial-strategy
+  maintainer: wenchiehlee
+  source: TAIEX.TW
+  updated_at: '2026-07-07'
+  revised_at: '2026-08-26'
 - name: skill-company-download-logo
   group: common
   path: common/skill-company-download-logo
@@ -36,6 +56,26 @@ skills:
   source: ''
   updated_at: '2026-07-07'
   revised_at: '2026-08-07'
+- name: skill-company-earnings-compare
+  group: common
+  path: common/skill-company-earnings-compare
+  version: 1.0.1
+  description: 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異
+  category: financial-accounting
+  maintainer: wenchiehlee
+  source: TAIEX.TW
+  updated_at: '2026-07-07'
+  revised_at: '2026-08-26'
+- name: skill-company-earnings-monitor
+  group: common
+  path: common/skill-company-earnings-monitor
+  version: 1.0.1
+  description: 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板
+  category: financial-data
+  maintainer: wenchiehlee
+  source: TAIEX.TW
+  updated_at: '2026-07-07'
+  revised_at: '2026-08-26'
 - name: skill-company-enrichment-json
   group: common
   path: common/skill-company-enrichment-json
@@ -156,6 +196,16 @@ skills:
   maintainer: wenchiehlee
   source: biztrends.TW
   updated_at: '2026-07-19'
+  revised_at: '2026-08-26'
+- name: skill-company-segment-viz
+  group: common
+  path: common/skill-company-segment-viz
+  version: 1.0.1
+  description: 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖
+  category: financial-accounting
+  maintainer: wenchiehlee
+  source: TAIEX.TW
+  updated_at: '2026-07-07'
   revised_at: '2026-08-26'
 - name: skill-facebook-fetch
   group: common
@@ -406,56 +456,6 @@ skills:
   maintainer: wenchiehlee
   source: biztrends.TW / ConceptStocks / Selenium-Actions.Auction
   updated_at: '2026-07-22'
-  revised_at: '2026-08-07'
-- name: skill-taiex-compare
-  group: common
-  path: common/skill-taiex-compare
-  version: 1.0.1
-  description: 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異
-  category: financial-accounting
-  maintainer: wenchiehlee
-  source: TAIEX.TW
-  updated_at: '2026-07-07'
-  revised_at: '2026-08-07'
-- name: skill-taiex-monitor
-  group: common
-  path: common/skill-taiex-monitor
-  version: 1.0.1
-  description: 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板
-  category: financial-data
-  maintainer: wenchiehlee
-  source: TAIEX.TW
-  updated_at: '2026-07-07'
-  revised_at: '2026-08-07'
-- name: skill-taiex-report
-  group: common
-  path: common/skill-taiex-report
-  version: 1.0.1
-  description: 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖）
-  category: financial-strategy
-  maintainer: wenchiehlee
-  source: TAIEX.TW
-  updated_at: '2026-07-07'
-  revised_at: '2026-08-07'
-- name: skill-taiex-sync
-  group: common
-  path: common/skill-taiex-sync
-  version: 1.0.1
-  description: 更新本地資料目錄索引，生成批次處理所需的投資標的清單
-  category: financial-data
-  maintainer: wenchiehlee
-  source: TAIEX.TW
-  updated_at: '2026-07-07'
-  revised_at: '2026-08-07'
-- name: skill-taiex-viz
-  group: common
-  path: common/skill-taiex-viz
-  version: 1.0.1
-  description: 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖
-  category: financial-accounting
-  maintainer: wenchiehlee
-  source: TAIEX.TW
-  updated_at: '2026-07-07'
   revised_at: '2026-08-07'
 - name: skill-theme-competitor-groups-curate
   group: common
