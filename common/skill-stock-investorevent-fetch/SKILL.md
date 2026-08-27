@@ -1,26 +1,38 @@
 ---
-name: skill-stock-investorconference-upcoming-earnings
+name: skill-stock-investorevent-fetch
 description: >-
-  Regenerate InvestorConference's raw_event_upcoming_earnings.csv locally from the repo's own
-  Taiwan watchlists (StockID_TWSE_TPEX.csv / StockID_TWSE_TPEX_focus.csv) and the US watchlist
+  Regenerate a repo's raw_event_upcoming_earnings.csv locally from that repo's own Taiwan
+  watchlists (StockID_TWSE_TPEX.csv / StockID_TWSE_TPEX_focus.csv) and US watchlist
   (raw_conceptstock_company_metadata.csv). Classifies every event into 財報, 法說會, or 受邀法說.
-  Use when the upcoming earnings/法說會 calendar is stale, when watchlists change, or before
-  skill-company-investorconference-ingest's --auto-todo / --update-readme need fresh calendar data.
+  Deployed identically to InvestorConference and InvestorEvents so both repos compute the same
+  event dates and fiscal-quarter labels. Use when the upcoming earnings/法說會 calendar is stale,
+  when watchlists change, or before skill-company-investorconference-ingest's --auto-todo /
+  --update-readme need fresh calendar data.
 ---
 
-# InvestorConference Upcoming Earnings Skill
+# Investor Event Fetch Skill
 
 ## Role
 
-You keep `raw_event_upcoming_earnings.csv` accurate and self-contained inside the
-`InvestorConference` repo. This calendar drives `skill-company-investorconference-ingest`'s
-`--auto-todo` scan and README generation, so its 類別 classification must be correct,
-not just its dates.
+You keep `raw_event_upcoming_earnings.csv` accurate and self-contained inside whichever repo
+runs this skill. `InvestorConference` and `InvestorEvents` both deploy an identical copy under
+`skills/skill-stock-investorevent-fetch/` — InvestorConference's `skill-company-investorconference-ingest`
+`--auto-todo` scan and README generation, and InvestorEvents' `weekly-earnings.yml` +
+`sync-to-Downstream.yml`, all depend on this CSV having correct dates *and* correct 類別
+classification, computed the same way in both places.
+
+> [!IMPORTANT]
+> Never let the two repos' copies of `scripts/fetch_upcoming_earnings.py` diverge. Fix bugs or
+> add classification logic here in the registry (`../skills`), then redeploy to both consumers
+> with `self_update.py --deploy-all` — do not patch one repo's copy in place. A prior divergence
+> (InvestorEvents stuck on a 645-line pre-`受邀法說` version while InvestorConference had the
+> 946-line version with the `KNOWN_US_CALENDAR_YEAR_EARNINGS` fiscal-quarter-mismatch fix) is
+> exactly the failure mode this shared skill exists to prevent.
 
 ## Prerequisites
 
-Run from the `InvestorConference` repo root. These files must exist there (download them
-first if missing — do not fabricate or hand-edit them):
+Run from the consuming repo's root (`InvestorConference` or `InvestorEvents`). These files must
+exist there (download them first if missing — do not fabricate or hand-edit them):
 
 - `StockID_TWSE_TPEX.csv` — full Taiwan watchlist (代號,名稱), used for TW 財報 dates via yfinance.
 - `StockID_TWSE_TPEX_focus.csv` — focus Taiwan watchlist, used for the (slower) per-stock MOPS 法說會 scrape.
@@ -33,14 +45,17 @@ skill if they look stale.
 ## Standard Workflow
 
 ```bash
-python skills/skill-stock-investorconference-upcoming-earnings/scripts/fetch_upcoming_earnings.py
+python skills/skill-stock-investorevent-fetch/scripts/fetch_upcoming_earnings.py
 ```
 
 Optional explicit date window (default: today-30d ~ today+60d):
 
 ```bash
-python skills/skill-stock-investorconference-upcoming-earnings/scripts/fetch_upcoming_earnings.py --start 2026-07-01 --end 2026-10-31
+python skills/skill-stock-investorevent-fetch/scripts/fetch_upcoming_earnings.py --start 2026-07-01 --end 2026-10-31
 ```
+
+InvestorEvents' `weekly-earnings.yml` and `fetch_all_events.py` call this script's
+`generate_upcoming_earnings()` from the repo root — see "InvestorEvents integration" below.
 
 The script does this in order:
 
@@ -73,11 +88,22 @@ this skill migrates old data automatically — no separate one-off migration scr
 - Downstream consumers (`skill-company-investorconference-ingest`'s `ingest_from_todo` / `update_readme`) read 類別 as `財報` / `法說會` / `受邀法說` directly — do not reintroduce `財報公告` as an output value.
 - A `受邀法說` row can be a genuinely separate appearance from the quarter's regular earnings-day call (e.g. an invited forum weeks/months later). `update_readme` guards against attaching the regular call's already-ingested materials to such a row unless its date is within 14 days of the same-quarter `財報` date — see `skill-company-investorconference-ingest`'s SKILL.md ("README `--update-readme` 合併規則"). Don't assume every `受邀法說` row will carry audio/transcripts even when materials already exist for that quarter.
 
+## InvestorEvents integration
+
+`InvestorEvents` imports this script as a module rather than only running it standalone:
+`fetch_all_events.py` does `from fetch_upcoming_earnings import generate_upcoming_earnings`,
+expecting the module importable from the repo root. Since the canonical copy now lives under
+`skills/skill-stock-investorevent-fetch/scripts/fetch_upcoming_earnings.py`, InvestorEvents'
+`fetch_all_events.py` and `.github/workflows/weekly-earnings.yml` add that scripts/ directory to
+`sys.path` (or run with `PYTHONPATH` set) before importing — see each file's top for the exact
+mechanism. Do not reintroduce a root-level copy of `fetch_upcoming_earnings.py` in InvestorEvents;
+that is what caused the original divergence.
+
 ## Replaces
 
-This skill is the maintained path for generating `raw_event_upcoming_earnings.csv` inside
-`InvestorConference`. Avoid copying the calendar in from another repo's `fetch_upcoming_earnings.py`
-or hand-editing rows; extend this skill's script instead if scraping/classification needs to change.
+This skill is the maintained path for generating `raw_event_upcoming_earnings.csv` inside both
+`InvestorConference` and `InvestorEvents`. Never hand-edit rows or let either repo's copy diverge;
+extend this skill's script in the registry and redeploy instead.
 
 ## Validation
 
