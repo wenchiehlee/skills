@@ -20,6 +20,7 @@ import os
 import re
 import sys
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import urllib3
 import requests
@@ -29,6 +30,20 @@ from dotenv import load_dotenv
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 load_dotenv()
+
+# skill-stock-fiscal-quarter-resolve is deployed as a sibling skill folder
+# (skills/skill-stock-fiscal-quarter-resolve/scripts/) in every repo that also
+# deploys this skill — see that skill's SKILL.md for why the fiscal-quarter
+# tables live there instead of being duplicated here.
+_FISCAL_QUARTER_SKILL_SCRIPTS = (
+    Path(__file__).resolve().parents[2] / "skill-stock-fiscal-quarter-resolve" / "scripts"
+)
+if str(_FISCAL_QUARTER_SKILL_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_FISCAL_QUARTER_SKILL_SCRIPTS))
+from fiscal_quarter import (  # noqa: E402
+    KNOWN_US_CALENDAR_YEAR_EARNINGS,
+    resolve_fiscal_quarter,
+)
 
 OUTPUT_FILE = "raw_event_upcoming_earnings.csv"
 CSV_HEADERS = [
@@ -126,45 +141,32 @@ _QUARTER_END_MONTH_DAY = {"1": (3, 31), "2": (6, 30), "3": (9, 30), "4": (12, 31
 # 法說會日期落在財季結束後超過此天數，視為受邀參加的投資論壇/法說會而非例行法說會。
 INVITED_MEETING_THRESHOLD_DAYS = 50
 
-# 財年與日曆年一致的美股（來自 skill-company-investorconference-ingest 已驗證的清單）。
-# raw_conceptstock_company_metadata.csv 的「即將發布」欄位對這些 ticker 常有一整季的落差
-# （例如 Alphabet 7 月公布的日曆 Q2 財報，metadata 卻標成 'FY2026 Q1'），
-# 需要以財報日期反推的日曆季度覆蓋，而不是直接信任 metadata 的 FY 標籤。
-KNOWN_US_CALENDAR_YEAR_EARNINGS = {"AMD", "AMZN", "GOOGL", "INTC", "META", "TSM"}
 _FY_QUARTER_RE = re.compile(r'FY(\d{4})\s+Q([1-4])')
-
-
-def _expected_us_calendar_earnings_quarter(date_str: str) -> tuple[str, str]:
-    """依財報公告日期反推日曆季度（美股慣例：報告月份即所屬季度）。"""
-    y, mo = int(date_str[:4]), int(date_str[5:7])
-    if 1 <= mo <= 3:
-        return str(y - 1), "4"
-    if 4 <= mo <= 6:
-        return str(y), "1"
-    if 7 <= mo <= 9:
-        return str(y), "2"
-    return str(y), "3"
 
 
 def _resolve_us_quarter_label(symbol: str, date_str: str, metadata_quarter: str | None,
                                fallback: datetime) -> str:
     """決定美股財報事件名稱要用的季度標籤。
 
-    對財年與日曆年一致的已知 ticker（KNOWN_US_CALENDAR_YEAR_EARNINGS），以財報日期反推
-    的日曆季度為準，metadata 的 FY 標籤僅供比對；衝突時印出警告並採用日期推算結果，
-    與 skill-company-investorconference-ingest README 產生器的 expected_us_calendar_earnings_quarter
-    workaround 保持一致。其餘 ticker 仍優先信任 metadata 的「即將發布」欄位。
+    對 skill-stock-fiscal-quarter-resolve 認得的已知 ticker——不論是財年偏移已知的
+    （KNOWN_US_FISCAL_YEAR_START_MONTH，例如 NVDA/DELL/QCOM/AAPL/MSFT）還是財年與日曆年
+    一致的（KNOWN_US_CALENDAR_YEAR_EARNINGS，例如 AMD/GOOGL）——一律以財報日期反推的結果
+    為準，metadata 的 FY 標籤僅供比對；衝突時印出警告並採用日期推算結果。這兩類 ticker 的
+    raw_conceptstock_company_metadata.csv「即將發布」欄位都曾被觀察到與實際公告日期不符
+    （NVDA 曾被標成 'FY2026 Q4'，實際是 'FY2027 Q2'；Alphabet 7 月公布的日曆 Q2 財報，
+    metadata 卻標成 'FY2026 Q1'）。只有 skill-stock-fiscal-quarter-resolve 無法判斷
+    （confidence == "unknown"）的 ticker，才繼續優先信任 metadata 的「即將發布」欄位。
     """
     display = symbol.replace(".TW", "").replace(".TWO", "").upper()
-    if display in KNOWN_US_CALENDAR_YEAR_EARNINGS:
-        date_year, date_q = _expected_us_calendar_earnings_quarter(date_str)
+    resolved = resolve_fiscal_quarter(display, date_str)
+    if resolved["confidence"] != "unknown":
         m = _FY_QUARTER_RE.match(metadata_quarter) if metadata_quarter else None
-        if m and (m.group(1), m.group(2)) != (date_year, date_q):
+        if m and (m.group(1), m.group(2)) != (resolved["year"], resolved["quarter"]):
             print(
                 f"  [QUARTER FIX] {symbol}: metadata {metadata_quarter} 與財報日期 {date_str} "
-                f"({date_year} Q{date_q}) 不符，改用日期推算的日曆季度。"
+                f"({resolved['label']}) 不符，改用日期推算的{'財年' if resolved['confidence'] == 'fiscal_offset' else '日曆'}季度。"
             )
-        return f"{date_year} Q{date_q}"
+        return resolved["label"]
     return metadata_quarter or _quarter_label(fallback)
 
 

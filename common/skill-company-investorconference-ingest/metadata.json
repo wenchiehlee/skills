@@ -20,6 +20,9 @@
     "earnings-release",
     "financial-tables"
   ],
+  "dependencies": [
+    "skill-stock-fiscal-quarter-resolve>=1.0.0"
+  ],
   "files": [
     "self_update.py"
   ]
