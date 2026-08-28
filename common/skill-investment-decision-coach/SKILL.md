@@ -39,6 +39,16 @@ description: Provide Traditional Chinese expert-level investment decision coachi
 
 當使用者詢問投資大師、投資流派、長期主義、左側/右側、edge、複利或 80/20 法則時，將答案整理成可比較的方法論，而不是零散名言。
 
+建立 methodology library 的目的，不是收集很多人的意見，而是引入多個互補的 mental models。每一位投資人或思想家的方法論，都代表一種觀察角度、判斷面向或操作方法；越多高品質且互補的模型，代表同一個投資問題能被更完整地檢查。
+
+操作時要避免變成「大師語錄拼貼」。正確用法是：
+
+```text
+不同高手 -> 不同 mental model -> 不同觀察面向 -> 更完整地看同一個問題 -> 降低盲點 -> 提高決策品質
+```
+
+關鍵限制：模型要互補，不是重複。若多個人物只是用不同語言講同一件事，合併成同一模型即可；只有能補上新視角、新面向或新方法時，才值得放進 methodology library。
+
 ### 徐新方法論
 
 徐新的框架可整理為三層：
@@ -92,7 +102,7 @@ Winner Pattern -> Consumer Insight -> Full-Theme Scan -> Best Candidate -> Valua
 | Jim Simons | Statistical Edge + Systematic Investing | 資料中是否有可重複統計優勢？ |
 | ARK / Cathie Wood | Wright's Law + Disruptive Innovation | 成本下降是否創造爆發式新市場？ |
 | 劉潤 | 底層邏輯 + 數學/商業模型 + 機率統計 + 博弈論 | 這個商業現象背後真正的變數、結構與約束是什麼？ |
-| 萬維鋼 | 系統思維 + 決策品質 + 跨學科模型 | 這個問題是否被放進正確的系統與回饋迴路裡理解？ |
+| 萬維鋼 | 系統思維 + 決策品質 + 多觀點/多面向模型 | 這個問題是否被放進正確的系統、回饋迴路與觀察面向裡理解？ |
 | Yuval Noah Harari | 歷史尺度 + 敘事/制度/科技變遷 | 這個投資敘事背後的人類協作、制度與長期趨勢是否成立？ |
 | 吳軍 | 科技史 + 資訊理論 + 工程/產品方法論 | 技術演進、資訊效率與工程約束如何改變產業結構？ |
 
@@ -103,7 +113,7 @@ Winner Pattern -> Consumer Insight -> Full-Theme Scan -> Best Candidate -> Valua
 - 《投資最重要的事》對應 **Howard Marks**：second-level thinking、風險控制、週期、逆向與市場預期。
 - 《窮查理的普通常識》對應 **Charlie Munger**，並連到 **Warren Buffett**：多元思維模型、逆向思考、能力圈、心理誤判、檢查清單、少數高品質機會。
 - 《底層邏輯》與《底層邏輯2》對應 **劉潤**：變數拆解、機率統計、數學期望、大數定律、博弈論、商業系統與相對思維。
-- 《佛畏系統》對應 **萬維鋼**：系統思維、回饋迴路、決策品質與跨學科理解。
+- 《佛畏系統》對應 **萬維鋼**：系統思維、回饋迴路、決策品質與多觀點/多面向理解。
 - 《人類大歷史》對應 **Yuval Noah Harari**：長期歷史尺度、共同敘事、制度演化、科技改變社會結構。
 - 書中提到 **吳軍** 時，可作為科技史、資訊理論、工程/產品方法論與長期技術演進的輔助框架。
 
@@ -118,7 +128,7 @@ Winner Pattern -> Consumer Insight -> Full-Theme Scan -> Best Candidate -> Valua
 
 ### 人物索引與分層
 
-方法論庫不要只列一張平面表；回答時可依問題切換分層：
+方法論庫不要只列一張平面表，也不要把人名數量當成品質；回答時可依問題切換分層，選出互補的 mental models 來檢查同一個投資問題：
 
 - **主題/產業/消費者/競爭**：徐新、Philip Fisher、Peter Lynch。
 - **長期複利/優質企業**：Buffett、Munger、Terry Smith、Nick Sleep、Li Lu、Chuck Akre、Tom Gayner、Thomas Russo。
@@ -128,7 +138,7 @@ Winner Pattern -> Consumer Insight -> Full-Theme Scan -> Best Candidate -> Valua
 - **技術顛覆/成本曲線**：ARK / Cathie Wood。
 - **左側價值**：Benjamin Graham、Buffett、Klarman、Marks、Pabrai。
 - **右側趨勢**：William O'Neil、Mark Minervini、Druckenmiller。
-- **書本延伸的思維模型/系統框架**：劉潤、萬維鋼、Yuval Noah Harari、吳軍。這些人不一定是投資流派代表，但可補強商業底層邏輯、系統思維、歷史尺度、科技/資訊理論與決策品質。
+- **書本延伸的思維模型/系統框架**：劉潤、萬維鋼、Yuval Noah Harari、吳軍。這些人不一定是投資流派代表，但可補強商業底層邏輯、系統思維、歷史尺度、科技/資訊理論與決策品質。這裡的 `多元思維模型` 不是狹義的「不同學科模型」，而是用不同觀點、不同面向、不同方法去檢查同一個問題。
 
 ### Value Creation、Storage、Compounding
 
