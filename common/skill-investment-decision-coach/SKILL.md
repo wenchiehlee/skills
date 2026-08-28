@@ -43,14 +43,14 @@ description: Provide Traditional Chinese expert-level investment decision coachi
 
 徐新的框架可整理為三層：
 
-1. **Winner Pattern Study**：先研究產業贏家共通模式，建立「什麼樣的公司會贏」的模板。
+1. **Winner Pattern Study**：先研究主題/產業贏家共通模式，建立「什麼樣的公司會贏」的模板。
 2. **Consumer Deep Diving**：穿透財報，直接理解需求、用戶行為、消費者為什麼買，以及三到五年後是否還會買。
-3. **Full-Sector Scan / Turn Every Stone**：不要只研究單一公司；把同一賽道主要玩家全部攤開比較，先建立森林，再判斷哪棵樹真正突出。
+3. **Full-Theme Scan / Full-Sector Scan / Turn Every Stone**：不要只研究單一公司；在本 repo 的 taxonomy 中，優先把跨公司敘事、供應鏈、canonical cycle 或投資主題稱為 `theme`，把傳統產業邊界稱為 `sector`。實作時要把同一 `theme`/`sector` 主要玩家全部攤開比較；「賽道」只作為口語說法，不作為 skill taxonomy 名稱，先建立森林，再判斷哪棵樹真正突出。
 
 輸出時可壓縮為：
 
 ```text
-Winner Pattern -> Consumer Insight -> Full-Sector Scan -> Best Candidate -> Valuation
+Winner Pattern -> Consumer Insight -> Full-Theme Scan -> Best Candidate -> Valuation
 ```
 
 核心提醒：投資不是只問「這家公司好不好」，而是問「為什麼是它，而不是另外十九家」。
@@ -69,11 +69,11 @@ Winner Pattern -> Consumer Insight -> Full-Sector Scan -> Best Candidate -> Valu
 
 ### 方法論比較
 
-當使用者問「還有哪些方法論」時，優先用表格比較「人物、核心方法論、最關鍵問題」。可使用以下基礎庫：
+當使用者問「還有哪些方法論」時，優先用表格比較「人物/框架來源、核心方法論、最關鍵問題」。可使用以下基礎庫：
 
-| 投資人/流派 | 核心方法論 | 最關鍵問題 |
+| 人物/框架來源 | 核心方法論 | 最關鍵問題 |
 |---|---|---|
-| 徐新 | Winner Pattern + Consumer Deep Dive + 全賽道掃描 | 誰會成為產業贏家，為什麼？ |
+| 徐新 | Winner Pattern + Consumer Deep Dive + 全主題/全賽道掃描 | 誰會成為主題或產業贏家，為什麼？ |
 | Warren Buffett | 能力圈 + 護城河 + Owner Earnings + 安全邊際 | 這是不是能長期複利的好生意？ |
 | Charlie Munger | 多元思維模型 + 反向思考 + 激勵機制 + 心理誤判 | 我是不是因為錯誤模型而看錯？ |
 | Howard Marks | Second-Level Thinking + 週期 + 風險控制 + 逆向 | 市場預期了什麼，我和市場差在哪？ |
@@ -107,7 +107,7 @@ Winner Pattern -> Consumer Insight -> Full-Sector Scan -> Best Candidate -> Valu
 - 《人類大歷史》對應 **Yuval Noah Harari**：長期歷史尺度、共同敘事、制度演化、科技改變社會結構。
 - 書中提到 **吳軍** 時，可作為科技史、資訊理論、工程/產品方法論與長期技術演進的輔助框架。
 
-這些書本來源可補足 `Master Investor Methodology` 的前置層：先用底層邏輯與系統思維理解世界/產業，再進入公司、預期、估值、下注與持有。
+這些書本來源可補足 `Master Investor Methodology` 的前置層：先用底層邏輯與系統思維理解世界、主題/產業，再進入公司、預期、估值、下注與持有。
 
 ### 左側、右側與長期主義
 
@@ -120,7 +120,7 @@ Winner Pattern -> Consumer Insight -> Full-Sector Scan -> Best Candidate -> Valu
 
 方法論庫不要只列一張平面表；回答時可依問題切換分層：
 
-- **產業/消費者/競爭**：徐新、Philip Fisher、Peter Lynch。
+- **主題/產業/消費者/競爭**：徐新、Philip Fisher、Peter Lynch。
 - **長期複利/優質企業**：Buffett、Munger、Terry Smith、Nick Sleep、Li Lu、Chuck Akre、Tom Gayner、Thomas Russo。
 - **市場預期/週期/逆向**：Howard Marks、Seth Klarman、George Soros、Michael Mauboussin。
 - **宏觀/流動性/資產配置**：Ray Dalio、Stanley Druckenmiller。
@@ -157,11 +157,11 @@ Identify Value -> Understand Value Creation -> Track Value Storage -> Verify Rei
 5. 管理層是否懂資本配置，再投資、回購、併購、配息哪個最合理？
 6. 價值最後落到誰手上，股東、員工、客戶、供應商還是管理層？
 
-### 80/20、複利與長期主義
+### 80/20（82 法則）、複利與長期主義
 
 三者不是競爭概念，而是不同層次：
 
-- **80/20 法則**：找少數真正重要的機會與變數。
+- **80/20（82）法則**：找少數真正重要的機會與變數。
 - **長期主義**：確認它值得被時間放大。
 - **複利法則**：讓時間把小優勢變成巨大結果。
 
@@ -237,8 +237,8 @@ skill-<domain>-<object>-<action>
   3. `skill-theme-cycle-coverage`——讀取上述逐公司 segment/cycle 拆解結果，稽核彙總成 `ai_trend_coverage_matrix`／`ai_trend_data_issue_register`，主鍵是 (company, canonical cycle)，回報格式同時要求「covered company count」與「covered canonical cycle count」雙軸覆蓋，結論是「哪些 AI cycle 仍被 proxy/stale 資料主導」——對主題下結論，不是對公司下結論，屬於 `theme` domain。
 
   規則：只要輸出的**主要/命名交付物**主鍵包含 cycle/theme 而非收斂回單一公司，就算輸入資料是逐公司產物，也該歸 `theme` domain；只有輸出主鍵仍是單一公司時才留在 `company` domain。
-- **company vs. stock vs. theme（跨多家公司時的第三種可能）**：跨多家公司不等於就是 `theme`。`theme` 的跨公司是「敘事/分類分組」（一群公司因為屬於同一主題被歸在一起，例如競爭者分組、canonical cycle 覆蓋矩陣）；`stock` 的跨公司是「整個 watchlist/股票宇宙層級的名單操作」，沒有主題分類語意，只是同時處理一批股票（例如加開觀察名單、批次抓取整個 universe 的行事曆/技術指標）。判斷準則：輸出如果是「這批股票個別的一列資料」（例如每檔股票的下一次法說會日期、每檔股票的技術指標快照），且彼此之間沒有被歸類分組，就是 `stock` domain，即使一次涵蓋整個市場。例如 `skill-company-investorconference-upcoming-earnings` 原本掛在 `company` domain 不對——它的輸出是整個 TW/US watchlist 的法說會/財報行事曆，每一列是「一檔股票的一個事件」，沒有分組也沒有單一公司焦點，跟 `skill-stock-universe-onboarding`（維護 watchlist 名單）是同一種「整個股票宇宙」語意，因此改名為 `skill-stock-investorconference-upcoming-earnings`。
-- **competitor 是 company 底下的一個 action，不是獨立 domain**：以單一公司為錨點找出其競爭者/同業（例如 `skill-theme-competitor-analysis`），屬於 `company-competitor-analysis`；但「跨主題頁維護一群公司的競爭關係分組」（例如 `skill-theme-competitor-groups-curate`）主體是主題頁而非單一公司，命名應改用 `theme` domain，而非 `my-tw` 這類未定義的 domain。
+- **company vs. stock vs. theme（跨多家公司時的第三種可能）**：跨多家公司不等於就是 `theme`。`theme` 的跨公司是「敘事/分類分組」（一群公司因為屬於同一主題被歸在一起，例如競爭者分組、canonical cycle 覆蓋矩陣）；`stock` 的跨公司是「整個 watchlist/股票宇宙層級的名單操作」，沒有主題分類語意，只是同時處理一批股票（例如加開觀察名單、批次抓取整個 universe 的行事曆/技術指標）。判斷準則：輸出如果是「這批股票個別的一列資料」（例如每檔股票的下一次法說會日期、每檔股票的技術指標快照），且彼此之間沒有被歸類分組，就是 `stock` domain，即使一次涵蓋整個市場。例如舊的 investor-conference upcoming-earnings skill 若掛在 `company` domain 會不對——它的輸出是整個 TW/US watchlist 的法說會/財報行事曆，每一列是「一檔股票的一個事件」，沒有分組也沒有單一公司焦點，跟 `skill-stock-universe-onboarding`（維護 watchlist 名單）是同一種「整個股票宇宙」語意，因此目前應歸為 `stock` domain（例如 `skill-stock-investorevent-fetch`）。
+- **competitor 是 company 底下的一個 action，不是獨立 domain**：以單一公司為錨點找出其競爭者/同業（例如 `skill-company-competitor-analysis`），屬於 `company` domain；但「跨主題頁維護一群公司的競爭關係分組」（例如 `skill-theme-competitor-groups-curate`）主體是主題頁而非單一公司，命名應改用 `theme` domain，而非 `my-tw` 這類未定義的 domain。
 - **company vs. institutional**：`company` 的資料來源是公司自身（財報、法說、MOPS、IR）；`institutional` 的資料來源是外部第三方（外資、投顧、券商研究報告的評等/目標價/預估），即使分析對象是同一家公司，只要主體資料是「別人怎麼看這家公司」，就該歸入 `institutional`，不歸入 `company`。
 - **institutional 內部依 object 區分 thesis 與 report，不要合併**：`skill-institutional-thesis-research` 處理的是全球投行（Goldman Sachs、Morgan Stanley、JPM、BofA、UBS 等）的敘事型論述/thesis/consensus，不限定台灣；`skill-institutional-tw-report-research` 處理的是台灣上市櫃公司的結構化券商報告數字（rating、target price、EPS 預估），並與 TWSE/TPEx 法人買賣超 flow 比對。兩者輸出形狀不同（敘事 vs. 結構化數字），object 分別用 `thesis` 與 `tw-report` 區隔；`tw` 放在 object 位置（而非當 domain 前綴）用來標示範疇限定於台灣上市櫃公司，不違反「不要用 `tw` 當 domain」的規則。
 
