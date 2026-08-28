@@ -1,6 +1,6 @@
 ---
 name: skill-investment-decision-coach
-description: Provide Traditional Chinese expert-level investment decision coaching based on digested book knowledge and 投資策略框架.md files. Use when Codex needs to answer investment questions, build a daily practical investment system, evaluate opportunities, manage risk, challenge behavioral mistakes, create decision checklists, or recommend coherent names/categories for finance-related skills.
+description: Provide Traditional Chinese expert-level investment decision coaching based on digested book knowledge, 投資策略框架.md files, and an investment methodology library. Use when Codex needs to answer investment questions, compare investor methodologies, explain edge/long-termism/compounding, build a daily practical investment system, evaluate opportunities, manage risk, challenge behavioral mistakes, create decision checklists, or recommend coherent names/categories for finance-related skills.
 ---
 
 # 投資決策教練
@@ -33,6 +33,127 @@ description: Provide Traditional Chinese expert-level investment decision coachi
 6. **機會成本**：比較現金、指數化、既有最佳持股與其他候選標的。
 7. **行動條件**：輸出可執行條件，例如觀察、研究、等待、小部位試探、分批、再平衡或排除。
 8. **覆盤機制**：要求留下決策紀錄，並設定下次檢查的事實觸發條件。
+
+
+## 投資方法論庫
+
+當使用者詢問投資大師、投資流派、長期主義、左側/右側、edge、複利或 80/20 法則時，將答案整理成可比較的方法論，而不是零散名言。
+
+### 徐新方法論
+
+徐新的框架可整理為三層：
+
+1. **Winner Pattern Study**：先研究產業贏家共通模式，建立「什麼樣的公司會贏」的模板。
+2. **Consumer Deep Diving**：穿透財報，直接理解需求、用戶行為、消費者為什麼買，以及三到五年後是否還會買。
+3. **Full-Sector Scan / Turn Every Stone**：不要只研究單一公司；把同一賽道主要玩家全部攤開比較，先建立森林，再判斷哪棵樹真正突出。
+
+輸出時可壓縮為：
+
+```text
+Winner Pattern -> Consumer Insight -> Full-Sector Scan -> Best Candidate -> Valuation
+```
+
+核心提醒：投資不是只問「這家公司好不好」，而是問「為什麼是它，而不是另外十九家」。
+
+### Edge 檢查
+
+使用者問 `edge` 時，定義為「相對市場其他參與者，能持續做出更好判斷的資訊、能力或行為優勢」。至少檢查五類：
+
+- **Information Edge**：是否更早、更多、更完整掌握資訊。
+- **Analytical Edge**：是否能從同一份資料推論出更深結論。
+- **Behavioral Edge**：是否有紀律，不被恐懼、貪婪、FOMO 或短期波動帶走。
+- **Time-horizon Edge**：是否願意承受短期雜訊，研究三到五年以上的結果。
+- **Structural Edge**：資金性質、工具、產業背景、研究流程是否形成優勢。
+
+沒有 edge 時，結論應降級為「跟市場共識相近」，不可用高自信語氣建議集中下注。
+
+### 方法論比較
+
+當使用者問「還有哪些方法論」時，優先用表格比較「人物、核心方法論、最關鍵問題」。可使用以下基礎庫：
+
+| 投資人/流派 | 核心方法論 | 最關鍵問題 |
+|---|---|---|
+| 徐新 | Winner Pattern + Consumer Deep Dive + 全賽道掃描 | 誰會成為產業贏家，為什麼？ |
+| Warren Buffett | 能力圈 + 護城河 + Owner Earnings + 安全邊際 | 這是不是能長期複利的好生意？ |
+| Charlie Munger | 多元思維模型 + 反向思考 + 激勵機制 + 心理誤判 | 我是不是因為錯誤模型而看錯？ |
+| Howard Marks | Second-Level Thinking + 週期 + 風險控制 + 逆向 | 市場預期了什麼，我和市場差在哪？ |
+| Philip Fisher | Scuttlebutt + 成長品質 + 長期持有 | 客戶、供應商、員工看到的競爭力如何？ |
+| Peter Lynch | 生活觀察 + 成長分類 + 合理估值 | 華爾街還沒完全理解的成長在哪？ |
+| Terry Smith | Good Companies, Don't Overpay, Do Nothing | 公司能否長期維持高 ROIC？ |
+| Mohnish Pabrai | Cloning + Checklist + 不對稱賭注 | 能否抄最好的作業，且下檔有限？ |
+| Ray Dalio | All Weather + Risk Parity + Economic Machine | 不同成長/通膨環境下組合能否活下來？ |
+| George Soros | Reflexivity | 價格是否反過來改變基本面？ |
+| Stanley Druckenmiller | 流動性 + 宏觀趨勢 + 集中下注 | 最強趨勢與資金方向在哪？ |
+| Joel Greenblatt | Magic Formula | 哪些公司同時便宜又好？ |
+| Seth Klarman | 安全邊際 + 絕對報酬 | 最差情況會永久損失多少？ |
+| Michael Mauboussin | Expectations Investing + Base Rates | 股價已經 price-in 什麼？ |
+| Ed Thorp | Kelly Criterion | 即使有 edge，該下注多少？ |
+| Nassim Taleb | Barbell + Antifragility | 如何避免一次黑天鵝毀滅？ |
+| Jim Simons | Statistical Edge + Systematic Investing | 資料中是否有可重複統計優勢？ |
+| ARK / Cathie Wood | Wright's Law + Disruptive Innovation | 成本下降是否創造爆發式新市場？ |
+
+### 左側、右側與長期主義
+
+- **左側投資**：市場尚未確認反轉時，因價格低於內在價值、安全邊際提高而買入。代表框架：Benjamin Graham、Warren Buffett、Seth Klarman、Howard Marks、Mohnish Pabrai。必須確認是 `Price down` 但 `Intrinsic Value roughly unchanged`，否則可能是 value trap。
+- **右側投資**：等價格、趨勢、基本面或資金流確認後跟進。代表框架：William O'Neil、Mark Minervini、Stanley Druckenmiller。
+- **混合系統**：可用基本面左側找價值，再用價格/趨勢/週期右側確認 thesis 是否開始被市場驗證。
+- **長期主義**：不是持有很久，而是選到能被時間放大的東西。核心公式為 `Quality x Durability x Reinvestment x Time`。最純長期主義可用 Buffett、Munger、Fisher、Terry Smith、Nick Sleep、Li Lu 作為代表；長期複利派可用 Chuck Akre、Tom Gayner、Thomas Russo、Pabrai 作為代表。徐新也可歸入長期主義，但她的特徵是先找到產業 winner，再長期陪伴 winner 成長。
+
+### 人物索引與分層
+
+方法論庫不要只列一張平面表；回答時可依問題切換分層：
+
+- **產業/消費者/競爭**：徐新、Philip Fisher、Peter Lynch。
+- **長期複利/優質企業**：Buffett、Munger、Terry Smith、Nick Sleep、Li Lu、Chuck Akre、Tom Gayner、Thomas Russo。
+- **市場預期/週期/逆向**：Howard Marks、Seth Klarman、George Soros、Michael Mauboussin。
+- **宏觀/流動性/資產配置**：Ray Dalio、Stanley Druckenmiller。
+- **量化/下注/風險結構**：Joel Greenblatt、Ed Thorp、Jim Simons、Nassim Taleb。
+- **技術顛覆/成本曲線**：ARK / Cathie Wood。
+- **左側價值**：Benjamin Graham、Buffett、Klarman、Marks、Pabrai。
+- **右側趨勢**：William O'Neil、Mark Minervini、Druckenmiller。
+
+### Value Creation、Storage、Compounding
+
+使用者問長期主義如何辨識與儲存價值時，用以下框架：
+
+```text
+Identify Value -> Understand Value Creation -> Track Value Storage -> Verify Reinvestment -> Let Time Compound
+```
+
+辨識價值至少看：
+
+- 高 ROIC/ROE，且長期高於資金成本。
+- Reinvestment Runway：仍有足夠高報酬再投資空間。
+- Moat：品牌、成本、網路效應、轉換成本、規模經濟等優勢是否持久。
+- Free Cash Flow：獲利能否轉成現金。
+- Pricing Power：成本上升時是否能漲價且不流失客戶。
+
+價值儲存要追問企業賺到的錢流向哪裡：本業再投資、併購、回購、配息、留現金，或被管理層浪費。真正的 compounder 是能把現在盈餘以高增量 ROIC 重新投入，轉化成更高未來盈餘。
+
+建立 `Value Storage Test` 時問六題：
+
+1. 公司是否真的創造經濟價值，ROIC 是否長期高於 WACC？
+2. 高回報是否有護城河保護，競爭者為何不能搶走超額報酬？
+3. 還能把多少錢重新投入，TAM、市占、新產品、新市場還有多大？
+4. 新增資本回報率是多少，不只看歷史 ROIC，也看 incremental ROIC。
+5. 管理層是否懂資本配置，再投資、回購、併購、配息哪個最合理？
+6. 價值最後落到誰手上，股東、員工、客戶、供應商還是管理層？
+
+### 80/20、複利與長期主義
+
+三者不是競爭概念，而是不同層次：
+
+- **80/20 法則**：找少數真正重要的機會與變數。
+- **長期主義**：確認它值得被時間放大。
+- **複利法則**：讓時間把小優勢變成巨大結果。
+
+輸出可整理為：
+
+```text
+80/20 -> Selection -> Long Term -> Compounding -> Durable Compounder
+```
+
+提醒使用者不要把它誤解成「重倉後永遠不賣」。複利成立的前提是增量資本報酬、護城河、管理層資本配置與成長 runway 持續存在。
 
 ## 日常投資系統輸出格式
 
