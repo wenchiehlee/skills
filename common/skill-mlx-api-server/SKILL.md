@@ -7,7 +7,7 @@ description: 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.0.0（詳見 `metadata.json`） |
+| 版本 | 1.1.1（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-server`） |
 | 維護者 | wenchiehlee |
@@ -88,6 +88,18 @@ skill-mlx-api-server/
    ```
 2. 若為 VLM，加入 `_VLM_REPOS`；若為 thinking model，加入 `_NOTHINK_REPOS`。
 3. 更新 `MLX_ALLOWED_MODELS` 環境變數（或 GitHub Vars）。
+
+## 📊 AI Model Usage 統計
+
+`skill-mlx-api-server` 會自行產生 AI 結果，因此 server 端必須直接送出 normalized `llm_call`，不能只依賴呼叫端：
+
+| Endpoint | `service` | `stage` | `provider` | `model` | `model_repo` |
+|----------|-----------|---------|------------|---------|--------------|
+| `/exec` default | `mlx-api-server` | `exec` | `mlx` | `mlx-qwen3` | `mlx-community/Qwen3.5-9B-MLX-4bit` |
+| `/exec` `model=mlx-gemma4` | `mlx-api-server` | `exec` | `mlx` | `mlx-gemma4` | `mlx-community/gemma-4-e4b-it-8bit` |
+| `/ocr` | `mlx-api-server` | `ocr` | `baidu-ocr` | `baidu/Unlimited-OCR` | `baidu/Unlimited-OCR` |
+
+呼叫端應傳 `X-App-Name`，server 端用它填入 `app_name`；沒有提供時 `/exec` fallback 為 `MLX-Exec`，`/ocr` fallback 為 `Baidu-OCR`。跨服務 README 應使用 `app_name × model` last-7-days 來回答單一應用的模型使用來源。
 
 ## ⚙️ 環境變數規格
 

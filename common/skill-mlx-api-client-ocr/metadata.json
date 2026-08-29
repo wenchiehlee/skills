@@ -2,11 +2,11 @@
   "name": "skill-mlx-api-client-ocr",
   "description": "呼叫 Mac-mini MLX API Server 的 OCR 客戶端（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。",
   "category": "document",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee/FamilyHealthyCheck",
-  "updated_at": "2026-08-09",
+  "updated_at": "2026-08-30",
   "license": "MIT",
   "tags": [
     "ocr",
