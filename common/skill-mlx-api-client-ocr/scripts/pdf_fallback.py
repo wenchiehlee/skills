@@ -17,7 +17,6 @@ try:
 except Exception:  # pragma: no cover - optional dependency
     fitz = None
 
-from pypdf import PdfReader
 
 if platform.system() == "Windows":
     try:
@@ -38,6 +37,11 @@ def _page_has_images(page) -> bool:
 
 
 def _extract_with_pypdf(path_obj: Path, min_chars: int, mark_embedded_images: bool) -> tuple[list[str], int, int]:
+    try:
+        from pypdf import PdfReader
+    except ImportError as exc:
+        raise RuntimeError("Missing dependency: install pypdf for fallback PDF text extraction") from exc
+
     reader = PdfReader(str(path_obj))
     parts: list[str] = []
     todo_count = 0

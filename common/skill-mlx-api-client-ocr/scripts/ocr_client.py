@@ -150,8 +150,9 @@ def transcribe_document_to_markdown(file_path: str | Path, dpi: int = 200, clean
             }
 
             print(f"Sending {path_obj.name} to Mac-mini OCR API...", file=sys.stderr)
-            # 設定連線與讀取超時時間，因為 OCR 處理可能需要較長時間，所以 timeout 設為 900 秒
-            response = requests.post(api_url, headers=headers, files=files, data=data, timeout=900)
+            # 設定連線與讀取超時時間，因為 OCR 處理可能需要較長時間，所以預設 timeout 設為 900 秒。
+            timeout = int(os.getenv("OCR_TIMEOUT_SECONDS", "900"))
+            response = requests.post(api_url, headers=headers, files=files, data=data, timeout=timeout)
 
         if response.status_code != 200:
             try:
