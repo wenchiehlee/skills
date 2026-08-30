@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-08-29'
+generated_at: '2026-08-30'
 skills:
 - name: skill-android-adb-gadget
   group: common
@@ -130,7 +130,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/MOPS
   updated_at: '2026-07-19'
-  revised_at: '2026-08-07'
+  revised_at: '2026-08-30'
 - name: skill-company-reputation-research
   group: common
   path: common/skill-company-reputation-research
