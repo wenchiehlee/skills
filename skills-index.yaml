@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-08-30'
+generated_at: '2026-08-31'
 skills:
 - name: skill-android-adb-gadget
   group: common
@@ -302,7 +302,7 @@ skills:
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/Miz.Fetch
   updated_at: '2026-08-28'
-  revised_at: '2026-08-28'
+  revised_at: '2026-08-31'
 - name: skill-llm-api-client
   group: common
   path: common/skill-llm-api-client
