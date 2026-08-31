@@ -1,0 +1,25 @@
+{
+  "name": "skill-tw-legal-search-console",
+  "description": "台灣人物法律查核搜尋主控台——支援兩種輸入模式：(1) 一篇提及人物的新聞連結 (2) 人名（建議附地區/公司/職稱等輔助資訊）。整合 tw-legal-rag（22,534,636 筆裁判書語義檢索，含引用防護）、司法院裁判書系統即時備援查詢與新聞搜尋佐證，依身分比對信心與風險分級規則產出查核報告。當使用者提供新聞連結或人名，要求「查有無官司」「法律查核」「背景調查」時使用。",
+  "category": "basic",
+  "version": "1.1.0",
+  "maintainer": "wenchiehlee",
+  "source": "TW-person-legal-search",
+  "updated_at": "2026-08-31",
+  "files": [
+    "metadata.json",
+    "SKILL.md"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-tw-legal-search-console"
+    },
+    {
+      "repo": "wenchiehlee-money/TW-person-legal-search",
+      "role": "consumer",
+      "local_path": "github.com/TW-person-legal-search/.claude/skills/skill-tw-legal-search-console"
+    }
+  ]
+}

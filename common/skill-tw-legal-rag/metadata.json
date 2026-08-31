@@ -1,0 +1,27 @@
+{
+  "name": "skill-tw-legal-rag",
+  "description": "Retrieve real Taiwan court judgments with verifiable citations before answering any question about Taiwan law or case law. Use when the user asks about 台灣/臺灣 judgments, 判決, 法院見解, legal precedents, or wants case support for a legal argument. Wraps the twlegalrag CLI (pack subcommand); answers must cite only citation_ids present in the returned bundle.",
+  "category": "basic",
+  "version": "1.0.0",
+  "maintainer": "wenchiehlee",
+  "source": "TW-person-legal-search (vendored from https://github.com/aa0101181514/tw-legal-rag, skills/tw-legal-rag/)",
+  "updated_at": "2026-08-31",
+  "notice": "Vendored third-party skill under Elastic License 2.0 (CLI/skill); the hosted retrieval service and judgment corpus are not covered by that license — see SKILL.md and upstream TERMS.md. Not MIT-licensed like the rest of this registry.",
+  "files": [
+    "metadata.json",
+    "SKILL.md",
+    "scripts/search_judgments.py"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-tw-legal-rag"
+    },
+    {
+      "repo": "wenchiehlee-money/TW-person-legal-search",
+      "role": "consumer",
+      "local_path": "github.com/TW-person-legal-search/.claude/skills/skill-tw-legal-rag"
+    }
+  ]
+}
