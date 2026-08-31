@@ -27,9 +27,14 @@ def find_mac_mini_ocr_skill(repo: Path) -> Path:
         repo / "skills" / "mac-mini-ocr",
         repo / "skills" / "skill-mac-mini-ocr",
         repo / "skills" / "common" / "skill-mac-mini-ocr",
+        repo / "skills" / "skill-mlx-api-client-ocr",
+        repo / "skills" / "common" / "skill-mlx-api-client-ocr",
         repo.parent / "skills" / "common" / "skill-mac-mini-ocr",
+        repo.parent / "skills" / "common" / "skill-mlx-api-client-ocr",
         Path(__file__).resolve().parents[2] / "skill-mac-mini-ocr",
+        Path(__file__).resolve().parents[2] / "skill-mlx-api-client-ocr",
         Path(__file__).resolve().parents[3] / "skill-mac-mini-ocr",
+        Path(__file__).resolve().parents[3] / "skill-mlx-api-client-ocr",
     ]
     for candidate in candidates:
         if (candidate / "scripts" / "pdf_fallback.py").is_file():
@@ -180,12 +185,11 @@ def main() -> int:
         if pdf in invalid:
             continue
         md = pdf.with_suffix(".md")
-        if not needs_conversion(pdf, args.force_convert):
-            continue
-        write_markdown_with_fallback(pdf, md, fallback_script, args.min_chars)
-        converted.append(md)
+        if needs_conversion(pdf, args.force_convert):
+            write_markdown_with_fallback(pdf, md, fallback_script, args.min_chars)
+            converted.append(md)
 
-        if not args.no_refine and count_todo(md):
+        if md.is_file() and not args.no_refine and count_todo(md):
             run_command([sys.executable, str(refine_script), str(md), "--pdf", str(pdf)], repo, allow_failure=True)
 
     return summarize(download_dir, pdfs, converted, invalid)

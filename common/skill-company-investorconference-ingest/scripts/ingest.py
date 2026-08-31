@@ -159,6 +159,7 @@ KNOWN_US_DIRECT_BY_QUARTER = {
 
 # Official webcast replay pages when no direct downloadable audio URL is available.
 KNOWN_US_WEBCASTS_BY_QUARTER = {
+    ("NVDA", "2027", "2"): "https://investor.nvidia.com/events-and-presentations/events-and-presentations/event-details/2026/NVIDIA-2nd-Quarter-FY27-Financial-Results/default.aspx",  # Q2FY27 results call 2026-08-26 2pm PT
     ("DELL", "2026", "1"): "https://event.webcasts.com/starthere.jsp?ei=1747660&tp_key=82c5169428",  # Q1FY27 results call 2026-05-28
 }
 
@@ -180,41 +181,22 @@ KNOWN_US_STOCKS = {
     "GOOGL": ("Alphabet Inc.", ""),
 }
 
-# Calendar-year US companies where stale Yahoo/CSV FY labels should be sanity-checked
-# against the earnings announcement month. Unknown tickers keep CSV/FY labels until
-# a company IR or SEC source confirms the quarter.
-KNOWN_US_CALENDAR_YEAR_EARNINGS = {
-    "AMD",
-    "AMZN",
-    "GOOGL",
-    "INTC",
-    "META",
-    "TSM",
-}
-
-# Fiscal year start month for US stocks whose fiscal year ≠ calendar year.
-# e.g. QCOM fiscal year starts October -> FY2026 Q1 = Oct-Dec 2025 (calendar Q4 2025)
-KNOWN_US_FISCAL_YEAR_START_MONTH = {
-    "QCOM": 10,   # October
-    "AAPL": 10,   # October
-    "MSFT": 7,    # July
-    "NVDA": 2,    # February (FY starts Feb 1)
-    "DELL": 2,    # February (FY starts Feb 1)
-}
-
-
-def calendar_to_fiscal(ticker: str, cal_year: str, cal_q: str):
-    """Return (fy_year, fy_q) strings for a US stock given its calendar year/quarter.
-    Returns (None, None) if no fiscal year mapping is defined for the ticker."""
-    start_month = KNOWN_US_FISCAL_YEAR_START_MONTH.get(ticker.upper())
-    if start_month is None:
-        return None, None
-    fy_start_cal_q = (start_month - 1) // 3 + 1  # e.g. Oct(10) -> Q4
-    cq = int(cal_q)
-    cy = int(cal_year)
-    fy_q = (cq - fy_start_cal_q) % 4 + 1
-    fy_year = cy + 1 if cq >= fy_start_cal_q else cy
-    return str(fy_year), str(fy_q)
+# KNOWN_US_CALENDAR_YEAR_EARNINGS, KNOWN_US_FISCAL_YEAR_START_MONTH, and
+# calendar_to_fiscal() moved to skill-stock-fiscal-quarter-resolve (a small,
+# dependency-free shared skill also consumed by skill-stock-investorevent-fetch
+# and ConceptStocks' update_concept_metadata.py) — see that skill's SKILL.md
+# for why: these tables had drifted across repos and caused mislabeled fiscal
+# quarters (e.g. NVDA's Q2 FY2027 earnings call was shown as "FY2026 Q4").
+_FISCAL_QUARTER_SKILL_SCRIPTS = (
+    INVESTOR_CONFERENCE_REPO / "skills" / "skill-stock-fiscal-quarter-resolve" / "scripts"
+)
+if str(_FISCAL_QUARTER_SKILL_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_FISCAL_QUARTER_SKILL_SCRIPTS))
+from fiscal_quarter import (  # noqa: E402
+    KNOWN_US_CALENDAR_YEAR_EARNINGS,
+    calendar_to_fiscal,
+    resolve_fiscal_quarter,
+)
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36"
 
@@ -2186,6 +2168,8 @@ def update_readme() -> None:
             return f"[↗]({url})"
         if fallback_link:
             return f"[↗]({fallback_link})"
+        if stock_id and not stock_id.isdigit():
+            return f"[↗](https://finance.yahoo.com/quote/{stock_id}/financials/)"
         return "[↗](https://mops.twse.com.tw/mops/#/web/t100sb07_1)"
 
     def _audio_cell(stock_id: str, year: str, quarter: str, audio_min: float | None) -> str:
@@ -2274,22 +2258,21 @@ def update_readme() -> None:
         sid = m.group(1) if m else None
 
         # Prefer explicit year/quarter from CSV, but guard against stale/misclassified
-        # US earnings-calendar rows. Calendar-year US companies such as Alphabet can
-        # be mislabeled as FY Q1 even when the July event is the Q2 result.
+        # US earnings-calendar rows. Apply the same correction to derived US call
+        # rows so a stale label (for example NVDA FY2026 Q4 on the FY2027 Q2 call)
+        # still matches already-ingested fiscal-year files such as NVDA_2027_q2_*.
         exp_year, exp_q = _csv_row_yq(ev_name, remarks, date)
-        if ev_class == "財報" and sid and not str(sid).isdigit():
-            date_year, date_q = expected_us_calendar_earnings_quarter(date)
-            if (
-                sid.upper() in KNOWN_US_CALENDAR_YEAR_EARNINGS
-                and date_year and date_q
-                and (exp_year, exp_q) != (date_year, date_q)
-            ):
-                print(
-                    f"[README] WARNING: {sid} CSV quarter {exp_year} Q{exp_q} "
-                    f"conflicts with event date {date} -> {date_year} Q{date_q}; "
-                    "using date-based calendar quarter."
-                )
-                exp_year, exp_q = date_year, date_q
+        if sid and not str(sid).isdigit():
+            resolved = resolve_fiscal_quarter(sid, date)
+            if resolved.get("confidence") != "unknown":
+                date_year, date_q = resolved.get("year"), resolved.get("quarter")
+                if date_year and date_q and (exp_year, exp_q) != (date_year, date_q):
+                    print(
+                        f"[README] WARNING: {sid} CSV quarter {exp_year} Q{exp_q} "
+                        f"conflicts with event date {date} -> {resolved.get('label')}; "
+                        "using fiscal resolver."
+                    )
+                    exp_year, exp_q = date_year, date_q
 
         # Check if this is an invited/forum investor conference rather than the regular quarterly earnings call.
         # Heuristic: If the event date is > 50 days after the quarter ends, it is an invited/forum conference.
@@ -2385,7 +2368,9 @@ def update_readme() -> None:
             display_name = re.sub(r'\((\w+)\)\(\1\)', r'(\1)', ev_name)
 
         def _qstr(year, q, ticker=sid):
-            """Format quarter string; append fiscal year label for US stocks."""
+            """Format quarter string; preserve explicit US FY labels from CSV."""
+            if ticker and not str(ticker).isdigit() and re.search(r"FY\d{4}\s+Q[1-4]", ev_name):
+                return f"FY{year} Q{q}"
             base = f"{year} Q{q}"
             if ticker and not str(ticker).isdigit():
                 fy_year, fy_q = calendar_to_fiscal(ticker, year, q)
@@ -2507,11 +2492,16 @@ def update_readme() -> None:
             pdf_cn, pdf_en = _format_ir_cells(sid, r["pdf_cn"], r["pdf_en"])
             row_type = "法說會"
             digest_cell = _digest_cell(sid, r['year'], r['quarter'])
-        # Compute quarter string (with fiscal year for US stocks)
-        fy_year, fy_q = calendar_to_fiscal(sid, r['year'], r['quarter'])
-        qstr_r = f"{r['year']} Q{r['quarter']}"
-        if fy_year:
-            qstr_r += f" / Q{fy_q}FY{fy_year}"
+        # Compute quarter string (with fiscal year for US stocks).
+        # NVDA local files use fiscal-year stems (NVDA_2027_q2_*), so an
+        # unmatched file-backed row should display that FY label directly.
+        if sid_up in ("NVDA",):
+            qstr_r = f"FY{r['year']} Q{r['quarter']}"
+        else:
+            fy_year, fy_q = calendar_to_fiscal(sid, r['year'], r['quarter'])
+            qstr_r = f"{r['year']} Q{r['quarter']}"
+            if fy_year:
+                qstr_r += f" / Q{fy_q}FY{fy_year}"
         hist_key = f"{sid}_{r['year']}_q{r['quarter']}"
         date_val = historical_dates.get(hist_key, "")
 

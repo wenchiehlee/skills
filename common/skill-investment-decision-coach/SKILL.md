@@ -1,6 +1,6 @@
 ---
 name: skill-investment-decision-coach
-description: Provide Traditional Chinese expert-level investment decision coaching based on digested book knowledge and 投資策略框架.md files. Use when Codex needs to answer investment questions, build a daily practical investment system, evaluate opportunities, manage risk, challenge behavioral mistakes, create decision checklists, or recommend coherent names/categories for finance-related skills.
+description: Provide Traditional Chinese expert-level investment decision coaching based on digested book knowledge, 投資策略框架.md files, and an investment methodology library. Use when Codex needs to answer investment questions, compare investor methodologies, explain edge/long-termism/compounding, build a daily practical investment system, evaluate opportunities, manage risk, challenge behavioral mistakes, create decision checklists, or recommend coherent names/categories for finance-related skills.
 ---
 
 # 投資決策教練
@@ -79,6 +79,155 @@ description: Provide Traditional Chinese expert-level investment decision coachi
 9. 現在股價已經反映多少成功機率？
 10. 哪個事實出現時，必須承認 thesis 錯了？
 
+
+## 投資方法論庫
+
+當使用者詢問投資大師、投資流派、長期主義、左側/右側、edge、複利或 80/20 法則時，將答案整理成可比較的方法論，而不是零散名言。
+
+建立 methodology library 的目的，不是收集很多人的意見，而是引入多個互補的 mental models。每一位投資人或思想家的方法論，都代表一種觀察角度、判斷面向或操作方法；越多高品質且互補的模型，代表同一個投資問題能被更完整地檢查。
+
+操作時要避免變成「大師語錄拼貼」。正確用法是：
+
+```text
+不同高手 -> 不同 mental model -> 不同觀察面向 -> 更完整地看同一個問題 -> 降低盲點 -> 提高決策品質
+```
+
+關鍵限制：模型要互補，不是重複。若多個人物只是用不同語言講同一件事，合併成同一模型即可；只有能補上新視角、新面向或新方法時，才值得放進 methodology library。
+
+### 徐新方法論
+
+徐新的框架可整理為三層：
+
+1. **Winner Pattern Study**：先研究主題/產業贏家共通模式，建立「什麼樣的公司會贏」的模板。
+2. **Consumer Deep Diving**：穿透財報，直接理解需求、用戶行為、消費者為什麼買，以及三到五年後是否還會買。
+3. **Full-Theme Scan / Full-Sector Scan / Turn Every Stone**：不要只研究單一公司；在本 repo 的 taxonomy 中，優先把跨公司敘事、供應鏈、canonical cycle 或投資主題稱為 `theme`，把傳統產業邊界稱為 `sector`。實作時要把同一 `theme`/`sector` 主要玩家全部攤開比較；「賽道」只作為口語說法，不作為 skill taxonomy 名稱，先建立森林，再判斷哪棵樹真正突出。
+
+輸出時可壓縮為：
+
+```text
+Winner Pattern -> Consumer Insight -> Full-Theme Scan -> Best Candidate -> Valuation
+```
+
+核心提醒：投資不是只問「這家公司好不好」，而是問「為什麼是它，而不是另外十九家」。
+
+### Edge 檢查
+
+使用者問 `edge` 時，定義為「相對市場其他參與者，能持續做出更好判斷的資訊、能力或行為優勢」。至少檢查五類：
+
+- **Information Edge**：是否更早、更多、更完整掌握資訊。
+- **Analytical Edge**：是否能從同一份資料推論出更深結論。
+- **Behavioral Edge**：是否有紀律，不被恐懼、貪婪、FOMO 或短期波動帶走。
+- **Time-horizon Edge**：是否願意承受短期雜訊，研究三到五年以上的結果。
+- **Structural Edge**：資金性質、工具、產業背景、研究流程是否形成優勢。
+
+沒有 edge 時，結論應降級為「跟市場共識相近」，不可用高自信語氣建議集中下注。
+
+### 方法論比較
+
+當使用者問「還有哪些方法論」時，優先用表格比較「人物/框架來源、核心方法論、最關鍵問題」。可使用以下基礎庫：
+
+| 人物/框架來源 | 核心方法論 | 最關鍵問題 |
+|---|---|---|
+| 徐新 | Winner Pattern + Consumer Deep Dive + 全主題/全賽道掃描 | 誰會成為主題或產業贏家，為什麼？ |
+| Warren Buffett | 能力圈 + 護城河 + Owner Earnings + 安全邊際 | 這是不是能長期複利的好生意？ |
+| Charlie Munger | 多元思維模型 + 反向思考 + 激勵機制 + 心理誤判 | 我是不是因為錯誤模型而看錯？ |
+| Howard Marks | Second-Level Thinking + 週期 + 風險控制 + 逆向 | 市場預期了什麼，我和市場差在哪？ |
+| Philip Fisher | Scuttlebutt + 成長品質 + 長期持有 | 客戶、供應商、員工看到的競爭力如何？ |
+| Peter Lynch | 生活觀察 + 成長分類 + 合理估值 | 華爾街還沒完全理解的成長在哪？ |
+| Terry Smith | Good Companies, Don't Overpay, Do Nothing | 公司能否長期維持高 ROIC？ |
+| Mohnish Pabrai | Cloning + Checklist + 不對稱賭注 | 能否抄最好的作業，且下檔有限？ |
+| Ray Dalio | All Weather + Risk Parity + Economic Machine | 不同成長/通膨環境下組合能否活下來？ |
+| George Soros | Reflexivity | 價格是否反過來改變基本面？ |
+| Stanley Druckenmiller | 流動性 + 宏觀趨勢 + 集中下注 | 最強趨勢與資金方向在哪？ |
+| Joel Greenblatt | Magic Formula | 哪些公司同時便宜又好？ |
+| Seth Klarman | 安全邊際 + 絕對報酬 | 最差情況會永久損失多少？ |
+| Michael Mauboussin | Expectations Investing + Base Rates | 股價已經 price-in 什麼？ |
+| Ed Thorp | Kelly Criterion | 即使有 edge，該下注多少？ |
+| Nassim Taleb | Barbell + Antifragility | 如何避免一次黑天鵝毀滅？ |
+| Jim Simons | Statistical Edge + Systematic Investing | 資料中是否有可重複統計優勢？ |
+| ARK / Cathie Wood | Wright's Law + Disruptive Innovation | 成本下降是否創造爆發式新市場？ |
+| 劉潤 | 底層邏輯 + 數學/商業模型 + 機率統計 + 博弈論 | 這個商業現象背後真正的變數、結構與約束是什麼？ |
+| 萬維鋼 | 系統思維 + 決策品質 + 多觀點/多面向模型 | 這個問題是否被放進正確的系統、回饋迴路與觀察面向裡理解？ |
+| Yuval Noah Harari | 歷史尺度 + 敘事/制度/科技變遷 | 這個投資敘事背後的人類協作、制度與長期趨勢是否成立？ |
+| 吳軍 | 科技史 + 資訊理論 + 工程/產品方法論 | 技術演進、資訊效率與工程約束如何改變產業結構？ |
+
+### 書本框架對方法論庫的補充
+
+`books/` 中的框架不只提供投資人，也提供投資決策需要的底層模型。回答時要區分「投資人/流派」與「可借用的思維模型來源」：
+
+- 《投資最重要的事》對應 **Howard Marks**：second-level thinking、風險控制、週期、逆向與市場預期。
+- 《窮查理的普通常識》對應 **Charlie Munger**，並連到 **Warren Buffett**：多元思維模型、逆向思考、能力圈、心理誤判、檢查清單、少數高品質機會。
+- 《底層邏輯》與《底層邏輯2》對應 **劉潤**：變數拆解、機率統計、數學期望、大數定律、博弈論、商業系統與相對思維。
+- 《佛畏系統》對應 **萬維鋼**：系統思維、回饋迴路、決策品質與多觀點/多面向理解。
+- 《人類大歷史》對應 **Yuval Noah Harari**：長期歷史尺度、共同敘事、制度演化、科技改變社會結構。
+- 書中提到 **吳軍** 時，可作為科技史、資訊理論、工程/產品方法論與長期技術演進的輔助框架。
+
+這些書本來源可補足 `Master Investor Methodology` 的前置層：先用底層邏輯與系統思維理解世界、主題/產業，再進入公司、預期、估值、下注與持有。
+
+### 左側、右側與長期主義
+
+- **左側投資**：市場尚未確認反轉時，因價格低於內在價值、安全邊際提高而買入。代表框架：Benjamin Graham、Warren Buffett、Seth Klarman、Howard Marks、Mohnish Pabrai。必須確認是 `Price down` 但 `Intrinsic Value roughly unchanged`，否則可能是 value trap。
+- **右側投資**：等價格、趨勢、基本面或資金流確認後跟進。代表框架：William O'Neil、Mark Minervini、Stanley Druckenmiller。
+- **混合系統**：可用基本面左側找價值，再用價格/趨勢/週期右側確認 thesis 是否開始被市場驗證。
+- **長期主義**：不是持有很久，而是選到能被時間放大的東西。核心公式為 `Quality x Durability x Reinvestment x Time`。最純長期主義可用 Buffett、Munger、Fisher、Terry Smith、Nick Sleep、Li Lu 作為代表；長期複利派可用 Chuck Akre、Tom Gayner、Thomas Russo、Pabrai 作為代表。徐新也可歸入長期主義，但她的特徵是先找到產業 winner，再長期陪伴 winner 成長。
+
+### 人物索引與分層
+
+方法論庫不要只列一張平面表，也不要把人名數量當成品質；回答時可依問題切換分層，選出互補的 mental models 來檢查同一個投資問題：
+
+- **主題/產業/消費者/競爭**：徐新、Philip Fisher、Peter Lynch。
+- **長期複利/優質企業**：Buffett、Munger、Terry Smith、Nick Sleep、Li Lu、Chuck Akre、Tom Gayner、Thomas Russo。
+- **市場預期/週期/逆向**：Howard Marks、Seth Klarman、George Soros、Michael Mauboussin。
+- **宏觀/流動性/資產配置**：Ray Dalio、Stanley Druckenmiller。
+- **量化/下注/風險結構**：Joel Greenblatt、Ed Thorp、Jim Simons、Nassim Taleb。
+- **技術顛覆/成本曲線**：ARK / Cathie Wood。
+- **左側價值**：Benjamin Graham、Buffett、Klarman、Marks、Pabrai。
+- **右側趨勢**：William O'Neil、Mark Minervini、Druckenmiller。
+- **書本延伸的思維模型/系統框架**：劉潤、萬維鋼、Yuval Noah Harari、吳軍。這些人不一定是投資流派代表，但可補強商業底層邏輯、系統思維、歷史尺度、科技/資訊理論與決策品質。這裡的 `多元思維模型` 不是狹義的「不同學科模型」，而是用不同觀點、不同面向、不同方法去檢查同一個問題。
+
+### Value Creation、Storage、Compounding
+
+使用者問長期主義如何辨識與儲存價值時，用以下框架：
+
+```text
+Identify Value -> Understand Value Creation -> Track Value Storage -> Verify Reinvestment -> Let Time Compound
+```
+
+辨識價值至少看：
+
+- 高 ROIC/ROE，且長期高於資金成本。
+- Reinvestment Runway：仍有足夠高報酬再投資空間。
+- Moat：品牌、成本、網路效應、轉換成本、規模經濟等優勢是否持久。
+- Free Cash Flow：獲利能否轉成現金。
+- Pricing Power：成本上升時是否能漲價且不流失客戶。
+
+價值儲存要追問企業賺到的錢流向哪裡：本業再投資、併購、回購、配息、留現金，或被管理層浪費。真正的 compounder 是能把現在盈餘以高增量 ROIC 重新投入，轉化成更高未來盈餘。
+
+建立 `Value Storage Test` 時問六題：
+
+1. 公司是否真的創造經濟價值，ROIC 是否長期高於 WACC？
+2. 高回報是否有護城河保護，競爭者為何不能搶走超額報酬？
+3. 還能把多少錢重新投入，TAM、市占、新產品、新市場還有多大？
+4. 新增資本回報率是多少，不只看歷史 ROIC，也看 incremental ROIC。
+5. 管理層是否懂資本配置，再投資、回購、併購、配息哪個最合理？
+6. 價值最後落到誰手上，股東、員工、客戶、供應商還是管理層？
+
+### 80/20（82 法則）、複利與長期主義
+
+三者不是競爭概念，而是不同層次：
+
+- **80/20（82）法則**：找少數真正重要的機會與變數。
+- **長期主義**：確認它值得被時間放大。
+- **複利法則**：讓時間把小優勢變成巨大結果。
+
+輸出可整理為：
+
+```text
+80/20 -> Selection -> Long Term -> Compounding -> Durable Compounder
+```
+
+提醒使用者不要把它誤解成「重倉後永遠不賣」。複利成立的前提是增量資本報酬、護城河、管理層資本配置與成長 runway 持續存在。
+
 ## 日常投資系統輸出格式
 
 當使用者要求建立日常投資系統時，輸出應包含：
@@ -143,8 +292,8 @@ skill-<domain>-<object>-<action>
   3. `skill-theme-cycle-coverage`——讀取上述逐公司 segment/cycle 拆解結果，稽核彙總成 `ai_trend_coverage_matrix`／`ai_trend_data_issue_register`，主鍵是 (company, canonical cycle)，回報格式同時要求「covered company count」與「covered canonical cycle count」雙軸覆蓋，結論是「哪些 AI cycle 仍被 proxy/stale 資料主導」——對主題下結論，不是對公司下結論，屬於 `theme` domain。
 
   規則：只要輸出的**主要/命名交付物**主鍵包含 cycle/theme 而非收斂回單一公司，就算輸入資料是逐公司產物，也該歸 `theme` domain；只有輸出主鍵仍是單一公司時才留在 `company` domain。
-- **company vs. stock vs. theme（跨多家公司時的第三種可能）**：跨多家公司不等於就是 `theme`。`theme` 的跨公司是「敘事/分類分組」（一群公司因為屬於同一主題被歸在一起，例如競爭者分組、canonical cycle 覆蓋矩陣）；`stock` 的跨公司是「整個 watchlist/股票宇宙層級的名單操作」，沒有主題分類語意，只是同時處理一批股票（例如加開觀察名單、批次抓取整個 universe 的行事曆/技術指標）。判斷準則：輸出如果是「這批股票個別的一列資料」（例如每檔股票的下一次法說會日期、每檔股票的技術指標快照），且彼此之間沒有被歸類分組，就是 `stock` domain，即使一次涵蓋整個市場。例如 `skill-company-investorconference-upcoming-earnings` 原本掛在 `company` domain 不對——它的輸出是整個 TW/US watchlist 的法說會/財報行事曆，每一列是「一檔股票的一個事件」，沒有分組也沒有單一公司焦點，跟 `skill-stock-universe-onboarding`（維護 watchlist 名單）是同一種「整個股票宇宙」語意，因此改名為 `skill-stock-investorconference-upcoming-earnings`。
-- **competitor 是 company 底下的一個 action，不是獨立 domain**：以單一公司為錨點找出其競爭者/同業（例如 `skill-theme-competitor-analysis`），屬於 `company-competitor-analysis`；但「跨主題頁維護一群公司的競爭關係分組」（例如 `skill-theme-competitor-groups-curate`）主體是主題頁而非單一公司，命名應改用 `theme` domain，而非 `my-tw` 這類未定義的 domain。
+- **company vs. stock vs. theme（跨多家公司時的第三種可能）**：跨多家公司不等於就是 `theme`。`theme` 的跨公司是「敘事/分類分組」（一群公司因為屬於同一主題被歸在一起，例如競爭者分組、canonical cycle 覆蓋矩陣）；`stock` 的跨公司是「整個 watchlist/股票宇宙層級的名單操作」，沒有主題分類語意，只是同時處理一批股票（例如加開觀察名單、批次抓取整個 universe 的行事曆/技術指標）。判斷準則：輸出如果是「這批股票個別的一列資料」（例如每檔股票的下一次法說會日期、每檔股票的技術指標快照），且彼此之間沒有被歸類分組，就是 `stock` domain，即使一次涵蓋整個市場。例如舊的 investor-conference upcoming-earnings skill 若掛在 `company` domain 會不對——它的輸出是整個 TW/US watchlist 的法說會/財報行事曆，每一列是「一檔股票的一個事件」，沒有分組也沒有單一公司焦點，跟 `skill-stock-universe-onboarding`（維護 watchlist 名單）是同一種「整個股票宇宙」語意，因此目前應歸為 `stock` domain（例如 `skill-stock-investorevent-fetch`）。
+- **competitor 是 company 底下的一個 action，不是獨立 domain**：以單一公司為錨點找出其競爭者/同業（例如 `skill-company-competitor-analysis`），屬於 `company` domain；但「跨主題頁維護一群公司的競爭關係分組」（例如 `skill-theme-competitor-groups-curate`）主體是主題頁而非單一公司，命名應改用 `theme` domain，而非 `my-tw` 這類未定義的 domain。
 - **company vs. institutional**：`company` 的資料來源是公司自身（財報、法說、MOPS、IR）；`institutional` 的資料來源是外部第三方（外資、投顧、券商研究報告的評等/目標價/預估），即使分析對象是同一家公司，只要主體資料是「別人怎麼看這家公司」，就該歸入 `institutional`，不歸入 `company`。
 - **institutional 內部依 object 區分 thesis 與 report，不要合併**：`skill-institutional-thesis-research` 處理的是全球投行（Goldman Sachs、Morgan Stanley、JPM、BofA、UBS 等）的敘事型論述/thesis/consensus，不限定台灣；`skill-institutional-tw-report-research` 處理的是台灣上市櫃公司的結構化券商報告數字（rating、target price、EPS 預估），並與 TWSE/TPEx 法人買賣超 flow 比對。兩者輸出形狀不同（敘事 vs. 結構化數字），object 分別用 `thesis` 與 `tw-report` 區隔；`tw` 放在 object 位置（而非當 domain 前綴）用來標示範疇限定於台灣上市櫃公司，不違反「不要用 `tw` 當 domain」的規則。
 

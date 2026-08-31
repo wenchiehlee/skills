@@ -22,13 +22,15 @@ refine_todo_ocr.py — 補轉錄 Markdown 中標記 TODO:OCR 的頁面
 """
 import argparse
 import datetime
+import os
 import platform
 import re
+import shutil
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
-from pypdf import PdfReader, PdfWriter
 
 # Fix Windows console encoding for Chinese characters
 if platform.system() == "Windows":
@@ -43,19 +45,90 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ocr_client import clean_ocr_markdown, transcribe_document_to_markdown  # noqa: E402
 
 TODO_RE = re.compile(r'<!-- TODO:OCR source="(?P<source>[^"]+)" page=(?P<page>\d+) reason=(?P<reason>[\w-]+) -->')
+LEGACY_TODO_RE = re.compile(
+    r'^> \*\*TODO:OCR\*\* - Page (?P<page>\d+) .*$|^> TODO:OCR - .*$',
+    re.MULTILINE,
+)
 PAGE_SECTION_RE = r'<!-- PAGE:{page} -->.*?(?=<!-- PAGE:\d+ -->|\Z)'
 
 
 def find_todo_pages(md_text: str) -> list[dict]:
     """回傳 Markdown 中所有 TODO:OCR 標記（source、page、reason）。"""
-    return [
+    todos = [
         {"source": m.group("source"), "page": int(m.group("page")), "reason": m.group("reason")}
         for m in TODO_RE.finditer(md_text)
     ]
+    seen_pages = {todo["page"] for todo in todos}
+    source_match = re.search(r'<!-- mac-mini-ocr:hybrid-base source="(?P<source>[^"]+)"', md_text)
+    source = source_match.group("source") if source_match else ""
+
+    current_page = None
+    for line in md_text.splitlines():
+        page_match = re.match(r'<!-- PAGE:(\d+) -->', line)
+        if page_match:
+            current_page = int(page_match.group(1))
+            continue
+
+        legacy_match = LEGACY_TODO_RE.match(line)
+        if not legacy_match:
+            continue
+
+        page = int(legacy_match.group("page") or current_page or 0)
+        if page and page not in seen_pages:
+            todos.append({"source": source, "page": page, "reason": "legacy-todo"})
+            seen_pages.add(page)
+    return todos
+
+
+def _remove_legacy_todo_for_page(md_text: str, page: int) -> str:
+    def replace_section(match: re.Match) -> str:
+        return LEGACY_TODO_RE.sub("", match.group(0))
+
+    return re.sub(
+        PAGE_SECTION_RE.format(page=page),
+        replace_section,
+        md_text,
+        count=1,
+        flags=re.DOTALL,
+    )
+
+
+def _render_single_page_png(pdf_path: Path, page_num: int, dest_dir: Path, dpi: int) -> Path:
+    """把 PDF 的第 page_num 頁（1-based）渲染成 PNG，回傳暫存檔路徑。"""
+    try:
+        import fitz
+    except ImportError as exc:
+        raise RuntimeError("Missing dependency: install PyMuPDF to render OCR page images") from exc
+
+    doc = fitz.open(str(pdf_path))
+    if not (1 <= page_num <= doc.page_count):
+        raise ValueError(f"頁碼超出範圍：{page_num}（共 {doc.page_count} 頁）")
+    page = doc.load_page(page_num - 1)
+    out_path = dest_dir / f"{pdf_path.stem}.p{page_num}.png"
+    pix = page.get_pixmap(dpi=dpi, alpha=False)
+    pix.save(str(out_path))
+    doc.close()
+    return out_path
+
+
+def _ocr_image_with_tesseract(image_path: Path) -> str:
+    if shutil.which("tesseract") is None:
+        raise RuntimeError("Missing dependency: install tesseract for local OCR fallback")
+
+    cmd = ["tesseract", str(image_path), "stdout", "-l", "chi_tra+eng", "--psm", "6"]
+    result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if result.returncode:
+        raise RuntimeError(f"Tesseract OCR failed: {result.stderr.strip()}")
+    return result.stdout.strip()
 
 
 def _extract_single_page_pdf(pdf_path: Path, page_num: int, dest_dir: Path) -> Path:
     """把 PDF 的第 page_num 頁（1-based）抽成單頁 PDF，回傳暫存檔路徑。"""
+    try:
+        from pypdf import PdfReader, PdfWriter
+    except ImportError as exc:
+        raise RuntimeError("Missing dependency: install pypdf to refine TODO:OCR pages") from exc
+
     reader = PdfReader(str(pdf_path))
     if not (1 <= page_num <= len(reader.pages)):
         raise ValueError(f"頁碼超出範圍：{page_num}（共 {len(reader.pages)} 頁）")
@@ -88,17 +161,44 @@ def refine(md_path: Path, pdf_path: Path | None, pages: set[int] | None, dpi: in
         for todo in todos:
             page = todo["page"]
             print(f"[refine] OCR 第 {page} 頁（reason={todo['reason']}）…", file=sys.stderr)
-            single = _extract_single_page_pdf(pdf_path, page, Path(tmp))
-            ocr_md = clean_ocr_markdown(transcribe_document_to_markdown(single, dpi=dpi)).strip()
+            local_fallback = False
+            try:
+                single = _render_single_page_png(pdf_path, page, Path(tmp), dpi)
+            except Exception as render_error:
+                print(f"[refine] PNG 渲染失敗，改用單頁 PDF：{render_error}", file=sys.stderr)
+                single = _extract_single_page_pdf(pdf_path, page, Path(tmp))
 
+            if os.getenv("OCR_ENGINE", "").lower() == "tesseract":
+                if single.suffix.lower() != ".png":
+                    raise RuntimeError("OCR_ENGINE=tesseract requires a rendered PNG page")
+                ocr_md = _ocr_image_with_tesseract(single).strip()
+                local_fallback = True
+            else:
+                try:
+                    ocr_md = clean_ocr_markdown(transcribe_document_to_markdown(single, dpi=dpi)).strip()
+                except Exception as remote_error:
+                    if single.suffix.lower() != ".png":
+                        raise
+                    print(f"[refine] Mac-mini OCR 失敗，改用本機 Tesseract：{remote_error}", file=sys.stderr)
+                    ocr_md = _ocr_image_with_tesseract(single).strip()
+                    local_fallback = True
+
+            if not ocr_md:
+                ocr_md = "> OCR completed; no text recognized on this page."
+
+            engine = "local-tesseract" if local_fallback else "mac-mini"
             new_section = (
                 f"<!-- PAGE:{page} -->\n"
                 f"## 第 {page} 頁\n\n"
-                f'<!-- OCR:done source="{todo["source"]}" page={page} date="{today}" -->\n'
+                f'<!-- OCR:done source="{todo["source"]}" page={page} date="{today}" engine="{engine}" -->\n'
                 f"{ocr_md}\n\n"
             )
             md_text, n = re.subn(
-                PAGE_SECTION_RE.format(page=page), new_section, md_text, count=1, flags=re.DOTALL
+                PAGE_SECTION_RE.format(page=page),
+                lambda _match: new_section,
+                md_text,
+                count=1,
+                flags=re.DOTALL,
             )
             if n == 0:
                 # 沒有 PAGE 標記的 Markdown（非 pdf_fallback 產物）：只移除 TODO 標記行並附上結果
@@ -106,7 +206,12 @@ def refine(md_path: Path, pdf_path: Path | None, pages: set[int] | None, dpi: in
                 md_text = TODO_RE.sub(
                     lambda m: "" if int(m.group("page")) == page else m.group(0), md_text
                 )
+                md_text = LEGACY_TODO_RE.sub(
+                    lambda m: "" if int(m.group("page") or 0) == page else m.group(0), md_text
+                )
                 md_text += f"\n\n## 第 {page} 頁（OCR 補轉錄 {today}）\n\n{ocr_md}\n"
+            else:
+                md_text = _remove_legacy_todo_for_page(md_text, page)
             done += 1
             # 每頁完成即存檔，中斷後重跑只會處理剩餘的 TODO:OCR 頁面
             md_path.write_text(md_text, encoding="utf-8", newline="\n")

@@ -7,7 +7,7 @@ description: 統一的 LLM 客戶端函式庫（llm package），封裝 Gemini A
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.0.0（詳見 `metadata.json`） |
+| 版本 | 1.0.1（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/llm |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-llm-api-client`） |
 | 維護者 | wenchiehlee |
@@ -151,6 +151,21 @@ text = client.generate_smart("TaskB", "請摘要此內容...", draft_provider="c
 | `codex` / `llm-cli` | `chatgpt-pro` / `gemini` | 透過 `skill-llm-api-server` 橋接呼叫；`model` 設為 `gemini-*` 時自動切換為該伺服器的 `/gemini/exec` |
 | `gemini` | `gemini-2.5-flash` | 直接調用 Google Gemini API，支援多金鑰自動輪轉 |
 | `mlx` | `mlx-qwen3` / `mlx-gemma4` | 呼叫本地 Apple Silicon 上的 MLX 推論伺服器 |
+
+## 📊 AI Model Usage 統計
+
+`skill-llm-api-client` 是一般 LLM 呼叫的主要埋點位置。每次 `LLMClient.generate()` / `generate_json()` 都應送出單一 `llm_call` event：
+
+| 欄位 | 來源 |
+|------|------|
+| `service` | 固定 `llm-api-client` |
+| `stage` | 固定 `generate` |
+| `provider` | 成功或失敗當下的 provider，如 `codex`、`gemini`、`mlx` |
+| `model` | provider 回填，如 `chatgpt-pro`、`gemini-2.5-flash`、`Qwen3-14B-4bit` |
+| `model_repo` | provider 可提供時填入精確來源；cloud provider 可留空 |
+| `app_name` | `LLMClient(app_name=...)`，未提供時用 `LLM_APP_NAME`，再 fallback 到 `llm` |
+
+呼叫端若要讓報表能回答「哪個 app 用了哪個模型」，必須明確設定 `app_name`，例如 `LLMClient(app_name="GoogleAlertManager")`。不要只依靠 server README 的總模型表；需要 `app_name × model` cross-tab 才能判斷單一 app 的模型來源。
 
 ## 🧪 測試與驗證
 

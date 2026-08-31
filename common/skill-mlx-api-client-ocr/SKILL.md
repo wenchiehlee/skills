@@ -7,7 +7,7 @@ description: 使用自建在 Mac-mini 上的 OCR API 服務，將 PDF 或圖片�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.3.0（詳見 `metadata.json`） |
+| 版本 | 1.6.1（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/FamilyHealthyCheck |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-client-ocr`） |
 | 維護者 | wenchiehlee |
@@ -54,6 +54,10 @@ pip install pillow-heif
 OCR_API_URL=http://mac-mini.tail28f10.ts.net:5001/ocr
 OCR_API_KEY=<your-api-key>
 ```
+
+## 📊 AI Model Usage 統計
+
+OCR 的模型使用量由 `skill-mlx-api-server` 的 `/ocr` endpoint 送出 Amplitude `llm_call`：`service=mlx-api-server`、`stage=ocr`、`provider=baidu-ocr`、`model=baidu/Unlimited-OCR`。本 client skill 的責任是讓呼叫端能正確歸因 app，因此 HTTP request 應傳 `X-App-Name`；未傳時 server 會 fallback 到 `Baidu-OCR`，但全域報表就無法看出是哪個專案消耗 OCR。
 
 ## 🚀 使用方式與範例
 

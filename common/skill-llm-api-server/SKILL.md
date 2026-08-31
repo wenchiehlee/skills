@@ -7,7 +7,7 @@ description: 在 Synology NAS Docker 容器中運行的 LLM CLI 橋接伺服器�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.1.0（詳見 `metadata.json`） |
+| 版本 | 1.1.1（詳見 `metadata.json`） |
 | 來源 | https://github.com/ZhongZheng782/Llm-Cli-APIServer |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-llm-api-server`） |
 | 維護者 | wenchiehlee |
@@ -163,6 +163,24 @@ Request：`{"task_name": "...", "prompt": "...", "draft_cli": "gemini", "judge_c
 ### `GET /`、`GET /codex/status`、`GET /gemini/status` — 健康檢查
 
 `GET /` → `{"status": "ready", "service": "LLM CLI API Server"}`（無需認證）
+
+## 📊 AI Model Usage 統計契約
+
+所有 AI 相關 skill 應用同一組 Amplitude `llm_call` 欄位，才能在 README 與跨 repo 報表中一致回答「哪個 app 最近使用哪個模型」：
+
+| 欄位 | 意義 | 範例 |
+|------|------|------|
+| `service` | 實際承載服務或 skill | `llm-api-client`, `llm-cli-api-server`, `mlx-api-server`, `mlx-api-server-whisper` |
+| `stage` | 多階段 pipeline 的階段；單階段填 `generate` 或 `exec` | `generate`, `exec`, `ocr`, `transcription`, `merge`, `judge` |
+| `provider` | 執行 backend 或 provider 類型 | `codex`, `gemini`, `mlx`, `baidu-ocr`, `mlx-whisper`, `faster-whisper` |
+| `model` | 報表聚合用模型名稱 | `chatgpt-pro`, `gemini-2.5-flash`, `baidu/Unlimited-OCR`, `mlx-qwen3`, `whisper-large-v3` |
+| `model_repo` | 精確權重/API model source；cloud provider 可留空 | `mlx-community/Qwen3.5-9B-MLX-4bit`, `mlx-community/whisper-large-v3-mlx` |
+| `app_name` | 呼叫端應用名稱 | `GoogleAlertManager`, `CompanyInfo`, `whisper-merge-fix` |
+| `duration_sec` | 端到端耗時秒數 | `12.34` |
+| `success` | 呼叫是否成功 | `true` / `false` |
+| `error_type` | 失敗分類；成功時可省略 | `timeout`, `auth_error`, `rate_limit`, `provider_error` |
+
+統計報表至少保留三種視角：`model` total、`app_name` total、`app_name × model` last-7-days。第三種是回答 `GoogleAlertManager` 最近實際由哪個模型產生內容的必要視角。
 
 ## 🐛 常見問題排除
 

@@ -2,11 +2,11 @@
   "name": "skill-llm-api-server",
   "description": "在 Synology NAS Docker 容器中運行的 LLM CLI 橋接伺服器，將 OpenAI codex-cli（ChatGPT Pro）與 Google gemini-cli 封裝為 Flask/Waitress HTTP API（/exec、/gemini/exec、/smart/exec），供 llm 函式庫的 CodexProvider 遠端呼叫。",
   "category": "server",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/ZhongZheng782/Llm-Cli-APIServer",
-  "updated_at": "2026-08-17",
+  "updated_at": "2026-08-30",
   "license": "MIT",
   "tags": [
     "server",

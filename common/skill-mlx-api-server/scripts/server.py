@@ -52,8 +52,19 @@ def _record_stat(prompt: str, model: str | None, output_len: int, elapsed: float
         logger.exception("Failed to write stats")
 
 
-def _send_amplitude_event_async(model: str, elapsed: float, output_len: int, app_name: str | None) -> None:
-    """Asynchronously send an event to Amplitude HTTP API V2 to avoid blocking response."""
+def _send_amplitude_event_async(
+    model: str,
+    elapsed: float,
+    output_len: int,
+    app_name: str | None,
+    *,
+    service: str = "mlx-api-server",
+    stage: str = "exec",
+    provider: str = "mlx",
+    model_repo: str = "",
+    success: bool = True,
+) -> None:
+    """Asynchronously send one normalized llm_call event to Amplitude."""
     api_key = config.AMPLITUDE_API_KEY
     if not api_key:
         return
@@ -68,10 +79,15 @@ def _send_amplitude_event_async(model: str, elapsed: float, output_len: int, app
                     "device_id": "mac-mini-server",
                     "event_type": "llm_call",
                     "event_properties": {
+                        "service": service,
+                        "stage": stage,
+                        "provider": provider,
                         "model": model,
+                        "model_repo": model_repo,
                         "duration_sec": elapsed,
                         "output_len": output_len,
-                        "app_name": app_name or "Baidu-OCR"
+                        "app_name": app_name or "Baidu-OCR",
+                        "success": success,
                     }
                 }
             ]
@@ -121,7 +137,18 @@ def execute():
     t0 = time.monotonic()
     try:
         output, actual_model = run(prompt, model=model)
-        _record_stat(prompt, actual_model, len(output), time.monotonic() - t0)
+        elapsed = time.monotonic() - t0
+        report_model = model or "mlx-qwen3"
+        _record_stat(prompt, actual_model, len(output), elapsed)
+        _send_amplitude_event_async(
+            report_model,
+            elapsed,
+            len(output),
+            request.headers.get("X-App-Name") or "MLX-Exec",
+            stage="exec",
+            provider="mlx",
+            model_repo=actual_model,
+        )
         return jsonify({"output": output})
     except ExecutionError as e:
         return jsonify({"error": str(e)}), e.status_code
@@ -161,12 +188,16 @@ def ocr():
     t0 = time.monotonic()
     try:
         markdown_output = run_ocr(tmp_path, dpi=dpi_val)
-        _record_stat(f"OCR File: {file.filename}", "baidu/Unlimited-OCR", len(markdown_output), time.monotonic() - t0)
+        elapsed = time.monotonic() - t0
+        _record_stat(f"OCR File: {file.filename}", "baidu/Unlimited-OCR", len(markdown_output), elapsed)
         _send_amplitude_event_async(
             "baidu/Unlimited-OCR",
-            time.monotonic() - t0,
+            elapsed,
             len(markdown_output),
-            request.headers.get("X-App-Name") or "Baidu-OCR"
+            request.headers.get("X-App-Name") or "Baidu-OCR",
+            stage="ocr",
+            provider="baidu-ocr",
+            model_repo="baidu/Unlimited-OCR",
         )
         return jsonify({"markdown": markdown_output})
     except ExecutionError as e:
