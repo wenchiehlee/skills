@@ -102,6 +102,7 @@ KNOWN_TW_PLAYWRIGHT_IR_BY_QUARTER = {
     ("3034", "2025", "3"): "https://www.novatek.com.tw/upload/website/_2025Q3_25110708_904.html",
     ("3034", "2025", "4"): "https://www.novatek.com.tw/upload/website/_2025Q4_26020909_911.html",
     ("3045", "2026", "1"): "http://www.zucast.com/webcast/YZRGwetH",  # 台灣大 2026Q1 法說會 2026-05-13 (Zucast 需註冊; 音檔為 S3 直連 mp3, 已下載至 3045_2026_q1.m4a)
+    ("3045", "2026", "2"): "http://www.zucast.com/webcast/O9Iud5A5",  # 台灣大 2026Q2 法說會 2026-08-14 (official Zucast webcast)
 }
 
 # IR portal URLs for Taiwan stocks that host webcast on their own IR sites
@@ -137,6 +138,17 @@ KNOWN_PDF_ATTACHMENTS = {
     ],
     "2395": [
         ("ir_en", "https://advcloudfiles.advantech.com/investor/Events/Advantech_{quarter}Q_{year}_Investors_Meeting_English.pdf"),
+    ],
+}
+
+# Quarter-specific official PDF attachments for issuers whose IR filenames are
+# event-specific rather than reusable templates.
+KNOWN_PDF_ATTACHMENTS_BY_QUARTER = {
+    ("3045", "2026", "2"): [
+        ("ir", "https://corp.taiwanmobile.com/files/investor-relations/convention/2Q26webcast_Chinese_final.pdf"),
+        ("ir_en", "https://english.taiwanmobile.com/english/upload/investor/2Q26webcast_English_final.pdf"),
+        ("performance_review", "https://english.taiwanmobile.com/english/upload/investor/mgmtreport20260814_update.pdf"),
+        ("transcript", "https://english.taiwanmobile.com/english/upload/investor/2Q26_Conference_Call_transcript(withQA).pdf"),
     ],
 }
 
@@ -1765,12 +1777,13 @@ def download_pdfs(stock_id: str, year: str, quarter: str,
             else:
                 print(f"[US-NIR] No matching presentation found for {year} Q{quarter}")
 
-    templates = KNOWN_PDF_ATTACHMENTS.get(stock_id, [])
+    templates = list(KNOWN_PDF_ATTACHMENTS.get(stock_id, []))
+    templates.extend(KNOWN_PDF_ATTACHMENTS_BY_QUARTER.get((stock_id, year, quarter), []))
     if not templates:
         return downloaded
 
     for suffix, url_template in templates:
-        url = url_template.format(year=year, quarter=quarter)
+        url = url_template.format(year=year, quarter=quarter, yy=year[-2:])
         filename = f"{stock_id}_{year}_q{quarter}_{suffix}.pdf"
         dest = save_dir / filename
 
@@ -2043,7 +2056,9 @@ def update_readme() -> None:
             m7 = performance_review_pat.match(f.name)
             if m7:
                 _, year, qnum = m7.groups()[:3]
-                _entry(stock_id, year, qnum)["pdf_en"] = f"data/{stock_id}/{f.name}"
+                e = _entry(stock_id, year, qnum)
+                if not e.get("pdf_en"):
+                    e["pdf_en"] = f"data/{stock_id}/{f.name}"
             m8 = transcript_pdf_pat.match(f.name)
             if m8:
                 _, year, qnum = m8.groups()[:3]
@@ -2400,12 +2415,41 @@ def update_readme() -> None:
                 pdf_en_file = ingested.get("pdf_en")
                 pdf_cn, pdf_en = _format_ir_cells(sid, pdf_cn_file, pdf_en_file)
 
-            digest = _digest_cell(sid, ingested['year'], ingested['quarter']) if ev_type != "財報" else "-"
+            # Digests now merge 法說會/受邀法說 + 財報 into one file when both
+            # exist for the same stock/quarter (SKILL.md 3.1.2), and a
+            # 財報-only quarter gets the same {stock}_{year}_q{q}_digest.md
+            # filename under the lean SKILL.md 5.0 architecture -- so the
+            # 財報 row should link to it too whenever it exists, not always "-".
+            digest = _digest_cell(sid, ingested['year'], ingested['quarter'])
         else:
-            # CSV-only row (not yet ingested): only include if within next 4 weeks
+            # A 受邀法說 (invited/broker-hosted conference) with no ingested
+            # materials of its own is only a "gap" worth surfacing if the
+            # underlying quarter has no coverage at all. If real materials for
+            # this (sid, year, quarter) already exist under a different date
+            # (the genuine 法說會/財報 row), this slot is a confirmed duplicate:
+            # broker-hosted NDR/roadshow sessions consistently turn out to be
+            # invite-only, unrecorded, and explicitly reiterate the already-
+            # public earnings-day figures (see 2330 2026 Q1/Q2, 2308 2026 Q1,
+            # 3231 2026 Q1 -- verified via each company's own material-info
+            # filing or ingest.py's discovery pipeline finding no media). An
+            # all-dashes row here adds no actionable information, so drop it.
+            if ev_type == "受邀法說" and sid and exp_year and exp_q:
+                dup_key = (sid, exp_year, exp_q)
+                if any((r["stock_id"], r["year"], r["quarter"]) == dup_key for r in rows):
+                    continue
+
+            # CSV-only row (not yet ingested): suppress far-future placeholders
+            # (show only once within the next 4 weeks) but always show past-due
+            # events that were never claimed by any ingested material -- a past
+            # 法說會/受邀法說 with no ingested data is a real coverage gap, not a
+            # "too early to display" placeholder, and must stay visible so the
+            # gap doesn't silently disappear (see 2412 2026 Q1: event date
+            # 2026-05-27 was >14 days from the same-quarter 財報 date so it
+            # couldn't claim materials, and being in the past meant it never
+            # entered the "next 4 weeks" window either -- the row just vanished).
             try:
                 ev_date = _date.fromisoformat(date)
-                if not (today <= ev_date <= two_weeks):
+                if ev_date > two_weeks:
                     continue
             except (ValueError, TypeError):
                 continue
@@ -2485,7 +2529,10 @@ def update_readme() -> None:
                 tables = _format_pdf_cell(r.get("financial_tables_en"), "Tables")
                 pdf_en = tables if pdf_en == "-" else f"{pdf_en} / {tables}"
             row_type = "財報"
-            digest_cell = "-"
+            # Same reasoning as the CSV-matched branch above: a merged or
+            # 財報-only digest can exist under this stock/year/quarter even
+            # though this row has no audio/IR/SRT of its own.
+            digest_cell = _digest_cell(sid, r['year'], r['quarter'])
         else:
             audio  = _webcast_cell(r)
             fin, gt = _call_transcript_cells(r)
