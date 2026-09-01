@@ -470,7 +470,7 @@ skills:
   maintainer: wenchiehlee
   source: biztrends.TW
   updated_at: '2026-09-01'
-  revised_at: '2026-08-27'
+  revised_at: '2026-09-01'
 - name: skill-theme-competitor-groups-curate
   group: common
   path: common/skill-theme-competitor-groups-curate
