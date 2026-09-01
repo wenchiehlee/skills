@@ -235,11 +235,41 @@ def convert_my_tw_units(metric: dict[str, object]) -> dict[str, object]:
         return metric
 
     metric["unit"] = "百萬台幣"
-    for key in ["revenue", "profit"]:
-        value = CCA.to_float(metric.get(key))
+    for spec in CCA.AMOUNT_KPIS:
+        value = CCA.to_float(metric.get(spec.key))
         if value is not None:
-            metric[key] = value * multiplier
+            metric[spec.key] = value * multiplier
     return metric
+
+
+def extra_kpi_specs() -> list[Any]:
+    """COMMON_KPIS entries beyond the revenue/profit/gm trio already hardcoded in output row dicts."""
+    return [spec for spec in CCA.COMMON_KPIS if spec.key not in {"revenue", "gross_profit", "profit", "gm"}]
+
+
+def blank_extra_kpi_fields() -> dict[str, object]:
+    fields: dict[str, object] = {}
+    for spec in extra_kpi_specs():
+        field = CCA.csv_kpi_field(spec)
+        fields[field] = ""
+        fields[f"{field}_raw"] = None
+        if spec.yoy:
+            fields[f"{spec.key}_yoy_pct"] = ""
+            fields[f"{spec.key}_yoy_pct_raw"] = None
+    return fields
+
+
+def extra_kpi_fields(metric: dict[str, object]) -> dict[str, object]:
+    fields: dict[str, object] = {}
+    for spec in extra_kpi_specs():
+        field = CCA.csv_kpi_field(spec)
+        formatter = CCA.gm_pct if spec.is_ratio else CCA.number
+        fields[field] = formatter(metric.get(spec.key))
+        fields[f"{field}_raw"] = metric.get(spec.key)
+        if spec.yoy:
+            fields[f"{spec.key}_yoy_pct"] = CCA.pct(metric.get(f"{spec.key}_yoy_pct"))
+            fields[f"{spec.key}_yoy_pct_raw"] = metric.get(f"{spec.key}_yoy_pct")
+    return fields
 
 
 def market_sort_key(market: object) -> int:
@@ -593,6 +623,7 @@ def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: P
                 "pe_range": "",
                 "fx_currency": "",
                 "is_monthly_revenue_only": False,
+                **blank_extra_kpi_fields(),
                 **peer_valuation,
             })
             continue
@@ -621,6 +652,7 @@ def output_rows_for_data(data: dict[str, Any], json_dir: Path, biztrends_root: P
                 "pe_range": peer_pe_ranges.get(str(metric.get("period") or ""), ""),
                 "fx_currency": metric.get("fx_currency", ""),
                 "is_monthly_revenue_only": bool(metric.get("is_monthly_revenue_only")),
+                **extra_kpi_fields(metric),
                 **peer_valuation,
             })
     return rows
@@ -699,7 +731,7 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
             companies[company_key][""] = row
 
     out = StringIO()
-    out.write("### 競爭同業 Revenue/Profit/GM/PE\n\n")
+    out.write("### 競爭同業 Revenue/Profit/Margins/PE\n\n")
     out.write(f"Revenue/Profit Unit: `{unit}`\n")
     out.write("P/E Range: `季內最低/平均/最高股價 / TTM EPS (當季 EPS + 最近 3 季 EPS)`; daily close 優先，歷史季度以 GoodInfo 月高低/季均價補齊\n")
     fx_notes = []
@@ -715,7 +747,8 @@ def render_pivot(rows: list[dict[str, object]]) -> str:
     write_profile_table(out, companies)
     write_period_table(out, "Revenue", revenue_periods, companies, [("revenue", "Revenue"), ("revenue_yoy_pct", "Rev YoY")])
     write_period_table(out, "Profit", financial_periods, companies, [("profit", "Profit"), ("profit_yoy_pct", "Profit YoY")])
-    write_period_table(out, "GM", financial_periods, companies, [("gross_margin_pct", "GM")])
+    write_period_table(out, "Net Profit", financial_periods, companies, [("net_profit", "Net Profit"), ("net_profit_yoy_pct", "Net Profit YoY")])
+    write_period_table(out, "Margins", financial_periods, companies, [("gross_margin_pct", "GM"), ("operating_margin_pct", "Op Margin"), ("net_margin_pct", "Net Margin")])
     write_pe_table(out, financial_periods, companies)
     return out.getvalue().strip()
 
