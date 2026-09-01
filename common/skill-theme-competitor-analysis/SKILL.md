@@ -109,7 +109,7 @@ Pivot the Revenue/Profit/GM presentation table so `Period` is the major column a
 Revenue | Rev YoY | Profit | Profit YoY | GM
 ```
 
-For Taiwan monthly-revenue-only quarters, keep the `YYYYQn（月營收）` period free of financial-report event dates. If a matching `財報公告` or `法說會` date exists in `data/InvestorEvents/raw_event_upcoming_earnings.csv` and the full `YYYYQn` financial row is not available yet, render a plain `YYYYQn` placeholder period and show the event date in its first otherwise-empty financial cell, normally `Profit`.
+For Taiwan monthly-revenue-only quarters, keep the `YYYYQn（月營收）` period free of financial-report event dates. If a matching `財報公告` or `法說會` date exists in `../biztrends.TW/data/InvestorEvents/raw_event_upcoming_earnings.csv` and the full `YYYYQn` financial row is not available yet, render a plain `YYYYQn` placeholder period and show the event date in its first otherwise-empty financial cell, normally `Profit`.
 
 Use HTML tables with `colspan` when needed, because standard Markdown pipe tables cannot express grouped period headers. Keep CSV output in long format for machine processing. In markdown reports, display `Relationship` cells in Traditional Chinese while preserving machine-readable relationship enums in CSV.
 
@@ -130,6 +130,8 @@ python3 skills/skill-theme-competitor-analysis/scripts/render_competitor_financi
 The adapter reads canonical competitors from `data/enrichment_all/{ticker}.json`, resolves competitor entity names to Taiwan stock IDs or US/international symbols, then renders a `### 競爭同業 Revenue/Profit/GM` markdown subsection. It uses `../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_performance1.csv`, `../biztrends.TW/data/Python-Actions.GoodInfo.Analyzer/raw_revenue.csv`, and `../biztrends.TW/data/InvestorConference/raw_ir_quarterly_financials.csv` and `../biztrends.TW/data/ConceptStocks/raw_conceptstock_company_income.csv` for financial data.
 
 The My-TW renderer imports this adapter directly from the repo-local `skills/skill-theme-competitor-analysis` folder. Keep this local skill in sync with `../skills/common/skill-theme-competitor-analysis` when changing the adapter.
+
+`output_rows_for_data()` (called by `render_competitor_financial_section()` and directly by `render_enrichment_markdown.py`'s main loop) returns each row with both a display-formatted string and an unrounded numeric sibling: `revenue`/`revenue_raw`, `revenue_yoy_pct`/`revenue_yoy_pct_raw`, `profit`/`profit_raw`, `profit_yoy_pct`/`profit_yoy_pct_raw`, `gross_margin_pct`/`gross_margin_pct_raw`. `render_pivot()` only reads the string fields, so the `_raw` siblings exist purely for downstream machine consumers — currently `render_enrichment_markdown.py`'s `output/json/{ticker}_competitors.json` export, which GoogleAlertManager reads to rank a target company against every peer without re-parsing formatted text (stripping `,`/`%`). Keep both fields in sync if you change how a metric is computed — never format-only one and leave the other stale.
 
 ## Validation
 

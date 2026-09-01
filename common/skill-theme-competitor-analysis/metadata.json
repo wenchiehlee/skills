@@ -2,11 +2,15 @@
   "name": "skill-theme-competitor-analysis",
   "description": "依指定 stock id，使用 supply-chain product peer seed 與 relationship rules 區分 brand competitor、ODM peer、server peer 與 supplier/component，並輸出最近三年季度 Revenue、Revenue YoY、Profit、Profit YoY、GM 競爭者分析表。",
   "category": "financial-strategy",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "maintainer": "wenchiehlee",
   "source": "biztrends.TW",
-  "updated_at": "2026-07-22",
+  "updated_at": "2026-09-01",
   "files": [
-    "self_update.py"
+    "self_update.py",
+    "SKILL.md",
+    "scripts/run_company_competitor_analysis.py",
+    "scripts/render_competitor_financial_section.py",
+    "references/competitor_rules.md"
   ]
 }

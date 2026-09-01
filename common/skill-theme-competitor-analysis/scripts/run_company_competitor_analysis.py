@@ -17,7 +17,7 @@ TAIWAN_MONTHLY_REVENUE = ROOT / "data/Python-Actions.GoodInfo.Analyzer/raw_reven
 TAIWAN_SUPPLY_F000 = ROOT / "data/ic.tpex.org.tw/raw_SupplyChain_F000.csv"
 US_INCOME = ROOT / "data/ConceptStocks/raw_conceptstock_company_income.csv"
 INVESTORCONFERENCE_IR_INCOME = ROOT / "data/InvestorConference/raw_ir_quarterly_financials.csv"
-INVESTORCONFERENCE_DATA = ROOT.parent / "InvestorConference/data"
+INVESTORCONFERENCE_DATA = ROOT.parent / "InvestorConference" / "data"
 INVESTOR_EVENTS = ROOT / "data/InvestorEvents/raw_event_upcoming_earnings.csv"
 COMPANY_CYCLE_MAJOR_WEIGHTS = OUTPUT_DIR / "company_cycle_major_weights.csv"
 COMPANY_SEGMENT_WEIGHTS = ROOT / "data/company_segment_weights.csv"
@@ -58,6 +58,8 @@ US_NAME_OVERRIDES = {
     "0992.HK": "Lenovo Group Limited",
     "LNVGY": "Lenovo Group ADR",
     "HPE": "Hewlett Packard Enterprise",
+    "MRVL": "Marvell Technology",
+    "SIMO": "Silicon Motion Technology",
     "AVGO": "Broadcom Inc.",
     "QCOM": "Qualcomm Inc.",
     "GFS": "GlobalFoundries Inc.",
@@ -84,6 +86,63 @@ class Peer:
     relationship_type: str
     peer_basis: str
     shared_categories: set[str]
+
+
+@dataclass(frozen=True)
+class KpiSpec:
+    """Common KPI definition, applied uniformly across every theme/company.
+
+    `tw_col`/`us_col` name the source column in raw_performance1.csv and the
+    US income CSVs (InvestorConference IR + ConceptStocks) respectively.
+    `ratio_of` is a (numerator_key, denominator_key) fallback used when the
+    ratio column itself is missing but both underlying amounts are present.
+    `yoy=True` only makes sense for amount metrics, not ratios.
+    """
+
+    key: str
+    label: str
+    tw_col: str | None = None
+    us_col: str | None = None
+    is_ratio: bool = False
+    ratio_of: tuple[str, str] | None = None
+    yoy: bool = False
+    display: bool = True  # show as its own column in the pivoted markdown report
+
+
+# Extend this list to add a new common KPI everywhere (extraction, CSV, markdown
+# report) without touching the extraction functions below. Source columns already
+# exist in raw_performance1.csv and the US income CSVs; parse_official_taiwan_earnings_release
+# (English-language IR filing regex parser) only supports revenue/gross_profit/profit/gm
+# by nature of regex-per-phrasing, so new keys added here simply won't populate from
+# that one highest-priority source until a matching regex is added for them there.
+COMMON_KPIS: list[KpiSpec] = [
+    KpiSpec("revenue", "Revenue", tw_col="獲利金額_億_營業_收入", us_col="total_revenue", yoy=True),
+    KpiSpec("gross_profit", "Gross Profit", tw_col="獲利金額_億_營業_毛利", us_col="gross_profit", yoy=False, display=False),
+    KpiSpec("profit", "Profit", tw_col="獲利金額_億_營業_利益", us_col="operating_income", yoy=True),
+    KpiSpec("net_profit", "Net Profit", tw_col="獲利金額_億_稅後_淨利", us_col="net_income", yoy=True),
+    KpiSpec("gm", "GM", tw_col="獲利率_pct_營業_毛利", us_col="gross_margin", is_ratio=True, ratio_of=("gross_profit", "revenue")),
+    KpiSpec("operating_margin", "Op Margin", tw_col="獲利率_pct_營業_利益", us_col="operating_margin", is_ratio=True, ratio_of=("profit", "revenue")),
+    KpiSpec("net_margin", "Net Margin", tw_col="獲利率_pct_稅後_淨利", us_col="net_margin", is_ratio=True, ratio_of=("net_profit", "revenue")),
+]
+AMOUNT_KPIS = [spec for spec in COMMON_KPIS if not spec.is_ratio]
+RATIO_KPIS = [spec for spec in COMMON_KPIS if spec.is_ratio]
+YOY_KPIS = [spec for spec in COMMON_KPIS if spec.yoy]
+
+
+def apply_ratio_fallback(row: dict[str, object]) -> None:
+    """Fill missing ratio KPIs from amount_key / denominator_key * 100 when possible."""
+    for spec in RATIO_KPIS:
+        if row.get(spec.key) is not None or spec.ratio_of is None:
+            continue
+        numerator = row.get(spec.ratio_of[0])
+        denominator = row.get(spec.ratio_of[1])
+        if isinstance(numerator, (int, float)) and isinstance(denominator, (int, float)) and denominator:
+            row[spec.key] = numerator / denominator * 100.0
+
+
+def blank_kpi_row() -> dict[str, object]:
+    return {spec.key: None for spec in COMMON_KPIS} | {f"{spec.key}_yoy_pct": None for spec in YOY_KPIS}
+
 
 def read_csv(path: Path) -> list[dict[str, str]]:
     if not path.exists():
@@ -305,11 +364,7 @@ def attach_investor_event_dates(metrics: dict[str, list[dict[str, object]]], sto
                 row = {
                     "period": period,
                     "unit": target_row.get("unit"),
-                    "revenue": None,
-                    "revenue_yoy_pct": None,
-                    "profit": None,
-                    "profit_yoy_pct": None,
-                    "gm": None,
+                    **blank_kpi_row(),
                     "company": target_row.get("company"),
                     "is_monthly_revenue_only": False,
                 }
@@ -319,11 +374,7 @@ def attach_investor_event_dates(metrics: dict[str, list[dict[str, object]]], sto
                 row = {
                     "period": period,
                     "unit": rows[0].get("unit") if rows else None,
-                    "revenue": None,
-                    "revenue_yoy_pct": None,
-                    "profit": None,
-                    "profit_yoy_pct": None,
-                    "gm": None,
+                    **blank_kpi_row(),
                     "company": rows[0].get("company") if rows else None,
                     "is_monthly_revenue_only": False,
                 }
@@ -536,17 +587,15 @@ def taiwan_quarterly_metrics(stocks: set[str], years: int) -> dict[str, list[dic
         revenue = to_float(row.get("獲利金額_億_營業_收入"))
         if stock not in stocks or key == (0, 0) or revenue is None:
             continue
-        gross_profit = to_float(row.get("獲利金額_億_營業_毛利"))
-        profit = to_float(row.get("獲利金額_億_營業_利益"))
-        gm = to_float(row.get("獲利率_pct_營業_毛利"))
-        if gm is None and gross_profit is not None and revenue:
-            gm = gross_profit / revenue * 100.0
+        kpi_row = blank_kpi_row()
+        for spec in COMMON_KPIS:
+            if spec.tw_col:
+                kpi_row[spec.key] = to_float(row.get(spec.tw_col))
+        apply_ratio_fallback(kpi_row)
         by_stock_period[(stock, key)] = {
             "period": period,
             "unit": "TWD 億",
-            "revenue": revenue,
-            "profit": profit,
-            "gm": gm,
+            **kpi_row,
             "company": row.get("company_name", "").strip(),
         }
 
@@ -563,8 +612,8 @@ def taiwan_quarterly_metrics(stocks: set[str], years: int) -> dict[str, list[dic
         if key not in selected_periods:
             continue
         prior = by_stock_period.get((stock, (key[0] - 1, key[1])), {})
-        current["revenue_yoy_pct"] = yoy(current.get("revenue"), prior.get("revenue"))
-        current["profit_yoy_pct"] = yoy(current.get("profit"), prior.get("profit"))
+        for spec in YOY_KPIS:
+            current[f"{spec.key}_yoy_pct"] = yoy(current.get(spec.key), prior.get(spec.key))
         out[stock].append(current)
     return out
 
@@ -591,15 +640,14 @@ def taiwan_monthly_revenue_metrics(stocks: set[str], years: int, existing: dict[
 
     for (stock, key), bucket in monthly_sums.items():
         prior = monthly_sums.get((stock, (key[0] - 1, key[1])), {})
+        kpi_row = blank_kpi_row()
+        kpi_row["revenue"] = bucket.get("revenue")
+        kpi_row["revenue_yoy_pct"] = yoy(bucket.get("revenue"), prior.get("revenue"))
         by_stock_quarter[(stock, key)] = {
             "period": bucket.get("period"),
             "unit": "TWD 億",
-            "revenue": bucket.get("revenue"),
-            "profit": None,
-            "gm": None,
+            **kpi_row,
             "company": bucket.get("company"),
-            "revenue_yoy_pct": yoy(bucket.get("revenue"), prior.get("revenue")),
-            "profit_yoy_pct": None,
             "is_monthly_revenue_only": True,
         }
 
@@ -630,27 +678,34 @@ def us_quarterly_metrics(symbols: set[str], years: int) -> dict[str, list[dict[s
         "FMP": 4,
     }
 
+    def extract_us_kpis(row: dict[str, str], scale: float) -> dict[str, object]:
+        kpi_row = blank_kpi_row()
+        for spec in COMMON_KPIS:
+            if not spec.us_col:
+                continue
+            value = to_float(row.get(spec.us_col))
+            if value is None:
+                continue
+            if spec.is_ratio and abs(value) <= 1.5:
+                value *= 100.0
+            elif not spec.is_ratio:
+                value /= scale
+            kpi_row[spec.key] = value
+        apply_ratio_fallback(kpi_row)
+        return kpi_row
+
     for row in read_csv(INVESTORCONFERENCE_IR_INCOME):
         symbol = row.get("symbol", "").strip()
         key = period_key_from_end_date(row.get("end_date", ""))
         revenue = to_float(row.get("total_revenue"))
         if symbol not in symbols or key == (0, 0) or revenue is None:
             continue
-        gross_profit = to_float(row.get("gross_profit"))
-        profit = to_float(row.get("operating_income"))
-        gm = to_float(row.get("gross_margin"))
-        if gm is None and gross_profit is not None and revenue:
-            gm = gross_profit / revenue * 100.0
-        elif gm is not None and abs(gm) <= 1.5:
-            gm *= 100.0
         currency = row.get("currency", "").strip() or "USD"
         scale = 1_000_000_000.0 if currency in {"USD", "HKD", "KRW"} else 1.0
         by_stock_period[(symbol, key)] = {
             "period": f"{key[0]}Q{key[1]}",
             "unit": f"{currency} 十億" if scale != 1.0 else currency,
-            "revenue": revenue / scale,
-            "profit": profit / scale if profit is not None else None,
-            "gm": gm,
+            **extract_us_kpis(row, scale),
             "company": row.get("company_name", "").strip() or US_NAME_OVERRIDES.get(symbol, ""),
             "revenue_yoy_pct": to_float(row.get("revenue_yoy_pct")),
             "source_priority": source_priority["InvestorConferenceOfficialIR"],
@@ -672,17 +727,11 @@ def us_quarterly_metrics(symbols: set[str], years: int) -> dict[str, list[dict[s
         existing = by_stock_period.get((symbol, key))
         if existing and source_priority.get(source, 9) >= int(existing.get("source_priority", 9)):
             continue
-        profit = to_float(row.get("operating_income"))
-        gm = to_float(row.get("gross_margin"))
-        if gm is not None and abs(gm) <= 1.5:
-            gm *= 100.0
         currency = row.get("currency", "").strip() or "USD"
         by_stock_period[(symbol, key)] = {
             "period": f"{key[0]}Q{key[1]}",
             "unit": f"{currency} 十億",
-            "revenue": revenue / 1_000_000_000.0,
-            "profit": profit / 1_000_000_000.0 if profit is not None else None,
-            "gm": gm,
+            **extract_us_kpis(row, 1_000_000_000.0),
             "company": row.get("company_name", "").strip() or US_NAME_OVERRIDES.get(symbol, ""),
             "revenue_yoy_pct": to_float(row.get("revenue_yoy_pct")),
             "source_priority": source_priority.get(source, 9),
@@ -696,22 +745,40 @@ def us_quarterly_metrics(symbols: set[str], years: int) -> dict[str, list[dict[s
         prior = by_stock_period.get((symbol, (key[0] - 1, key[1])), {})
         if current.get("revenue_yoy_pct") is None:
             current["revenue_yoy_pct"] = yoy(current.get("revenue"), prior.get("revenue"))
-        current["profit_yoy_pct"] = yoy(current.get("profit"), prior.get("profit"))
+        for spec in YOY_KPIS:
+            if spec.key == "revenue":
+                continue
+            current[f"{spec.key}_yoy_pct"] = yoy(current.get(spec.key), prior.get(spec.key))
         out[symbol].append(current)
     return out
+
+def csv_kpi_field(spec: KpiSpec) -> str:
+    """CSV column name for a KPI's formatted value. `gm` keeps its legacy
+    `gross_margin_pct` name so existing downstream consumers (e.g.
+    skill-theme-competitor-groups-curate, GoogleAlertManager's
+    src/analysis/competitors.py) don't break; other ratio KPIs use `{key}_pct`."""
+    if spec.key == "gm":
+        return "gross_margin_pct"
+    return f"{spec.key}_pct" if spec.is_ratio else spec.key
+
 
 def write_outputs(stock: str, peers: dict[str, Peer], metrics: dict[str, list[dict[str, object]]], relationships: set[str]) -> tuple[Path, Path, int]:
     out_dir = OUTPUT_DIR / "focus" / stock
     out_dir.mkdir(parents=True, exist_ok=True)
     csv_path = out_dir / f"company_competitor_analysis_{stock}.csv"
     md_path = out_dir / f"company_competitor_analysis_{stock}.md"
-    fields = ["stock", "company", "relationship_type", "peer_basis", "shared_categories", "period", "financial_report_event_date", "ir_event_date", "unit", "revenue", "revenue_yoy_pct", "profit", "profit_yoy_pct", "gross_margin_pct"]
+    kpi_fields = []
+    for spec in COMMON_KPIS:
+        kpi_fields.append(csv_kpi_field(spec))
+        if spec.yoy:
+            kpi_fields.append(f"{spec.key}_yoy_pct")
+    fields = ["stock", "company", "relationship_type", "peer_basis", "shared_categories", "period", "financial_report_event_date", "ir_event_date", "unit", *kpi_fields]
     output_rows: list[dict[str, object]] = []
     for peer_stock, peer in sorted(peers.items(), key=lambda item: (item[1].relationship_type != "target", item[1].relationship_type, item[0])):
         if peer.relationship_type != "target" and relationships and peer.relationship_type not in relationships:
             continue
         for metric in metrics.get(peer_stock, []):
-            output_rows.append({
+            row = {
                 "stock": peer_stock,
                 "company": metric.get("company") or peer.company,
                 "relationship_type": peer.relationship_type,
@@ -722,13 +789,14 @@ def write_outputs(stock: str, peers: dict[str, Peer], metrics: dict[str, list[di
                 "ir_event_date": metric.get("ir_event_date", ""),
                 "event_date": metric.get("event_date", ""),
                 "unit": metric.get("unit"),
-                "revenue": number(metric.get("revenue")),
-                "revenue_yoy_pct": pct(metric.get("revenue_yoy_pct")),
-                "profit": number(metric.get("profit")),
-                "profit_yoy_pct": pct(metric.get("profit_yoy_pct")),
-                "gross_margin_pct": gm_pct(metric.get("gm")),
                 "is_monthly_revenue_only": bool(metric.get("is_monthly_revenue_only")),
-            })
+            }
+            for spec in COMMON_KPIS:
+                formatter = gm_pct if spec.is_ratio else number
+                row[csv_kpi_field(spec)] = formatter(metric.get(spec.key))
+                if spec.yoy:
+                    row[f"{spec.key}_yoy_pct"] = pct(metric.get(f"{spec.key}_yoy_pct"))
+            output_rows.append(row)
     with csv_path.open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
@@ -827,14 +895,20 @@ def write_ai_cycle_weights_markdown(f, output_rows: list[dict[str, object]], ai_
             f.write("</tr>\n")
         f.write("</tbody>\n</table>\n\n")
 
+def pivot_metric_columns() -> list[tuple[str, str]]:
+    """(csv_field, display_label) pairs for the pivoted markdown table, in COMMON_KPIS order."""
+    columns: list[tuple[str, str]] = []
+    for spec in COMMON_KPIS:
+        if not spec.display:
+            continue
+        columns.append((csv_kpi_field(spec), spec.label))
+        if spec.yoy:
+            columns.append((f"{spec.key}_yoy_pct", f"{spec.label} YoY"))
+    return columns
+
+
 def write_pivot_markdown(f, output_rows: list[dict[str, object]]) -> None:
-    metrics = [
-        ("revenue", "Revenue"),
-        ("revenue_yoy_pct", "Rev YoY"),
-        ("profit", "Profit"),
-        ("profit_yoy_pct", "Profit YoY"),
-        ("gross_margin_pct", "GM"),
-    ]
+    metrics = pivot_metric_columns()
     rows_by_unit: dict[str, list[dict[str, object]]] = defaultdict(list)
     for row in output_rows:
         rows_by_unit[str(row.get("unit") or "")].append(row)
@@ -906,8 +980,6 @@ def main() -> int:
     taiwan_metrics = taiwan_monthly_revenue_metrics(tw_stocks, args.years, taiwan_metrics)
     metrics.update(taiwan_metrics)
     metrics.update(us_quarterly_metrics(us_symbols, args.years))
-    for peer_stock in peers:
-        metrics.setdefault(peer_stock, [])
     attach_investor_event_dates(metrics, set(peers))
     csv_path, md_path, row_count = write_outputs(target, peers, metrics, relationships)
     print(f"Wrote {row_count} rows")
