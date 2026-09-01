@@ -313,7 +313,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/llm
   updated_at: '2026-09-01'
-  revised_at: '2026-08-30'
+  revised_at: '2026-09-01'
 - name: skill-llm-api-server
   group: common
   path: common/skill-llm-api-server
