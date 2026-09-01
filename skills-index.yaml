@@ -306,13 +306,13 @@ skills:
 - name: skill-llm-api-client
   group: common
   path: common/skill-llm-api-client
-  version: 1.0.1
+  version: 1.0.2
   description: 統一的 LLM 客戶端函式庫（llm），封裝 Gemini API 金鑰輪轉、skill-llm-api-server 的 codex-cli/gemini-cli
     橋接、以及本地 MLX 推論，內建 codex → gemini → mlx 自動備援鏈與智慧路由（Smart Routing）。
   category: library
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/llm
-  updated_at: '2026-08-30'
+  updated_at: '2026-09-01'
   revised_at: '2026-08-30'
 - name: skill-llm-api-server
   group: common
