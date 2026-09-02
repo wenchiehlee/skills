@@ -2,7 +2,7 @@
   "name": "skill-scribd-pdf-fetch",
   "description": "從 Scribd 文件網址下載乾淨的 PDF 副本，透過外部工具 themrsami/scribd-downloader（headless Chrome + CDP 逐頁列印）執行，本登錄庫不複製該工具原始碼；自動修補 Chrome 130+ 因 excludeSwitches 選項導致啟動即崩潰的相容性問題。",
   "category": "document",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "wenchiehlee-money",
   "maintainer": "wenchiehlee-money",
   "source": "",
