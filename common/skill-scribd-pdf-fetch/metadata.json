@@ -1,0 +1,60 @@
+{
+  "name": "skill-scribd-pdf-fetch",
+  "description": "從 Scribd 文件網址下載乾淨的 PDF 副本，透過外部工具 themrsami/scribd-downloader（headless Chrome + CDP 逐頁列印）執行，本登錄庫不複製該工具原始碼；自動修補 Chrome 130+ 因 excludeSwitches 選項導致啟動即崩潰的相容性問題。",
+  "category": "document",
+  "version": "1.0.0",
+  "author": "wenchiehlee-money",
+  "maintainer": "wenchiehlee-money",
+  "source": "",
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-scribd-pdf-fetch",
+  "updated_at": "2026-09-02",
+  "license": "MIT",
+  "tags": [
+    "scribd",
+    "pdf",
+    "selenium",
+    "chrome",
+    "document-download"
+  ],
+  "compatibility": {
+    "python": ">=3.10",
+    "requires": [
+      "git (external CLI)",
+      "Google Chrome",
+      "themrsami/scribd-downloader (external repo, cloned at runtime)"
+    ]
+  },
+  "external_dependencies": [
+    {
+      "name": "scribd-downloader",
+      "source": "https://github.com/themrsami/scribd-downloader",
+      "author": "Usama Nazir (fullstackusama / themrsami)",
+      "declared_license": "MIT (stated in README only; no LICENSE file present as of 2026-09-02)",
+      "vendored": false,
+      "note": "Invoked as a subprocess against the user's own local clone; never copied into this registry. See SKILL.md '授權與合規注意事項'."
+    }
+  ],
+  "files": [
+    "SKILL.md",
+    "metadata.json",
+    "self_update.py",
+    "scripts/scribd_pdf_fetch.py"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "local_path": "github.com/skills/common/skill-scribd-pdf-fetch",
+      "role": "registry"
+    },
+    {
+      "repo": "wenchiehlee-money/TW-institutional-research",
+      "local_path": "github.com/TW-institutional-research/skills/skill-scribd-pdf-fetch",
+      "role": "consumer"
+    },
+    {
+      "repo": "wenchiehlee-money/TW-institutional-investment-theses",
+      "local_path": "github.com/TW-institutional-investment-theses/skills/skill-scribd-pdf-fetch",
+      "role": "consumer"
+    }
+  ]
+}
