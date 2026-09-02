@@ -418,7 +418,7 @@ skills:
 - name: skill-stock-investorevent-fetch
   group: common
   path: common/skill-stock-investorevent-fetch
-  version: 1.2.0
+  version: 1.2.1
   description: Regenerate raw_event_upcoming_earnings.csv from TW/US watchlists (MOPS
     + yfinance), classifying every event as 財報, 法說會, or 受邀法說, with consistent date/fiscal-quarter
     mapping shared across InvestorConference and InvestorEvents.
@@ -426,7 +426,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
   updated_at: '2026-08-27'
-  revised_at: '2026-08-28'
+  revised_at: '2026-09-02'
 - name: skill-stock-ma-rsi-bband-macd-peband
   group: common
   path: common/skill-stock-ma-rsi-bband-macd-peband
