@@ -184,7 +184,14 @@ class KeyframeExtractor:
         proc = subprocess.run(
             ["yt-dlp", *YT_DLP_JS_RUNTIME_ARGS, *yt_dlp_cookie_args(),
              "-f", "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best",
-             "--merge-output-format", "mp4", "-o", out_template, video_url],
+             # mkv, not mp4: merging separate video+audio streams into mp4 needs
+             # ffmpeg to remux the audio codec (often Opus) into an MP4-compatible
+             # one, which fails as "Postprocessing: Stream #1:0 -> #0:1 (copy)" on
+             # older ffmpeg builds (seen on a fresh self-hosted runner's distro-repo
+             # ffmpeg 4.2.7). Matroska accepts stream-copying virtually any
+             # video/audio codec pairing, and grab_frame()'s later ffmpeg call
+             # doesn't care about the container.
+             "--merge-output-format", "mkv", "-o", out_template, video_url],
             capture_output=True, text=True, encoding="utf-8", errors="replace",
         )
         if proc.returncode != 0:
