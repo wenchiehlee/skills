@@ -23,12 +23,21 @@ What this wrapper adds on top of the upstream CLI:
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import shutil
 import subprocess
 import sys
 import urllib.parse
 from pathlib import Path
+
+# Non-Latin-1 Scribd titles/filenames (CJK, etc.) crash a plain print() when
+# the terminal's console codepage isn't UTF-8 (e.g. Windows cp1252/cp950).
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 UPSTREAM_URL = "https://github.com/themrsami/scribd-downloader.git"
 DEFAULT_CLONE_PARENT = Path.home() / "SynologyDrive" / "NAS" / "github.com"
@@ -100,11 +109,17 @@ def run_downloader(repo_dir: Path, url: str) -> Path:
     expected_path = repo_dir / expected_name
 
     print(f"[scribd-pdf-fetch] Running downloader for: {url}")
+    # Force UTF-8 stdout/stderr in the subprocess: on Windows, a non-UTF-8
+    # console codepage (e.g. cp1252) makes upstream's print() crash with
+    # UnicodeEncodeError whenever the Scribd title/filename contains
+    # non-Latin-1 characters (CJK, etc.).
+    child_env = dict(os.environ, PYTHONIOENCODING="utf-8")
     result = subprocess.run(
         [sys.executable, "scribd-downloader.py"],
         cwd=repo_dir,
         input=url + "\n",
         text=True,
+        env=child_env,
     )
     if result.returncode != 0:
         raise SystemExit(
