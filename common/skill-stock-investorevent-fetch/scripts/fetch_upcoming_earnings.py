@@ -29,6 +29,16 @@ from dotenv import load_dotenv
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+# On Windows, a non-UTF-8 console codepage (e.g. cp1252) makes any print()
+# of this script's CJK category labels (財報/法說會/受邀法說) crash with
+# UnicodeEncodeError before the CSV is ever touched.
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 load_dotenv()
 
 # skill-stock-fiscal-quarter-resolve is deployed as a sibling skill folder
