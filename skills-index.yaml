@@ -642,11 +642,11 @@ skills:
 - name: skill-youtube-channel-srt-keyframe-extract
   group: common
   path: common/skill-youtube-channel-srt-keyframe-extract
-  version: 1.2.0
+  version: 1.2.1
   description: 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡報／數字等視覺重點的時間點，下載對應影片並擷取該時間點的畫面存成帶時間碼的
     JPEG，索引 md 裡每張截圖都附上該時間區段的實際逐字稿片段（可關鍵字搜尋）與 LLM 話題推測。
   category: document
   maintainer: wenchiehlee
-  source: https://github.com/wenchiehlee-money/YoutubeAudio.Fetch
-  updated_at: '2026-08-26'
-  revised_at: '2026-08-26'
+  source: https://github.com/ZhongZheng782/YoutubeAudio.Fetch
+  updated_at: '2026-09-02'
+  revised_at: '2026-09-02'
