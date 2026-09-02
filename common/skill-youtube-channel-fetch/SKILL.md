@@ -65,8 +65,10 @@ pip install requests python-dotenv youtube-transcript-api
 
 ### 2. 設定環境變數（`.env`）
 ```env
-WHISPER_SOURCE_REPO=wenchiehlee-money/YoutubeAudio.Fetch   # 本 repo（音訊/GT 的家）
+WHISPER_SOURCE_REPO=ZhongZheng782/YoutubeAudio.Fetch   # 本 repo（音訊/GT 的家）
 REPO_FILE_SYNC_WENCHIEHLEE_MONEY=<PAT，對 WHISPER_SOURCE_REPO 需要 Contents: Read and write>
+# 若上面那把 token 對 WHISPER_SOURCE_REPO 失效（例如 repo 換了 org），會 fallback 到：
+# REPO_FILE_SYNC_ZHONGZHENG782_MONEY=<PAT，同樣需要 Contents: Read and write>
 ```
 > 變數名沿用 `skill-mlx-api-client-whisper` 的 `REPO_FILE_SYNC_<OWNER>_<...>` 命名慣例，
 > 只是這裡對應的是**來源 repo**（`WHISPER_SOURCE_REPO`）而非目標 repo。兩者是**不同範圍**

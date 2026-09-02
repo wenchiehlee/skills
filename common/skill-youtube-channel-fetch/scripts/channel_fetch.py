@@ -149,11 +149,16 @@ class ChannelFetcher:
         # REPO_FILE_SYNC_<SOURCE_OWNER>_<...> follows the same naming convention as
         # whisper_issue_client's REPO_FILE_SYNC_<TARGET_OWNER>_<...>, just scoped to the
         # source repo instead of the target repo — e.g. REPO_FILE_SYNC_WENCHIEHLEE_MONEY
-        # for source_repo "wenchiehlee-money/...". YOUTUBE_FETCH_TOKEN/GH_TOKEN are generic
-        # fallbacks for ad-hoc local use.
+        # for source_repo "wenchiehlee-money/...". REPO_FILE_SYNC_ZHONGZHENG782_MONEY is a
+        # fallback for after the source repo moved under the ZhongZheng782 org (kept behind
+        # the WENCHIEHLEE var since that one is deliberately scoped narrower, Contents-only
+        # on this repo, vs. the ZHONGZHENG782 one's Issues-only scope on the Mac-mini repo —
+        # only try it here if it happens to also carry Contents access on this repo).
+        # YOUTUBE_FETCH_TOKEN/GH_TOKEN are generic fallbacks for ad-hoc local use.
         self.token = (
             token
             or os.environ.get("REPO_FILE_SYNC_WENCHIEHLEE_MONEY")
+            or os.environ.get("REPO_FILE_SYNC_ZHONGZHENG782_MONEY")
             or os.environ.get("YOUTUBE_FETCH_TOKEN")
             or os.environ.get("GH_TOKEN")
         )
