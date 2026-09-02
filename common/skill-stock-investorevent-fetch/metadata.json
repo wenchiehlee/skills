@@ -43,6 +43,11 @@
       "repo": "wenchiehlee-investment/InvestorEvents",
       "role": "consumer",
       "local_path": "github.com/InvestorEvents/skills/skill-stock-investorevent-fetch"
+    },
+    {
+      "repo": "wenchiehlee-money/TW-institutional-research",
+      "role": "consumer",
+      "local_path": "github.com/TW-institutional-research/skills/skill-stock-investorevent-fetch"
     }
   ]
 }
