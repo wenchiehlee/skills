@@ -1,0 +1,29 @@
+{
+  "name": "skill-stock-earnings-calendar-monitor",
+  "description": "財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板",
+  "version": "1.0.1",
+  "maintainer": "wenchiehlee",
+  "source": "TAIEX.TW",
+  "updated_at": "2026-09-03",
+  "files": [
+    "metadata.json",
+    "scripts/check_calendar_gaps.py",
+    "scripts/get_watchlist.py",
+    "scripts/update_readme.py",
+    "self_update.py",
+    "SKILL.md"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-stock-earnings-calendar-monitor"
+    },
+    {
+      "repo": "wenchiehlee/TAIEX.TW",
+      "role": "consumer",
+      "local_path": "github.com/TAIEX.TW/skills/skill-stock-earnings-calendar-monitor"
+    }
+  ],
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-stock-earnings-calendar-monitor"
+}
