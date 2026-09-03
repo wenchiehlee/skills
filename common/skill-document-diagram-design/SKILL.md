@@ -31,7 +31,8 @@ skill-document-diagram-design/
 │   ├── diagram-types.md            # 圖表類型子集與選型表（可擴充）
 │   ├── output-spec.md              # Docsify / MkDocs / PowerPoint 輸出規則
 │   ├── plantuml-support.md         # PlantUML 匯入與淘汰路徑（含 InvestmentStackVision 案例）
-│   └── import-redraw.md            # 文字 DSL / 圖片 / 既有 SVG 三種匯入來源的處理流程
+│   ├── import-redraw.md            # 文字 DSL / 圖片 / 既有 SVG 三種匯入來源的處理流程
+│   └── icon-assets.md              # 向量線稿 vs 彩色/寫實圖示：兩種模式的嵌入方式與設計紀律
 ├── scripts/
 │   ├── import_plantuml_mindmap.py  # PlantUML mindmap → IR JSON（匯入用，不是輸出）
 │   ├── render_plantuml.py          # 舊 PlantUML 圖表比對用渲染工具（遷移期間限定）
@@ -78,6 +79,7 @@ Docsify／MkDocs 純輸出 SVG 不需要額外套件；PlantUML 匯入解析（`
 - 座標取 4 的倍數、1px hairline 邊框無陰影、accent color 只用 1–2 處。
 - 節點數超過 `diagram-types.md` 建議上限時，先問能不能拆成兩張圖，不要硬塞。
 - 每張圖都要有 `role="img"`、`<title>`、`<desc>`（無障礙）。
+- 需要放裝置/物件圖示時，先讀 `references/icon-assets.md` 判斷該用「向量線稿」（預設）還是「彩色/寫實風格點陣圖片」（僅限使用者明確要求時）——兩種嵌入方式、常見陷阱（向量圖示縮放後 stroke-width 要反推、點陣圖示 base64 要用程式寫入不要手動貼）都寫在該檔案裡。
 
 ### 4. 依目標平台匯出
 
