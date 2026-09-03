@@ -67,14 +67,14 @@ skills:
 - name: skill-company-enrichment-json
   group: common
   path: common/skill-company-enrichment-json
-  version: 0.1.1
+  version: 0.1.2
   description: Extract and review My-TW-Coverage Markdown enrichment as atomic JSON
     using the biztrends.TW focus list.
   category: basic
-  maintainer: ''
-  source: ''
-  updated_at: ''
-  revised_at: '2026-08-26'
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee/My-TW-Coverage
+  updated_at: '2026-09-03'
+  revised_at: '2026-09-03'
 - name: skill-company-enrichment-render
   group: common
   path: common/skill-company-enrichment-render

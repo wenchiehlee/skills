@@ -25,7 +25,7 @@
 | [skill-company-download-logo](common/skill-company-download-logo) | common | basic | 1.0.1 | 指定台灣股票代碼或美股概念股 Ticker，自動下載高解析度公司官方 Logo PNG，並限制在固定大小。 | 2026-08-07 |
 | [skill-company-earnings-compare](common/skill-company-earnings-compare) | common | financial-accounting | 1.0.1 | 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異 | 2026-08-26 |
 | [skill-company-earnings-monitor](common/skill-company-earnings-monitor) | common | financial-data | 1.0.1 | 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板 | 2026-08-26 |
-| [skill-company-enrichment-json](common/skill-company-enrichment-json) | common | basic | 0.1.1 | Extract and review My-TW-Coverage Markdown enrichment as atomic JSON using the biztrends.TW focus list. | 2026-08-26 |
+| [skill-company-enrichment-json](common/skill-company-enrichment-json) | common | basic | 0.1.2 | Extract and review My-TW-Coverage Markdown enrichment as atomic JSON using the biztrends.TW focus list. | 2026-09-03 |
 | [skill-company-enrichment-render](common/skill-company-enrichment-render) | common | financial-data | 1.0.1 | Render My-TW-Coverage canonical enrichment JSON into organized Markdown without using Pilot_Reports as an active source. | 2026-08-27 |
 | [skill-company-investorconference-digest](common/skill-company-investorconference-digest) | common | basic | 2.4.6 | 法說會/earnings call 與財報結果 digest SOP；支援 FIN/GT/IR/Q&A、Skills 財報結果、公司財報文件、Yahoo consensus、預期差、模型修正路徑與美股對台股 read-through。 | 2026-08-25 |
 | [skill-company-investorconference-ingest](common/skill-company-investorconference-ingest) | common | basic | 1.3.2 | 投資人說明會/財報事件材料蒐集 Ingest 模組；法說會抓音檔、IR、逐字稿，財報事件抓 Skills 財報結果、earnings release、financial tables、SEC filing，並避免對純財報事件產生 FIN/GT。 | 2026-09-01 |
