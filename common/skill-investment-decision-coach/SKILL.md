@@ -260,7 +260,7 @@ skill-<domain>-<object>-<action>
 
 常用 domain：
 
-- `company`：單一公司自身資料——基本面、營收、財報、法說、以「該公司」為中心找出的競爭者/同業清單。判斷準則是輸出結果是否只圍繞一家公司展開。
+- `company`：單一公司自身資料——基本面、營收、財報、法說。判斷準則是輸出結果是否只圍繞一家公司展開。**不含競爭者/同業分析**——「誰是誰的競爭者」永遠是 `theme` domain（見下方「company vs. theme vs. competitor vs. institutional 的界線」），即使輸出格式看起來以單一公司為主鍵。
 - `theme`：跨公司的主題、類股、供應鏈或族群分組。輸出是「一群公司」的分類與關係，不是單一公司的深度分析。
 - `institutional`：法人／外資／投顧等第三方研究觀點——評等、目標價、EPS 預估、投資論述、研究報告修正。核心是「外部研究者怎麼看」，資料來源是券商/投顧報告，而非公司自身揭露。
 - `stock`：股票、ETF、價格、市場技術指標、籌碼或交易層資料。
@@ -273,7 +273,7 @@ skill-<domain>-<object>-<action>
 
 四者常被混用，判斷時用「輸出的主體是誰、資料來源是誰」來拆分：
 
-- **company vs. theme**：`company` 的輸出永遠收斂回一家公司（即使內容包含競爭者比較，目的仍是理解這家公司）；`theme` 的輸出是「一組公司」本身的分類與關係，沒有單一主角。判斷方法可以看輸出的資料形狀（output shape）：`company` skill 的輸出是「一家公司 → 多個欄位」（例如營收、毛利、法說重點），主鍵是公司；`theme` skill 的輸出是「一個主題 → 多個公司分組」，主鍵是主題。以 `skill-theme-competitor-groups-curate` 為例，它的輸出結構是每個主題一列，欄位為：
+- **company vs. theme**：`company` 的輸出永遠收斂回一家公司，且內容是這家公司自己的屬性（營收、毛利、法說重點），**不包含競爭者/同業分析**——競爭者分析一律是 `theme` domain，見下一條規則。`theme` 的輸出是「一組公司」本身的分類與關係，沒有單一主角。判斷方法可以看輸出的資料形狀（output shape）：`company` skill 的輸出是「一家公司 → 多個欄位」，主鍵是公司；`theme` skill 的輸出是「一個主題 → 多個公司分組」，主鍵是主題。以 `skill-theme-competitor-groups-curate` 為例，它的輸出結構是每個主題一列，欄位為：
 
   | 欄位 | 意義 |
   |---|---|
@@ -282,7 +282,7 @@ skill-<domain>-<object>-<action>
   | competitive_groups | 主題內依真實產品/商業模式切出的競爭者分組數，每組是「一群互為競爭者的公司」 |
   | extra_entities | 原始分類（IC-taxonomy/GICS）漏收、需手動補進主題的公司清單 |
 
-  只要輸出是這種「主題為主鍵、公司分組為欄位值」的形狀，就屬於 `theme` domain；反過來，若輸出是「公司為主鍵、其競爭者清單為欄位值」（例如某公司的 `relationships.competitors`），即使同樣談競爭者，主體仍是單一公司，屬於 `company` domain。
+  這是「主題為主鍵、公司分組為欄位值」的形狀，屬於 `theme` domain。即使輸出格式改成「公司為主鍵、其競爭者清單為欄位值」（例如某公司的 `relationships.competitors`），也**不會**因此變成 `company` domain——見下一條規則，competitor 這個主題本身就不存在 company domain 的分支。
 - **segment weight 是 company 與 theme 之間的橋樑，不是矛盾**：同一個 canonical cycle（例如「AI 伺服器」這個主題/景氣循環）本身可以在不同市場/公司之間存在時間落差（lead-lag，例如美股循環領先台股循環），這代表 cycle/theme 是獨立於任何單一公司、有自己時間結構的第一類概念。但一家公司常同時涉入多個主題（例如同時做 AI 伺服器與消費性電子），無法直接說「這家公司 = 這個主題」，必須先用 revenue segment weight 把公司營收拆解到各主題/cycle 的占比，才能算出這家公司在某個主題裡的實際曝險。判斷準則不變：看最終輸出的主鍵與彙總方向，而不是看資料來源用到了哪些公司層級的中間產物。完整 pipeline 分三層，domain 隨每一層輸出的主鍵改變：
   1. `skill-company-revenue-segment-weights`——拆解**單一公司**營收到各 segment/cycle 的占比，輸出主鍵是公司，屬於 `company` domain。
   2. `skill-theme-cycle-index`——把拆解後的權重套用到 canonical cycle model，彙總成**主題層級的市場指數**（`company_cycle_index_*.png`、`company_cycle_intensity_*.csv`，主鍵是 (月份, canonical cycle)，橫跨全市場公司加總），雖然也附帶輸出逐公司明細 CSV，但命名的主要交付物是主題指數，屬於 `theme` domain。

@@ -2,7 +2,7 @@
   "name": "skill-investment-decision-coach",
   "description": "Provide Traditional Chinese expert-level investment decision coaching based on digested book knowledge and an investment methodology library, helping users compare investor and book-derived frameworks, build daily practical investment systems, evaluate opportunities, manage risk, avoid behavioral mistakes, and maintain coherent naming/category taxonomy for finance-related skills.",
   "category": "financial-strategy",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "maintainer": "wenchiehlee-money",
   "source": "https://github.com/wenchiehlee-money/Miz.Fetch",
   "updated_at": "2026-09-03",
