@@ -195,6 +195,17 @@ skills:
   source: TAIEX.TW
   updated_at: '2026-07-07'
   revised_at: '2026-08-26'
+- name: skill-document-diagram-design
+  group: common
+  path: common/skill-document-diagram-design
+  version: 1.0.0
+  description: 以 cathrynlavery/diagram-design 的編輯級圖表方法論，產生可嵌入 Docsify、Material for
+    MkDocs 或 PowerPoint 的圖表；支援從既有 PlantUML/Mermaid 原始碼或圖片匯入語意後，改畫成統一風格的原生 SVG。
+  category: document
+  maintainer: wenchiehlee-money
+  source: https://github.com/cathrynlavery/diagram-design
+  updated_at: '2026-09-03'
+  revised_at: '2026-09-03'
 - name: skill-facebook-fetch
   group: common
   path: common/skill-facebook-fetch
