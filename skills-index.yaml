@@ -64,16 +64,6 @@ skills:
   source: TAIEX.TW
   updated_at: '2026-07-07'
   revised_at: '2026-08-26'
-- name: skill-company-earnings-social-verify
-  group: common
-  path: common/skill-company-earnings-social-verify
-  version: 1.0.1
-  description: 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異
-  category: basic
-  maintainer: wenchiehlee
-  source: TAIEX.TW
-  updated_at: '2026-09-03'
-  revised_at: '2026-09-03'
 - name: skill-company-enrichment-json
   group: common
   path: common/skill-company-enrichment-json
@@ -413,16 +403,6 @@ skills:
   source: ''
   updated_at: '2026-09-02'
   revised_at: '2026-09-02'
-- name: skill-stock-earnings-calendar-monitor
-  group: common
-  path: common/skill-stock-earnings-calendar-monitor
-  version: 1.0.1
-  description: 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板
-  category: basic
-  maintainer: wenchiehlee
-  source: TAIEX.TW
-  updated_at: '2026-09-03'
-  revised_at: '2026-09-03'
 - name: skill-stock-fiscal-quarter-resolve
   group: common
   path: common/skill-stock-fiscal-quarter-resolve
