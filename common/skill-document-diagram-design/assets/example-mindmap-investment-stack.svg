@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="440" viewBox="0 0 1040 440" role="img" aria-labelledby="d-title d-desc">
+  <title id="d-title">Investment Stack Vision</title>
+  <desc id="d-desc">AI stack mindmap: forecasting/data branch and language-model branch on the right; DevOps and AIOT/data branches on the left.</desc>
+  <style>
+    text { font-family: -apple-system, "Segoe UI", "Noto Sans TC", sans-serif; }
+    .row-label { font-size: 12px; letter-spacing: 0.12em; fill: #8A8A85; font-family: "Courier New", monospace; }
+    .node { fill: #FAFAF8; stroke: #1A1A1A; stroke-width: 1px; }
+    .node-accent { fill: #EFECFF; stroke: #5B4CFF; stroke-width: 1.5px; }
+    .label { font-size: 15px; fill: #1A1A1A; }
+    .label-accent { font-size: 15px; fill: #5B4CFF; font-weight: 700; }
+    .edge { stroke: #8A8A85; stroke-width: 1px; fill: none; }
+    .edge-accent { stroke: #5B4CFF; stroke-width: 1px; fill: none; opacity: 0.7; }
+  </style>
+
+  <rect x="0" y="0" width="1040" height="440" fill="#FAFAF8"/>
+
+  <text class="row-label" x="16" y="24">INVESTMENT STACK VISION</text>
+
+  <!-- edges: root -> right branches -->
+  <path class="edge-accent" d="M552,260 C602,260 522,158 572,158"/>
+  <path class="edge" d="M552,260 C602,260 522,342 572,342"/>
+  <!-- edges: right branch children -->
+  <path class="edge-accent" d="M748,158 L772,158"/>
+  <path class="edge" d="M748,342 L772,342"/>
+  <!-- edges: root -> left branches -->
+  <path class="edge" d="M408,260 C358,260 438,198 352,198"/>
+  <path class="edge" d="M408,260 C358,260 438,342 352,342"/>
+  <!-- edge: left branch child -->
+  <path class="edge" d="M212,342 L172,342"/>
+
+  <!-- root -->
+  <rect class="node-accent" x="408" y="236" width="144" height="48" rx="8"/>
+  <text class="label-accent" x="480" y="266" text-anchor="middle">AI</text>
+
+  <!-- right branch: forecasting (accent subtree) -->
+  <rect class="node-accent" x="572" y="136" width="176" height="44" rx="8"/>
+  <text class="label-accent" x="660" y="163" text-anchor="middle" font-size="14">Data Forecasting</text>
+  <rect class="node-accent" x="772" y="136" width="176" height="44" rx="8"/>
+  <text class="label-accent" x="860" y="163" text-anchor="middle" font-size="14">Stock Forecasting</text>
+
+  <!-- right branch: language model -->
+  <rect class="node" x="572" y="320" width="176" height="44" rx="8"/>
+  <text class="label" x="660" y="347" text-anchor="middle" font-size="14">Language Model</text>
+  <rect class="node" x="772" y="320" width="220" height="44" rx="8"/>
+  <text class="label" x="882" y="347" text-anchor="middle" font-size="13">GenAI (Large Language Model)</text>
+
+  <!-- left branch: DevOps (leaf) -->
+  <rect class="node" x="212" y="176" width="140" height="44" rx="8"/>
+  <text class="label" x="282" y="203" text-anchor="middle" font-size="14">DevOps</text>
+
+  <!-- left branch: AIOT -> Data -->
+  <rect class="node" x="212" y="320" width="140" height="44" rx="8"/>
+  <text class="label" x="282" y="347" text-anchor="middle" font-size="14">AIOT</text>
+  <rect class="node" x="32" y="320" width="140" height="44" rx="8"/>
+  <text class="label" x="102" y="347" text-anchor="middle" font-size="14">Data</text>
+</svg>

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<title>Org Chart — Command Center</title>
+<style>
+  :root {
+    --paper: #FAFAF8;
+    --ink: #1A1A1A;
+    --muted: #8A8A85;
+    --accent: #D9622B;
+    --border: rgba(0,0,0,0.16);
+  }
+  html, body { margin: 0; padding: 0; background: var(--paper); }
+  body { font-family: -apple-system, "Segoe UI", "Noto Sans TC", sans-serif; color: var(--ink); }
+  #diagram-root { display: inline-block; padding: 24px; background: var(--paper); }
+  .row-label { font-size: 12px; letter-spacing: 0.12em; fill: var(--muted); font-family: "Courier New", monospace; }
+  .tag { font-size: 11px; letter-spacing: 0.08em; font-family: "Courier New", monospace; }
+  .name { font-size: 20px; font-weight: 700; fill: var(--ink); }
+  .sub { font-size: 13px; fill: var(--muted); font-family: "Courier New", monospace; }
+  .note-title { font-size: 15px; font-weight: 700; fill: var(--ink); }
+  .note-body { font-size: 13px; fill: var(--muted); font-family: "Courier New", monospace; }
+  .legend-text { font-size: 13px; fill: var(--ink); font-family: "Courier New", monospace; }
+  .divider { stroke: var(--border); stroke-width: 1px; }
+  .edge { stroke: var(--ink); stroke-width: 1px; fill: none; opacity: 0.55; }
+  .node-pod { fill: #FFFFFF; stroke: var(--ink); stroke-width: 1px; opacity: 0.9; }
+  .node-front { fill: #FCEDE4; stroke: var(--accent); stroke-width: 1.5px; }
+  .node-specialist { fill: #EFEFEC; stroke: var(--ink); stroke-width: 1px; opacity: 0.8; }
+  .note-box { fill: none; stroke: var(--muted); stroke-width: 1px; stroke-dasharray: 4 4; }
+</style>
+</head>
+<body>
+<div id="diagram-root">
+<svg width="1272" height="680" viewBox="0 0 1272 680" role="img" aria-labelledby="d-title d-desc">
+  <title id="d-title">Command Center Org Chart</title>
+  <desc id="d-desc">Athena routes work to four pods (Growth, Content, Commerce, Systems); Growth, Content and Commerce each own two specialists, Systems owns one.</desc>
+
+  <!-- Row 1: Command Center -->
+  <text class="row-label" x="32" y="44">COMMAND CENTER</text>
+  <g>
+    <rect class="node-front" x="536" y="40" width="280" height="88" rx="8"/>
+    <rect x="552" y="56" width="52" height="18" rx="3" fill="none" stroke="#D9622B" stroke-width="1"/>
+    <text class="tag" x="578" y="69" text-anchor="middle" fill="#D9622B">FRONT</text>
+    <text class="name" x="676" y="98" text-anchor="middle">Athena</text>
+    <text class="sub" x="676" y="118" text-anchor="middle">@athena · route ambiguous work</text>
+  </g>
+
+  <line class="divider" x1="32" y1="152" x2="1240" y2="152"/>
+
+  <!-- Row 2: Workstreams -->
+  <text class="row-label" x="32" y="176">WORKSTREAMS</text>
+
+  <!-- connectors: Athena -> 4 pods -->
+  <path class="edge" d="M676,128 V164 H192 V200"/>
+  <path class="edge" d="M676,164 H528 V200"/>
+  <path class="edge" d="M676,164 H864 V200"/>
+  <path class="edge" d="M676,164 H1116 V200"/>
+
+  <g>
+    <rect class="node-pod" x="68" y="200" width="248" height="88" rx="8"/>
+    <rect x="84" y="216" width="40" height="18" rx="3" fill="none" stroke="var(--ink)" stroke-width="1"/>
+    <text class="tag" x="104" y="229" text-anchor="middle">POD</text>
+    <text class="name" x="192" y="258" text-anchor="middle">Growth</text>
+    <text class="sub" x="192" y="278" text-anchor="middle">ads · analytics</text>
+  </g>
+  <g>
+    <rect class="node-pod" x="404" y="200" width="248" height="88" rx="8"/>
+    <rect x="420" y="216" width="40" height="18" rx="3" fill="none" stroke="var(--ink)" stroke-width="1"/>
+    <text class="tag" x="440" y="229" text-anchor="middle">POD</text>
+    <text class="name" x="528" y="258" text-anchor="middle">Content</text>
+    <text class="sub" x="528" y="278" text-anchor="middle">email · blog · SEO</text>
+  </g>
+  <g>
+    <rect class="node-pod" x="740" y="200" width="248" height="88" rx="8"/>
+    <rect x="756" y="216" width="40" height="18" rx="3" fill="none" stroke="var(--ink)" stroke-width="1"/>
+    <text class="tag" x="776" y="229" text-anchor="middle">POD</text>
+    <text class="name" x="864" y="258" text-anchor="middle">Commerce</text>
+    <text class="sub" x="864" y="278" text-anchor="middle">shopify · CRO</text>
+  </g>
+  <g>
+    <rect class="node-pod" x="992" y="200" width="248" height="88" rx="8"/>
+    <rect x="1008" y="216" width="40" height="18" rx="3" fill="none" stroke="var(--ink)" stroke-width="1"/>
+    <text class="tag" x="1028" y="229" text-anchor="middle">POD</text>
+    <text class="name" x="1116" y="258" text-anchor="middle">Systems</text>
+    <text class="sub" x="1116" y="278" text-anchor="middle">agents · runtime</text>
+  </g>
+
+  <line class="divider" x1="32" y1="308" x2="1240" y2="308"/>
+
+  <!-- Row 3: Specialists -->
+  <text class="row-label" x="32" y="332">SPECIALISTS</text>
+
+  <!-- connectors: pods -> specialists -->
+  <path class="edge" d="M192,288 V328 H108 V368"/>
+  <path class="edge" d="M192,328 H276 V368"/>
+  <path class="edge" d="M528,288 V328 H444 V368"/>
+  <path class="edge" d="M528,328 H612 V368"/>
+  <path class="edge" d="M864,288 V328 H780 V368"/>
+  <path class="edge" d="M864,328 H948 V368"/>
+  <path class="edge" d="M1116,288 V368"/>
+
+  <g>
+    <rect class="node-specialist" x="32" y="368" width="152" height="88" rx="8"/>
+    <text class="name" x="108" y="404" text-anchor="middle" font-size="17">Media Buyer</text>
+    <text class="sub" x="108" y="424" text-anchor="middle">Google · Meta</text>
+  </g>
+  <g>
+    <rect class="node-specialist" x="200" y="368" width="152" height="88" rx="8"/>
+    <text class="name" x="276" y="404" text-anchor="middle" font-size="17">Maximo</text>
+    <text class="sub" x="276" y="424" text-anchor="middle">offers · strategy</text>
+  </g>
+  <g>
+    <rect class="node-specialist" x="368" y="368" width="152" height="88" rx="8"/>
+    <text class="name" x="444" y="404" text-anchor="middle" font-size="17">Rory</text>
+    <text class="sub" x="444" y="424" text-anchor="middle">copy · newsletter</text>
+  </g>
+  <g>
+    <rect class="node-specialist" x="536" y="368" width="152" height="88" rx="8"/>
+    <text class="name" x="612" y="404" text-anchor="middle" font-size="17">Sable</text>
+    <text class="sub" x="612" y="424" text-anchor="middle">SEO · content ops</text>
+  </g>
+  <g>
+    <rect class="node-specialist" x="704" y="368" width="152" height="88" rx="8"/>
+    <text class="name" x="780" y="404" text-anchor="middle" font-size="17">Porter</text>
+    <text class="sub" x="780" y="424" text-anchor="middle">Shopify admin</text>
+  </g>
+  <g>
+    <rect class="node-specialist" x="872" y="368" width="152" height="88" rx="8"/>
+    <text class="name" x="948" y="404" text-anchor="middle" font-size="17">Atlas</text>
+    <text class="sub" x="948" y="424" text-anchor="middle">theme · APIs</text>
+  </g>
+  <g>
+    <rect class="node-specialist" x="1040" y="368" width="152" height="88" rx="8"/>
+    <text class="name" x="1116" y="404" text-anchor="middle" font-size="17">Hermes</text>
+    <text class="sub" x="1116" y="424" text-anchor="middle">Paperclip health</text>
+  </g>
+
+  <!-- Footer note -->
+  <rect class="note-box" x="32" y="500" width="1208" height="64" rx="4"/>
+  <text class="note-title" x="52" y="538">Setup gaps stay visible:</text>
+  <text class="note-body" x="240" y="538">specialists without Slack bots · approval gates · backend name mismatches</text>
+
+  <!-- Legend -->
+  <line class="divider" x1="32" y1="600" x2="1240" y2="600"/>
+  <text class="row-label" x="32" y="640">LEGEND</text>
+  <rect x="200" y="624" width="24" height="20" rx="3" fill="#FCEDE4" stroke="#D9622B" stroke-width="1.5"/>
+  <text class="legend-text" x="232" y="639">front door</text>
+  <rect x="380" y="624" width="24" height="20" rx="3" fill="#FFFFFF" stroke="var(--ink)" stroke-width="1"/>
+  <text class="legend-text" x="412" y="639">pod / owner</text>
+  <rect x="560" y="624" width="24" height="20" rx="3" fill="none" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>
+  <text class="legend-text" x="592" y="639">needs setup / gap</text>
+</svg>
+</div>
+</body>
+</html>
