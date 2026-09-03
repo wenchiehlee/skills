@@ -292,7 +292,7 @@ skills:
 - name: skill-investment-decision-coach
   group: common
   path: common/skill-investment-decision-coach
-  version: 1.0.4
+  version: 1.0.5
   description: Provide Traditional Chinese expert-level investment decision coaching
     based on digested book knowledge and an investment methodology library, helping
     users compare investor and book-derived frameworks, build daily practical investment
