@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-09-07'
+generated_at: '2026-09-08'
 skills:
 - name: skill-android-adb-gadget
   group: common
@@ -425,7 +425,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/skills
   updated_at: '2026-08-27'
-  revised_at: '2026-08-27'
+  revised_at: '2026-09-08'
 - name: skill-stock-investorevent-fetch
   group: common
   path: common/skill-stock-investorevent-fetch

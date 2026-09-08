@@ -56,7 +56,7 @@
 | [skill-mlx-api-server-whisper](common/skill-mlx-api-server-whisper) | common | server | 2.0.1 | Mac-mini 上以 self-hosted GitHub Actions runner 執行的語音轉錄 pipeline（whisper 轉錄 → LLM postprocess → CER 校驗 → GT 校正迴圈），透過 issue 驅動、支援多種音訊來源（法說會、YouTube 財經影片…）。 | 2026-08-25 |
 | [skill-pptx-to-md](common/skill-pptx-to-md) | common | document | 1.0.1 | 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。 | 2026-08-25 |
 | [skill-scribd-pdf-fetch](common/skill-scribd-pdf-fetch) | common | document | 1.0.1 | 從 Scribd 文件網址下載乾淨的 PDF 副本，透過外部工具 themrsami/scribd-downloader（headless Chrome + CDP 逐頁列印）執行，本登錄庫不複製該工具原始碼；自動修補 Chrome 130+ 因 excludeSwitches 選項導致啟動即崩潰的相容性問題。 | 2026-09-02 |
-| [skill-stock-fiscal-quarter-resolve](common/skill-stock-fiscal-quarter-resolve) | common | financial-data | 1.0.0 | Deterministic, dependency-free US fiscal-year/quarter resolution shared by skill-company-investorconference-ingest, skill-stock-investorevent-fetch, and ConceptStocks' update_concept_metadata.py. | 2026-08-27 |
+| [skill-stock-fiscal-quarter-resolve](common/skill-stock-fiscal-quarter-resolve) | common | financial-data | 1.0.0 | Deterministic, dependency-free US fiscal-year/quarter resolution shared by skill-company-investorconference-ingest, skill-stock-investorevent-fetch, and ConceptStocks' update_concept_metadata.py. | 2026-09-08 |
 | [skill-stock-investorevent-fetch](common/skill-stock-investorevent-fetch) | common | financial-data | 1.2.1 | Regenerate raw_event_upcoming_earnings.csv from TW/US watchlists (MOPS + yfinance), classifying every event as 財報, 法說會, or 受邀法說, with consistent date/fiscal-quarter mapping shared across InvestorConference and InvestorEvents. | 2026-09-02 |
 | [skill-stock-ma-rsi-bband-macd-peband](common/skill-stock-ma-rsi-bband-macd-peband) | common | financial-strategy | 1.7.0 | 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MACD）與標準 common market PE band；PEBand 用 dated EPS historical PE series，支援 trailing TTM EPS builder、forward EPS、forward consensus EPS。 | 2026-08-25 |
 | [skill-stock-market-cost-distribution](common/skill-stock-market-cost-distribution) | common | financial-forecasting | 1.0.2 | 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。 | 2026-08-07 |
@@ -78,7 +78,7 @@
 | [skill-youtube-channel-fetch](common/skill-youtube-channel-fetch) | common | document | 1.4.1 | 從 YouTube 財經頻道下載影片（裸頻道網址會合併 /videos+/streams 兩個 tab，網址已指定 /videos 或 /streams 則只查那一個 tab；支援「最新 N 支」或「日期區間」兩種模式），優先嘗試官方逐字稿（youtube-transcript-api）：自動字幕直接寫成 FIN.srt，手動字幕只寫成 GT.srt（不寫 FIN.srt——GT-only 本身就是完整狀態，下游步驟找不到 FIN.srt 時會改用 GT.srt），可用 refine 子指令針對有 GT.srt 但無 FIN.srt 的 stem 補觸發 whisper pipeline 的 refine_fin_srt；沒有逐字稿的才下載音訊、發佈為本 repo 的 GitHub Release 附件並寫入 audio_manifest.json，供 skill-mlx-api-client-whisper 觸發轉錄。 | 2026-09-02 |
 | [skill-youtube-channel-srt-keyframe-extract](common/skill-youtube-channel-srt-keyframe-extract) | common | document | 1.2.1 | 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡報／數字等視覺重點的時間點，下載對應影片並擷取該時間點的畫面存成帶時間碼的 JPEG，索引 md 裡每張截圖都附上該時間區段的實際逐字稿片段（可關鍵字搜尋）與 LLM 話題推測。 | 2026-09-02 |
 
-最後產生日期：2026-09-07
+最後產生日期：2026-09-08
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理
