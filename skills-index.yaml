@@ -385,10 +385,11 @@ skills:
 - name: skill-mops-fetch
   group: common
   path: common/skill-mops-fetch
-  version: 1.1.0
+  version: 1.2.0
   description: 'Fetch Taiwan MOPS data end to end: download quarterly financial-report
     PDFs, convert same-stem Markdown sidecars with the skill-mac-mini-ocr hybrid PDF/OCR
-    workflow, and orchestrate the repo''s batch/early-filer/health-report fetch pipeline.'
+    workflow, track official filing deadlines, and orchestrate the repo''s batch/early-filer/health-report
+    fetch pipeline.'
   category: financial-data
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/MOPS
