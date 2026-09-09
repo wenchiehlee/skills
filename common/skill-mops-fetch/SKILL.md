@@ -3,11 +3,13 @@ name: skill-mops-fetch
 description: >-
   Fetch Taiwan MOPS data for the MOPS repo end to end: download quarterly
   financial-report PDFs (AI1/AI2/AI3/AE2), convert same-stem PDF sidecars to
-  Markdown via the skill-mac-mini-ocr hybrid PDF/OCR pipeline, and orchestrate
-  the repo's batch-all, early-filer-detection, watchlist-refresh, and
-  health/matrix-report scripts as one fetch pipeline. Use when MOPS
-  downloads/*.pdf files are missing Markdown, stale, or need auditable
-  TODO:OCR repair, or when asked to run/extend any MOPS data-fetch step.
+  Markdown via the skill-mac-mini-ocr hybrid PDF/OCR pipeline, track official
+  MOPS filing deadlines, and orchestrate the repo's batch-all,
+  early-filer-detection, watchlist-refresh, and health/matrix-report scripts
+  as one fetch pipeline. Use when MOPS downloads/*.pdf files are missing
+  Markdown, stale, or need auditable TODO:OCR repair; when asked whether a
+  company's filing is overdue; or when asked to run/extend any MOPS
+  data-fetch step.
 ---
 
 # MOPS Fetch Skill
@@ -32,9 +34,40 @@ This skill is separate from `skill-company-investorconference-ir-pdf-md`.
 | Batch-all download | Loop the download+convert step over every company in the watchlist CSV | `MOPS/DownloadAll.py` (calls this skill's runner per company) |
 | Watchlist refresh | Refresh `StockID_TWSE_TPEX.csv` / `StockID_TWSE_TPEX_focus.csv` from the canonical watchlist source | `MOPS/Get觀察名單.py` |
 | Early-filer detection | Find companies whose report is likely already filed ahead of the general deadline (e.g. TSMC), based on the InvestorConference earnings calendar | `MOPS/scripts/check_early_filers.py` |
-| Health / matrix reporting | Summarize PDF/Markdown coverage, TODO:OCR backlog, and produce `mops_matrix_latest.csv` | `MOPS/scripts/generate_mops_health.py` |
+| Health / matrix reporting | Summarize PDF/Markdown coverage, TODO:OCR backlog, filing-deadline status, and produce `mops_matrix_latest.csv` | `MOPS/scripts/generate_mops_health.py` (uses `scripts/filing_deadlines.py` below) |
+| Filing-deadline tracking | Compute which reporting quarter's official MOPS deadline has most recently passed, and how overdue it is | `scripts/filing_deadlines.py` (this skill) |
 
-The download+convert step is implemented inside this skill because it is the one step shared with the OCR pipeline. The other four steps stay as repo-local scripts under `MOPS/` — do not port their logic into this skill; call them directly, and document new fetch behavior here so the pipeline stays discoverable as one whole.
+The download+convert and filing-deadline steps are implemented inside this skill because they are the parts shared across the OCR pipeline and every deadline-aware caller (workflows, health report, README). The other three steps stay as repo-local scripts under `MOPS/` — do not port their logic into this skill; call them directly, and document new fetch behavior here so the pipeline stays discoverable as one whole.
+
+## Filing Deadline Awareness
+
+`scripts/filing_deadlines.py` is the single source of truth for Taiwan MOPS quarterly filing deadlines, so workflows, `generate_mops_health.py`, and `MOPS/scripts/update_readme_status.py` all agree on the same dates instead of re-deriving month/day windows ad hoc (as `.github/workflows/Download.yaml`'s cron comments used to do independently).
+
+General (non-holding) listed company deadlines:
+
+| Quarter | Deadline | Holding-company deadline |
+|---|---|---|
+| Q1 (Jan-Mar) | May 15 | May 30 |
+| Q2 (Apr-Jun) | Aug 14 | Aug 31 |
+| Q3 (Jul-Sep) | Nov 14 | Nov 29 |
+| Q4 (Oct-Dec, annual report) | Mar 31 (next year) | Mar 31 (next year) |
+
+Key entry points:
+
+```bash
+# Print the current "filing focus quarter" (most recently closed deadline) as JSON
+python scripts/filing_deadlines.py
+python scripts/filing_deadlines.py --as-of 2026-09-09
+```
+
+```python
+import filing_deadlines as fd
+qd = fd.current_focus_quarter()        # QuarterDeadline for e.g. 2026 Q2
+fd.days_since_deadline(qd)             # e.g. 26
+fd.deadline_note(2026, 3)              # "申報期限 2026-11-14（尚有 N 天）" style note for any quarter
+```
+
+Note the holding-company deadline is informational only: this module has no per-company classification data (財報 vs. 金控/銀行), so "overdue" counts computed against the general deadline may include a small number of holding companies still inside their legitimate extension window. Document this caveat wherever an overdue count is surfaced (e.g. the README banner).
 
 ## Standard Workflow (download + convert)
 
@@ -89,6 +122,7 @@ python scripts/generate_mops_health.py
 - Preserve source filename, page markers, `TODO:OCR`, and `OCR:done` markers for downstream auditability.
 - Treat annual reports (`AI3`) and quarterly financial reports (`AI1`/`AI2`) as target financial-report PDFs.
 - Batch orchestration, watchlist refresh, early-filer detection, and health reporting stay as repo-local scripts (see table above); extend those scripts directly rather than duplicating their logic inside this skill.
+- Filing deadlines belong in `scripts/filing_deadlines.py`; do not hardcode month/day deadline checks anywhere else (workflows, health report, README generator). If a deadline date needs to change, change it there once.
 
 ## Replaces
 

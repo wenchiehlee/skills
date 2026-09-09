@@ -1,8 +1,8 @@
 {
   "name": "skill-mops-fetch",
-  "description": "Fetch Taiwan MOPS data end to end: download quarterly financial-report PDFs, convert same-stem Markdown sidecars with the skill-mac-mini-ocr hybrid PDF/OCR workflow, and orchestrate the repo's batch/early-filer/health-report fetch pipeline.",
+  "description": "Fetch Taiwan MOPS data end to end: download quarterly financial-report PDFs, convert same-stem Markdown sidecars with the skill-mac-mini-ocr hybrid PDF/OCR workflow, track official filing deadlines, and orchestrate the repo's batch/early-filer/health-report fetch pipeline.",
   "category": "financial-data",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee-money/MOPS",
@@ -14,6 +14,7 @@
     "financial-report",
     "pdf-to-md",
     "mac-mini-ocr",
+    "filing-deadline",
     "taiwan",
     "financial-data"
   ],
@@ -25,17 +26,20 @@
     "SKILL.md",
     "metadata.json",
     "self_update.py",
-    "scripts/run_mops_fetch.py"
+    "scripts/run_mops_fetch.py",
+    "scripts/filing_deadlines.py"
   ],
   "deployments": [
     {
       "repo": "wenchiehlee/skills",
       "role": "registry",
       "local_path": "github.com/skills/common/skill-mops-fetch"
+    },
+    {
+      "repo": "wenchiehlee-investment/MOPS",
+      "role": "consumer",
+      "local_path": "github.com/MOPS/skills/skill-mops-fetch"
     }
-  ],
-  "consumers": [
-    "wenchiehlee-investment/MOPS references this skill by relative path (../skills/common/skill-mops-fetch) rather than vendoring a local copy; it is checked out to ./skills in CI."
   ],
   "replaces": ["skill-company-mops-financialreport-pdf-md"]
 }
