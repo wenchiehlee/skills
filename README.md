@@ -30,7 +30,6 @@
 | [skill-company-investorconference-digest](common/skill-company-investorconference-digest) | common | basic | 2.4.6 | 法說會/earnings call 與財報結果 digest SOP；支援 FIN/GT/IR/Q&A、Skills 財報結果、公司財報文件、Yahoo consensus、預期差、模型修正路徑與美股對台股 read-through。 | 2026-08-25 |
 | [skill-company-investorconference-ingest](common/skill-company-investorconference-ingest) | common | basic | 1.3.2 | 投資人說明會/財報事件材料蒐集 Ingest 模組；法說會抓音檔、IR、逐字稿，財報事件抓 Skills 財報結果、earnings release、financial tables、SEC filing，並避免對純財報事件產生 FIN/GT。 | 2026-09-01 |
 | [skill-company-investorconference-ir-pdf-md](common/skill-company-investorconference-ir-pdf-md) | common | financial-data | 1.0.1 | Fetch InvestorConference official IR PDFs through ingest, then convert them to Markdown using the repo-local Mac-mini OCR hybrid pipeline with auditable TODO/OCR markers. | 2026-08-07 |
-| [skill-company-mops-financialreport-pdf-md](common/skill-company-mops-financialreport-pdf-md) | common | financial-data | 1.0.1 | Download Taiwan MOPS quarterly financial-report PDFs, then convert same-stem Markdown sidecars with skill-mac-mini-ocr hybrid PDF/OCR workflow. | 2026-08-30 |
 | [skill-company-reputation-research](common/skill-company-reputation-research) | common | basic | 0.1.1 | Collect Taiwan and global public jobseeker intelligence for a specified company, including employer reviews, interview/salary transparency, workplace reputation, labor/legal signals, layoffs, and recurring red flags. | 2026-08-20 |
 | [skill-company-revenue-expense-profit-predict](common/skill-company-revenue-expense-profit-predict) | common | financial-forecasting | 1.0.1 | 季度損益三線（營業收入 / 總支出 / 營業利益）底部加總預測 SOP | 2026-08-26 |
 | [skill-company-revenue-forecast-benchmark](common/skill-company-revenue-forecast-benchmark) | common | financial-forecasting | 1.0.1 | 多模型與分析師共識效能評估標準作業程序。 | 2026-08-26 |
@@ -54,6 +53,7 @@
 | [skill-mlx-api-client-whisper](common/skill-mlx-api-client-whisper) | common | document | 1.0.3 | 以 GitHub issue 觸發 Mac-mini 上的 whisper 轉錄 pipeline（skill-mlx-api-server-whisper），並輪詢結果是否已同步回本 repo。支援法說會音訊、YouTube 財經影片等多種來源。 | 2026-08-30 |
 | [skill-mlx-api-server](common/skill-mlx-api-server) | common | server | 1.1.1 | 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，提供 Baidu Unlimited-OCR 文件轉錄（/ocr）與 MLX LLM 推理（/exec，Qwen3.5/Gemma4），以 Flask/Waitress 常駐服務形式運行。 | 2026-08-30 |
 | [skill-mlx-api-server-whisper](common/skill-mlx-api-server-whisper) | common | server | 2.0.1 | Mac-mini 上以 self-hosted GitHub Actions runner 執行的語音轉錄 pipeline（whisper 轉錄 → LLM postprocess → CER 校驗 → GT 校正迴圈），透過 issue 驅動、支援多種音訊來源（法說會、YouTube 財經影片…）。 | 2026-08-25 |
+| [skill-mops-fetch](common/skill-mops-fetch) | common | financial-data | 1.1.0 | Fetch Taiwan MOPS data end to end: download quarterly financial-report PDFs, convert same-stem Markdown sidecars with the skill-mac-mini-ocr hybrid PDF/OCR workflow, and orchestrate the repo's batch/early-filer/health-report fetch pipeline. | 2026-09-09 |
 | [skill-pptx-to-md](common/skill-pptx-to-md) | common | document | 1.0.1 | 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。 | 2026-08-25 |
 | [skill-scribd-pdf-fetch](common/skill-scribd-pdf-fetch) | common | document | 1.0.1 | 從 Scribd 文件網址下載乾淨的 PDF 副本，透過外部工具 themrsami/scribd-downloader（headless Chrome + CDP 逐頁列印）執行，本登錄庫不複製該工具原始碼；自動修補 Chrome 130+ 因 excludeSwitches 選項導致啟動即崩潰的相容性問題。 | 2026-09-02 |
 | [skill-stock-fiscal-quarter-resolve](common/skill-stock-fiscal-quarter-resolve) | common | financial-data | 1.0.0 | Deterministic, dependency-free US fiscal-year/quarter resolution shared by skill-company-investorconference-ingest, skill-stock-investorevent-fetch, and ConceptStocks' update_concept_metadata.py. | 2026-09-08 |
@@ -78,7 +78,7 @@
 | [skill-youtube-channel-fetch](common/skill-youtube-channel-fetch) | common | document | 1.4.1 | 從 YouTube 財經頻道下載影片（裸頻道網址會合併 /videos+/streams 兩個 tab，網址已指定 /videos 或 /streams 則只查那一個 tab；支援「最新 N 支」或「日期區間」兩種模式），優先嘗試官方逐字稿（youtube-transcript-api）：自動字幕直接寫成 FIN.srt，手動字幕只寫成 GT.srt（不寫 FIN.srt——GT-only 本身就是完整狀態，下游步驟找不到 FIN.srt 時會改用 GT.srt），可用 refine 子指令針對有 GT.srt 但無 FIN.srt 的 stem 補觸發 whisper pipeline 的 refine_fin_srt；沒有逐字稿的才下載音訊、發佈為本 repo 的 GitHub Release 附件並寫入 audio_manifest.json，供 skill-mlx-api-client-whisper 觸發轉錄。 | 2026-09-02 |
 | [skill-youtube-channel-srt-keyframe-extract](common/skill-youtube-channel-srt-keyframe-extract) | common | document | 1.2.1 | 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡報／數字等視覺重點的時間點，下載對應影片並擷取該時間點的畫面存成帶時間碼的 JPEG，索引 md 裡每張截圖都附上該時間區段的實際逐字稿片段（可關鍵字搜尋）與 LLM 話題推測。 | 2026-09-02 |
 
-最後產生日期：2026-09-08
+最後產生日期：2026-09-09
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理

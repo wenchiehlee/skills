@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-09-08'
+generated_at: '2026-09-09'
 skills:
 - name: skill-android-adb-gadget
   group: common
@@ -120,17 +120,6 @@ skills:
   source: https://github.com/wenchiehlee-money/InvestorConference
   updated_at: '2026-07-19'
   revised_at: '2026-08-07'
-- name: skill-company-mops-financialreport-pdf-md
-  group: common
-  path: common/skill-company-mops-financialreport-pdf-md
-  version: 1.0.1
-  description: Download Taiwan MOPS quarterly financial-report PDFs, then convert
-    same-stem Markdown sidecars with skill-mac-mini-ocr hybrid PDF/OCR workflow.
-  category: financial-data
-  maintainer: wenchiehlee
-  source: https://github.com/wenchiehlee-money/MOPS
-  updated_at: '2026-07-19'
-  revised_at: '2026-08-30'
 - name: skill-company-reputation-research
   group: common
   path: common/skill-company-reputation-research
@@ -393,6 +382,18 @@ skills:
   source: https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server-whisper/scripts
   updated_at: '2026-08-12'
   revised_at: '2026-08-25'
+- name: skill-mops-fetch
+  group: common
+  path: common/skill-mops-fetch
+  version: 1.1.0
+  description: 'Fetch Taiwan MOPS data end to end: download quarterly financial-report
+    PDFs, convert same-stem Markdown sidecars with the skill-mac-mini-ocr hybrid PDF/OCR
+    workflow, and orchestrate the repo''s batch/early-filer/health-report fetch pipeline.'
+  category: financial-data
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee-money/MOPS
+  updated_at: '2026-09-09'
+  revised_at: '2026-09-09'
 - name: skill-pptx-to-md
   group: common
   path: common/skill-pptx-to-md
