@@ -425,10 +425,20 @@ class ChannelFetcher:
                 data_dir = self.repo_root / "data" / channel_slug
                 fin_path = data_dir / f"{stem}_FIN.srt"
                 gt_path = data_dir / f"{stem}_GT.srt"
-                if stem in manifest or fin_path.exists() or gt_path.exists():
+                if fin_path.exists() or gt_path.exists():
                     print(f"[channel_fetch] skip {stem} (already sourced)")
                     skipped += 1
                     continue
+
+                # A stem already in the manifest with neither file yet is still waiting
+                # on the whisper pipeline. It fell through to that path either because it
+                # genuinely has no official transcript, or because the lookup transiently
+                # failed / captions hadn't been uploaded yet at the time. Re-check the
+                # official transcript on every run rather than trusting that first
+                # failure forever — if a transcript has since appeared, prefer it and
+                # withdraw the pending whisper request instead of leaving the stem stuck
+                # waiting on Mac-mini for a video that no longer needs it.
+                pending_whisper = stem in manifest
 
                 try:
                     if try_official_transcript:
@@ -459,7 +469,15 @@ class ChannelFetcher:
                                 )
                                 print(f"[channel_fetch] {stem}: manual YouTube transcript ({transcript.language_code}), wrote {gt_path} — run `refine` to have whisper pipeline generate a scored FIN.srt from this GT")
                                 transcribed_manual += 1
+                            if pending_whisper:
+                                del manifest[stem]
+                                print(f"[channel_fetch] {stem}: official transcript surfaced after falling back to whisper — removed from manifest (close its generate-FIN issue manually)")
                             continue
+
+                    if pending_whisper:
+                        print(f"[channel_fetch] skip {stem} (still no official transcript, already queued for whisper)")
+                        skipped += 1
+                        continue
 
                     print(f"[channel_fetch] downloading audio for {stem}: {video['title']}")
                     audio_path = self.download_audio(video["video_id"], tmp_dir)
