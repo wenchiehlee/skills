@@ -59,6 +59,64 @@ def _availability_date(period_end: pd.Timestamp) -> pd.Timestamp:
     return pd.Timestamp(date(filing_year, filing_month, filing_day))
 
 
+def _stock_dividend_factors(symbol: str, start: str, end: str) -> list[tuple[pd.Timestamp, float]]:
+    """Ex-date + dilution factor (1 + new shares per held share) for every stock-dividend
+    (無償配股/盈餘或公積轉增資) event in range.
+
+    Taiwan's par value is NT$10, so TaiwanStockDividend's StockEarningsDistribution
+    (NT$ of stock dividend per share) / 10 = new shares received per share held —
+    e.g. 6669 distributed 19.83 on 2026-09-02, i.e. 1.98 new shares per share, a
+    ~2.98x share-count jump. A cash-only dividend has this field at 0 and is not a
+    split-like event, so it's excluded."""
+    try:
+        rows = _fetch("TaiwanStockDividend", symbol, start, end)
+    except Exception:
+        return []
+    factors = []
+    for row in rows:
+        ex_date = row.get("StockExDividendTradingDate")
+        ratio = row.get("StockEarningsDistribution") or 0
+        if ex_date and ratio:
+            factors.append((pd.Timestamp(ex_date), 1 + float(ratio) / 10))
+    return factors
+
+
+def _cumulative_factor(dates: pd.Series, factors: list[tuple[pd.Timestamp, float]]) -> pd.Series:
+    """For each date, the product of every split factor whose ex-date is later —
+    i.e. how much a value anchored at that date needs shrinking to sit on the
+    same (latest) share-count basis as everything after the last split."""
+    factor = pd.Series(1.0, index=dates.index)
+    for ex_date, ratio in sorted(factors, key=lambda item: item[0], reverse=True):
+        factor.loc[dates < ex_date] *= ratio
+    return factor
+
+
+# 2026-09-20：6669 在 2026-09-02 配發約2.98倍的股票股利，TaiwanStockPrice的"close"
+# 沒有做除權處理，原始序列在那天出現一個假的「單日跌66%」斷崖，任何橫跨這個ex-date的
+# 滾動PE窗口都會混到兩種不可比的股本基礎——這是導致外層上緣算出7614卻對著2140收盤價
+# 這種荒謬數字的真正原因，不是隨機資料錯誤。
+#
+# 這裡曾經有一版錯的修法：直接用「交易日」是否早於ex-date去把close跟daily裡的ttm_eps
+# 一起除掉同一個factor。問題是分子分母同時除以同一個數，PE比值完全沒變，等於白改——
+# 而且ttm_eps的正確調整基準不是「交易日」，是「這筆EPS所屬的財報期別／available_date」
+# ：截至2026-09-02當下，最新一次公布的TTM EPS本來就是配股之前的股本算出來的，在配股後
+# 的交易日繼續沿用同一個數字（要等下一次季報才會反映新股本），所以只要這筆EPS的
+# available_date早於ex-date，不管拿去配對的是配股前或配股後的交易日，都要除以同一個
+# factor——而不是看「今天是不是已經過了ex-date」。修法：EPS只用它自己的期別日期算
+# factor、股價只用交易日算factor，兩邊分開處理再merge，PE才會是同一個股本基礎上的
+# 真實比值。
+def _adjust_for_stock_dividends(
+    prices: pd.DataFrame, eps: pd.DataFrame, factors: list[tuple[pd.Timestamp, float]]
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    if not factors:
+        return prices, eps
+    prices = prices.copy()
+    prices["close"] = prices["close"] / _cumulative_factor(prices.index.to_series(), factors)
+    eps = eps.copy()
+    eps["ttm_eps"] = eps["ttm_eps"] / _cumulative_factor(eps["available_date"], factors)
+    return prices, eps
+
+
 def _build_daily_box(symbol: str, display_years: int, end_date: pd.Timestamp, window: int) -> tuple[pd.DataFrame, pd.DataFrame]:
     # Extra history warms up the PE rolling distribution before the display range.
     data_start = (end_date - pd.DateOffset(years=display_years + 3)).strftime("%Y-%m-%d")
@@ -82,6 +140,9 @@ def _build_daily_box(symbol: str, display_years: int, end_date: pd.Timestamp, wi
     eps["available_date"] = eps["period_end"].map(_availability_date)
     eps["ttm_eps"] = eps["value"].rolling(4).sum()
     eps = eps.dropna(subset=["ttm_eps"])[["available_date", "period_end", "ttm_eps"]]
+
+    split_factors = _stock_dividend_factors(symbol, data_start, end_text)
+    prices, eps = _adjust_for_stock_dividends(prices, eps, split_factors)
 
     daily = pd.merge_asof(
         prices.reset_index().sort_values("date"),

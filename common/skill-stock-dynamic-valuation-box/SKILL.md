@@ -30,7 +30,7 @@ Downstream technical and quality skills must reference this CSV by date; they mu
 
 ## Required valuation rules
 
-1. Use **unadjusted close** with nominal EPS for PE. Do not use dividend-adjusted prices to calculate a PE valuation box.
+1. Use **unadjusted close** with nominal EPS for PE. Do not use dividend-adjusted prices to calculate a PE valuation box. The one exception is a stock dividend / capital-increase-from-earnings event (a share-count change, not a cash payout): the script rescales close before the ex-date and the affected quarterly EPS onto the post-event share basis via FinMind `TaiwanStockDividend`, otherwise a single such event makes the raw close series jump and any rolling window straddling it compares two incompatible share counts.
 2. Use only the latest four quarterly EPS figures that were available on the relevant date. The bundled script applies conservative Taiwan statutory filing deadlines: Q1 5/15, Q2 8/14, Q3 11/14, and Q4 of the following year 3/31.
 3. Calculate each date's PE distribution from the trailing `--window`-sized rolling window ending on that date. Never use a later EPS, price, or completed rolling window in a historical decision.
 4. Treat the valuation box, quality review, and technical timing as separate layers. The chart supplies the valuation layer; use dividend-adjusted price only when separately calculating RSI, moving averages, or other technical signals.
