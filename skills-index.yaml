@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-09-19'
+generated_at: '2026-09-20'
 skills:
 - name: skill-android-adb-gadget
   group: common
@@ -416,6 +416,18 @@ skills:
   source: ''
   updated_at: '2026-09-02'
   revised_at: '2026-09-02'
+- name: skill-stock-dynamic-valuation-box
+  group: common
+  path: common/skill-stock-dynamic-valuation-box
+  version: 1.0.0
+  description: Render no-look-ahead Taiwan-stock time-price diagrams (2–5 year windows)
+    with dynamic TTM P/E valuation boxes (μ±1σ/±2σ) and optional matched buy/sell
+    markers, using unadjusted price + statutory-deadline-gated nominal EPS.
+  category: financial-strategy
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
+  updated_at: '2026-09-20'
+  revised_at: '2026-09-20'
 - name: skill-stock-fiscal-quarter-resolve
   group: common
   path: common/skill-stock-fiscal-quarter-resolve
