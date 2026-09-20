@@ -25,6 +25,9 @@ skill-stock-dynamic-valuation-box/
 
 ## 版本
 
+- 1.1.1 (2026-09-20)：拿掉標題下面那行「TTM EPS is available...」副標——跟上面的
+  主標題（含中文股名後變兩行）貼太近，視覺上幾乎黏在一起；順手把`_plot()`用不到的
+  `window`參數也拿掉（原本只有這行副標在用），並把圖表頂部留白從0.90調回0.93。
 - 1.1.0 (2026-09-20)：圖表標題改成「代號 中文名稱」（例如「2412 中華電」），透過
   FinMind `TaiwanStockInfo` 查名稱，查不到（下市/剛上市）就退回只顯示代號；同時把
   matplotlib 字型改成優先用系統裝的中文字型（Microsoft JhengHei/YaHei等），原本

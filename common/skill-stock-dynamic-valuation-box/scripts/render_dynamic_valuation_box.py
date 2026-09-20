@@ -123,7 +123,7 @@ def _read_trade_events(path: str | None, symbols: Iterable[str]) -> pd.DataFrame
     return trades[trades["symbol"].isin(set(symbols))]
 
 
-def _plot(symbol: str, name: str, years: int, daily: pd.DataFrame, eps: pd.DataFrame, trades: pd.DataFrame, output_dir: Path, window: int) -> tuple[Path, Path]:
+def _plot(symbol: str, name: str, years: int, daily: pd.DataFrame, eps: pd.DataFrame, trades: pd.DataFrame, output_dir: Path) -> tuple[Path, Path]:
     display_start = daily.index.max() - pd.DateOffset(years=years)
     view = daily.loc[daily.index >= display_start].copy()
     if view.empty:
@@ -141,7 +141,6 @@ def _plot(symbol: str, name: str, years: int, daily: pd.DataFrame, eps: pd.DataF
     figure, (axis, eps_axis) = plt.subplots(2, 1, figsize=(16, 9), sharex=True, gridspec_kw={"height_ratios": [4, 1], "hspace": 0.08})
     label = f"{symbol} {name}" if name else symbol
     figure.suptitle(f"{label} | {years}-year price & dynamic TTM P/E valuation box", x=0.125, ha="left", y=0.975, fontsize=16, fontweight="bold")
-    figure.text(0.125, 0.945, f"TTM EPS is available only after a conservative statutory deadline; each band uses the prior {window} trading-day PE history.", fontsize=9.5, color="#555555")
 
     axis.fill_between(view.index, view["price_m2"], view["price_p2"], color="#f4c7c3", alpha=0.38, label="Outer valuation range: PE mean ±2σ")
     axis.fill_between(view.index, view["price_m1"], view["price_p1"], color="#b7e1cd", alpha=0.72, label="Core valuation box: PE mean ±1σ")
@@ -171,7 +170,7 @@ def _plot(symbol: str, name: str, years: int, daily: pd.DataFrame, eps: pd.DataF
     eps_axis.xaxis.set_major_locator(mdates.MonthLocator(interval=max(3, years * 2)))
     eps_axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
     figure.text(0.01, 0.01, "Data: FinMind TaiwanStockPrice / TaiwanStockFinancialStatements. P/E uses unadjusted price and nominal EPS; use dividend-adjusted prices separately for technical research.", fontsize=8.5, color="#555555")
-    figure.subplots_adjust(top=0.90)
+    figure.subplots_adjust(top=0.93)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     png_path = output_dir / f"{symbol}_dynamic_valuation_box_{years}y.png"
@@ -201,7 +200,7 @@ def main() -> None:
     for symbol in symbols:
         name = _stock_name(symbol)
         daily, eps = _build_daily_box(symbol, args.years, end_date, args.window)
-        png_path, csv_path = _plot(symbol, name, args.years, daily, eps, trades, output_dir, args.window)
+        png_path, csv_path = _plot(symbol, name, args.years, daily, eps, trades, output_dir)
         print(f"{symbol}: {png_path}")
         print(f"{symbol}: {csv_path}")
 
