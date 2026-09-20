@@ -19,6 +19,8 @@ For each requested stock, render a PNG and an auditable daily CSV containing:
 
 The green region is the core valuation box (`μ±1σ`). The red outer range (`μ±2σ`) is an alert boundary, not an automatic target price. The dashed orange line/box is the forward-EPS equivalent, shown only when forward-EPS input is provided; it complements, and does not replace, the trailing box.
 
+When a Yahoo/FactSet curve extends past today, the top panel also draws one future trend ray per source (colored to match that source's bottom-panel markers): today's forward-PE multiple (mean and ±1σ, held constant) applied to that source's own future-year EPS estimate — i.e. "what price today's multiple implies once this year's consensus is realized," not a new multiple assumption. Two sources with different future EPS trajectories produce two different rays from the same starting point.
+
 ## Data contract with other skills
 
 This skill owns only the valuation layer. Its daily CSV is the stable hand-off:

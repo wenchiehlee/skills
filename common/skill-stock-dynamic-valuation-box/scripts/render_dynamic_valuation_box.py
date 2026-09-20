@@ -381,6 +381,35 @@ def _plot(
         "Noto Sans TC", "SimHei", "DejaVu Sans",
     ]
     plt.rcParams["axes.unicode_minus"] = False
+
+    # Precomputed once, up front, so both panels can use the same per-source
+    # forward-EPS facts: the top panel projects a future trend ray from today
+    # through each source's own future-year estimate, and the bottom panel
+    # draws that source's full revision history. Splitting this out avoids
+    # recomputing "the latest known estimate per target year" twice.
+    cutoff = view.index.max()
+    source_forward = {}
+    for source_index, (source_label, curve, color, marker) in enumerate((
+        ("Yahoo", yahoo_curve, "#d9782d", "D"),
+        ("FactSet", factset_curve, "#1b7f9e", "s"),
+    )):
+        if curve is None or curve.empty:
+            continue
+        known = curve[curve["source_asof_date"] <= cutoff]
+        if known.empty:
+            continue
+        x_jitter = pd.Timedelta(days=-30 + source_index * 60)
+        year_latest = []  # (x, target_year, forward_eps) — one per year
+        for target_year, revisions in known.groupby("target_year"):
+            revisions = revisions.sort_values("source_asof_date")
+            x = pd.Timestamp(year=int(target_year), month=7, day=1) + x_jitter
+            year_latest.append((x, int(target_year), revisions["forward_eps"].iloc[-1]))
+        year_latest.sort(key=lambda item: item[0])
+        source_forward[source_label] = {
+            "color": color, "marker": marker, "known": known,
+            "year_latest": year_latest, "latest_report_date": known["source_asof_date"].max().date(),
+        }
+
     # sharex=True so the two panels line up on one timeline: a forward-EPS
     # point's x-position in the bottom panel is directly comparable to the
     # top panel's price/date grid, not just internally consistent within its
@@ -404,6 +433,28 @@ def _plot(
             axis.plot(view.index, view[field], color="#d9782d", lw=0.7, ls=":")
 
     axis.plot(view.index, view["close"], color="#17365d", lw=1.7, label="Close (unadjusted)")
+
+    # Future trend rays: today's forward-PE multiple (mean and ±1σ, held
+    # constant) applied to each source's OWN future-year EPS estimate — not
+    # a new multiple assumption, just "what would price be at today's
+    # multiple once this year's consensus EPS is realized." One ray per
+    # source (colored to match its bottom-panel markers), since Yahoo and
+    # FactSet routinely imply different future prices from the same multiple.
+    last_row = view.iloc[-1]
+    if has_forward and pd.notna(last_row["forward_pe_mean"]):
+        today_x = view.index[-1]
+        mean_pe = last_row["forward_pe_mean"]
+        std_pe = last_row["forward_pe_std"] if pd.notna(last_row["forward_pe_std"]) else 0.0
+        for source_label, info in source_forward.items():
+            future = [item for item in info["year_latest"] if item[0] > today_x]
+            if not future:
+                continue
+            xs = [today_x] + [item[0] for item in future]
+            mean_ys = [last_row["forward_price_mean"]] + [mean_pe * eps for _, _, eps in future]
+            axis.plot(xs, mean_ys, color=info["color"], lw=1.1, ls="--", alpha=0.85, zorder=3)
+            for sigma, base_field in ((-1, "forward_price_m1"), (1, "forward_price_p1")):
+                band_ys = [last_row[base_field]] + [(mean_pe + sigma * std_pe) * eps for _, _, eps in future]
+                axis.plot(xs, band_ys, color=info["color"], lw=0.7, ls=":", alpha=0.7, zorder=2)
 
     # Trades can predate the display window by years (a long-held position),
     # e.g. 2324/2356/3231 have entries from 2015-2020; without this filter a
@@ -461,23 +512,15 @@ def _plot(
     # source's latest-known value across consecutive target years, so the
     # shape of its forward curve (e.g. FY2026E -> FY2027E -> FY2028E) reads at
     # a glance instead of as isolated dots.
-    cutoff = view.index.max()
     forward_points = []  # (x, y, source_label, target_year, color, source_index)
-    for source_index, (source_label, curve, color, marker) in enumerate((
-        ("Yahoo", yahoo_curve, "#d9782d", "D"),
-        ("FactSet", factset_curve, "#1b7f9e", "s"),
-    )):
-        if curve is None or curve.empty:
+    for source_index, source_label in enumerate(("Yahoo", "FactSet")):
+        info = source_forward.get(source_label)
+        if info is None:
             continue
-        known = curve[curve["source_asof_date"] <= cutoff]
-        if known.empty:
-            continue
-        x_jitter = pd.Timedelta(days=-30 + source_index * 60)
-        latest_report_date = known["source_asof_date"].max().date()
-        year_latest = []  # (x, target_year, forward_eps) — one per year, for the cross-year line
+        color, marker, known, year_latest = info["color"], info["marker"], info["known"], info["year_latest"]
         for target_year, revisions in known.groupby("target_year"):
             revisions = revisions.sort_values("source_asof_date")
-            x = pd.Timestamp(year=int(target_year), month=7, day=1) + x_jitter
+            x = next(item[0] for item in year_latest if item[1] == int(target_year))
             n = len(revisions)
             for i, forward_eps in enumerate(revisions["forward_eps"]):
                 is_latest = i == n - 1
@@ -488,9 +531,7 @@ def _plot(
                 )
             if n > 1:
                 eps_axis.plot([x, x], [revisions["forward_eps"].iloc[0], revisions["forward_eps"].iloc[-1]], color=color, lw=1, ls=":", alpha=0.55, zorder=2)
-            year_latest.append((x, int(target_year), revisions["forward_eps"].iloc[-1]))
-        year_latest.sort(key=lambda item: item[0])
-        eps_axis.plot([p[0] for p in year_latest], [p[2] for p in year_latest], color=color, lw=1, ls=":", zorder=3, label=f"{source_label} forward EPS (latest per FY, as of {latest_report_date})")
+        eps_axis.plot([p[0] for p in year_latest], [p[2] for p in year_latest], color=color, lw=1, ls=":", zorder=3, label=f"{source_label} forward EPS (latest per FY, as of {info['latest_report_date']})")
         for x, target_year, forward_eps in year_latest:
             forward_points.append((x, forward_eps, source_label, target_year, color, source_index))
 
