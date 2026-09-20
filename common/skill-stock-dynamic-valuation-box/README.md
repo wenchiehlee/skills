@@ -25,6 +25,31 @@ skill-stock-dynamic-valuation-box/
 
 ## 版本
 
+- 1.4.0 (2026-09-20)：forward EPS改成能直接讀Yahoo Finance跟FactSet兩家真實的consensus
+  feed原生格式，不用先手動轉成本skill的CSV格式。新增`--yahoo-consensus-csv`（讀
+  Yahoo原生的`raw_yahoo_finance_consensus_daily.csv`，欄位stock_code/
+  forecast_asof_date/earnings_1y_avg——這欄位本身就是逐日更新的forward EPS時間序
+  列，不用另外猜發布日）跟`--factset-report-csv`（讀FactSet原生的
+  `raw_factset_detailed_report.csv`，欄位代號/股票代號/MD日期/<年份>EPS平均值——
+  FactSet沒有像Yahoo那樣現成的「next FY」欄位，改用每筆報告的MD日期算出
+  「年份(MD日期)+1」對應的年度平均值欄位當作forward EPS，跟Yahoo的
+  earnings_1y_avg是同一個「下一個完整財年」概念，只是FactSet存成具名年份欄）。
+  三種來源（含原本1.3.0的`--forward-eps-csv`手動格式）可以同時給，程式把所有列
+  併在一起照as_of_date排序，backward merge自然會選到當下最新已知的那筆估計，不
+  管它來自哪個來源。已用真實的`../Yahoo.Finance/data/reports/`資料（2301光寶科）
+  驗證兩個轉接器分別跑、合併跑都正確。
+- 1.3.0 (2026-09-20)：新增選用的forward EPS疊圖——`--forward-eps-csv`（欄位symbol/
+  as_of_date/forward_eps，支援stock_id別名）讓使用者提供每次法人/共識預估EPS更新時
+  的「發布日」跟預估值，程式用跟trailing TTM EPS一樣的merge_asof backward手法按
+  as_of_date掛到每個交易日，算出forward PE跟同樣的μ±1σ/±2σ滾動估值帶。刻意不做的事：
+  這個skill不抓、不算forward EPS本身（FinMind沒有這個dataset），只負責把使用者已經
+  拿到手的預估值按「這筆預估在哪一天才算已知」正確接到no-look-ahead框架裡——如果
+  誤用預估的「目標財報期別」而非「發布日」去merge，等於讓後續交易日提前看到還沒
+  公布的預估值，就違反了整個skill的no-look-ahead前提。圖表上trailing box仍是主要的
+  綠/紅區域，forward PE mean跟±1σ用橘色虛線疊在同一張圖，不取代trailing box；下方
+  EPS子圖也加一條橘色forward EPS階梯線對照trailing TTM EPS。CSV輸出新增forward_eps/
+  forward_pe/forward_pe_mean/forward_pe_std/forward_price_{m2,m1,mean,p1,p2}欄位，
+  沒提供`--forward-eps-csv`時全部是NaN、其餘輸出跟舊版完全相同（向下相容）。
 - 1.2.0 (2026-09-20)：新增股票股利（無償配股/除權）調整——6669在2026-09-02配發
   約2.98倍股票股利，TaiwanStockPrice的close沒做除權處理，原始序列出現假的單日
   跌66%斷崖，橫跨那個ex-date的滾動PE窗口整個算壞（外層上緣曾經算出7614卻對著
