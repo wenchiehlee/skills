@@ -149,7 +149,12 @@ def _plot(symbol: str, name: str, years: int, daily: pd.DataFrame, eps: pd.DataF
     axis.plot(view.index, view["price_mean"], color="#666666", lw=0.9, ls="--", label="PE mean")
     axis.plot(view.index, view["close"], color="#17365d", lw=1.7, label="Close (unadjusted)")
 
-    event_view = trades[trades["symbol"] == symbol]
+    # Trades can predate the display window by years (a long-held position),
+    # e.g. 2324/2356/3231 have entries from 2015-2020; without this filter a
+    # single old marker forces the shared x-axis to span its full trade
+    # history instead of the requested --years window, squashing the actual
+    # price line into a sliver at the right edge.
+    event_view = trades[(trades["symbol"] == symbol) & (trades["date"] >= display_start)]
     for side, marker, color, label in (("buy", "^", "#117a4a", "Actual buys (size = lots)"), ("sell", "v", "#b71c1c", "Actual sells (size = lots)")):
         points = event_view[event_view["side"] == side]
         if not points.empty:
