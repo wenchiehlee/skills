@@ -34,6 +34,21 @@ def _fetch(dataset: str, symbol: str, start: str, end: str) -> list[dict]:
     return body.get("data", [])
 
 
+def _stock_name(symbol: str) -> str:
+    """Best-effort Chinese/English name lookup so charts read "2412 中華電"
+    instead of a bare code; falls back to the code alone if FinMind has
+    nothing (e.g. a delisted or newly listed ticker)."""
+    try:
+        query = urlencode({"dataset": "TaiwanStockInfo", "data_id": symbol})
+        request = Request(f"{FINMIND_URL}?{query}", headers={"User-Agent": "dynamic-valuation-box/1.0"})
+        with urlopen(request, timeout=30) as response:
+            body = json.load(response)
+        rows = body.get("data", [])
+        return rows[0]["stock_name"] if rows else ""
+    except Exception:
+        return ""
+
+
 def _availability_date(period_end: pd.Timestamp) -> pd.Timestamp:
     """Use conservative statutory filing deadlines, never quarter-end data."""
     month = period_end.month
@@ -108,16 +123,24 @@ def _read_trade_events(path: str | None, symbols: Iterable[str]) -> pd.DataFrame
     return trades[trades["symbol"].isin(set(symbols))]
 
 
-def _plot(symbol: str, years: int, daily: pd.DataFrame, eps: pd.DataFrame, trades: pd.DataFrame, output_dir: Path, window: int) -> tuple[Path, Path]:
+def _plot(symbol: str, name: str, years: int, daily: pd.DataFrame, eps: pd.DataFrame, trades: pd.DataFrame, output_dir: Path, window: int) -> tuple[Path, Path]:
     display_start = daily.index.max() - pd.DateOffset(years=years)
     view = daily.loc[daily.index >= display_start].copy()
     if view.empty:
         raise RuntimeError(f"{symbol}: no data in the selected display window")
 
-    plt.rcParams["font.sans-serif"] = ["DejaVu Sans"]
+    # DejaVu Sans (the default) has no CJK glyphs, so a Chinese stock_name in the
+    # title would silently render as missing-glyph boxes. Prefer whichever CJK
+    # font this machine actually has installed, and fall back to DejaVu Sans
+    # (English-only titles) elsewhere rather than failing outright.
+    plt.rcParams["font.sans-serif"] = [
+        "Microsoft JhengHei", "Microsoft YaHei", "PingFang TC", "Noto Sans CJK TC",
+        "Noto Sans TC", "SimHei", "DejaVu Sans",
+    ]
     plt.rcParams["axes.unicode_minus"] = False
     figure, (axis, eps_axis) = plt.subplots(2, 1, figsize=(16, 9), sharex=True, gridspec_kw={"height_ratios": [4, 1], "hspace": 0.08})
-    figure.suptitle(f"{symbol} | {years}-year price & dynamic TTM P/E valuation box", x=0.125, ha="left", y=0.975, fontsize=16, fontweight="bold")
+    label = f"{symbol} {name}" if name else symbol
+    figure.suptitle(f"{label} | {years}-year price & dynamic TTM P/E valuation box", x=0.125, ha="left", y=0.975, fontsize=16, fontweight="bold")
     figure.text(0.125, 0.945, f"TTM EPS is available only after a conservative statutory deadline; each band uses the prior {window} trading-day PE history.", fontsize=9.5, color="#555555")
 
     axis.fill_between(view.index, view["price_m2"], view["price_p2"], color="#f4c7c3", alpha=0.38, label="Outer valuation range: PE mean ±2σ")
@@ -176,8 +199,9 @@ def main() -> None:
     trades = _read_trade_events(args.trades_csv, symbols)
     output_dir = Path(args.output_dir)
     for symbol in symbols:
+        name = _stock_name(symbol)
         daily, eps = _build_daily_box(symbol, args.years, end_date, args.window)
-        png_path, csv_path = _plot(symbol, args.years, daily, eps, trades, output_dir, args.window)
+        png_path, csv_path = _plot(symbol, name, args.years, daily, eps, trades, output_dir, args.window)
         print(f"{symbol}: {png_path}")
         print(f"{symbol}: {csv_path}")
 
