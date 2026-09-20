@@ -329,8 +329,18 @@ def _build_daily_box(
             left_on="date", right_on="as_of_date", direction="backward",
         ).set_index("date")
         daily["forward_pe"] = daily["close"] / daily["forward_eps"]
-        daily["forward_pe_mean"] = daily["forward_pe"].rolling(window, min_periods=min_periods).mean()
-        daily["forward_pe_std"] = daily["forward_pe"].rolling(window, min_periods=min_periods).std(ddof=1)
+        # A separate, lower min_periods than the trailing box's: Yahoo/FactSet
+        # coverage often starts well within the display window (e.g. 81
+        # trading days for a stock whose feed began in May), and reusing the
+        # trailing box's 120-day floor left forward_pe_mean entirely NaN for
+        # those names — hiding both the historical band and the future trend
+        # ray even though the bottom panel already had forward-EPS points to
+        # show. Forward EPS is an analyst estimate, not a noisy daily price
+        # series, so a shorter warm-up is an acceptable trade for surfacing it
+        # sooner; ±1σ will just be wider on a smaller sample early on.
+        forward_min_periods = min(window, 20)
+        daily["forward_pe_mean"] = daily["forward_pe"].rolling(window, min_periods=forward_min_periods).mean()
+        daily["forward_pe_std"] = daily["forward_pe"].rolling(window, min_periods=forward_min_periods).std(ddof=1)
         for sigma, name in ((-2, "m2"), (-1, "m1"), (0, "mean"), (1, "p1"), (2, "p2")):
             daily[f"forward_price_{name}"] = (daily["forward_pe_mean"] + sigma * daily["forward_pe_std"]) * daily["forward_eps"]
     return daily, eps
