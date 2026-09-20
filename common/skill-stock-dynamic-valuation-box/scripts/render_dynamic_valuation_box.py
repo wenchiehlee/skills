@@ -164,7 +164,7 @@ def main() -> None:
     parser.add_argument("--symbols", nargs="+", required=True, help="Taiwan stock codes, e.g. 3045 2412")
     parser.add_argument("--years", type=int, choices=(2, 3, 4, 5), default=2, help="Visible price-history years")
     parser.add_argument("--end-date", default=date.today().isoformat(), help="Analysis cutoff date, YYYY-MM-DD")
-    parser.add_argument("--window", type=int, default=500, help="Rolling PE observations (default: 500)")
+    parser.add_argument("--window", type=int, default=120, help="Rolling PE observations (default: 120, minimum: 120)")
     parser.add_argument("--trades-csv", help="Optional CSV: symbol,date,side,price,lots; supports stock_id/qty aliases and 買進/賣出")
     parser.add_argument("--output-dir", default="output/dynamic_valuation_box")
     args = parser.parse_args()
