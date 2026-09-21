@@ -1,6 +1,6 @@
 ---
 name: skill-document-diagram-design
-description: Generate editorial-quality diagrams (flowchart, sequence, quadrant, comparison table, timeline, tree, radar, sankey, mindmap, state, class/ER, org chart) as self-contained HTML+SVG, following the restrained design system from cathrynlavery/diagram-design, and export them for embedding in Docsify, Material for MkDocs, or PowerPoint. Also imports and redraws existing diagrams from PlantUML/Mermaid source or from a diagram image, so legacy PlantUML embeds (e.g. .planuml mindmaps) can be migrated to native SVG instead of depending on an external rendering server.
+description: Generate editorial-quality diagrams (flowchart, sequence, quadrant, comparison table, timeline, tree, radar, sankey, mindmap, state, class/ER, org chart) as self-contained HTML+SVG, following the restrained design system from cathrynlavery/diagram-design, and export them for embedding in Docsify, Material for MkDocs, PowerPoint, or as interactive slides in open-slide (React) or mkslides (Reveal.js). Also imports and redraws existing diagrams from PlantUML/Mermaid source or from a diagram image, so legacy PlantUML embeds (e.g. .planuml mindmaps) can be migrated to native SVG instead of depending on an external rendering server.
 ---
 
 # 文件圖表設計技能（document-diagram-design）
@@ -30,6 +30,8 @@ skill-document-diagram-design/
 │   ├── style-guide.md              # 顏色/字型 token、克制美學原則
 │   ├── diagram-types.md            # 圖表類型子集與選型表（可擴充）
 │   ├── output-spec.md              # Docsify / MkDocs / PowerPoint 輸出規則
+│   ├── output-openslide.md         # open-slide 互動投影片輸出規則（React/Node，互動天花板最高）
+│   ├── output-mkslides.md          # mkslides 互動投影片輸出規則（Reveal.js/Python，環境成本最低）
 │   ├── plantuml-support.md         # PlantUML 匯入與淘汰路徑（含 InvestmentStackVision 案例）
 │   ├── import-redraw.md            # 文字 DSL / 圖片 / 既有 SVG 三種匯入來源的處理流程
 │   └── icon-assets.md              # 向量線稿 vs 彩色/寫實圖示：兩種模式的嵌入方式與設計紀律
@@ -83,13 +85,19 @@ Docsify／MkDocs 純輸出 SVG 不需要額外套件；PlantUML 匯入解析（`
 
 ### 4. 依目標平台匯出
 
-讀 `references/output-spec.md`：
+先判斷這是「嵌進文件的一張圖」還是「簡報／投影片」——後者（尤其需要互動）讀 `references/output-openslide.md`（React/Node）或 `references/output-mkslides.md`（Reveal.js/Python，二者互斥擇一），不要套用下表的靜態流程。文件內嵌圖表讀 `references/output-spec.md`：
 
 | 目標 | 指令/做法 |
 |---|---|
-| Docsify | 直接存 `.svg`，或把 `<svg>` 內聯進 Markdown |
-| MkDocs Material | 存 `.svg` 到 `docs/assets/diagrams/`，用 `<figure markdown="span">` 包裝 |
-| PowerPoint | `python scripts/svg_to_png.py <name>.html --out <name>.png` → 寫 `manifest.json` → `python scripts/svg_to_pptx.py manifest.json --out deck.pptx` |
+| Docsify（靜態） | 存 `.svg`，用 `![alt](x.svg)` 引用 |
+| Docsify（互動） | 把 `<svg>` 原封不動內聯進 Markdown，不能用圖片語法（`<img>` 會讓 CSS hover/JS 全部失效）；注意單頁只解析第一個 `<script>` |
+| MkDocs Material（靜態） | 存 `.svg` 到 `docs/assets/diagrams/`，用 `<figure markdown="span">` 包裝 |
+| MkDocs Material（互動） | 同樣把 `<svg>` 內聯進 Markdown；建置期渲染，沒有 Docsify 的單頁單 script 限制 |
+| PowerPoint | `python scripts/svg_to_png.py <name>.html --out <name>.png` → 寫 `manifest.json` → `python scripts/svg_to_pptx.py manifest.json --out deck.pptx`；`manifest.json` 可加 `hotspots`/`nav` 做熱區跳轉與導覽按鈕 |
+| open-slide（互動，Node） | 圖表以 React 元件形式嵌入 `slides/<id>/index.tsx`，見 `references/output-openslide.md` |
+| mkslides（互動，Python） | 圖表比照 MkDocs Material 內聯 `<svg>` 進 Markdown，`mkslides build` 產出 Reveal.js 簡報，見 `references/output-mkslides.md` |
+
+互動與靜態的分野見 `references/output-spec.md` 的「互動性與嵌入方式的關係」一節：SVG 用 `<img>`/圖片語法嵌入時，瀏覽器會當成靜態圖片處理，CSS `:hover` 和 `<script>` 一律失效，這跟框架無關，是格式規則。
 
 ## 🔁 PlantUML／Mermaid 遷移（重點案例）
 
