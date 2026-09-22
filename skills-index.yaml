@@ -210,14 +210,14 @@ skills:
 - name: skill-finmind-fetch
   group: common
   path: common/skill-finmind-fetch
-  version: 1.0.1
-  description: Fetch Taiwan stock margin and price data from FinMind API and export/merge
-    to stage1 raw CSV.
+  version: 1.8.0
+  description: Fetch FinMind Taiwan stock margin/price data and quarterly financial-ratio
+    data, exporting GoodInfo Analyzer-compatible CSVs.
   category: financial-data
   maintainer: wenchiehlee
-  source: https://github.com/wenchiehlee/FinMind
-  updated_at: '2026-07-24'
-  revised_at: '2026-08-07'
+  source: https://github.com/wenchiehlee/Python-Actions.FindMind
+  updated_at: '2026-09-22'
+  revised_at: '2026-09-22'
 - name: skill-goodinfo-fetch
   group: common
   path: common/skill-goodinfo-fetch
