@@ -36,7 +36,7 @@
 | [skill-company-revenue-predict](common/skill-company-revenue-predict) | common | financial-forecasting | 1.0.1 | 營收預測與 10-Model 評估 SOP | 2026-08-26 |
 | [skill-company-revenue-segment-weights](common/skill-company-revenue-segment-weights) | common | financial-strategy | 1.3.1 | 更新與稽核 company revenue segment weights evidence、quarterly candidates、QA report 與 active snapshot；目前支援 biztrends.TW 台股 InvestorConference/MOPS/IR Markdown evidence，並在更新 company_segment_weights.csv 前產出資料解讀 QA。 | 2026-08-26 |
 | [skill-company-segment-viz](common/skill-company-segment-viz) | common | financial-accounting | 1.0.1 | 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖 | 2026-08-26 |
-| [skill-document-diagram-design](common/skill-document-diagram-design) | common | document | 1.1.0 | 以 cathrynlavery/diagram-design 的編輯級圖表方法論，產生可嵌入 Docsify、Material for MkDocs 或 PowerPoint 的圖表；支援從既有 PlantUML/Mermaid 原始碼或圖片匯入語意後，改畫成統一風格的原生 SVG。 | 2026-09-03 |
+| [skill-document-diagram-design](common/skill-document-diagram-design) | common | document | 1.4.0 | 以 cathrynlavery/diagram-design 的編輯級圖表方法論，產生可嵌入 Docsify、Material for MkDocs、PowerPoint 的圖表，或以 open-slide／mkslides 輸出具互動的簡報；支援從既有 PlantUML/Mermaid 原始碼或圖片匯入語意後，改畫成統一風格的原生 SVG。 | 2026-09-21 |
 | [skill-facebook-fetch](common/skill-facebook-fetch) | common | financial-data | 1.2.3 | 管理 Facebook.Fetch 專案的每日粉專/珍藏清單貼文抓取 — 本機執行與 GitHub Actions 共用同一支 run_daily_fetch.py，更新過期的 FB_COOKIE、手動觸發並監看 daily_fetch workflow、排查已知的資料夾命名衝突與 sync 觸發失敗問題。 | 2026-08-07 |
 | [skill-finmind-fetch](common/skill-finmind-fetch) | common | financial-data | 1.0.1 | Fetch Taiwan stock margin and price data from FinMind API and export/merge to stage1 raw CSV. | 2026-08-07 |
 | [skill-goodinfo-fetch](common/skill-goodinfo-fetch) | common | financial-data | 1.1.0 | Unified dispatcher across the GoodInfo.tw data pipeline: download raw XLS (Python-Actions.GoodInfo), convert to CSV via stage1 extraction (Python-Actions.GoodInfo.Analyzer), and enrich company-level metadata (Python-Actions.GoodInfo.CompanyInfo). | 2026-08-17 |
@@ -79,7 +79,7 @@
 | [skill-youtube-channel-fetch](common/skill-youtube-channel-fetch) | common | document | 1.4.2 | 從 YouTube 財經頻道下載影片（裸頻道網址會合併 /videos+/streams 兩個 tab，網址已指定 /videos 或 /streams 則只查那一個 tab；支援「最新 N 支」或「日期區間」兩種模式），優先嘗試官方逐字稿（youtube-transcript-api）：自動字幕直接寫成 FIN.srt，手動字幕只寫成 GT.srt（不寫 FIN.srt——GT-only 本身就是完整狀態，下游步驟找不到 FIN.srt 時會改用 GT.srt），可用 refine 子指令針對有 GT.srt 但無 FIN.srt 的 stem 補觸發 whisper pipeline 的 refine_fin_srt；沒有逐字稿的才下載音訊、發佈為本 repo 的 GitHub Release 附件並寫入 audio_manifest.json，供 skill-mlx-api-client-whisper 觸發轉錄。 | 2026-09-17 |
 | [skill-youtube-channel-srt-keyframe-extract](common/skill-youtube-channel-srt-keyframe-extract) | common | document | 1.2.1 | 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡報／數字等視覺重點的時間點，下載對應影片並擷取該時間點的畫面存成帶時間碼的 JPEG，索引 md 裡每張截圖都附上該時間區段的實際逐字稿片段（可關鍵字搜尋）與 LLM 話題推測。 | 2026-09-02 |
 
-最後產生日期：2026-09-20
+最後產生日期：2026-09-21
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理
