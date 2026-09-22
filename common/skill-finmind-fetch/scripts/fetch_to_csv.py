@@ -6,6 +6,10 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 import logging
+from dotenv import load_dotenv
+from token_env import TokenRotator
+
+load_dotenv()
 
 # Add parent directory to sys.path to enable self_update imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -43,11 +47,6 @@ def parse_args():
                         help="Limit number of stocks fetched (for debugging).")
     return parser.parse_args()
 
-def get_finmind_token(args):
-    if args.token:
-        return args.token
-    return os.environ.get("FINMIND_TOKEN") or os.environ.get("FINMIND_API_TOKEN")
-
 def fetch_data(dataset, data_id=None, start_date=None, end_date=None, token=None):
     params = {
         "dataset": dataset,
@@ -56,20 +55,28 @@ def fetch_data(dataset, data_id=None, start_date=None, end_date=None, token=None
     }
     if data_id:
         params["data_id"] = data_id
-    if token:
-        params["token"] = token
+    request_token = token.next() if isinstance(token, TokenRotator) else token
+    if request_token:
+        params["token"] = request_token
         
     try:
         r = requests.get(FINMIND_URL, params=params)
-        r.raise_for_status()
         res = r.json()
-        if res.get("status") == 200:
+        if r.ok and res.get("status") == 200:
             return pd.DataFrame(res.get("data", []))
-        else:
-            logger.warning(f"FinMind API return status {res.get('status')} for dataset {dataset}: {res.get('msg')}")
+        msg = str(res.get("msg", "")).strip().lower()
+        quota_exhausted = res.get("status") == 402 or "reach the upper limit" in msg
+        if isinstance(token, TokenRotator) and ("token is illegal" in msg or quota_exhausted):
+            token.retire(request_token)
+            if token.count:
+                return fetch_data(dataset, data_id, start_date, end_date, token)
+            logger.error("FinMind rejected all configured tokens")
             return pd.DataFrame()
+        logger.warning(f"FinMind API return status {res.get('status')} for dataset {dataset}: {res.get('msg')}")
+        return pd.DataFrame()
     except Exception as e:
-        logger.error(f"Error fetching dataset {dataset} for {data_id}: {e}")
+        # Never log requests' URL, because it may contain the token query parameter.
+        logger.error(f"Error fetching dataset {dataset} for {data_id}: {type(e).__name__}: request failed")
         return pd.DataFrame()
 
 def to_stage1_date(date_str):
@@ -198,11 +205,13 @@ def process_stock_data(stock_code, price_df, margin_df, company_name):
     - price_df columns: date, stock_id, Trading_Volume, Trading_money, open, max, min, close, spread, Trading_turnover
     - margin_df columns: date, stock_id, MarginPurchaseBuy, MarginPurchaseCashRepayment, MarginPurchaseLimit, MarginPurchaseTodayBalance, MarginPurchaseYesterdayBalance, ShortSaleCashRepayment, ShortSaleLimit, ShortSaleSell, ShortSaleTodayBalance, ShortSaleYesterdayBalance, ShortSaleBuy, OffsetLoanAndShort
     """
-    if price_df.empty or margin_df.empty:
+    if price_df.empty:
         return pd.DataFrame()
-        
-    # Merge price and margin
-    m_df = price_df.merge(margin_df, on="date", how="left")
+
+    # Some stocks (e.g. not yet eligible for margin trading) have price data
+    # but no margin data at all; GoodInfo still reports them with blank
+    # margin columns rather than omitting them, so match that here.
+    m_df = price_df.merge(margin_df, on="date", how="left") if not margin_df.empty else price_df.copy()
     
     rows = []
     now_cst = datetime.now() + timedelta(hours=8)
@@ -256,7 +265,8 @@ def process_stock_data(stock_code, price_df, margin_df, company_name):
             "收盤_價格_元": close_val,
             "漲跌_價格_元": spread_val,
             "漲跌_pct": round(change_pct, 2) if pd.notna(change_pct) else np.nan,
-            "成交_張數": round(vol_lots, 2) if pd.notna(vol_lots) else np.nan,
+            # GoodInfo Type 13 stores trading volume as whole lots.
+            "成交_張數": int(round(vol_lots)) if pd.notna(vol_lots) else np.nan,
             "融資_買進_張": mp_buy,
             "融資_賣出_張": mp_sell,
             "融資_現償_張": mp_ret,
@@ -351,7 +361,8 @@ def determine_incremental_targets(existing_df, stock_list_df, default_start_date
 
 def main():
     args = parse_args()
-    token = get_finmind_token(args)
+    token = TokenRotator(args.token)
+    logger.info("Using %d FinMind token(s) with round-robin rotation", token.count)
     
     # 1. Load Stock List
     stock_list_df = pd.DataFrame()
@@ -460,7 +471,7 @@ def main():
             price_df = fetch_data("TaiwanStockPrice", data_id=code, start_date=start_str, end_date=end_date, token=token)
             margin_df = fetch_data("TaiwanStockMarginPurchaseShortSale", data_id=code, start_date=start_str, end_date=end_date, token=token)
             
-            if not price_df.empty and not margin_df.empty:
+            if not price_df.empty:
                 df_stk = process_stock_data(code, price_df, margin_df, company_name=name)
                 if not df_stk.empty:
                     logger.info(f"Processed {len(df_stk)} rows for Stock {code}")
