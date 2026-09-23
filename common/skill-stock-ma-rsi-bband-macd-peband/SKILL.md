@@ -17,6 +17,14 @@ description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MA
 
 PEBand 是可選功能，不會自行推估 EPS，也不會把研究報告或 consensus 直接混進技術指標層。呼叫端必須用 `--pe-eps-file` 明確提供 EPS CSV；該 CSV 至少需要一個代號欄（`symbol` / `stock_code` / `代號`）與 EPS 欄。標準 PEBand 需要 EPS CSV 有 `date` / `asof_date` / `forecast_asof_date`，把 EPS 當作 dated series，對齊交易日後向前填補。沒有日期欄時預設報錯；只有明確加 `--pe-allow-static-eps-band` 時，才允許用最後一筆 EPS 除整段價格，這是非標準 fallback。
 
+### `calc_pe_band_series()`：給呼叫端重用的整段序列版本
+
+`scripts/indicators.py` 的 `calc_pe_band()` 只回傳**最新一筆**快照（給本技能的單列 CSV 用）。若呼叫端需要**整段每日**滾動 PE band 序列（例如畫多年估值箱圖），改用 `calc_pe_band_series(close, eps, period, min_periods=None)`——口徑跟 `calc_pe_band()` 完全一致（PE_t = close_t/EPS_t，滾動窗 μ/σ、μ±1σ/±2σ 及對應價格帶），只是對每一天都算一次，回傳 DataFrame（欄位：`eps`/`pe`/`pe_mean`/`pe_std`/`price_m2`/`price_m1`/`price_mean`/`price_p1`/`price_p2`）而不是 dict。
+
+`calc_pe_band_series()` 對 close 的還原/未還原狀態**沒有立場**——它只做 PE_t = close_t/EPS_t 之後的純數學，不重新抓取或調整價格本身，呼叫端自行決定要傳哪一種收盤價序列。這點很重要：本技能其他指標（MA/RSI/BBand/MACD）的既定慣例是吃還原股價，但 `skill-stock-dynamic-valuation-box` 刻意傳**未還原**收盤價（理由見該技能 SKILL.md 的「Required valuation rules」第 1 條）——`calc_pe_band_series()` 兩種都吃得下，不會因為傳未還原價而算錯，因為它本來就沒有對輸入的還原狀態做任何假設。
+
+`skill-stock-dynamic-valuation-box` 透過 sibling-skill sys.path import 直接呼叫這個函式來算它的滾動 PE band（trailing 與 forward 兩層），取代它自己重寫一份同樣的 μ/σ/±1σ/±2σ 公式；TTM EPS 建構（statutory filing deadline 可得日期、股票股利股本重新換算）與 Yahoo/FactSet 多來源 forward EPS 對帳仍由該技能自己負責，`calc_pe_band_series()` 不涉及這兩塊。
+
 EPS scope 定義：
 
 | Scope | 定義 | 典型來源 | 用途 |
@@ -205,11 +213,33 @@ MACD_dif, MACD_signal, MACD_hist
 
 ```text
 PE_eps_scope, PE_eps_horizon, PE_eps_source,
-PE_eps, PE_current, PE_mean, PE_std,
+PE_eps, PE_current, PE_mean, PE_std, PE_band,
 PE_minus_2std, PE_minus_1std, PE_plus_1std, PE_plus_2std,
 PEBand_price_minus_2std, PEBand_price_minus_1std, PEBand_price_mean,
 PEBand_price_plus_1std, PEBand_price_plus_2std
 ```
+
+### PE band 離散分類（`classify_pe_band()`）
+
+`PE_current`/`PE_mean`/`PE_std` 是連續數字，消費端（例如試算表欄位）常常只需要
+「現在算便宜還是貴、落在哪一段」這個離散標籤，不需要自己重算 z-score 再分段。
+`indicators.classify_pe_band(pe_current, mean, std)` 把這件事做成一個可重用函式，
+`calc_all(..., pe_eps=...)` 跟 `run_indicators.py --pe-eps-file` 都會自動呼叫它，
+輸出多一欄 `PE_band`：
+
+| PE_band | 條件（z = (PE_current-μ)/σ） | 意義 |
+|---:|---|---|
+| 0 | z < -2 | 極便宜，跌出 μ-2σ 以下 |
+| 1 | -2 <= z < -1 | μ-2σ ~ μ-1σ |
+| 2 | -1 <= z < 0 | μ-1σ ~ μ |
+| 3 | 0 <= z < 1 | μ ~ μ+1σ |
+| 4 | 1 <= z < 2 | μ+1σ ~ μ+2σ |
+| 5 | z >= 2 | 極貴，漲出 μ+2σ 以上 |
+
+刻意用 6 段（0~5）而不是把 <μ-2σ/>μ+2σ 夾進最近的一端（1/4）——常態假設下 2σ 以外
+只有約5%機率，直接夾進鄰近段會把「這次真的很極端」跟「剛好卡在帶緣」混在一起，對
+機械化的估值判斷資訊量差很多。任一輸入是 `None`/`NaN`，或 `std<=0`（樣本太少或PE
+序列退化成常數）時回傳 `None`，呼叫端自行決定顯示成 `"-"` 或其他預設值。
 
 若使用 `--pe-eps-columns` 多 scope 模式，上述欄位會加 scope 前綴輸出，例如：
 

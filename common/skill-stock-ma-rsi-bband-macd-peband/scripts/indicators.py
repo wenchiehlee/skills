@@ -97,6 +97,57 @@ def calc_macd(close: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9)
     return pd.DataFrame({"dif": dif, "signal": macd_signal, "hist": hist})
 
 
+def calc_pe_band_series(
+    close: pd.Series, eps: float | pd.Series, period: int = 240, min_periods: int | None = None,
+) -> pd.DataFrame:
+    """`calc_pe_band()` 的向量化版本：回傳整段每日 PE band 序列，不是只回最新一筆快照。
+
+    給需要畫多年時間序列圖（而非單日技術指標寬表）的呼叫端使用，例如
+    `skill-stock-dynamic-valuation-box`。口徑跟 `calc_pe_band()` 完全一致
+    （PE_t = close_t / EPS_t，滾動窗 μ/σ、μ±1σ/±2σ 及對應價格帶），差別只在
+    這裡對每一天都算一次，而不是只算最後一天。
+
+    本函式對 close 的還原/未還原狀態沒有立場——呼叫端決定要傳哪一種收盤價序列
+    （例如 valuation-box 刻意傳未還原收盤價，理由見它自己的 SKILL.md）；這裡只
+    負責 PE_t = close_t / EPS_t 之後的純數學，不重新抓取或調整價格本身。
+
+    回傳 DataFrame（index 與 close 對齊），欄位：eps, pe, pe_mean, pe_std,
+    price_m2, price_m1, price_mean, price_p1, price_p2。資料不足時回傳空 DataFrame。
+    """
+    close = close.dropna().astype(float)
+    if close.empty or period <= 1:
+        return pd.DataFrame()
+
+    if isinstance(eps, pd.Series):
+        eps_series = eps.dropna().astype(float).sort_index()
+        if eps_series.empty:
+            return pd.DataFrame()
+        aligned_eps = (
+            eps_series.reindex(eps_series.index.union(close.index))
+            .sort_index()
+            .ffill()
+            .reindex(close.index)
+        )
+    else:
+        try:
+            latest_eps = float(eps)
+        except (TypeError, ValueError):
+            return pd.DataFrame()
+        if latest_eps <= 0:
+            return pd.DataFrame()
+        aligned_eps = pd.Series(latest_eps, index=close.index)
+
+    pe = close / aligned_eps
+    mp = min_periods if min_periods is not None else min(period, 120)
+    pe_mean = pe.rolling(period, min_periods=mp).mean()
+    pe_std = pe.rolling(period, min_periods=mp).std(ddof=1)
+
+    out = pd.DataFrame({"eps": aligned_eps, "pe": pe, "pe_mean": pe_mean, "pe_std": pe_std})
+    for sigma, name in ((-2, "m2"), (-1, "m1"), (0, "mean"), (1, "p1"), (2, "p2")):
+        out[f"price_{name}"] = (pe_mean + sigma * pe_std) * aligned_eps
+    return out
+
+
 def calc_pe_band(close: pd.Series, eps: float | pd.Series, period: int = 240) -> dict:
     """用 common market PE band 口徑計算估值帶。
 
@@ -154,6 +205,41 @@ def calc_pe_band(close: pd.Series, eps: float | pd.Series, period: int = 240) ->
     return bands
 
 
+def classify_pe_band(pe_current: float | None, mean: float | None, std: float | None) -> int | None:
+    """把「現在PE相對μ/σ落在哪一段」轉成離散band標籤（0~5，共6段）：
+
+      0：PE < μ-2σ（極便宜，跌出正常估值帶下緣以下）
+      1：μ-2σ <= PE < μ-1σ
+      2：μ-1σ <= PE < μ
+      3：μ   <= PE < μ+1σ
+      4：μ+1σ <= PE < μ+2σ
+      5：PE >= μ+2σ（極貴，漲出正常估值帶上緣以上）
+
+    刻意保留0/5這兩個「超出±2σ」的極端標籤而不是夾到1/4——2σ以外在常態假設下只有約
+    5%機率，直接夾進最近的一端會把「這次真的很極端」跟「剛好卡在帶緣」混在一起，
+    對機械化的估值判斷來說資訊量差很多（[[project-strategy-framework]]機率思維的
+    校準桶概念在這裡也適用：極端桶不該被併回鄰近桶）。
+
+    std<=0（樣本太少或PE序列退化成常數）或任一輸入是None/NaN時回傳None，呼叫端
+    自行決定顯示成"-"還是其他預設值，不在這裡幫呼叫端做決定。"""
+    if pe_current is None or mean is None or std is None:
+        return None
+    if any(pd.isna(v) for v in (pe_current, mean, std)) or std <= 0:
+        return None
+    z = (pe_current - mean) / std
+    if z < -2:
+        return 0
+    if z < -1:
+        return 1
+    if z < 0:
+        return 2
+    if z < 1:
+        return 3
+    if z < 2:
+        return 4
+    return 5
+
+
 def calc_all(close: pd.Series, ma_periods=(20, 60, 120, 240), rsi_period=14,
              macd=(12, 26, 9), bband_period=20, bband_k=2.0,
              pe_eps: float | pd.Series | None = None, pe_period: int = 240) -> dict:
@@ -186,7 +272,9 @@ def calc_all(close: pd.Series, ma_periods=(20, 60, 120, 240), rsi_period=14,
     out["MACD_hist"] = last(m["hist"])
 
     if pe_eps is not None:
-        out.update(calc_pe_band(close, pe_eps, pe_period))
+        pe = calc_pe_band(close, pe_eps, pe_period)
+        out.update(pe)
+        out["PE_band"] = classify_pe_band(pe.get("PE_current"), pe.get("PE_mean"), pe.get("PE_std"))
 
     out["close"] = last(close)
     return out

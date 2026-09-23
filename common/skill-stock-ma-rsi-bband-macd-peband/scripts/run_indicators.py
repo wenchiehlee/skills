@@ -63,7 +63,7 @@ from price_loader import (
     fetch_fugle_market_adjustment_events,
     fetch_yahoo_adjusted,
 )
-from indicators import calc_all, calc_pe_band
+from indicators import calc_all, calc_pe_band, classify_pe_band
 
 try:
     if hasattr(sys.stdout, "reconfigure"):
@@ -88,7 +88,7 @@ FIELD_ORDER += ["BB20_upper", "BB20_mid", "BB20_lower", "RSI14",
                 "MACD_dif", "MACD_signal", "MACD_hist"]
 PE_SCOPE_CHOICES = ("trailing_eps", "forward_eps", "forward_consensus_eps")
 PE_BAND_VALUE_FIELDS = [
-    "PE_eps", "PE_current", "PE_mean", "PE_std",
+    "PE_eps", "PE_current", "PE_mean", "PE_std", "PE_band",
     "PE_minus_2std", "PE_minus_1std", "PE_plus_1std", "PE_plus_2std",
     "PEBand_price_minus_2std", "PEBand_price_minus_1std", "PEBand_price_mean",
     "PEBand_price_plus_1std", "PEBand_price_plus_2std",
@@ -251,6 +251,7 @@ def add_pe_band_fields(row: dict, close: pd.Series, scoped_pe_inputs, args, sing
             "PE_eps_source": args.pe_eps_source,
             **bands,
         }
+        bands["PE_band"] = classify_pe_band(bands.get("PE_current"), bands.get("PE_mean"), bands.get("PE_std"))
         if single_scope_mode:
             row.update(bands)
         else:

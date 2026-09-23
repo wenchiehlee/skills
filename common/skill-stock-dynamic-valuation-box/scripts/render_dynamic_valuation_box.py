@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from datetime import date
 from pathlib import Path
 from typing import Iterable
@@ -19,6 +20,14 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas as pd
 
+# Sibling registry skill: the μ/σ/±1σ/±2σ PE-band math is shared with
+# skill-stock-ma-rsi-bband-macd-peband's calc_pe_band_series() instead of being
+# reimplemented here. That function takes no position on adjusted-vs-unadjusted
+# close (pure PE_t = close_t/EPS_t math), so it's safe to feed the unadjusted
+# close this skill deliberately uses (see "Required valuation rules" below).
+PEBAND_SCRIPTS_DIR = (Path(__file__).resolve().parent / "../../skill-stock-ma-rsi-bband-macd-peband/scripts").resolve()
+sys.path.insert(0, str(PEBAND_SCRIPTS_DIR))
+from indicators import calc_pe_band_series  # noqa: E402
 
 FINMIND_URL = "https://api.finmindtrade.com/api/v4/data"
 STATUTORY_DEADLINES = {3: (5, 15), 6: (8, 14), 9: (11, 14), 12: (3, 31)}
@@ -310,12 +319,8 @@ def _build_daily_box(
         eps.sort_values("available_date"),
         left_on="date", right_on="available_date", direction="backward",
     ).set_index("date")
-    daily["pe"] = daily["close"] / daily["ttm_eps"]
-    min_periods = min(window, 120)
-    daily["pe_mean"] = daily["pe"].rolling(window, min_periods=min_periods).mean()
-    daily["pe_std"] = daily["pe"].rolling(window, min_periods=min_periods).std(ddof=1)
-    for sigma, name in ((-2, "m2"), (-1, "m1"), (0, "mean"), (1, "p1"), (2, "p2")):
-        daily[f"price_{name}"] = (daily["pe_mean"] + sigma * daily["pe_std"]) * daily["ttm_eps"]
+    trailing_band = calc_pe_band_series(daily["close"], daily["ttm_eps"], period=window)
+    daily = daily.join(trailing_band[["pe", "pe_mean", "pe_std", "price_m2", "price_m1", "price_mean", "price_p1", "price_p2"]])
 
     forward_cols = ["forward_eps", "forward_pe", "forward_pe_mean", "forward_pe_std"]
     forward_cols += [f"forward_price_{name}" for name in ("m2", "m1", "mean", "p1", "p2")]
@@ -328,7 +333,6 @@ def _build_daily_box(
             forward_eps[["as_of_date", "forward_eps"]].sort_values("as_of_date"),
             left_on="date", right_on="as_of_date", direction="backward",
         ).set_index("date")
-        daily["forward_pe"] = daily["close"] / daily["forward_eps"]
         # A separate, lower min_periods than the trailing box's: Yahoo/FactSet
         # coverage often starts well within the display window (e.g. 81
         # trading days for a stock whose feed began in May), and reusing the
@@ -338,11 +342,12 @@ def _build_daily_box(
         # show. Forward EPS is an analyst estimate, not a noisy daily price
         # series, so a shorter warm-up is an acceptable trade for surfacing it
         # sooner; ±1σ will just be wider on a smaller sample early on.
-        forward_min_periods = min(window, 20)
-        daily["forward_pe_mean"] = daily["forward_pe"].rolling(window, min_periods=forward_min_periods).mean()
-        daily["forward_pe_std"] = daily["forward_pe"].rolling(window, min_periods=forward_min_periods).std(ddof=1)
-        for sigma, name in ((-2, "m2"), (-1, "m1"), (0, "mean"), (1, "p1"), (2, "p2")):
-            daily[f"forward_price_{name}"] = (daily["forward_pe_mean"] + sigma * daily["forward_pe_std"]) * daily["forward_eps"]
+        forward_band = calc_pe_band_series(daily["close"], daily["forward_eps"], period=window, min_periods=min(window, 20))
+        daily["forward_pe"] = forward_band["pe"]
+        daily["forward_pe_mean"] = forward_band["pe_mean"]
+        daily["forward_pe_std"] = forward_band["pe_std"]
+        for name in ("m2", "m1", "mean", "p1", "p2"):
+            daily[f"forward_price_{name}"] = forward_band[f"price_{name}"]
     return daily, eps
 
 
