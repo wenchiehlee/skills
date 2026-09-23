@@ -39,6 +39,12 @@
       "repo": "wenchiehlee-money/GoogleSheet.Banks",
       "role": "consumer",
       "local_path": "github.com/GoogleSheet.Banks/skills/skill-stock-ma-rsi-bband-macd-peband"
+    },
+    {
+      "repo": "wenchiehlee-money/TW-institutional-research",
+      "role": "consumer",
+      "local_path": "github.com/TW-institutional-research/skills/skill-stock-MA-RSI-BBand-MACD-PEBand",
+      "note": "still under the pre-rename folder name; not yet renamed/synced to v1.9.0"
     }
   ]
 }
