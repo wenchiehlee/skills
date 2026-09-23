@@ -34,6 +34,11 @@
       "repo": "wenchiehlee/skills",
       "role": "registry",
       "local_path": "github.com/skills/common/skill-stock-ma-rsi-bband-macd-peband"
+    },
+    {
+      "repo": "wenchiehlee-money/GoogleSheet.Banks",
+      "role": "consumer",
+      "local_path": "github.com/GoogleSheet.Banks/skills/skill-stock-ma-rsi-bband-macd-peband"
     }
   ]
 }
