@@ -215,7 +215,7 @@ skills:
     data, exporting GoodInfo Analyzer-compatible CSVs.
   category: financial-data
   maintainer: wenchiehlee
-  source: https://github.com/wenchiehlee/Python-Actions.FindMind
+  source: https://github.com/wenchiehlee/Python-Actions.FinMind
   updated_at: '2026-09-22'
   revised_at: '2026-09-22'
 - name: skill-goodinfo-fetch
