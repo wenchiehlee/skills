@@ -2,7 +2,7 @@
   "name": "skill-stock-pipeline-health-monitor",
   "description": "複合技能：委派給所有 skill-*-fetch 抓取技能，維護 Data Health Dashboard 新鮮度、資料系統架構 Repo 角色對照表，並稽核跨 repo CSV 同步 YAML 與 GoodInfo/FinMind 智慧選源。",
   "category": "financial-data",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "maintainer": "wenchiehlee",
   "source": "biztrends.TW",
   "updated_at": "2026-09-23",
@@ -12,6 +12,7 @@
     "scripts/audit_health_summaries.py",
     "scripts/audit_sync_config.py",
     "scripts/select_data_source.py",
+    "scripts/detect_mops_ocr_backlog.py",
     "self_update.py",
     "SKILL.md"
   ],

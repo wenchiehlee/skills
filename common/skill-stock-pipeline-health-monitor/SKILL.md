@@ -58,6 +58,16 @@ python scripts/check_csv_freshness.py
 python skills/skill-stock-pipeline-health-monitor/scripts/audit_health_summaries.py
 ```
 
+### 表二 `mops_pdf_sync` 的 `ocr_needed_count` 非零時
+
+`mops_health_summary.csv` 的 `ocr_needed_count` 只給總數，不列出是哪幾份 PDF。此技能不做 OCR（那是 `skill-mops-fetch` 的職責），但會掃描本機 sibling `MOPS` repo 的 `downloads/` 找出實際還有 `TODO:OCR` 標記的檔案，並印出委派指令：
+
+```bash
+python skills/skill-stock-pipeline-health-monitor/scripts/detect_mops_ocr_backlog.py
+```
+
+實際修復一律委派 `skill-mops-fetch` 的 `scripts/refine_pending_ocr.py`（於 `MOPS` repo 執行）——它會一次掃描整個 `downloads/` 樹並呼叫 Mac-mini OCR API 修補，不需要逐一知道是哪個 company/year/quarter。
+
 ## 流程二：GoodInfo vs FinMind 智慧選源 (Smart Source Selection)
 
 GoodInfo 與 FinMind 對同一批 GoodInfo Type（1/4/5/6/7/8/9/11/12/13/14/15/16/17/18/19）輸出**完全相同欄位結構**的 stage1 CSV（詳見 `skill-finmind-fetch` SKILL.md），因此當某個 Type 過期/損壞時，可以選擇改用 API 管道而非重跑網頁下載。
