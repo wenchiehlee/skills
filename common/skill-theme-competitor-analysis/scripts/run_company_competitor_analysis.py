@@ -601,10 +601,21 @@ def taiwan_quarterly_metrics(stocks: set[str], years: int) -> dict[str, list[dic
 
     for (stock, key), row in load_official_taiwan_earnings_metrics(stocks).items():
         existing = by_stock_period.get((stock, key))
-        if existing is None or int(existing.get("source_priority", 9)) > int(row.get("source_priority", 9)):
-            if existing and not row.get("company"):
-                row["company"] = existing.get("company", "")
+        if existing is None:
             by_stock_period[(stock, key)] = row
+            continue
+        if int(existing.get("source_priority", 9)) <= int(row.get("source_priority", 9)):
+            continue
+        # 官方新聞稿的英文 regex parser 只解析 revenue/profit/gm 三個欄位（有時
+        # 更少，例如 TSMC 的新聞稿摘要段落只揭露 revenue 與 net income，沒有
+        # operating income），其餘 KPI（net_profit、ROE、EPS...）它根本沒填。
+        # 逐欄合併、只在官方來源真的有值時才覆蓋，沒有值的欄位保留 GoodInfo/
+        # FinMind 算出來的既有值，而不是整列蓋掉導致其他欄位無端消失。
+        merged = dict(existing)
+        for field, value in row.items():
+            if value is not None and value != "":
+                merged[field] = value
+        by_stock_period[(stock, key)] = merged
 
     selected_periods = select_recent_periods([key for stock, key in by_stock_period if stock in stocks], years)
     out: dict[str, list[dict[str, object]]] = defaultdict(list)
