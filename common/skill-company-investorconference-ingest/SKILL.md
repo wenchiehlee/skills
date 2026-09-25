@@ -65,6 +65,8 @@ Ingest 不得只信任 MOPS 查詢結果的第一個影音檔。部分公司或 
 | MOPS 法說會附件 | `t100sb07_1` 法說會/受邀法說公告附件，常見檔名 `{stock}{YYYYMMDD}{M/E}001.pdf` | `法說會` / `受邀法說` | `data/{stock}/{stock}_{year}_q{quarter}_ir.pdf`、`_ir_en.pdf` | 法說會簡報、presentation deck、營運/財務結果簡報；可支援 digest 與 GT 校正 | 不得稱為「財報」或用來滿足 `財報` row 的 statutory financial report 缺口 |
 | MOPS repo 財報文件 | `../MOPS` 或 `wenchiehlee-investment/MOPS/downloads/...`，常見檔名 `{YYYYQQ}_{stock}_AI1.pdf`、`AIA.pdf` | `財報` | README 外部連結或後續落檔為 report/financial statement 類材料 | 財報事件的一級財務文件、GoodInfo 尚未更新時的財務數字來源 | 不得用來滿足 `法說會` row 的音檔/法說會附件缺口；除非同一來源明確也是法說會簡報 |
 
+對非台灣股票，`F/X` 也代表官方財務結果材料，不限於 MOPS：`F` 是公司 IR 的 earnings-release / financial-results PDF、SEC 8-K Exhibit 99.1 或 SEC/公司 financial-tables PDF；`X` 是該 PDF 的 Markdown 轉檔。這些是財報材料，不能與 `I/M`（IR presentation PDF/MD）混用；第三方 transcript 不得填入 `F/X`。
+
 因此，像 `2382_2026_q2_ir.pdf` / `_ir_en.pdf` 這類從 `238220260813M001.pdf` / `E001.pdf` 取得的檔案，應描述為「MOPS 法說會附件 / investor-conference presentation deck」。即使內容包含 Q2 財務結果，也不是 MOPS repo 的財報文件。相反地，README `財報` row 連到 `wenchiehlee-investment/MOPS/downloads/.../202602_2382_AI1.pdf` 這類檔案時，才是財報事件材料。
 
 ### 來源層級與衝突處理

@@ -80,7 +80,7 @@ description: 法說會/earnings call 與財報結果 digest。當使用者要求
 | `{StockID}_{Year}_q{N}_ir.md` | 中文法說會簡報 | 財務數據第一優先 |
 | `{StockID}_{Year}_q{N}_ir_en.md` | 英文法說會簡報 | 財務數據補充 |
 | `{StockID}_{Year}_q{N}_qa.md` | 官方 Q&A 紀錄 | Q&A 分析必讀 |
-| `{StockID}_{Year}_q{N}_report_en.md` / `_financial_tables.md` | 美股 earnings release / tables | US 財務數據第一來源 |
+| `{StockID}_{Year}_q{N}_report_en.pdf` / `.md`, `_financial_tables.pdf` / `.md` | 美股 official earnings release / SEC 8-K Exhibit 99.1 / financial tables | US 財務數據第一來源；matrix `F/X` |
 | `{StockID}_{Year}_q{N}_performance_review.md` / `_ir_en.md` | 美股簡報或 performance review | US guidance / segment 補充 |
 | `{StockID}_{Year}_q{N}_10q.md` | SEC 10-Q/10-K 摘要或連結 | US filing 交叉驗證（若可得） |
 | `{StockID}_{Year}_q{N}_alphaspread_transcript.md` | 第三方逐字稿 | 補充來源 |

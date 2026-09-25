@@ -31,7 +31,7 @@ description: 複合技能（composite skill），本身不抓資料，而是委�
 | 台股財報 PDF → MD（含 OCR） | `skill-mops-fetch` | `data/MOPS/mops_health_summary.csv` |
 | Google Alert 新聞 + LLM 情緒分析 | `skill-google-alert-fetch` | `data/GoogleAlertManager/google_alert_health_summary.csv` |
 | FactSet 分析師預估、搜尋結果 | `skill-googlesearch-factsets-fetch` | `data/reports/` 下 quarantine/coverage 報告 |
-| 法說會音檔/簡報/逐字稿 ingestion | `skill-company-investorconference-ingest`（音檔）／`skill-company-investorconference-ir-pdf-md`（純財報 PDF） | `data/InvestorConference/investor_conference_health_summary.csv` |
+| 法說會音檔/簡報/逐字稿與官方財務結果材料 ingestion | `skill-company-investorconference-ingest`（音檔、IR、transcript、US earnings release/SEC 8-K financial PDF）／`skill-company-investorconference-ir-pdf-md`（PDF→MD） | `data/InvestorConference/investor_conference_health_summary.csv` |
 | 法說會重點萃取 Digest | `skill-company-investorconference-digest` | 同上（依 `investor_conference_digest` 欄位） |
 | 法說會/財報行事曆 | `skill-stock-investorevent-fetch` | — |
 | Facebook 粉專貼文 | `skill-facebook-fetch` | — |
