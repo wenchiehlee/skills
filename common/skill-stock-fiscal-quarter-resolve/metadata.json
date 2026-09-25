@@ -2,11 +2,11 @@
   "name": "skill-stock-fiscal-quarter-resolve",
   "description": "Deterministic, dependency-free US fiscal-year/quarter resolution shared by skill-company-investorconference-ingest, skill-stock-investorevent-fetch, and ConceptStocks' update_concept_metadata.py.",
   "category": "financial-data",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee/skills",
-  "updated_at": "2026-08-27",
+  "updated_at": "2026-09-25",
   "license": "MIT",
   "tags": [
     "fiscal-quarter",

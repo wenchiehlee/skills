@@ -31,6 +31,14 @@ CASES = [
     ("MSFT", "2026-01-28", "FY2026 Q2", "yfinance get_earnings_dates"),
     ("MSFT", "2026-04-29", "FY2026 Q3", "yfinance get_earnings_dates"),
     ("MSFT", "2026-07-29", "FY2026 Q4", "yfinance get_earnings_dates"),
+    ("AMZN", "2026-07-30", "2026 Q2", "Amazon official Q2 2026 results release"),
+    ("ARM", "2026-07-29", "FY2027 Q1", "Arm official FYE27 Q1 results page"),
+    ("ASML", "2026-07-15", "2026 Q2", "ASML official Q2 2026 results release"),
+    ("META", "2026-07-29", "2026 Q2", "Meta official Q2 2026 earnings-call page"),
+    ("MU", "2026-06-24", "FY2026 Q3", "Micron official fiscal Q3 2026 results release"),
+    ("ORCL", "2026-09-10", "FY2027 Q1", "Oracle official Q1 fiscal 2027 results release"),
+    ("SIMO", "2026-07-29", "2026 Q2", "yfinance reported earnings date"),
+    ("TSM", "2026-07-16", "2026 Q2", "TSMC official Q2 2026 earnings call materials"),
 ]
 
 

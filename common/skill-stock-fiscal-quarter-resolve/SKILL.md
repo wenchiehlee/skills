@@ -60,6 +60,11 @@ resolve_fiscal_quarter("2330", "2026-07-17")
   source the caller already has (upstream metadata, a hand-maintained label,
   etc.) rather than treating `None` as a real answer.
 
+For ARM, Micron, and Oracle, the resolver uses their verified earnings-
+announcement cycles because those companies announce shortly after a fiscal
+quarter closes. ASML and Silicon Motion are treated as calendar-year earnings
+issuers.
+
 `calendar_to_fiscal(ticker, cal_year, cal_q)` and
 `expected_us_calendar_earnings_quarter(date_str)` are exposed directly (not
 just through `resolve_fiscal_quarter`) so existing call sites in `ingest.py`
