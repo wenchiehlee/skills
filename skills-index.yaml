@@ -96,7 +96,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
   updated_at: '2026-07-23'
-  revised_at: '2026-08-25'
+  revised_at: '2026-09-25'
 - name: skill-company-investorconference-ingest
   group: common
   path: common/skill-company-investorconference-ingest
@@ -488,7 +488,7 @@ skills:
   maintainer: wenchiehlee
   source: biztrends.TW
   updated_at: '2026-09-23'
-  revised_at: '2026-09-23'
+  revised_at: '2026-09-25'
 - name: skill-stock-topcrash
   group: common
   path: common/skill-stock-topcrash
