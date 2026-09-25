@@ -150,6 +150,12 @@ KNOWN_PDF_ATTACHMENTS_BY_QUARTER = {
         ("performance_review", "https://english.taiwanmobile.com/english/upload/investor/mgmtreport20260814_update.pdf"),
         ("transcript", "https://english.taiwanmobile.com/english/upload/investor/2Q26_Conference_Call_transcript(withQA).pdf"),
     ],
+    ("DELL", "2027", "2"): [
+        ("report_en", "https://delltechnologies.gcs-web.com/static-files/86d4752c-0d07-45e8-b920-d83e8727005b"),
+        ("financial_tables", "https://delltechnologies.gcs-web.com/static-files/0a4db8b2-db3e-456d-8b27-3648451afbf7"),
+        ("performance_review", "https://delltechnologies.gcs-web.com/static-files/5d15be71-1d9a-45ec-8308-8987fb41084d"),
+        ("transcript", "https://delltechnologies.gcs-web.com/static-files/a24f97e4-63b2-460d-a4be-44738826e8ce"),
+    ],
 }
 
 # IR portal URLs for US stocks (ticker -> IR URL)
@@ -173,6 +179,7 @@ KNOWN_US_DIRECT_BY_QUARTER = {
 KNOWN_US_WEBCASTS_BY_QUARTER = {
     ("NVDA", "2027", "2"): "https://investor.nvidia.com/events-and-presentations/events-and-presentations/event-details/2026/NVIDIA-2nd-Quarter-FY27-Financial-Results/default.aspx",  # Q2FY27 results call 2026-08-26 2pm PT
     ("DELL", "2026", "1"): "https://event.webcasts.com/starthere.jsp?ei=1747660&tp_key=82c5169428",  # Q1FY27 results call 2026-05-28
+    ("DELL", "2027", "2"): "https://event.webcasts.com/starthere.jsp?ei=1747682&tp_key=d94d9a0909",  # Q2FY27 results call 2026-09-01
 }
 
 # Quarter-specific Yahoo Finance earnings transcript pages.
@@ -1504,12 +1511,23 @@ def download_audio(source: str, output_path: Path,
             str(output_path),
         ]
         print(f"[ffmpeg] {' '.join(ffmpeg_cmd)}")
-        result = subprocess.run(ffmpeg_cmd, capture_output=True, encoding="utf-8", errors="replace")
+        try:
+            result = subprocess.run(
+                ffmpeg_cmd,
+                capture_output=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=30,
+            )
+        except subprocess.TimeoutExpired:
+            print("[ffmpeg] Direct media extraction timed out after 30s; falling back to yt-dlp.")
+            output_path.unlink(missing_ok=True)
+            result = None
         if output_path.exists() and output_path.stat().st_size > 0:
             return True
         if output_path.exists():
             output_path.unlink()
-        if result.stderr:
+        if result and result.stderr:
             lines = [l for l in result.stderr.splitlines() if l.strip()]
             for line in lines[-3:]:
                 print(f"[ffmpeg] {line}")
