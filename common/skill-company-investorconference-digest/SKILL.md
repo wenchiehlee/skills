@@ -588,12 +588,24 @@ Issue sidecar JSON 格式：
 | 市場模板 | auto / TW / US |
 | 產業模板 | auto / 指定產業 |
 | Correlation Mode | none / tw_readthrough / quantitative |
+| 法說會日期 | {actual investor-conference / earnings-call date; use `NA` only when no catalog or primary-source date is available} |
+| 財報日期 | {actual financial-report / earnings-release publication date; use `NA` only when no catalog or primary-source date is available} |
 | 市場預期來源 | {來源；無則填 repo-only，未取得市場共識} |
 | 資料來源 | {實際使用的檔案清單} |
 | 字幕來源 | GT / FIN / 無 |
 | 資料品質 Issue | {issue 連結，無問題則填「無」} |
 | 分析日期 | {YYYY-MM-DD} |
 ```
+
+`法說會日期` and `財報日期` are event metadata, not analysis dates. They must be
+recorded separately even when they are the same day. For US issuers, use the
+official earnings-call/release date or the verified InvestorConference event
+catalog date; do not substitute the fiscal-period end date. If the catalog
+has separate same-quarter `法說會` and `財報` rows, preserve both dates rather
+than deduplicating them. If no separate event row exists, use an explicit
+value such as `NA（無獨立財報事件；財報材料存在）` or
+`NA（無獨立財報事件；未使用財報材料）`. Plain `NA` must not be used because
+it cannot distinguish a missing event date from missing financial material.
 
 之後依序輸出「零、投資決策摘要」與十三節。對話中回覆「零、投資決策摘要」精簡版、「十一、加權紅黃綠燈評分」整體結果、完整報告檔案路徑，以及 Blocker/Major 資料品質問題。
 
