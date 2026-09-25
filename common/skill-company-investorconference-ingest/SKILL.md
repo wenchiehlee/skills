@@ -30,7 +30,7 @@ Ingest 必須把「音檔身份」與「音檔長度」分開管理：
 每次新增或更新音檔時必須執行以下 gate：
 
 1. 先對下載完成的本地音檔計算 `sha256`、`size_bytes` 與 ffprobe `duration_sec`。
-2. 將 `sha256` 與 `audio_metadata.json`、本地音檔及 GitHub release asset digest（若 API 提供）比對。
+2. 將 `sha256` 與 `audio_metadata.json`、本地音檔及 GitHub Release asset digest（若 API 提供）比對。音檔只存 GitHub Release asset，不進 Git 或 Git LFS。
 3. 若 checksum 已存在於不同 stem，必須拒絕登錄或上傳，避免把舊季度音檔掛到新季度。
 4. 若 release 中已存在疑似重複音檔，執行 audit 工具重建 metadata，並將錯誤季度標為 `status: duplicate`、`duplicate_of: <canonical_stem>`。
 5. `audio_durations.json` 只能視為顯示用快取；即使 duration 不同，也不能覆蓋 checksum 結論。若 checksum 相同但 duration cache 不同，應以重新 ffprobe 的結果更新 duration。
@@ -264,6 +264,12 @@ Downstream consumers should prefer this official CSV over `../ConceptStocks` pro
 
 > [!CAUTION]
 > 美股第三方 transcript 只能作補充來源。若 Yahoo/AlphaSpread 與公司 IR、earnings release 或 SEC filing 衝突，digest 應以公司文件與可驗證音訊為準。
+
+## Audio storage boundary
+
+Conference audio is stored only as a GitHub Release asset under the `audio-files`
+release. It is never committed to Git, Git LFS, or Google Drive. Any legacy Google
+Drive migration script is historical-only and must not be used by new ingestion.
 
 ## 📂 檔案清單
 * `scripts/ingest.py`：主 Ingest 邏輯。

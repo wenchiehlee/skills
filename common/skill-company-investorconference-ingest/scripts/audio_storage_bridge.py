@@ -94,12 +94,6 @@ def upload_and_update_manifest(repo: Path, audio_path: Path):
     return url, manifest_path
 
 
-# Keep old name as alias so existing ingest.py calls still work
-def upload_to_gdrive_and_update_manifest(repo: Path, stock_id: str, audio_path: Path):
-    url, manifest_path = upload_and_update_manifest(repo, audio_path)
-    return url, manifest_path
-
-
 def get_audio_link_for_readme(repo: Path, stock_id: str, year: str, quarter: str, audio_min: float):
     stem = f"{stock_id}_{year}_q{quarter}"
     manifest_path = repo / "audio_manifest.json"
@@ -109,9 +103,9 @@ def get_audio_link_for_readme(repo: Path, stock_id: str, year: str, quarter: str
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             if stem in manifest:
                 val = manifest[stem]
-                url = val if val.startswith("https://") else \
-                      f"https://drive.google.com/uc?export=download&id={val}"
-                return f"[{dur_str}]({url})"
+                if val.startswith("https://github.com/") and "/releases/download/" in val:
+                    return f"[{dur_str}]({val})"
+                print(f"[audio] Ignoring non-Release audio URL for {stem}: {val}")
         except: pass
 
     for suffix in (".m4a", ".mp3", ".wav", ".mp4"):

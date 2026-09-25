@@ -14,7 +14,7 @@ import datetime
 import requests
 from pathlib import Path
 from urllib.parse import urljoin
-from audio_storage_bridge import upload_to_gdrive_and_update_manifest, get_audio_link_for_readme
+from audio_storage_bridge import upload_and_update_manifest, get_audio_link_for_readme
 
 # Suppress InsecureRequestWarning for MOPS (Taiwan gov site SSL quirks on Windows)
 warnings.filterwarnings("ignore", message="Unverified HTTPS request")
@@ -2987,7 +2987,8 @@ def commit_push_files(stock_id: str, year: str, quarter: str,
                       audio_source_info: dict | None = None) -> str | None:
     """
     Move the downloaded audio (and optional PDFs) into InvestorConference/data/<stock_id>/,
-    commit (git-lfs for .m4a), push, then remove local whisper-sandbox copies.
+    upload audio to the GitHub Release asset, commit only metadata/docs, push, then
+    remove the local working copy. Audio is never stored in Git or Git LFS.
 
     Returns the new audio path inside InvestorConference, or None on failure.
     """
@@ -3030,7 +3031,7 @@ def commit_push_files(stock_id: str, year: str, quarter: str,
         target_audio = target_dir / audio_path.name
         shutil.move(str(audio_path), str(target_audio))
         print(f"[git] Moved -> {target_audio}")
-        # git("add", str(target_audio.relative_to(repo)))  # Audio now on GDrive
+        # Audio is stored as a GitHub Release asset, not in Git or Git LFS.
 
     # Move PDFs / transcript / other extras
     for pdf in (pdf_paths or []):
@@ -3053,7 +3054,7 @@ def commit_push_files(stock_id: str, year: str, quarter: str,
         git("add", "audio_durations.json")
 
         # Upload to GitHub Releases and update manifest
-        release_url, _manifest_path = upload_to_gdrive_and_update_manifest(repo, stock_id, target_audio)
+        release_url, _manifest_path = upload_and_update_manifest(repo, target_audio)
         git("add", "audio_manifest.json")
 
         # Persist checksum metadata after the final release URL is known.
@@ -3073,7 +3074,7 @@ def commit_push_files(stock_id: str, year: str, quarter: str,
         extras.append(f"{len(extra_paths)} extra file(s)")
     extras_str = f" + {', '.join(extras)}" if extras else ""
     if audio_exists:
-        msg = (f"feat: add {stock_id} {year} Q{quarter} earnings call audio (audio on GDrive){extras_str}\n\n"
+        msg = (f"feat: add {stock_id} {year} Q{quarter} earnings call audio (GitHub Release asset){extras_str}\n\n"
                f"Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>")
     else:
         msg = (f"feat: add {stock_id} {year} Q{quarter} official conference attachment PDF(s) (audio remains unavailable){extras_str}\n\n"
@@ -3082,7 +3083,7 @@ def commit_push_files(stock_id: str, year: str, quarter: str,
         print(f"[git] commit failed")
         return str(target_audio) if audio_exists else (str(target_dir / pdf_paths[0].name) if pdf_paths else None)
 
-    print(f"[git] Committed. Pushing (LFS upload may take a moment) ...")
+    print(f"[git] Committed metadata/docs. Pushing (audio remains in GitHub Release) ...")
     if git("push", "origin", "main"):
         print(f"[git] OK Pushed to InvestorConference/{stock_id}/")
     else:
@@ -3106,7 +3107,7 @@ def ingest_earnings_audio(stock_id: str, year: str, quarter: str,
       1. Known IR portal -> company-linked YouTube ID -> yt-dlp
 
     If auto_push=True: on success, moves audio to InvestorConference repo,
-    commits via git-lfs, pushes, and removes local copy.
+    commits metadata/docs, pushes, and removes the local audio copy.
     """
     save_dir = INVESTOR_CONFERENCE_REPO / "tmp"
     save_dir.mkdir(exist_ok=True)
