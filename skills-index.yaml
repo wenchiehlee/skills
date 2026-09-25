@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-09-24'
+generated_at: '2026-09-25'
 skills:
 - name: skill-android-adb-gadget
   group: common
@@ -435,15 +435,15 @@ skills:
 - name: skill-stock-fiscal-quarter-resolve
   group: common
   path: common/skill-stock-fiscal-quarter-resolve
-  version: 1.0.0
+  version: 1.1.0
   description: Deterministic, dependency-free US fiscal-year/quarter resolution shared
     by skill-company-investorconference-ingest, skill-stock-investorevent-fetch, and
     ConceptStocks' update_concept_metadata.py.
   category: financial-data
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/skills
-  updated_at: '2026-08-27'
-  revised_at: '2026-09-08'
+  updated_at: '2026-09-25'
+  revised_at: '2026-09-25'
 - name: skill-stock-investorevent-fetch
   group: common
   path: common/skill-stock-investorevent-fetch
@@ -455,7 +455,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
   updated_at: '2026-08-27'
-  revised_at: '2026-09-02'
+  revised_at: '2026-09-25'
 - name: skill-stock-ma-rsi-bband-macd-peband
   group: common
   path: common/skill-stock-ma-rsi-bband-macd-peband
