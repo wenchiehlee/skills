@@ -478,7 +478,7 @@ def _plot(
     # own panel. When a forward curve's target year runs past the price
     # history (e.g. FactSet's FY2028E), both panels' x-range is explicitly
     # extended together below, rather than left to independent autoscale.
-    figure, (axis, eps_axis, revenue_axis, growth_axis) = plt.subplots(4, 1, figsize=(16, 15), sharex=True, gridspec_kw={"height_ratios": [3, 1.6, 1.5, 0.9], "hspace": 0.1})
+    figure, (axis, pe_axis, eps_axis, revenue_axis, growth_axis) = plt.subplots(5, 1, figsize=(16, 16.5), sharex=True, gridspec_kw={"height_ratios": [3, 0.8, 1.6, 1.5, 0.9], "hspace": 0.1})
     label = f"{symbol} {name}" if name else symbol
     figure.suptitle(f"{label} | {years}-year price & dynamic TTM P/E valuation box", x=0.125, ha="left", y=0.975, fontsize=16, fontweight="bold")
 
@@ -547,6 +547,18 @@ def _plot(
     axis.xaxis.set_minor_locator(mdates.MonthLocator())
     axis.grid(which="minor", axis="x", color="#c9c9c9", lw=0.5)
     axis.legend(loc="upper left", ncol=3, fontsize=9, frameon=False)
+
+    pe_axis.plot(view.index, view["pe"], color="#6a329f", lw=0.8, alpha=0.65, label="Trailing P/E")
+    pe_axis.plot(view.index, view["pe_mean"], color="#666666", lw=1.2, ls="--", label="P/E mean")
+    if has_forward:
+        pe_axis.plot(view.index, view["forward_pe"], color="#d9782d", lw=0.8, alpha=0.65, label="Forward P/E")
+        pe_axis.plot(view.index, view["forward_pe_mean"], color="#d9782d", lw=1.1, ls="--", label="Forward P/E mean")
+    pe_axis.set_ylabel("P/E")
+    pe_axis.grid(axis="y", color="#e6e6e6", lw=0.7)
+    pe_axis.legend(loc="upper left", ncol=4, frameon=False, fontsize=7)
+    pe_axis.xaxis.set_major_locator(mdates.MonthLocator(interval=max(3, years * 2)))
+    pe_axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+    pe_axis.xaxis.remove_overlapping_locs = False
 
     eps_view = eps[eps["available_date"] >= display_start]
     # step() only draws between given x-values, so without this the line just
@@ -624,7 +636,6 @@ def _plot(
     eps_axis.xaxis.remove_overlapping_locs = False
     eps_axis.xaxis.set_minor_locator(mdates.MonthLocator())
     eps_axis.grid(which="minor", axis="x", color="#c9c9c9", lw=0.5)
-    figure.text(0.01, 0.01, "Data: FinMind price/financials/monthly revenue + GoodInfo Analyzer raw_revenue.csv. P/E uses unadjusted price and nominal EPS; use dividend-adjusted prices separately for technical research.", fontsize=8.5, color="#555555")
     revenue_view = monthly_revenue[monthly_revenue["date"] >= display_start].copy()
     revenue_series = revenue_view.get("revenue_m_twd", pd.Series(index=revenue_view.index, dtype=float))
     yoy_series = revenue_view.get("revenue_yoy_pct", pd.Series(index=revenue_view.index, dtype=float))
