@@ -8,6 +8,7 @@ the trailing rolling window ending on that day.
 from __future__ import annotations
 
 import argparse
+import os
 import json
 import sys
 from datetime import date
@@ -18,6 +19,7 @@ from urllib.request import Request, urlopen
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+from matplotlib import font_manager
 import pandas as pd
 
 # Sibling registry skill: the μ/σ/±1σ/±2σ PE-band math is shared with
@@ -384,17 +386,21 @@ def _plot(
     symbol: str, name: str, years: int, daily: pd.DataFrame, eps: pd.DataFrame,
     forward_eps: pd.DataFrame, trades: pd.DataFrame, output_dir: Path,
     yahoo_curve: pd.DataFrame = None, factset_curve: pd.DataFrame = None,
-) -> tuple[Path, Path]:
+) -> tuple[Path, Path, Path]:
     display_start = daily.index.max() - pd.DateOffset(years=years)
     view = daily.loc[daily.index >= display_start].copy()
     if view.empty:
         raise RuntimeError(f"{symbol}: no data in the selected display window")
 
-    # DejaVu Sans (the default) has no CJK glyphs, so a Chinese stock_name in the
-    # title would silently render as missing-glyph boxes. Prefer whichever CJK
-    # font this machine actually has installed, and fall back to DejaVu Sans
-    # (English-only titles) elsewhere rather than failing outright.
-    plt.rcParams["font.sans-serif"] = [
+    # Prefer a supplied/installed CJK font so Traditional Chinese labels render
+    # correctly in both PNG and SVG; DejaVu Sans remains the final fallback.
+    cjk_font_path = os.environ.get("TW_CJK_FONT", "")
+    cjk_family = ""
+    if cjk_font_path and Path(cjk_font_path).is_file():
+        font_manager.fontManager.addfont(cjk_font_path)
+        cjk_family = font_manager.FontProperties(fname=cjk_font_path).get_name()
+    preferred_fonts = [cjk_family] if cjk_family else []
+    plt.rcParams["font.sans-serif"] = preferred_fonts + [
         "Microsoft JhengHei", "Microsoft YaHei", "PingFang TC", "Noto Sans CJK TC",
         "Noto Sans TC", "SimHei", "DejaVu Sans",
     ]
@@ -588,9 +594,9 @@ def _plot(
     csv_path = output_dir / f"{symbol}_dynamic_valuation_box_{years}y.csv"
     svg_path = output_dir / f"{symbol}_dynamic_valuation_box_{years}y.svg"
     figure.savefig(png_path, dpi=180, bbox_inches="tight")
-    plt.close(figure)
     figure.savefig(svg_path, format="svg", bbox_inches="tight")
     view.reset_index().to_csv(csv_path, index=False, float_format="%.6f")
+    plt.close(figure)
     return png_path, svg_path, csv_path
 
 
