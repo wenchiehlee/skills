@@ -369,6 +369,8 @@ def _build_daily_box(
         for col in forward_cols:
             daily[col] = float("nan")
     else:
+        forward_eps = forward_eps.copy()
+        forward_eps["as_of_date"] = pd.to_datetime(forward_eps["as_of_date"]).astype("datetime64[ns]")
         daily = pd.merge_asof(
             daily.reset_index().sort_values("date"),
             forward_eps[["as_of_date", "forward_eps"]].sort_values("as_of_date"),
@@ -476,7 +478,7 @@ def _plot(
     # own panel. When a forward curve's target year runs past the price
     # history (e.g. FactSet's FY2028E), both panels' x-range is explicitly
     # extended together below, rather than left to independent autoscale.
-    figure, (axis, eps_axis, revenue_axis) = plt.subplots(3, 1, figsize=(16, 13), sharex=True, gridspec_kw={"height_ratios": [3, 1.6, 1.5], "hspace": 0.1})
+    figure, (axis, eps_axis, revenue_axis, growth_axis) = plt.subplots(4, 1, figsize=(16, 15), sharex=True, gridspec_kw={"height_ratios": [3, 1.6, 1.5, 0.9], "hspace": 0.1})
     label = f"{symbol} {name}" if name else symbol
     figure.suptitle(f"{label} | {years}-year price & dynamic TTM P/E valuation box", x=0.125, ha="left", y=0.975, fontsize=16, fontweight="bold")
 
@@ -624,30 +626,27 @@ def _plot(
     eps_axis.grid(which="minor", axis="x", color="#c9c9c9", lw=0.5)
     figure.text(0.01, 0.01, "Data: FinMind price/financials/monthly revenue + GoodInfo Analyzer raw_revenue.csv. P/E uses unadjusted price and nominal EPS; use dividend-adjusted prices separately for technical research.", fontsize=8.5, color="#555555")
     revenue_view = monthly_revenue[monthly_revenue["date"] >= display_start].copy()
-    has_finmind = revenue_view["finmind_revenue_m_twd"].notna().any() if "finmind_revenue_m_twd" in revenue_view else False
-    has_analyzer = revenue_view["analyzer_revenue_m_twd"].notna().any() if "analyzer_revenue_m_twd" in revenue_view else False
-    if not has_finmind and not has_analyzer:
-        revenue_axis.text(0.5, 0.5, "Monthly revenue data unavailable", transform=revenue_axis.transAxes, ha="center", va="center")
-    else:
-        if has_finmind:
-            revenue_axis.bar(revenue_view["date"] - pd.Timedelta(days=5), revenue_view["finmind_revenue_m_twd"], width=9, color="#5b9bd5", alpha=0.75, label="FinMind revenue")
-        if has_analyzer:
-            revenue_axis.bar(revenue_view["date"] + pd.Timedelta(days=5), revenue_view["analyzer_revenue_m_twd"], width=9, color="#70ad47", alpha=0.75, label="Analyzer revenue")
+    revenue_series = revenue_view.get("revenue_m_twd", pd.Series(index=revenue_view.index, dtype=float))
+    yoy_series = revenue_view.get("revenue_yoy_pct", pd.Series(index=revenue_view.index, dtype=float))
+    if revenue_series.notna().any():
+        revenue_axis.bar(revenue_view["date"], revenue_series, width=18, color="#5b9bd5", alpha=0.78, label="Monthly revenue")
         revenue_axis.set_ylabel("Revenue (M TWD)")
-        revenue_axis.grid(axis="y", color="#e6e6e6", lw=0.7)
         revenue_axis.legend(loc="upper left", frameon=False, fontsize=8)
-        yoy_axis = revenue_axis.twinx()
-        if has_finmind:
-            yoy_axis.plot(revenue_view["date"], revenue_view["finmind_yoy_pct"], color="#ed7d31", lw=1.3, marker="o", markersize=2.5, label="FinMind YoY")
-        if has_analyzer:
-            yoy_axis.plot(revenue_view["date"], revenue_view["analyzer_yoy_pct"], color="#a64d79", lw=1.3, marker="s", markersize=2.5, label="Analyzer YoY")
-        yoy_axis.axhline(0, color="#999999", lw=0.7)
-        yoy_axis.set_ylabel("YoY (%)")
-        yoy_axis.legend(loc="upper right", frameon=False, fontsize=8)
+    else:
+        revenue_axis.text(0.5, 0.5, "Monthly revenue data unavailable", transform=revenue_axis.transAxes, ha="center", va="center")
+    revenue_axis.grid(axis="y", color="#e6e6e6", lw=0.7)
     revenue_axis.xaxis.set_major_locator(mdates.MonthLocator(interval=max(3, years * 2)))
     revenue_axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
     revenue_axis.xaxis.remove_overlapping_locs = False
-    revenue_axis.set_xlabel("Month")
+    growth_axis.bar(revenue_view["date"], yoy_series, width=18, color="#ed7d31", alpha=0.78, label="Revenue YoY growth")
+    growth_axis.axhline(0, color="#999999", lw=0.7)
+    growth_axis.set_ylabel("YoY (%)")
+    growth_axis.set_xlabel("Month")
+    growth_axis.grid(axis="y", color="#e6e6e6", lw=0.7)
+    growth_axis.legend(loc="upper left", frameon=False, fontsize=8)
+    growth_axis.xaxis.set_major_locator(mdates.MonthLocator(interval=max(3, years * 2)))
+    growth_axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+    growth_axis.xaxis.remove_overlapping_locs = False
 
     figure.subplots_adjust(top=0.93)
 
@@ -709,6 +708,8 @@ def main() -> None:
         monthly_revenue = _build_monthly_revenue(symbol, revenue_start, end_date.strftime("%Y-%m-%d"))
         analyzer_revenue = _read_analyzer_revenue(args.analyzer_revenue_csv, symbol)
         monthly_revenue = monthly_revenue.merge(analyzer_revenue, on="date", how="outer").sort_values("date")
+        monthly_revenue["revenue_m_twd"] = monthly_revenue["analyzer_revenue_m_twd"].combine_first(monthly_revenue["finmind_revenue_m_twd"])
+        monthly_revenue["revenue_yoy_pct"] = monthly_revenue["revenue_m_twd"].pct_change(12) * 100
         yahoo_curve = yahoo_curve_all[yahoo_curve_all["symbol"] == symbol]
         factset_curve = factset_curve_all[factset_curve_all["symbol"] == symbol]
         png_path, svg_path, csv_path = _plot(symbol, name, args.years, daily, eps, forward_eps, trades, monthly_revenue, output_dir, yahoo_curve, factset_curve)
