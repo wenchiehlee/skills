@@ -5,6 +5,9 @@ description: Render no-look-ahead Taiwan-stock price charts with dynamic TTM P/E
 
 # Dynamic Valuation Box
 
+## Output artifacts
+
+For each requested stock, the renderer writes a PNG, an SVG using the same figure, and an auditable daily CSV. Use the SVG for Markdown/report embedding and the CSV as the numeric hand-off.
 Use this skill when a Taiwan stock needs a time-price diagram that separates valuation from technical timing.
 
 ## Output

@@ -314,8 +314,11 @@ def _build_daily_box(
     split_factors = _stock_dividend_factors(symbol, data_start, end_text)
     prices, eps = _adjust_for_stock_dividends(prices, eps, split_factors)
 
+    prices = prices.reset_index()
+    prices["date"] = prices["date"].astype("datetime64[ns]")
+    eps["available_date"] = eps["available_date"].astype("datetime64[ns]")
     daily = pd.merge_asof(
-        prices.reset_index().sort_values("date"),
+        prices.sort_values("date"),
         eps.sort_values("available_date"),
         left_on="date", right_on="available_date", direction="backward",
     ).set_index("date")
@@ -583,10 +586,12 @@ def _plot(
     output_dir.mkdir(parents=True, exist_ok=True)
     png_path = output_dir / f"{symbol}_dynamic_valuation_box_{years}y.png"
     csv_path = output_dir / f"{symbol}_dynamic_valuation_box_{years}y.csv"
+    svg_path = output_dir / f"{symbol}_dynamic_valuation_box_{years}y.svg"
     figure.savefig(png_path, dpi=180, bbox_inches="tight")
     plt.close(figure)
+    figure.savefig(svg_path, format="svg", bbox_inches="tight")
     view.reset_index().to_csv(csv_path, index=False, float_format="%.6f")
-    return png_path, csv_path
+    return png_path, svg_path, csv_path
 
 
 def main() -> None:
@@ -633,7 +638,8 @@ def main() -> None:
         daily, eps = _build_daily_box(symbol, args.years, end_date, args.window, forward_eps)
         yahoo_curve = yahoo_curve_all[yahoo_curve_all["symbol"] == symbol]
         factset_curve = factset_curve_all[factset_curve_all["symbol"] == symbol]
-        png_path, csv_path = _plot(symbol, name, args.years, daily, eps, forward_eps, trades, output_dir, yahoo_curve, factset_curve)
+        png_path, svg_path, csv_path = _plot(symbol, name, args.years, daily, eps, forward_eps, trades, output_dir, yahoo_curve, factset_curve)
+        print(f"{symbol}: {svg_path}")
         print(f"{symbol}: {png_path}")
         print(f"{symbol}: {csv_path}")
 
