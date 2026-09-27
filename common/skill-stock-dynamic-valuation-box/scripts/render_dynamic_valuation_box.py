@@ -287,6 +287,42 @@ def _latest_curve_snapshot(curve: pd.DataFrame, cutoff: pd.Timestamp) -> pd.Data
     return known[known["source_asof_date"] == latest_date].sort_values("target_year")
 
 
+
+def _build_monthly_revenue(symbol: str, start: str, end: str) -> pd.DataFrame:
+    rows = _fetch("TaiwanStockMonthRevenue", symbol, start, end)
+    revenue = pd.DataFrame(rows)
+    if revenue.empty:
+        return pd.DataFrame(columns=["date", "finmind_revenue_m_twd", "finmind_yoy_pct"])
+    revenue["year"] = pd.to_numeric(revenue["revenue_year"], errors="coerce")
+    revenue["month"] = pd.to_numeric(revenue["revenue_month"], errors="coerce")
+    revenue["revenue"] = pd.to_numeric(revenue["revenue"], errors="coerce")
+    revenue = revenue.dropna(subset=["year", "month", "revenue"]).copy()
+    revenue["date"] = pd.to_datetime(dict(year=revenue["year"].astype(int), month=revenue["month"].astype(int), day=1))
+    revenue = revenue.sort_values("date").drop_duplicates("date", keep="last")
+    revenue["finmind_revenue_m_twd"] = revenue["revenue"] / 1e6
+    revenue["finmind_yoy_pct"] = revenue["finmind_revenue_m_twd"].pct_change(12) * 100
+    return revenue[["date", "finmind_revenue_m_twd", "finmind_yoy_pct"]].reset_index(drop=True)
+
+
+def _read_analyzer_revenue(path: str, symbol: str) -> pd.DataFrame:
+    columns = ["date", "analyzer_revenue_m_twd", "analyzer_yoy_pct"]
+    if not path:
+        return pd.DataFrame(columns=columns)
+    try:
+        revenue = pd.read_csv(path, encoding="utf-8-sig")
+    except (FileNotFoundError, OSError, UnicodeDecodeError):
+        return pd.DataFrame(columns=columns)
+    revenue["stock_code"] = revenue["stock_code"].astype(str).str.extract(r"(\d+)")[0].str.zfill(4)
+    revenue = revenue[revenue["stock_code"] == symbol].copy()
+    if revenue.empty:
+        return pd.DataFrame(columns=columns)
+    revenue["date"] = pd.to_datetime(revenue["月別"].astype(str).str.replace("/", "-", regex=False) + "-01", errors="coerce")
+    revenue["analyzer_revenue_m_twd"] = pd.to_numeric(revenue["合併營業收入_營收_億"], errors="coerce") * 100
+    revenue = revenue.dropna(subset=["date", "analyzer_revenue_m_twd"]).sort_values("date").drop_duplicates("date", keep="last")
+    revenue["analyzer_yoy_pct"] = revenue["analyzer_revenue_m_twd"].pct_change(12) * 100
+    return revenue[columns].reset_index(drop=True)
+
+
 def _build_daily_box(
     symbol: str, display_years: int, end_date: pd.Timestamp, window: int, forward_eps: pd.DataFrame
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -384,7 +420,7 @@ def _read_trade_events(path: str | None, symbols: Iterable[str]) -> pd.DataFrame
 
 def _plot(
     symbol: str, name: str, years: int, daily: pd.DataFrame, eps: pd.DataFrame,
-    forward_eps: pd.DataFrame, trades: pd.DataFrame, output_dir: Path,
+    forward_eps: pd.DataFrame, trades: pd.DataFrame, monthly_revenue: pd.DataFrame, output_dir: Path,
     yahoo_curve: pd.DataFrame = None, factset_curve: pd.DataFrame = None,
 ) -> tuple[Path, Path, Path]:
     display_start = daily.index.max() - pd.DateOffset(years=years)
@@ -440,7 +476,7 @@ def _plot(
     # own panel. When a forward curve's target year runs past the price
     # history (e.g. FactSet's FY2028E), both panels' x-range is explicitly
     # extended together below, rather than left to independent autoscale.
-    figure, (axis, eps_axis) = plt.subplots(2, 1, figsize=(16, 10), sharex=True, gridspec_kw={"height_ratios": [3, 1.6], "hspace": 0.1})
+    figure, (axis, eps_axis, revenue_axis) = plt.subplots(3, 1, figsize=(16, 13), sharex=True, gridspec_kw={"height_ratios": [3, 1.6, 1.5], "hspace": 0.1})
     label = f"{symbol} {name}" if name else symbol
     figure.suptitle(f"{label} | {years}-year price & dynamic TTM P/E valuation box", x=0.125, ha="left", y=0.975, fontsize=16, fontweight="bold")
 
@@ -586,7 +622,33 @@ def _plot(
     eps_axis.xaxis.remove_overlapping_locs = False
     eps_axis.xaxis.set_minor_locator(mdates.MonthLocator())
     eps_axis.grid(which="minor", axis="x", color="#c9c9c9", lw=0.5)
-    figure.text(0.01, 0.01, "Data: FinMind TaiwanStockPrice / TaiwanStockFinancialStatements. P/E uses unadjusted price and nominal EPS; use dividend-adjusted prices separately for technical research.", fontsize=8.5, color="#555555")
+    figure.text(0.01, 0.01, "Data: FinMind price/financials/monthly revenue + GoodInfo Analyzer raw_revenue.csv. P/E uses unadjusted price and nominal EPS; use dividend-adjusted prices separately for technical research.", fontsize=8.5, color="#555555")
+    revenue_view = monthly_revenue[monthly_revenue["date"] >= display_start].copy()
+    has_finmind = revenue_view["finmind_revenue_m_twd"].notna().any() if "finmind_revenue_m_twd" in revenue_view else False
+    has_analyzer = revenue_view["analyzer_revenue_m_twd"].notna().any() if "analyzer_revenue_m_twd" in revenue_view else False
+    if not has_finmind and not has_analyzer:
+        revenue_axis.text(0.5, 0.5, "Monthly revenue data unavailable", transform=revenue_axis.transAxes, ha="center", va="center")
+    else:
+        if has_finmind:
+            revenue_axis.bar(revenue_view["date"] - pd.Timedelta(days=5), revenue_view["finmind_revenue_m_twd"], width=9, color="#5b9bd5", alpha=0.75, label="FinMind revenue")
+        if has_analyzer:
+            revenue_axis.bar(revenue_view["date"] + pd.Timedelta(days=5), revenue_view["analyzer_revenue_m_twd"], width=9, color="#70ad47", alpha=0.75, label="Analyzer revenue")
+        revenue_axis.set_ylabel("Revenue (M TWD)")
+        revenue_axis.grid(axis="y", color="#e6e6e6", lw=0.7)
+        revenue_axis.legend(loc="upper left", frameon=False, fontsize=8)
+        yoy_axis = revenue_axis.twinx()
+        if has_finmind:
+            yoy_axis.plot(revenue_view["date"], revenue_view["finmind_yoy_pct"], color="#ed7d31", lw=1.3, marker="o", markersize=2.5, label="FinMind YoY")
+        if has_analyzer:
+            yoy_axis.plot(revenue_view["date"], revenue_view["analyzer_yoy_pct"], color="#a64d79", lw=1.3, marker="s", markersize=2.5, label="Analyzer YoY")
+        yoy_axis.axhline(0, color="#999999", lw=0.7)
+        yoy_axis.set_ylabel("YoY (%)")
+        yoy_axis.legend(loc="upper right", frameon=False, fontsize=8)
+    revenue_axis.xaxis.set_major_locator(mdates.MonthLocator(interval=max(3, years * 2)))
+    revenue_axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+    revenue_axis.xaxis.remove_overlapping_locs = False
+    revenue_axis.set_xlabel("Month")
+
     figure.subplots_adjust(top=0.93)
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -610,6 +672,7 @@ def main() -> None:
     parser.add_argument("--forward-eps-csv", help="Optional CSV, this skill's own shape: symbol,as_of_date,forward_eps (as_of_date = when the estimate was published, not the target fiscal period)")
     parser.add_argument("--yahoo-consensus-csv", help="Optional CSV in Yahoo Finance's native shape (stock_code, forecast_asof_date, earnings_1y_avg, ...), e.g. a sibling Yahoo.Finance repo's data/reports/raw_yahoo_finance_consensus_daily.csv")
     parser.add_argument("--factset-report-csv", help="Optional CSV in FactSet's native shape (代號/股票代號, MD日期, <year>EPS平均值 columns), e.g. a sibling repo's data/reports/raw_factset_detailed_report.csv")
+    parser.add_argument("--analyzer-revenue-csv", default="../Python-Actions.GoodInfo.Analyzer/data/stage1_raw/raw_revenue.csv", help="Optional GoodInfo Analyzer monthly revenue CSV")
     parser.add_argument("--output-dir", default="output/dynamic_valuation_box")
     args = parser.parse_args()
     if args.window < 120:
@@ -642,9 +705,13 @@ def main() -> None:
         name = _stock_name(symbol)
         forward_eps = forward_eps_all[forward_eps_all["symbol"] == symbol]
         daily, eps = _build_daily_box(symbol, args.years, end_date, args.window, forward_eps)
+        revenue_start = (end_date - pd.DateOffset(years=args.years + 1)).strftime("%Y-%m-%d")
+        monthly_revenue = _build_monthly_revenue(symbol, revenue_start, end_date.strftime("%Y-%m-%d"))
+        analyzer_revenue = _read_analyzer_revenue(args.analyzer_revenue_csv, symbol)
+        monthly_revenue = monthly_revenue.merge(analyzer_revenue, on="date", how="outer").sort_values("date")
         yahoo_curve = yahoo_curve_all[yahoo_curve_all["symbol"] == symbol]
         factset_curve = factset_curve_all[factset_curve_all["symbol"] == symbol]
-        png_path, svg_path, csv_path = _plot(symbol, name, args.years, daily, eps, forward_eps, trades, output_dir, yahoo_curve, factset_curve)
+        png_path, svg_path, csv_path = _plot(symbol, name, args.years, daily, eps, forward_eps, trades, monthly_revenue, output_dir, yahoo_curve, factset_curve)
         print(f"{symbol}: {svg_path}")
         print(f"{symbol}: {png_path}")
         print(f"{symbol}: {csv_path}")

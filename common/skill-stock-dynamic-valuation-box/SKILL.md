@@ -9,6 +9,10 @@ description: Render no-look-ahead Taiwan-stock price charts with dynamic TTM P/E
 
 For each requested stock, the renderer writes a PNG, an SVG using the same figure, and an auditable daily CSV. Use the SVG for Markdown/report embedding and the CSV as the numeric hand-off.
 For environments without an installed CJK font, set `TW_CJK_FONT` to a Traditional Chinese
+The third panel is a monthly-revenue comparison: FinMind `TaiwanStockMonthRevenue` and the
+GoodInfo Analyzer `raw_revenue.csv` series are plotted separately, with separate YoY lines.
+Pass `--analyzer-revenue-csv` to override the Analyzer CSV path.
+
 font file (for example, Noto Sans CJK TC) before rendering. The same selected font is used
 for PNG and SVG output.
 
