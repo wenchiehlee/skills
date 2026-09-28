@@ -36,7 +36,11 @@ STATUTORY_DEADLINES = {3: (5, 15), 6: (8, 14), 9: (11, 14), 12: (3, 31)}
 
 
 def _fetch(dataset: str, symbol: str, start: str, end: str) -> list[dict]:
-    query = urlencode({"dataset": dataset, "data_id": symbol, "start_date": start, "end_date": end})
+    params = {"dataset": dataset, "data_id": symbol, "start_date": start, "end_date": end}
+    token = os.environ.get("FINMIND_TOKEN") or os.environ.get("FINMIND_API_TOKEN")
+    if token:
+        params["token"] = token
+    query = urlencode(params)
     request = Request(f"{FINMIND_URL}?{query}", headers={"User-Agent": "dynamic-valuation-box/1.0"})
     with urlopen(request, timeout=60) as response:
         body = json.load(response)
@@ -50,7 +54,11 @@ def _stock_name(symbol: str) -> str:
     instead of a bare code; falls back to the code alone if FinMind has
     nothing (e.g. a delisted or newly listed ticker)."""
     try:
-        query = urlencode({"dataset": "TaiwanStockInfo", "data_id": symbol})
+        params = {"dataset": "TaiwanStockInfo", "data_id": symbol}
+        token = os.environ.get("FINMIND_TOKEN") or os.environ.get("FINMIND_API_TOKEN")
+        if token:
+            params["token"] = token
+        query = urlencode(params)
         request = Request(f"{FINMIND_URL}?{query}", headers={"User-Agent": "dynamic-valuation-box/1.0"})
         with urlopen(request, timeout=30) as response:
             body = json.load(response)
