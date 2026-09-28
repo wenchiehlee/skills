@@ -399,18 +399,61 @@ def _read_analyzer_revenue(path: str, symbol: str) -> pd.DataFrame:
     return revenue[columns].reset_index(drop=True)
 
 
+def _read_price_csv(path: str, symbol: str) -> pd.DataFrame:
+    """Historical daily-close baseline from a pre-fetched FinMind TaiwanStockPrice
+    snapshot (Python-Actions.FinMind's stage1_raw/raw_daily_k_chart_flow.csv,
+    itself sourced from FinMind), when available. This is purely an
+    optimization to skip re-fetching days it already covers — _fetch_prices
+    below still tops up whatever's newer from live FinMind, so a stale or
+    missing snapshot only costs extra API calls, never wrong data. Returns an
+    empty frame (not an error) for any missing file, unreadable file, or a
+    symbol with no rows in it."""
+    if not path or not Path(path).is_file():
+        return pd.DataFrame(columns=["date", "close"])
+    try:
+        raw = pd.read_csv(path, usecols=["stock_code", "交易_日期", "收盤價_元"], dtype={"stock_code": str})
+    except (OSError, ValueError, pd.errors.ParserError):
+        return pd.DataFrame(columns=["date", "close"])
+    rows = raw[raw["stock_code"].str.zfill(4) == symbol].copy()
+    rows["date"] = pd.to_datetime(rows["交易_日期"], errors="coerce")
+    rows["close"] = pd.to_numeric(rows["收盤價_元"], errors="coerce")
+    rows = rows.dropna(subset=["date", "close"])[["date", "close"]]
+    return rows.drop_duplicates("date", keep="last").sort_values("date")
+
+
+def _fetch_prices(symbol: str, data_start: str, end_text: str, price_csv: str) -> pd.DataFrame:
+    """TaiwanStockPrice for [data_start, end_text], preferring the pre-fetched
+    CSV snapshot for whatever it already covers and only calling FinMind live
+    for the gap after its last date. A snapshot that already reaches end_text
+    skips the live call entirely; one that covers nothing (missing file, wrong
+    symbol, or a snapshot older than data_start) falls back to today's
+    unmodified full-range live fetch."""
+    start_ts, end_ts = pd.Timestamp(data_start), pd.Timestamp(end_text)
+    cached = _read_price_csv(price_csv, symbol)
+    cached = cached[(cached["date"] >= start_ts) & (cached["date"] <= end_ts)]
+    cached_last = cached["date"].max() if not cached.empty else None
+    if cached_last is not None and cached_last >= end_ts:
+        return cached
+    fetch_start = data_start if cached_last is None else (cached_last + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+    live = pd.DataFrame(_fetch("TaiwanStockPrice", symbol, fetch_start, end_text))
+    if not live.empty:
+        live = live[["date", "close"]].copy()
+        live["date"] = pd.to_datetime(live["date"])
+    combined = pd.concat([cached, live], ignore_index=True) if not live.empty else cached
+    return combined.drop_duplicates("date", keep="last").sort_values("date")
+
+
 def _build_daily_box(
-    symbol: str, display_years: int, end_date: pd.Timestamp, window: int, forward_eps: pd.DataFrame
+    symbol: str, display_years: int, end_date: pd.Timestamp, window: int, forward_eps: pd.DataFrame, price_csv: str = ""
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     # Extra history warms up the PE rolling distribution before the display range.
     data_start = (end_date - pd.DateOffset(years=display_years + 3)).strftime("%Y-%m-%d")
     eps_start = (end_date - pd.DateOffset(years=display_years + 5)).strftime("%Y-%m-%d")
     end_text = end_date.strftime("%Y-%m-%d")
 
-    prices = pd.DataFrame(_fetch("TaiwanStockPrice", symbol, data_start, end_text))
+    prices = _fetch_prices(symbol, data_start, end_text, price_csv)
     if prices.empty:
         raise RuntimeError(f"{symbol}: no daily-price data")
-    prices["date"] = pd.to_datetime(prices["date"])
     prices = prices[["date", "close"]].sort_values("date").set_index("date")
 
     financials = pd.DataFrame(_fetch("TaiwanStockFinancialStatements", symbol, eps_start, end_text))
@@ -784,6 +827,7 @@ def main() -> None:
     parser.add_argument("--yahoo-consensus-csv", help="Optional CSV in Yahoo Finance's native shape (stock_code, forecast_asof_date, earnings_1y_avg, ...), e.g. a sibling Yahoo.Finance repo's data/reports/raw_yahoo_finance_consensus_daily.csv")
     parser.add_argument("--factset-report-csv", help="Optional CSV in FactSet's native shape (代號/股票代號, MD日期, <year>EPS平均值 columns), e.g. a sibling repo's data/reports/raw_factset_detailed_report.csv")
     parser.add_argument("--analyzer-revenue-csv", default="../Python-Actions.GoodInfo.Analyzer/data/stage1_raw/raw_revenue.csv", help="Optional GoodInfo Analyzer monthly revenue CSV")
+    parser.add_argument("--price-csv", default="../Python-Actions.FinMind/data/stage1_raw/raw_daily_k_chart_flow.csv", help="Optional pre-fetched FinMind TaiwanStockPrice snapshot (stock_code, 交易_日期, 收盤價_元 columns); only the gap after its last covered date per symbol is fetched live")
     parser.add_argument("--output-dir", default="output/dynamic_valuation_box")
     args = parser.parse_args()
     if args.window < 120:
@@ -829,7 +873,7 @@ def main() -> None:
     for symbol in symbols:
         name = _stock_name(symbol)
         forward_eps = forward_eps_all[forward_eps_all["symbol"] == symbol]
-        daily, eps = _build_daily_box(symbol, args.years, end_date, args.window, forward_eps)
+        daily, eps = _build_daily_box(symbol, args.years, end_date, args.window, forward_eps, args.price_csv)
         revenue_start = (end_date - pd.DateOffset(years=args.years + 1)).strftime("%Y-%m-%d")
         monthly_revenue = _build_monthly_revenue(symbol, revenue_start, end_date.strftime("%Y-%m-%d"))
         analyzer_revenue = _read_analyzer_revenue(args.analyzer_revenue_csv, symbol)

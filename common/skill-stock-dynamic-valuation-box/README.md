@@ -25,6 +25,22 @@ skill-stock-dynamic-valuation-box/
 
 ## 版本
 
+- 1.9.0 (2026-09-28)：新增`--price-csv`（預設指向`../Python-Actions.FinMind/
+  data/stage1_raw/raw_daily_k_chart_flow.csv`）——`TaiwanStockPrice`是這個
+  skill最重的一次FinMind呼叫（每次都要拉`--years + 3`年的每日收盤價），實測
+  發現`Python-Actions.FinMind`那個repo已經有現成的每日收盤價快照CSV（欄位
+  `stock_code,交易_日期,收盤價_元`），涵蓋2357從2021年至今、只落後3~5天。新增
+  `_read_price_csv()`讀這份快照，`_fetch_prices()`只對快照最後一天之後到
+  `--end-date`的缺口打即時API——快照已經到`--end-date`就完全不打API，快照
+  沒涵蓋到的股票或整個檔案不存在就照舊整段打API，行為不變。用真實2357資料
+  驗證：快照涵蓋到2026-09-23，只多補抓2026-09-24一天，原本要拉2年份的API
+  call變成只拉1天。也確認了另外三個沒有現成CSV的FinMind呼叫——
+  `TaiwanStockDividend`（現有CSV是GoodInfo年度彙總格式，沒有除權日/稀釋倍數
+  這個skill算股本調整需要的原始欄位）、`TaiwanStockFinancialStatements`
+  （唯一候選CSV是`financial/type16`那份通用財報比率寬表，欄位名稱重複、
+  monthly頻率跟EPS的quarterly頻率對不上，接了風險大於省下的配額）、
+  `TaiwanStockInfo`（四個裡呼叫成本最低，不值得）——維持原樣即時打API，
+  不勉強接不合適的CSV。
 - 1.8.0 (2026-09-28)：跟`wenchiehlee-money/My-TW-Coverage`那邊CI獨立做的同一個
   FinMind token修正合併——CI在我推1.7.0之前，自己也發現了同一個402問題並在
   `render_dynamic_valuation_box.py`加了輪替（`57a6e4e2b` "Make company

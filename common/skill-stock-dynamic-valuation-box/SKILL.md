@@ -70,6 +70,10 @@ python skills/skill-stock-dynamic-valuation-box/scripts/render_dynamic_valuation
 
 `--years` accepts only `2`, `3`, `4`, or `5`. `--end-date YYYY-MM-DD` freezes a historical retrospective. `--window` defaults to 120 trading observations (the minimum); raise it for a longer, less reactive PE baseline. `--yahoo-consensus-csv`, `--factset-report-csv`, and `--forward-eps-csv` are all optional and independent — pass any subset (including none), and any combination; when none are given, the chart and CSV are unchanged from the trailing-only output.
 
+## Price CSV gap-fill (FinMind quota saving)
+
+`--price-csv` (default `../Python-Actions.FinMind/data/stage1_raw/raw_daily_k_chart_flow.csv`) points at a pre-fetched FinMind `TaiwanStockPrice` snapshot with `stock_code`, `交易_日期`, `收盤價_元` columns. `TaiwanStockPrice` is by far this skill's heaviest FinMind call — it pulls `--years + 3` years of daily closes on every run — so before calling it live, the renderer reads whatever the snapshot already covers for that symbol and only fetches the gap after its last date through `--end-date`. A snapshot that already reaches `--end-date` skips the live call entirely; a missing file, a symbol it doesn't have, or one whose last date is older than the requested start all fall back unchanged to fetching the full range live, same as if `--price-csv` had never been given — a stale or absent snapshot costs extra API calls, never wrong data. This only applies to `TaiwanStockPrice`; `TaiwanStockDividend` (no event-level CSV exists anywhere in this codebase, only GoodInfo-style annual rollups without ex-dividend dates), `TaiwanStockFinancialStatements` (the one candidate CSV, a monthly-cadence general-purpose financial-ratio table, is fragile to parse and cadence-mismatched with quarterly EPS), and `TaiwanStockInfo` (cheapest call of the four; not worth it) all stay live-fetched.
+
 ## Optional trade-event CSV
 
 Provide the matched trade events rather than hard-coding a stock-specific history. Required columns are:
