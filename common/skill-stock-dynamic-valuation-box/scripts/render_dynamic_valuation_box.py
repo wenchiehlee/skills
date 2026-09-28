@@ -14,6 +14,7 @@ import sys
 from datetime import date
 from pathlib import Path
 from typing import Iterable
+from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -21,6 +22,16 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
 import pandas as pd
+
+try:
+    # Optional: matches skill-finmind-fetch's convention of reading tokens from
+    # a .env file rather than requiring them already exported in the shell.
+    # Falls back to plain os.environ (still works for CI secrets, which are
+    # exported directly) if python-dotenv isn't installed.
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 # Sibling registry skill: the μ/σ/±1σ/±2σ PE-band math is shared with
 # skill-stock-ma-rsi-bband-macd-peband's calc_pe_band_series() instead of being
@@ -34,19 +45,80 @@ from indicators import calc_pe_band_series  # noqa: E402
 FINMIND_URL = "https://api.finmindtrade.com/api/v4/data"
 STATUTORY_DEADLINES = {3: (5, 15), 6: (8, 14), 9: (11, 14), 12: (3, 31)}
 
+# Historical drift across this codebase's various FinMind-consuming scripts left
+# three different env-var naming schemes for a pool of rotatable tokens (a single
+# free FinMind account's daily quota is tiny) — this skill's own original
+# FINMIND_TOKEN/FINMIND_API_TOKEN, a numbered FINMIND_TOKEN1..6 convention some
+# .env files use, and skill-finmind-fetch's FINDMIND_GMAIL_TOKEN[1-6] (note the
+# transposed "FINDMIND" spelling there). Checking all of them means whichever
+# convention is already in a given machine's .env just works, instead of forcing
+# a rename or a hard dependency on that sibling skill's heavier requests/
+# python-dotenv-based fetch module just to read token names.
+TOKEN_ENV_NAMES = (
+    "FINMIND_TOKEN", "FINMIND_API_TOKEN",
+    *(f"FINMIND_TOKEN{i}" for i in range(1, 7)),
+    "FINDMIND_GMAIL_TOKEN", *(f"FINDMIND_GMAIL_TOKEN{i}" for i in range(1, 7)),
+)
+
+_live_tokens: list[str] | None = None
+
+
+def _finmind_tokens() -> list[str]:
+    """Every configured token, deduplicated, in the order TOKEN_ENV_NAMES lists
+    them. Cached at module scope and only ever shrunk (via _retire_token) so a
+    token that FinMind rejects mid-run stays retired for the rest of this
+    process instead of being retried on every subsequent _fetch call."""
+    global _live_tokens
+    if _live_tokens is None:
+        seen: list[str] = []
+        for name in TOKEN_ENV_NAMES:
+            value = os.environ.get(name)
+            if value and value.strip() and value.strip() not in seen:
+                seen.append(value.strip())
+        _live_tokens = seen
+    return _live_tokens
+
+
+def _retire_token(token: str) -> None:
+    if _live_tokens and token in _live_tokens:
+        _live_tokens.remove(token)
+
 
 def _fetch(dataset: str, symbol: str, start: str, end: str) -> list[dict]:
-    params = {"dataset": dataset, "data_id": symbol, "start_date": start, "end_date": end}
-    token = os.environ.get("FINMIND_TOKEN") or os.environ.get("FINMIND_API_TOKEN")
-    if token:
-        params["token"] = token
-    query = urlencode(params)
-    request = Request(f"{FINMIND_URL}?{query}", headers={"User-Agent": "dynamic-valuation-box/1.0"})
-    with urlopen(request, timeout=60) as response:
-        body = json.load(response)
-    if body.get("status") != 200:
-        raise RuntimeError(f"{symbol} {dataset}: {body.get('msg', body)}")
-    return body.get("data", [])
+    tokens = _finmind_tokens()
+    # None = anonymous request. Anonymous FinMind quota is small enough that a
+    # single run can exhaust it, but it is still a valid mode this skill has
+    # always supported for light/no-token use, so it stays the fallback rather
+    # than a hard requirement.
+    attempt_tokens: list[str | None] = list(tokens) if tokens else [None]
+    last_error: Exception | None = None
+    for token in attempt_tokens:
+        params = {"dataset": dataset, "data_id": symbol, "start_date": start, "end_date": end}
+        if token:
+            params["token"] = token
+        query = urlencode(params)
+        request = Request(f"{FINMIND_URL}?{query}", headers={"User-Agent": "dynamic-valuation-box/1.0"})
+        try:
+            with urlopen(request, timeout=60) as response:
+                body = json.load(response)
+        except HTTPError as exc:
+            last_error = exc
+            if exc.code == 402 and token:
+                _retire_token(token)
+                continue
+            raise RuntimeError(f"{symbol} {dataset}: FinMind request failed ({exc})") from exc
+        if body.get("status") != 200:
+            msg = str(body.get("msg", "")).strip()
+            if token and ("reach the upper limit" in msg.lower() or "token is illegal" in msg.lower()):
+                _retire_token(token)
+                last_error = RuntimeError(msg)
+                continue
+            raise RuntimeError(f"{symbol} {dataset}: {body.get('msg', body)}")
+        return body.get("data", [])
+    raise RuntimeError(
+        f"{symbol} {dataset}: FinMind quota exhausted on every configured token. "
+        f"Set at least one of {', '.join(TOKEN_ENV_NAMES[:4])}, ... in the environment or .env."
+    ) from last_error
 
 
 def _stock_name(symbol: str) -> str:
@@ -54,15 +126,7 @@ def _stock_name(symbol: str) -> str:
     instead of a bare code; falls back to the code alone if FinMind has
     nothing (e.g. a delisted or newly listed ticker)."""
     try:
-        params = {"dataset": "TaiwanStockInfo", "data_id": symbol}
-        token = os.environ.get("FINMIND_TOKEN") or os.environ.get("FINMIND_API_TOKEN")
-        if token:
-            params["token"] = token
-        query = urlencode(params)
-        request = Request(f"{FINMIND_URL}?{query}", headers={"User-Agent": "dynamic-valuation-box/1.0"})
-        with urlopen(request, timeout=30) as response:
-            body = json.load(response)
-        rows = body.get("data", [])
+        rows = _fetch("TaiwanStockInfo", symbol, "", "")
         return rows[0]["stock_name"] if rows else ""
     except Exception:
         return ""
@@ -720,6 +784,20 @@ def main() -> None:
     args = parser.parse_args()
     if args.window < 120:
         parser.error("--window must be at least 120 observations")
+
+    # Fail fast with an actionable message instead of letting the first FinMind
+    # call fifteen symbols in surface a bare "HTTP Error 402: Payment Required"
+    # deep in a traceback. Anonymous access is still allowed to proceed — it is
+    # a small but real quota, not zero — this is a warning, not a hard exit.
+    if not _finmind_tokens():
+        print(
+            "[render_dynamic_valuation_box] Warning: no FinMind token found in the "
+            f"environment (checked {', '.join(TOKEN_ENV_NAMES)}). Proceeding with "
+            "anonymous FinMind access, whose daily quota is small and may fail with "
+            "HTTP 402 partway through this run. Set one of those env vars (directly "
+            "or via a .env file) to use a real quota.",
+            file=sys.stderr,
+        )
 
     symbols = [str(symbol).zfill(4) for symbol in args.symbols]
     end_date = pd.Timestamp(args.end_date)

@@ -25,6 +25,29 @@ skill-stock-dynamic-valuation-box/
 
 ## 版本
 
+- 1.7.0 (2026-09-28)：FinMind token解析補強——實測重繪2357時只設了單一
+  `FINMIND_TOKEN`類環境變數，第一筆`TaiwanStockPrice`就打到FinMind「Requests
+  reach the upper limit」的402，整個腳本直接掛掉、只留一坨urllib的traceback，
+  使用者完全看不出是配額問題還是程式錯誤。這版：(1)補上`load_dotenv()`（optional
+  import，沒裝`python-dotenv`就照舊只讀已匯出的環境變數），讓`.env`檔案真的會被
+  讀到；(2)token偵測範圍從原本只認`FINMIND_TOKEN`/`FINMIND_API_TOKEN`兩個名字，
+  擴大到同時檢查這個codebase裡三種歷史上並存的命名慣例——本skill原本的兩個、
+  numbered的`FINMIND_TOKEN1`~`6`、以及`skill-finmind-fetch`那份`token_env.py`用
+  的`FINDMIND_GMAIL_TOKEN`/`FINDMIND_GMAIL_TOKEN1`~`6`（注意那邊「FINDMIND」拼法
+  跟D/M顛倒，是既有拼字不一致，這裡照抄env變數名稱清單而非改去import那個skill，
+  避免多背一個`requests`+`python-dotenv`的重量級fetch模組依賴）；(3)找到的所有
+  token全部池化輪替——`_fetch()`遇到402或訊息含「reach the upper limit」/「token
+  is illegal」就把當下這個token從池子永久剔除（整個process生命週期內，不會每次
+  呼叫重試已知失效的token）、改試下一個，讓單一次執行能撐過個別帳號自己的每日
+  配額上限；(4)`main()`一開始如果完全找不到任何token，會印一行warning到stderr
+  說明匿名FinMind配額很小可能中途402，但不會直接擋下整個執行（維持向下相容——
+  這個skill一直都支援無token模式）；(5)所有token跟匿名管道都失效時，最終的
+  `RuntimeError`會明確列出檢查過哪些環境變數名稱，取代原本裸的
+  `HTTP Error 402: Payment Required` traceback。用真實2357重繪實測驗證：修正
+  後確實能正確偵測到`.env`裡設的6組`FINMIND_TOKEN1`~`6`（原本因為缺
+  `load_dotenv()`完全讀不到），但同一時間這6組token加匿名存取全部剛好都已經是
+  當下配額用盡狀態（直接對FinMind API逐一測試確認，非本skill臆測）——這是外部
+  帳號配額的真實限制，不是這次程式修正要解決的問題。
 - 1.6.0 (2026-09-28)：5-panel佈局（price/P/E/EPS/revenue/YoY）的收尾精修，六項來自實際
   輸出圖（2357華碩）目視審查發現的問題：(1) top panel為了容納最遠的forward-EPS目標年
   （如FactSet FY2028E）延伸共用x軸，revenue/YoY兩個panel沒有那麼遠的資料，右側留下一大塊
