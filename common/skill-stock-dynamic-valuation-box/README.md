@@ -25,6 +25,28 @@ skill-stock-dynamic-valuation-box/
 
 ## 版本
 
+- 1.8.0 (2026-09-28)：跟`wenchiehlee-money/My-TW-Coverage`那邊CI獨立做的同一個
+  FinMind token修正合併——CI在我推1.7.0之前，自己也發現了同一個402問題並在
+  `render_dynamic_valuation_box.py`加了輪替（`57a6e4e2b` "Make company
+  valuation chart generation retryable"），同時新增了這次一起收進registry的
+  `render_dynamic_valuation_batch.py`（掃`data/enrichment_all/*.json`裡的數字
+  代號、跳過已有三個artifact的、失敗名單寫`--failure-log`方便重跑的批次執行
+  腳本）。但CI那版檢查的是`FINDMIND_GMAIL_TOKEN1`~`6`——追到`Python-Actions.
+  FinMind`那個現行維護中的repo才確認這其實是**舊名字**（`.env.example`跟
+  `daily-finmind-status.yml`的GitHub Actions secrets現在都用`FINMIND_TOKEN1`
+  ~`6`，`FINDMIND_GMAIL_TOKEN`只剩一個`archived/`底下的舊腳本還在用），所以CI
+  那版在唯一有設定實際token的機器上，token池是空的，`itertools.cycle`永遠只轉
+  到空字串、每次都退回匿名配額。這版：拿1.7.0的token邏輯（正確的
+  `FINMIND_TOKEN1~6`優先順序、402/reach-the-upper-limit時剔除失效token而非
+  盲目輪詢、`load_dotenv()`、找不到token時的warning、全部配額用盡時的明確
+  `RuntimeError`）取代CI那版的`itertools.cycle`實作；同時保留CI那次一起做的
+  YoY除以零防呆（`revenue.replace(0, nan)`再`pct_change`）；`render_dynamic_
+  valuation_batch.py`的`--token-env-prefix`預設值同樣從`FINDMIND_GMAIL_TOKEN`
+  改成`FINMIND_TOKEN`，range也從`range(1,6)`（少算一組，漏掉TOKEN6）修成
+  `range(1,7)`；`indicators.py`的peband vendoring（CI用單一檔案而非完整skill
+  vendor的方式解決`skill-stock-ma-rsi-bband-macd-peband`依賴缺失，考量到完整
+  vendor會多帶`taishin_sdk`/`yfinance`等不相關依賴，刻意沿用CI這個較輕量的
+  做法，不收進這個skill自己的registry管理）維持原狀不動。
 - 1.7.0 (2026-09-28)：FinMind token解析補強——實測重繪2357時只設了單一
   `FINMIND_TOKEN`類環境變數，第一筆`TaiwanStockPrice`就打到FinMind「Requests
   reach the upper limit」的402，整個腳本直接掛掉、只留一坨urllib的traceback，

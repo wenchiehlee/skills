@@ -48,12 +48,16 @@ STATUTORY_DEADLINES = {3: (5, 15), 6: (8, 14), 9: (11, 14), 12: (3, 31)}
 # Historical drift across this codebase's various FinMind-consuming scripts left
 # three different env-var naming schemes for a pool of rotatable tokens (a single
 # free FinMind account's daily quota is tiny) — this skill's own original
-# FINMIND_TOKEN/FINMIND_API_TOKEN, a numbered FINMIND_TOKEN1..6 convention some
-# .env files use, and skill-finmind-fetch's FINDMIND_GMAIL_TOKEN[1-6] (note the
-# transposed "FINDMIND" spelling there). Checking all of them means whichever
-# convention is already in a given machine's .env just works, instead of forcing
-# a rename or a hard dependency on that sibling skill's heavier requests/
-# python-dotenv-based fetch module just to read token names.
+# FINMIND_TOKEN/FINMIND_API_TOKEN, the numbered FINMIND_TOKEN1..6 convention that
+# is actually current (see Python-Actions.FinMind's .env.example and its
+# daily-finmind-status.yml secrets), and skill-finmind-fetch's
+# FINDMIND_GMAIL_TOKEN[1-6] (note the transposed "FINDMIND" spelling there,
+# which turns out to be a legacy name only still referenced by an archived
+# script — kept here purely for backward compatibility, checked last).
+# Checking all of them means whichever convention is already in a given
+# machine's .env just works, instead of forcing a rename or a hard dependency
+# on skill-finmind-fetch's heavier requests/python-dotenv-based fetch module
+# just to read token names.
 TOKEN_ENV_NAMES = (
     "FINMIND_TOKEN", "FINMIND_API_TOKEN",
     *(f"FINMIND_TOKEN{i}" for i in range(1, 7)),
@@ -372,7 +376,7 @@ def _build_monthly_revenue(symbol: str, start: str, end: str) -> pd.DataFrame:
     revenue["date"] = pd.to_datetime(dict(year=revenue["year"].astype(int), month=revenue["month"].astype(int), day=1))
     revenue = revenue.sort_values("date").drop_duplicates("date", keep="last")
     revenue["finmind_revenue_m_twd"] = revenue["revenue"] / 1e6
-    revenue["finmind_yoy_pct"] = revenue["finmind_revenue_m_twd"].pct_change(12) * 100
+    revenue["finmind_yoy_pct"] = revenue["finmind_revenue_m_twd"].replace(0, float("nan")).pct_change(12) * 100
     return revenue[["date", "finmind_revenue_m_twd", "finmind_yoy_pct"]].reset_index(drop=True)
 
 
@@ -391,7 +395,7 @@ def _read_analyzer_revenue(path: str, symbol: str) -> pd.DataFrame:
     revenue["date"] = pd.to_datetime(revenue["月別"].astype(str).str.replace("/", "-", regex=False) + "-01", errors="coerce")
     revenue["analyzer_revenue_m_twd"] = pd.to_numeric(revenue["合併營業收入_營收_億"], errors="coerce") * 100
     revenue = revenue.dropna(subset=["date", "analyzer_revenue_m_twd"]).sort_values("date").drop_duplicates("date", keep="last")
-    revenue["analyzer_yoy_pct"] = revenue["analyzer_revenue_m_twd"].pct_change(12) * 100
+    revenue["analyzer_yoy_pct"] = revenue["analyzer_revenue_m_twd"].replace(0, float("nan")).pct_change(12) * 100
     return revenue[columns].reset_index(drop=True)
 
 
@@ -831,7 +835,7 @@ def main() -> None:
         analyzer_revenue = _read_analyzer_revenue(args.analyzer_revenue_csv, symbol)
         monthly_revenue = monthly_revenue.merge(analyzer_revenue, on="date", how="outer").sort_values("date")
         monthly_revenue["revenue_m_twd"] = monthly_revenue["analyzer_revenue_m_twd"].combine_first(monthly_revenue["finmind_revenue_m_twd"])
-        monthly_revenue["revenue_yoy_pct"] = monthly_revenue["revenue_m_twd"].pct_change(12) * 100
+        monthly_revenue["revenue_yoy_pct"] = monthly_revenue["revenue_m_twd"].replace(0, float("nan")).pct_change(12) * 100
         yahoo_curve = yahoo_curve_all[yahoo_curve_all["symbol"] == symbol]
         factset_curve = factset_curve_all[factset_curve_all["symbol"] == symbol]
         png_path, svg_path, csv_path = _plot(symbol, name, args.years, daily, eps, forward_eps, trades, monthly_revenue, output_dir, yahoo_curve, factset_curve)
