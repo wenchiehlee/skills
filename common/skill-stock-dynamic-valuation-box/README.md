@@ -25,6 +25,21 @@ skill-stock-dynamic-valuation-box/
 
 ## 版本
 
+- 1.6.0 (2026-09-28)：5-panel佈局（price/P/E/EPS/revenue/YoY）的收尾精修，六項來自實際
+  輸出圖（2357華碩）目視審查發現的問題：(1) top panel為了容納最遠的forward-EPS目標年
+  （如FactSet FY2028E）延伸共用x軸，revenue/YoY兩個panel沒有那麼遠的資料，右側留下一大塊
+  無說明的空白——改成用淺灰底色（`axvspan`）標示該區間並加一行「Forward-EPS projection
+  window — no revenue data yet」文字，不再讓人誤以為是資料遺失或掉圖。(2) `eps_axis`（現在
+  已經不是最底部panel）殘留一行多餘的`set_xlabel("Trading day")`，跟真正最底部`growth_axis`
+  的「Month」標籤重複又矛盾，直接移除。(3) YoY成長率panel原本沒有資料不足時的提示，
+  跟revenue panel的"data unavailable"文字不對稱——補上對稱的`else`分支。(4) suptitle仍寫死
+  「price & dynamic TTM P/E valuation box」，沒反映現在多出的P/E、EPS、revenue、YoY四個
+  panel，改成「price, P/E valuation box, EPS & revenue trend」。(5) P/E panel的
+  `height_ratios`只有0.8，但圖例塞了4條線（Trailing P/E/P/E mean/Forward P/E/Forward P/E
+  mean），字級已經是最小的7pt仍偏擠，調到1.0給多一點高度。(6) revenue/YoY長條寬度原本寫死
+  18天，`--years`拉到5年時同樣寬度在更長的x軸上會顯得過寬，改成`18 * 2 / years`隨顯示年數
+  反比縮放。用合成假資料直接呼叫`_plot()`在years=2跟5各跑一次驗證六項修改都不報錯、畫面
+  正確（未接FinMind，避免測試耗用API token）。
 - 1.4.0 (2026-09-20)：forward EPS改成能直接讀Yahoo Finance跟FactSet兩家真實的consensus
   feed原生格式，不用先手動轉成本skill的CSV格式。新增`--yahoo-consensus-csv`（讀
   Yahoo原生的`raw_yahoo_finance_consensus_daily.csv`，欄位stock_code/

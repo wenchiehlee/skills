@@ -486,9 +486,9 @@ def _plot(
     # own panel. When a forward curve's target year runs past the price
     # history (e.g. FactSet's FY2028E), both panels' x-range is explicitly
     # extended together below, rather than left to independent autoscale.
-    figure, (axis, pe_axis, eps_axis, revenue_axis, growth_axis) = plt.subplots(5, 1, figsize=(16, 16.5), sharex=True, gridspec_kw={"height_ratios": [3, 0.8, 1.6, 1.5, 0.9], "hspace": 0.1})
+    figure, (axis, pe_axis, eps_axis, revenue_axis, growth_axis) = plt.subplots(5, 1, figsize=(16, 16.5), sharex=True, gridspec_kw={"height_ratios": [3, 1.0, 1.6, 1.5, 0.9], "hspace": 0.1})
     label = f"{symbol} {name}" if name else symbol
-    figure.suptitle(f"{label} | {years}-year price & dynamic TTM P/E valuation box", x=0.125, ha="left", y=0.975, fontsize=16, fontweight="bold")
+    figure.suptitle(f"{label} | {years}-year price, P/E valuation box, EPS & revenue trend", x=0.125, ha="left", y=0.975, fontsize=16, fontweight="bold")
 
     axis.fill_between(view.index, view["price_m2"], view["price_p2"], color="#f4c7c3", alpha=0.38, label="Outer valuation range: PE mean ±2σ")
     axis.fill_between(view.index, view["price_m1"], view["price_p1"], color="#b7e1cd", alpha=0.72, label="Core valuation box: PE mean ±1σ")
@@ -637,7 +637,6 @@ def _plot(
             eps_axis.annotate(f"{source_label} FY{target_year}E {y:.1f}", xy=(x, y), xytext=(x, text_y), textcoords="data", fontsize=7.5, color=color, ha="center", va="bottom")
         eps_axis.legend(loc="upper left", fontsize=8, frameon=False)
     eps_axis.set_ylabel("EPS")
-    eps_axis.set_xlabel("Trading day")
     eps_axis.grid(axis="y", color="#e6e6e6", lw=0.7)
     eps_axis.xaxis.set_major_locator(mdates.MonthLocator(interval=max(3, years * 2)))
     eps_axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
@@ -647,8 +646,13 @@ def _plot(
     revenue_view = monthly_revenue[monthly_revenue["date"] >= display_start].copy()
     revenue_series = revenue_view.get("revenue_m_twd", pd.Series(index=revenue_view.index, dtype=float))
     yoy_series = revenue_view.get("revenue_yoy_pct", pd.Series(index=revenue_view.index, dtype=float))
+    # Bar width scales inversely with the display window: the same 18-day
+    # width that reads fine when 2 years of bars fit across the figure
+    # starts overlapping once --years stretches the same width to cover
+    # 5 years of months, so scale it down proportionally.
+    bar_width = 18 * 2 / years
     if revenue_series.notna().any():
-        revenue_axis.bar(revenue_view["date"], revenue_series, width=18, color="#5b9bd5", alpha=0.78, label="Monthly revenue")
+        revenue_axis.bar(revenue_view["date"], revenue_series, width=bar_width, color="#5b9bd5", alpha=0.78, label="Monthly revenue")
         revenue_axis.set_ylabel("Revenue (M TWD)")
         revenue_axis.legend(loc="upper left", frameon=False, fontsize=8)
     else:
@@ -657,15 +661,36 @@ def _plot(
     revenue_axis.xaxis.set_major_locator(mdates.MonthLocator(interval=max(3, years * 2)))
     revenue_axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
     revenue_axis.xaxis.remove_overlapping_locs = False
-    growth_axis.bar(revenue_view["date"], yoy_series, width=18, color="#ed7d31", alpha=0.78, label="Revenue YoY growth")
-    growth_axis.axhline(0, color="#999999", lw=0.7)
+    if yoy_series.notna().any():
+        growth_axis.bar(revenue_view["date"], yoy_series, width=bar_width, color="#ed7d31", alpha=0.78, label="Revenue YoY growth")
+        growth_axis.axhline(0, color="#999999", lw=0.7)
+        growth_axis.legend(loc="upper left", frameon=False, fontsize=8)
+    else:
+        growth_axis.text(0.5, 0.5, "Revenue YoY data unavailable", transform=growth_axis.transAxes, ha="center", va="center")
     growth_axis.set_ylabel("YoY (%)")
     growth_axis.set_xlabel("Month")
     growth_axis.grid(axis="y", color="#e6e6e6", lw=0.7)
-    growth_axis.legend(loc="upper left", frameon=False, fontsize=8)
     growth_axis.xaxis.set_major_locator(mdates.MonthLocator(interval=max(3, years * 2)))
     growth_axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
     growth_axis.xaxis.remove_overlapping_locs = False
+
+    # The shared x-axis (line ~625) is deliberately stretched past the price
+    # history to fit the furthest forward-EPS target year (e.g. FactSet
+    # FY2028E) so the top price panel's trend rays and the EPS panel's
+    # forward markers have room to plot. Monthly revenue never has data out
+    # there, so without this shading revenue_axis/growth_axis were left with
+    # a multi-year dead blank stretch on their right edge with no visual
+    # explanation for why. Shade that stretch and label it once, rather than
+    # leaving readers to guess whether data is missing or just flat/zero.
+    last_revenue_date = view.index.max()
+    if range_end > last_revenue_date:
+        for shaded_axis in (revenue_axis, growth_axis):
+            shaded_axis.axvspan(last_revenue_date, range_end, color="#ececec", alpha=0.7, zorder=0)
+        projection_mid = last_revenue_date + (range_end - last_revenue_date) / 2
+        revenue_axis.annotate(
+            "Forward-EPS projection window — no revenue data yet", xy=(projection_mid, 0.92),
+            xycoords=("data", "axes fraction"), ha="center", va="top", fontsize=7.5, color="#888888",
+        )
 
     figure.subplots_adjust(top=0.93)
 

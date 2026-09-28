@@ -1,11 +1,11 @@
 {
   "name": "skill-stock-dynamic-valuation-box",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "source": "https://github.com/wenchiehlee-money/GoogleSheet.Banks",
   "maintainer": "wenchiehlee",
-  "description": "Render no-look-ahead Taiwan-stock time-price diagrams (2–5 year windows) with dynamic TTM P/E valuation boxes (μ±1σ/±2σ), an optional forward-EPS/forward-PE overlay sourced from Yahoo Finance and/or FactSet consensus feeds, and optional matched buy/sell markers, using unadjusted price + statutory-deadline-gated nominal EPS. The μ/σ/±1σ/±2σ PE-band math itself is shared with skill-stock-ma-rsi-bband-macd-peband's calc_pe_band_series() rather than reimplemented here.",
+  "description": "Render no-look-ahead Taiwan-stock time-price diagrams (2–5 year windows) with dynamic TTM P/E valuation boxes (μ±1σ/±2σ), an optional forward-EPS/forward-PE overlay sourced from Yahoo Finance and/or FactSet consensus feeds, optional matched buy/sell markers, and monthly-revenue/YoY panels, using unadjusted price + statutory-deadline-gated nominal EPS. The μ/σ/±1σ/±2σ PE-band math itself is shared with skill-stock-ma-rsi-bband-macd-peband's calc_pe_band_series() rather than reimplemented here.",
   "category": "financial-strategy",
-  "updated_at": "2026-09-23",
+  "updated_at": "2026-09-28",
   "compatibility": {
     "python": ">=3.10",
     "requires": [
@@ -34,6 +34,11 @@
       "repo": "wenchiehlee-money/GoogleSheet.Banks",
       "role": "consumer",
       "local_path": "github.com/GoogleSheet.Banks/skills/skill-stock-dynamic-valuation-box"
+    },
+    {
+      "repo": "wenchiehlee-money/My-TW-Coverage",
+      "role": "consumer",
+      "local_path": "github.com/My-TW-Coverage/skills/skill-stock-dynamic-valuation-box"
     }
   ]
 }
