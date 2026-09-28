@@ -70,7 +70,8 @@ Docker/部署相關檔案（`Dockerfile`、`docker-compose.yml`、`entrypoint.sh
 | 項目 | 值 |
 |------|----|
 | 外網 HTTPS (WAN) | `https://api.wenchiehlee.synology.me:8443` |
-| 內網 Tailscale | `http://newton.tail28f10.ts.net:5055` |
+| 內網 Tailscale（容器直連，推薦） | `http://llm-cli-api.tail28f10.ts.net:5001` |
+| 內網 Tailscale（NAS 轉發） | `http://newton.tail28f10.ts.net:5055` |
 | 容器內部埠 | `5001`（Waitress/Flask），對外映射 `5055` |
 
 ## ⚙️ 環境變數規格

@@ -16,7 +16,7 @@ import urllib.error
 import urllib.request
 
 
-API_URL = os.getenv("CODEX_API_URL", "http://newton.tail28f10.ts.net:5055").rstrip("/")
+API_URL = os.getenv("CODEX_API_URL", "http://llm-cli-api.tail28f10.ts.net:5001").rstrip("/")
 API_KEY = os.getenv("CODEX_API_KEY", "")
 TIMEOUT = int(os.getenv("CODEX_TEST_TIMEOUT", "180"))
 
