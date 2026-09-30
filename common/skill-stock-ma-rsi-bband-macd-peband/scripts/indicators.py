@@ -21,11 +21,17 @@ def calc_std(close: pd.Series, period: int) -> pd.Series:
 
 
 def calc_bbands(close: pd.Series, period: int = 20, k: float = 2.0) -> pd.DataFrame:
-    """布林通道（BBand）：標準定義為中軌=MA20、STD20為20日樣本標準差，上軌=MA20+2σ、下軌=MA20-2σ；函式參數允許其他週期或k值。"""
+    """布林通道（BBand）：標準定義為中軌=MA20、STD20為20日樣本標準差，內軌=MA20±1σ，外軌=MA20±2σ；回傳的 upper/lower 是外軌（±2σ），函式參數允許其他週期或k值。"""
     ma = calc_ma(close, period)
     std = calc_std(close, period)
     return pd.DataFrame({
         "mid": ma,
+        "upper1": ma + std,
+        "lower1": ma - std,
+        "upper2": ma + 2 * std,
+        "lower2": ma - 2 * std,
+        # Backward-compatible aliases: upper/lower are the configured kσ
+        # bands, whose standard definition is the outer ±2σ band.
         "upper": ma + k * std,
         "lower": ma - k * std,
         "std": std,
