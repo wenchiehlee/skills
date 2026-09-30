@@ -13,6 +13,15 @@ description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MA
 - **MACD(12,26,9)**：DIF、訊號線、柱狀圖(histogram)
 - **PEBand（可選）**：若提供 EPS CSV，用 daily close / EPS 建立 common market PE 分布，輸出 μ、樣本 σ、μ±1σ/±2σ 與對應價格帶；EPS scope 明確區分 `trailing_eps`、`forward_eps`、`forward_consensus_eps`
 
+### BBand σ versus PEBand σ
+
+These σ values are intentionally different and must not be substituted:
+
+- **BBand:** `SMA20(close)` and `STD20(close)`; σ is in price units.
+- **PEBand:** `SMA20(P/E)` and `STD20(P/E)`; σ is in P/E-multiple units.
+
+`P/E mean + STD20(close)` is invalid because a P/E multiple and a price have different units. Use BBand for price volatility and PEBand for valuation-multiple volatility.
+
 ## PEBand 估值帶
 
 PEBand 是可選功能，不會自行推估 EPS，也不會把研究報告或 consensus 直接混進技術指標層。呼叫端必須用 `--pe-eps-file` 明確提供 EPS CSV；該 CSV 至少需要一個代號欄（`symbol` / `stock_code` / `代號`）與 EPS 欄。標準 PEBand 需要 EPS CSV 有 `date` / `asof_date` / `forecast_asof_date`，把 EPS 當作 dated series，對齊交易日後向前填補。沒有日期欄時預設報錯；只有明確加 `--pe-allow-static-eps-band` 時，才允許用最後一筆 EPS 除整段價格，這是非標準 fallback。
