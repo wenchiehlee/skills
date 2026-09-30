@@ -265,8 +265,13 @@ def calc_all(close: pd.Series, ma_periods=(20, 60, 120, 240), rsi_period=14,
         out[f"zscore_MA{n}"] = last(z)
 
     bb = calc_bbands(close, bband_period, bband_k)
-    out[f"BB{bband_period}_upper"] = last(bb["upper"])
+    out[f"BB{bband_period}_upper1"] = last(bb["upper1"])
     out[f"BB{bband_period}_mid"] = last(bb["mid"])
+    out[f"BB{bband_period}_lower1"] = last(bb["lower1"])
+    out[f"BB{bband_period}_upper2"] = last(bb["upper2"])
+    out[f"BB{bband_period}_lower2"] = last(bb["lower2"])
+    # Backward-compatible aliases retain the historical ±2σ names.
+    out[f"BB{bband_period}_upper"] = last(bb["upper"])
     out[f"BB{bband_period}_lower"] = last(bb["lower"])
 
     out[f"RSI{rsi_period}"] = last(calc_rsi(close, rsi_period))

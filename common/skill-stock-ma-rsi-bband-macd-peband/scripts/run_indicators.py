@@ -21,7 +21,7 @@ run_indicators.py — CLI 進入點：算一批股票的 MA/STD/布林通道(BBa
   symbol, close,
   MA20, STD20, zscore_MA20, MA60, STD60, zscore_MA60, MA120, STD120, zscore_MA120,
   MA240, STD240, zscore_MA240,
-  BB20_upper, BB20_mid, BB20_lower,
+  BB20_upper1, BB20_mid, BB20_lower1, BB20_upper2, BB20_lower2,
   RSI14,
   MACD_dif, MACD_signal, MACD_hist
 
