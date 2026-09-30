@@ -36,7 +36,7 @@ skills:
   source: TAIEX.TW
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-08-26'
+  revised_at: '2026-09-30'
 - name: skill-company-download-logo
   group: common
   path: common/skill-company-download-logo
