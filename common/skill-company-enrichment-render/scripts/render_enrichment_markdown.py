@@ -38,6 +38,7 @@ ENTITY_ALIAS_BY_COMPANY = {
     "群創": ["群創光電"],
     "日月光投控": ["日月光"],
     "LINEPAY": ["LINE Pay"],
+    "聯想集團": ["聯想", "Lenovo", "Lenovo Group", "Lenovo Group Limited"],
 }
 
 FINANCIAL_HEADING = "## 財務概況"
@@ -989,10 +990,10 @@ def apply_entity_badges_to_markdown(markdown: str, entity_render_index: dict[str
     return "\n".join(apply_entity_badges(line, entity_render_index, current_filename) for line in markdown.splitlines())
 
 
-def load_json_files(json_dir: Path, ticker: str | None = None) -> list[Path]:
+def load_json_files(json_dir: Path, ticker: str | list[str] | None = None) -> list[Path]:
     if ticker:
-        path = json_dir / f"{ticker}.json"
-        return [path] if path.exists() else []
+        tickers = ticker if isinstance(ticker, list) else [ticker]
+        return [path for value in tickers if (path := json_dir / f"{value}.json").exists()]
     return sorted(json_dir.glob("*.json"))
 
 
@@ -1217,8 +1218,8 @@ def main() -> int:
     parser.add_argument("--biztrends-root", default="../biztrends.TW")
     parser.add_argument("--themes-dir", default="data/themes")
     parser.add_argument("--competitor-financial-years", type=int, default=3)
-    parser.add_argument("--updated-at", default=DEFAULT_UPDATED_AT)
-    parser.add_argument("--ticker")
+    parser.add_argument("--updated-at", default=None, help="Defaults to the current time if omitted")
+    parser.add_argument("--ticker", nargs="+", help="One or more tickers to render")
     args = parser.parse_args()
 
     json_dir = Path(args.json_dir).resolve()
