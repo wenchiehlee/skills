@@ -85,7 +85,7 @@ skills:
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
   updated_at: '2026-07-31'
-  revised_at: '2026-08-27'
+  revised_at: '2026-09-30'
 - name: skill-company-investorconference-digest
   group: common
   path: common/skill-company-investorconference-digest
