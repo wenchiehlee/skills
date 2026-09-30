@@ -4,7 +4,7 @@
   "category": "basic",
   "version": "0.1.1",
   "maintainer": "wenchiehlee",
-  "source": "",
+  "source": "https://github.com/wenchiehlee-money/TW.good-job",
   "updated_at": "2026-08-20",
   "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-company-reputation-research",
   "files": [
@@ -13,5 +13,17 @@
     "references/source-map.md",
     "README.md",
     "self_update.py"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-company-reputation-research"
+    },
+    {
+      "repo": "wenchiehlee-money/TW.good-job",
+      "role": "consumer",
+      "local_path": "github.com/TW.good-job/skills/skill-company-reputation-research"
+    }
   ]
 }
