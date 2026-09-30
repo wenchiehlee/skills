@@ -47,21 +47,21 @@ OCR_QUEUE_MAX_SIZE: int = int(_get("MLX_OCR_QUEUE_MAX_SIZE", "8"))
 OCR_QUEUE_WAIT_SECONDS: int = int(_get("MLX_OCR_QUEUE_WAIT_SECONDS", "1800"))
 OCR_ENGINES: set[str] = {
     engine.strip().lower()
-    for engine in _get("MLX_OCR_ENGINES", "baidu").split(",")
+    for engine in _get("MLX_OCR_ENGINES", "baidu,glm").split(",")
     if engine.strip()
-}
-PADDLE_VLM_PORT: int = int(_get("MLX_PADDLE_VLM_PORT", "8111"))
-PADDLE_VLM_BASE_URL: str = _get(
-    "MLX_PADDLE_VLM_BASE_URL", f"http://127.0.0.1:{PADDLE_VLM_PORT}"
+}.intersection({"baidu", "glm"})
+GLM_VLM_PORT: int = int(_get("MLX_GLM_VLM_PORT", "8111"))
+GLM_VLM_BASE_URL: str = _get(
+    "MLX_GLM_VLM_BASE_URL", f"http://127.0.0.1:{GLM_VLM_PORT}"
 )
-PADDLE_VLM_LOG: str = _get(
-    "MLX_PADDLE_VLM_LOG", str(Path.home() / "mlx-api" / "paddle-vlm.log")
+GLM_VLM_LOG: str = _get(
+    "MLX_GLM_VLM_LOG", str(Path.home() / "mlx-api" / "glm-vlm.log")
 )
-PADDLE_OCR_PYTHON: str = _get(
-    "MLX_PADDLE_OCR_PYTHON", str(Path.home() / "mlx-api" / "paddle-venv" / "bin" / "python")
+GLM_VLM_PYTHON: str = _get(
+    "MLX_GLM_VLM_PYTHON", str(Path.home() / "mlx-api" / "glm-mlx-venv" / "bin" / "python")
 )
-PADDLE_OCR_TIMEOUT_SECONDS: int = int(
-    _get("MLX_PADDLE_OCR_TIMEOUT", str(int(_get("MLX_TIMEOUT", "900"))))
+GLM_OCR_TIMEOUT_SECONDS: int = int(
+    _get("MLX_GLM_OCR_TIMEOUT", str(int(_get("MLX_TIMEOUT", "900"))))
 )
 
 # ── Input validation ──────────────────────────────────────────────────────────

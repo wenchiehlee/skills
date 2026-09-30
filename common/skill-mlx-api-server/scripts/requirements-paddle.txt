@@ -1,5 +1,0 @@
-# Keep this runtime separate from the Baidu Unlimited-OCR environment.
-# The two models require incompatible transformers versions.
-paddlepaddle==3.2.1
-paddleocr[doc-parser]==3.7.0
-mlx-vlm==0.7.4

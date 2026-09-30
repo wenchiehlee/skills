@@ -25,8 +25,8 @@ _ocr_condition = threading.Condition()
 _ocr_waiters: deque[object] = deque()
 _ocr_active = False
 _ocr_current_engine: str | None = None
-_paddle_vlm_process: subprocess.Popen | None = None
-_paddle_vlm_process_lock = threading.Lock()
+_glm_vlm_process: subprocess.Popen | None = None
+_glm_vlm_process_lock = threading.Lock()
 
 _OCR_TIMING_PREFIX = "OCR_TIMING_JSON="
 
@@ -210,10 +210,10 @@ def run(prompt: str, model: str | None = None) -> tuple[str, str]:
         _semaphore.release()
 
 
-def _paddle_vlm_ready() -> bool:
-    base_url = config.PADDLE_VLM_BASE_URL.rstrip("/")
+def _glm_vlm_ready() -> bool:
+    base_url = config.GLM_VLM_BASE_URL.rstrip("/")
     try:
-        with urllib.request.urlopen(f"{base_url}/v1/models", timeout=1) as response:
+        with urllib.request.urlopen(f"{base_url}/health", timeout=1) as response:
             return response.status == 200
     except Exception:
         return False
@@ -236,45 +236,46 @@ def _stop_process_group(process: subprocess.Popen | None, wait_seconds: float = 
             logger.error("Process group %d did not exit after SIGKILL", process.pid)
 
 
-def _stop_paddle_vlm() -> float:
-    """Stop MLX-VLM before Baidu runs, freeing its model memory."""
-    global _paddle_vlm_process
+def _stop_glm_vlm() -> float:
+    """Stop GLM-OCR's MLX-VLM process before Baidu runs, freeing memory."""
+    global _glm_vlm_process
     started = time.monotonic()
-    with _paddle_vlm_process_lock:
-        process = _paddle_vlm_process
-        _paddle_vlm_process = None
+    with _glm_vlm_process_lock:
+        process = _glm_vlm_process
+        _glm_vlm_process = None
         _stop_process_group(process)
     return time.monotonic() - started
 
 
-def _ensure_paddle_vlm(deadline: float) -> float:
-    """Start or reuse the single Paddle VLM process; return readiness wait."""
-    global _paddle_vlm_process
-    base_url = config.PADDLE_VLM_BASE_URL.rstrip("/")
+def _ensure_glm_vlm(deadline: float) -> float:
+    """Start or reuse the single GLM-OCR MLX-VLM process."""
+    global _glm_vlm_process
+    base_url = config.GLM_VLM_BASE_URL.rstrip("/")
     started = time.monotonic()
-    with _paddle_vlm_process_lock:
-        if _paddle_vlm_process is not None and _paddle_vlm_process.poll() is not None:
-            logger.error("Paddle VLM process exited — rc=%s", _paddle_vlm_process.returncode)
-            _paddle_vlm_process = None
+    with _glm_vlm_process_lock:
+        if _glm_vlm_process is not None and _glm_vlm_process.poll() is not None:
+            logger.error("GLM-OCR VLM process exited — rc=%s", _glm_vlm_process.returncode)
+            _glm_vlm_process = None
 
-        if _paddle_vlm_process is None:
-            paddle_python = Path(config.PADDLE_OCR_PYTHON)
-            if not paddle_python.is_file():
+        if _glm_vlm_process is None:
+            glm_python = Path(config.GLM_VLM_PYTHON)
+            if not glm_python.is_file():
                 raise ExecutionError(
-                    "PaddleOCR-VL runtime is not installed. Check the paddle-venv deployment.",
+                    "GLM-OCR MLX runtime is not installed. Check the glm-mlx-venv deployment.",
                     status_code=503,
                 )
-            log_path = Path(config.PADDLE_VLM_LOG)
+            log_path = Path(config.GLM_VLM_LOG)
             log_path.parent.mkdir(parents=True, exist_ok=True)
             log_file = log_path.open("a", encoding="utf-8")
             cmd = [
-                str(paddle_python), "-m", "mlx_vlm.server",
+                str(glm_python), "-m", "mlx_vlm.server",
                 "--host", "127.0.0.1",
-                "--port", str(config.PADDLE_VLM_PORT),
-                "--model", "PaddlePaddle/PaddleOCR-VL-1.6",
+                "--port", str(config.GLM_VLM_PORT),
+                "--model", "mlx-community/GLM-OCR-bf16",
+                "--trust-remote-code",
             ]
             try:
-                _paddle_vlm_process = subprocess.Popen(
+                _glm_vlm_process = subprocess.Popen(
                     cmd,
                     stdin=subprocess.DEVNULL,
                     stdout=log_file,
@@ -283,22 +284,22 @@ def _ensure_paddle_vlm(deadline: float) -> float:
                 )
             finally:
                 log_file.close()
-            logger.info("Started Paddle VLM process pid=%d", _paddle_vlm_process.pid)
+            logger.info("Started GLM-OCR VLM process pid=%d", _glm_vlm_process.pid)
 
         while time.monotonic() < deadline:
-            if _paddle_vlm_process is None or _paddle_vlm_process.poll() is not None:
-                rc = _paddle_vlm_process.returncode if _paddle_vlm_process else "unknown"
+            if _glm_vlm_process is None or _glm_vlm_process.poll() is not None:
+                rc = _glm_vlm_process.returncode if _glm_vlm_process else "unknown"
                 raise ExecutionError(
-                    f"PaddleOCR-VL model server exited during startup (rc={rc}).",
+                    f"GLM-OCR model server exited during startup (rc={rc}).",
                     status_code=503,
                 )
-            if _paddle_vlm_ready():
+            if _glm_vlm_ready():
                 return time.monotonic() - started
             time.sleep(1)
 
-    _stop_paddle_vlm()
+    _stop_glm_vlm()
     raise ExecutionError(
-        "PaddleOCR-VL model server did not become ready before timeout.", status_code=504,
+        "GLM-OCR model server did not become ready before timeout.", status_code=504,
         details={"engine_ready_wait_s": round(time.monotonic() - started, 3)},
     )
 
@@ -317,7 +318,7 @@ def _timing_from_stderr(stderr: str) -> dict[str, float | int]:
 
 def run_ocr(file_path: str, dpi: int = 200, engine: str = "baidu") -> tuple[str, dict[str, float | int | str]]:
     """
-    Run Baidu Unlimited-OCR on a PDF or image file and return the transcribed markdown.
+    Run Baidu Unlimited-OCR or GLM-OCR on a PDF or image file.
     Uses subprocess to isolate PyTorch and completely free memory on exit.
     """
     global _ocr_current_engine
@@ -333,24 +334,23 @@ def run_ocr(file_path: str, dpi: int = 200, engine: str = "baidu") -> tuple[str,
     with _ocr_condition:
         _ocr_current_engine = engine
 
-    timeout = config.PADDLE_OCR_TIMEOUT_SECONDS if engine == "paddle" else config.TIMEOUT_SECONDS
+    timeout = config.GLM_OCR_TIMEOUT_SECONDS if engine == "glm" else config.TIMEOUT_SECONDS
     deadline = started + timeout
     runner_process: subprocess.Popen | None = None
     ready_wait_s = 0.0
     engine_release_s = 0.0
     try:
         if engine == "baidu":
-            engine_release_s = _stop_paddle_vlm()
+            engine_release_s = _stop_glm_vlm()
             ocr_script = Path(__file__).parent / "ocr_run.py"
             cmd = [sys.executable, str(ocr_script), "--input", file_path, "--dpi", str(dpi)]
             model_repo = "baidu/Unlimited-OCR"
-        elif engine == "paddle":
-            ready_wait_s = _ensure_paddle_vlm(deadline)
-            paddle_python = Path(config.PADDLE_OCR_PYTHON)
-            ocr_script = Path(__file__).parent / "paddleocr_run.py"
-            cmd = [str(paddle_python), str(ocr_script), "--input", file_path, "--dpi", str(dpi),
-                   "--vlm-url", config.PADDLE_VLM_BASE_URL]
-            model_repo = "PaddlePaddle/PaddleOCR-VL-1.6"
+        elif engine == "glm":
+            ready_wait_s = _ensure_glm_vlm(deadline)
+            ocr_script = Path(__file__).parent / "glm_ocr_run.py"
+            cmd = [sys.executable, str(ocr_script), "--input", file_path, "--dpi", str(dpi),
+                   "--vlm-url", config.GLM_VLM_BASE_URL]
+            model_repo = "mlx-community/GLM-OCR-bf16"
         else:  # defensive: the allowlist is the only supported source of engine names
             raise ExecutionError(f"Unsupported OCR engine: {engine}", status_code=400)
 
@@ -396,8 +396,8 @@ def run_ocr(file_path: str, dpi: int = 200, engine: str = "baidu") -> tuple[str,
 
     except subprocess.TimeoutExpired:
         _stop_process_group(runner_process)
-        if engine == "paddle":
-            _stop_paddle_vlm()
+        if engine == "glm":
+            _stop_glm_vlm()
         logger.warning("OCR timed out — engine=%s timeout=%ds", engine, timeout)
         raise ExecutionError(
             f"OCR request timed out after {timeout}s (engine={engine}).", status_code=504,
@@ -424,4 +424,4 @@ def run_ocr(file_path: str, dpi: int = 200, engine: str = "baidu") -> tuple[str,
 
 def shutdown_ocr_engines() -> None:
     """Free persistent OCR model memory when the API server is stopping."""
-    _stop_paddle_vlm()
+    _stop_glm_vlm()

@@ -46,11 +46,19 @@ _state = {"active": 0, "maximum": 0, "engines": []}
 
 
 class OCRQueueTests(unittest.TestCase):
-    def test_baidu_and_paddle_requests_are_serialized(self):
+    def test_retired_paddle_engine_is_rejected(self):
         old_engines = config.OCR_ENGINES
-        old_paddle_python = config.PADDLE_OCR_PYTHON
-        config.OCR_ENGINES = {"baidu", "paddle"}
-        config.PADDLE_OCR_PYTHON = sys.executable
+        config.OCR_ENGINES = {"baidu", "glm"}
+        try:
+            with self.assertRaises(executor.ExecutionError) as raised:
+                executor.run_ocr("/tmp/queue-test.png", engine="paddle")
+            self.assertEqual(raised.exception.status_code, 400)
+        finally:
+            config.OCR_ENGINES = old_engines
+
+    def test_baidu_and_glm_requests_are_serialized(self):
+        old_engines = config.OCR_ENGINES
+        config.OCR_ENGINES = {"baidu", "glm"}
         _state.update(active=0, maximum=0, engines=[])
 
         def run(engine):
@@ -59,11 +67,11 @@ class OCRQueueTests(unittest.TestCase):
         try:
             with (
                 patch.object(executor.subprocess, "Popen", side_effect=_FakeProcess),
-                patch.object(executor, "_stop_paddle_vlm", return_value=0.0),
-                patch.object(executor, "_ensure_paddle_vlm", return_value=0.0),
+                patch.object(executor, "_stop_glm_vlm", return_value=0.0),
+                patch.object(executor, "_ensure_glm_vlm", return_value=0.0),
             ):
                 first = threading.Thread(target=run, args=("baidu",))
-                second = threading.Thread(target=run, args=("paddle",))
+                second = threading.Thread(target=run, args=("glm",))
                 first.start()
                 time.sleep(0.02)
                 second.start()
@@ -73,13 +81,12 @@ class OCRQueueTests(unittest.TestCase):
             self.assertFalse(first.is_alive())
             self.assertFalse(second.is_alive())
             self.assertEqual(_state["maximum"], 1)
-            self.assertEqual(_state["engines"], ["baidu", "paddle"])
+            self.assertEqual(_state["engines"], ["baidu", "glm"])
             self.assertEqual(executor.ocr_queue_status(), {
                 "active": False, "active_engine": None, "queued": 0
             })
         finally:
             config.OCR_ENGINES = old_engines
-            config.PADDLE_OCR_PYTHON = old_paddle_python
 
 
 if __name__ == "__main__":

@@ -195,7 +195,7 @@ def ocr():
     Request: Multipart-form upload:
              - "file": PDF or image file
              - "dpi" (optional): DPI for PDF rendering, default 200
-             - "engine" (optional): "baidu" (default) or "paddle"
+             - "engine" (optional): "baidu" (default) or "glm"
     Response: {"markdown": "...", "engine": "...", "timings": {...}}
     """
     if 'file' not in request.files:
@@ -225,7 +225,9 @@ def ocr():
 
     t0 = time.monotonic()
     timings: dict = {}
-    model_repo = "baidu/Unlimited-OCR" if engine == "baidu" else "PaddlePaddle/PaddleOCR-VL-1.6"
+    model_repo = (
+        "baidu/Unlimited-OCR" if engine == "baidu" else "mlx-community/GLM-OCR-bf16"
+    )
     try:
         markdown_output, timings = run_ocr(tmp_path, dpi=dpi_val, engine=engine)
         elapsed = time.monotonic() - t0
