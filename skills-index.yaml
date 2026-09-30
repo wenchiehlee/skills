@@ -4,7 +4,7 @@ skills:
 - name: skill-android-adb-gadget
   group: common
   path: common/skill-android-adb-gadget
-  version: 1.0.2
+  version: 2.0.0
   description: PowerShell module for managing dual ADB transports (USB + Ethernet)
     on an embedded Android device that exposes a USB composite gadget — handles state
     detection, Ethernet bootstrapping, safe reboot/recovery, gadget mount, and HID
@@ -12,8 +12,8 @@ skills:
   category: basic
   maintainer: WJLEE
   source: wj-lee_Barco.github.com/gadget/skills/Android BaseUnit-adb
-  repo_count: 0
-  updated_at: '2026-07-21'
+  repo_count: 1
+  updated_at: '2026-09-30'
   revised_at: '2026-08-07'
 - name: skill-company-data-index-sync
   group: common
@@ -140,18 +140,6 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
   repo_count: 1
-  updated_at: '2026-07-19'
-  revised_at: '2026-09-30'
-- name: skill-company-mops-financialreport-pdf-md
-  group: common
-  path: common/skill-company-mops-financialreport-pdf-md
-  version: 1.0.1
-  description: Download Taiwan MOPS quarterly financial-report PDFs, then convert
-    same-stem Markdown sidecars with skill-mac-mini-ocr hybrid PDF/OCR workflow.
-  category: financial-data
-  maintainer: wenchiehlee
-  source: https://github.com/wenchiehlee-money/MOPS
-  repo_count: 0
   updated_at: '2026-07-19'
   revised_at: '2026-09-30'
 - name: skill-company-reputation-research
@@ -702,7 +690,7 @@ skills:
   category: basic
   maintainer: WJLEE
   source: wj-lee_Barco.github.com/gadget/debug_usb.py
-  repo_count: 0
+  repo_count: 1
   updated_at: '2026-07-21'
   revised_at: '2026-08-07'
 - name: skill-usb-gadget-monitor
@@ -716,7 +704,7 @@ skills:
   category: analytics
   maintainer: WJLEE
   source: wj-lee_Barco.github.com/gadget/android_baseunit_monitor.py
-  repo_count: 0
+  repo_count: 1
   updated_at: '2026-07-21'
   revised_at: '2026-08-07'
 - name: skill-usb-uvc-4k-capture
@@ -730,7 +718,7 @@ skills:
   category: basic
   maintainer: WJLEE
   source: wj-lee_Barco.github.com/gadget/uvc_camera_forward.c
-  repo_count: 0
+  repo_count: 1
   updated_at: '2026-07-21'
   revised_at: '2026-08-07'
 - name: skill-usb-wasapi-capture-debug
