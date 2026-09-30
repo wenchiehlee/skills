@@ -405,7 +405,7 @@ skills:
   source: https://github.com/ZhongZheng782/Mac-mini/tree/main/skills/skill-mlx-api-server-whisper/scripts
   repo_count: 1
   updated_at: '2026-08-12'
-  revised_at: '2026-08-25'
+  revised_at: '2026-09-30'
 - name: skill-mops-fetch
   group: common
   path: common/skill-mops-fetch
