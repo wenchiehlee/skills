@@ -20,6 +20,18 @@ logger = logging.getLogger("paddleocr_runner")
 TIMING_PREFIX = "OCR_TIMING_JSON="
 
 
+def _save_result_markdown(result, save_dir: Path) -> str:
+    """Save one Paddle result to a directory and read its generated Markdown."""
+    save_dir.mkdir(parents=True, exist_ok=True)
+    # PaddleOCR's save_to_markdown argument is a directory, not a filename
+    # prefix. It writes <save_dir>/<input-image-basename>.md.
+    result.save_to_markdown(save_path=str(save_dir))
+    generated = sorted(save_dir.rglob("*.md"))
+    if not generated:
+        raise RuntimeError(f"PaddleOCR returned no Markdown file under {save_dir}")
+    return "\n\n".join(path.read_text(encoding="utf-8").strip() for path in generated).strip()
+
+
 def _render_pdf(pdf_path: Path, dpi: int, output_dir: Path) -> list[Path]:
     import pypdfium2 as pdfium
 
@@ -85,13 +97,11 @@ def main() -> int:
         for index, page_path in enumerate(page_paths, start=1):
             logger.info("Recognizing page %d/%d", index, len(page_paths))
             results = pipeline.predict(input=str(page_path))
-            for result in results:
-                result_dir = output_dir / f"result_{index:04d}"
-                result_dir.mkdir()
-                result.save_to_markdown(str(result_dir / f"page_{index:04d}"))
-                generated = sorted(result_dir.glob("*.md"))
-                if generated:
-                    output_parts.append(generated[-1].read_text(encoding="utf-8").strip())
+            for result_index, result in enumerate(results, start=1):
+                result_dir = output_dir / f"result_{index:04d}_{result_index:02d}"
+                markdown = _save_result_markdown(result, result_dir)
+                if markdown:
+                    output_parts.append(markdown)
                 page_count += 1
         inference_seconds = time.monotonic() - inference_started
 

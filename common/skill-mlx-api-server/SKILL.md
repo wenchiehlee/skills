@@ -7,12 +7,12 @@ description: 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.2.0（詳見 `metadata.json`） |
+| 版本 | 1.2.1（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-server`） |
 | 維護者 | wenchiehlee |
 | 執行位置 | **Mac-mini 本機**（Apple Silicon M4，24 GB Unified Memory） |
-| 對應 Caller Skill | `common/skill-mac-mini-ocr`（在外部機器呼叫此服務） |
+| 對應 Caller Skill | `common/skill-mlx-api-client-ocr`（在外部機器呼叫此服務） |
 
 此技能封裝了運行於 Mac-mini 上的 AI 推理伺服器，提供兩大核心服務：
 1. **`POST /ocr`** — Baidu Unlimited-OCR 或 PaddleOCR-VL-1.6 文件轉錄，將 PDF 或圖片轉為 Markdown
@@ -37,7 +37,10 @@ skill-mlx-api-server/
     ├── config.py          # 設定載入（讀取 .env，含必填欄位驗證）
     ├── executor.py        # MLX 執行引擎（subprocess 管理、Semaphore 並發控制）
     ├── ocr_run.py         # Baidu Unlimited-OCR 子程序（PyTorch + MPS 加速）
+    ├── paddleocr_run.py   # PaddleOCR-VL-1.6 子程序（獨立 Paddle venv + MLX-VLM）
     ├── requirements.txt   # Python 依賴清單（含已知相容性限制說明）
+    ├── requirements-paddle.txt # Paddle 獨立環境依賴
+    ├── test_paddleocr_runner.py # Markdown 結果檔讀取迴歸測試
     ├── bench_params.py    # 效能基準測試工具（kv-bits / max-kv-size 對照）
     └── test_qwen3_thinking.py  # Qwen3 enable_thinking=False 迴歸測試
 ```
@@ -48,7 +51,7 @@ skill-mlx-api-server/
 
 ```
 [外部機器 — Windows / GitHub Actions / Mac]
-        ↓  skill-mac-mini-ocr (Caller)
+        ↓  skill-mlx-api-client-ocr (Caller)
         ↓  HTTP POST /ocr 或 /exec（X-API-Key header）
 [mac-mini.tail28f10.ts.net:5001]  ← Tailscale VPN
         ↓
@@ -89,6 +92,18 @@ skill-mlx-api-server/
    ```
 2. 若為 VLM，加入 `_VLM_REPOS`；若為 thinking model，加入 `_NOTHINK_REPOS`。
 3. 更新 `MLX_ALLOWED_MODELS` 環境變數（或 GitHub Vars）。
+
+## 📊 AI Model Usage 統計
+
+`skill-mlx-api-server` 會自行產生 AI 結果，因此 server 端必須直接送出 normalized `llm_call`，不能只依賴呼叫端：
+
+| Endpoint | `service` | `stage` | `provider` | `model` | `model_repo` |
+|----------|-----------|---------|------------|---------|--------------|
+| `/exec` default | `mlx-api-server` | `exec` | `mlx` | `mlx-qwen3` | `mlx-community/Qwen3.5-9B-MLX-4bit` |
+| `/exec` `model=mlx-gemma4` | `mlx-api-server` | `exec` | `mlx` | `mlx-gemma4` | `mlx-community/gemma-4-e4b-it-8bit` |
+| `/ocr` | `mlx-api-server` | `ocr` | `baidu-ocr` | `baidu/Unlimited-OCR` | `baidu/Unlimited-OCR` |
+
+呼叫端應傳 `X-App-Name`，server 端用它填入 `app_name`；沒有提供時 `/exec` fallback 為 `MLX-Exec`，`/ocr` fallback 為 `Baidu-OCR`。跨服務 README 應使用 `app_name × model` last-7-days 來回答單一應用的模型使用來源。
 
 ## ⚙️ 環境變數規格
 
@@ -339,6 +354,8 @@ OCR 由獨立 FIFO 佇列依序執行，一次只跑一個 OCR；排隊數上限
 兩個引擎共用同一個 FIFO worker，一次只執行一個 OCR。Paddle 模型在 Paddle 請求間保持載入；切回 Baidu 前會先停止 MLX-VLM 以釋放統一記憶體。服務關閉時也會回收模型 server。Paddle 依賴安裝在獨立 `paddle-venv`，避免與 Baidu 的 `transformers<5` 衝突。`/health` 的 `ocr` 欄位可查看 active engine 和 queued 數量。
 
 速度比較使用相同頁面、相同 DPI、各引擎分開連續跑整批，避免每頁切換引擎導致模型反覆冷啟動。分開報告第一筆冷啟動、後續暖機頁面的中位數與 p95；同時保留 `queue_wait_s`、`engine_ready_wait_s`、渲染、辨識與整體 client 時間。品質需另以同一組掃描頁人工比對文字錯誤與表格結構；速度快不能單獨代表 OCR 較好。
+
+Paddle runner 需將 `save_to_markdown()` 的 `save_path` 設為輸出目錄，再從該目錄讀取 Markdown；若改用檔名前綴，結果檔可能寫在子目錄而造成 API 成功但回傳空內容。
 
 ### `GET /health` — 健康檢查
 
