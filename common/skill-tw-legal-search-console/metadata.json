@@ -21,7 +21,7 @@
     {
       "repo": "wenchiehlee-money/TW-person-legal-search",
       "role": "consumer",
-      "local_path": "github.com/TW-person-legal-search/.claude/skills/skill-tw-legal-search-console"
+      "local_path": "github.com/TW-person-legal-search/skills/skill-tw-legal-search-console"
     }
   ]
 }
