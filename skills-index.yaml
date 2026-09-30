@@ -151,8 +151,8 @@ skills:
     reputation, labor/legal signals, layoffs, and recurring red flags.
   category: basic
   maintainer: wenchiehlee
-  source: ''
-  repo_count: 0
+  source: https://github.com/wenchiehlee-money/TW.good-job
+  repo_count: 1
   updated_at: '2026-08-20'
   revised_at: '2026-09-30'
 - name: skill-company-revenue-expense-profit-predict
