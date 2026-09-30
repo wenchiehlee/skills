@@ -14,7 +14,7 @@ skills:
   source: wj-lee_Barco.github.com/gadget/skills/Android BaseUnit-adb
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-08-07'
+  revised_at: '2026-09-30'
 - name: skill-company-data-index-sync
   group: common
   path: common/skill-company-data-index-sync
@@ -692,7 +692,7 @@ skills:
   source: wj-lee_Barco.github.com/gadget/debug_usb.py
   repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-08-07'
+  revised_at: '2026-09-30'
 - name: skill-usb-gadget-monitor
   group: common
   path: common/skill-usb-gadget-monitor
@@ -706,7 +706,7 @@ skills:
   source: wj-lee_Barco.github.com/gadget/android_baseunit_monitor.py
   repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-08-07'
+  revised_at: '2026-09-30'
 - name: skill-usb-uvc-4k-capture
   group: common
   path: common/skill-usb-uvc-4k-capture
@@ -720,7 +720,7 @@ skills:
   source: wj-lee_Barco.github.com/gadget/uvc_camera_forward.c
   repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-08-07'
+  revised_at: '2026-09-30'
 - name: skill-usb-wasapi-capture-debug
   group: common
   path: common/skill-usb-wasapi-capture-debug
