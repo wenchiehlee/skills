@@ -1,5 +1,5 @@
 ---
-name: mlx-api-server
+name: skill-mlx-api-server
 description: 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，提供 Baidu Unlimited-OCR 與 PaddleOCR-VL-1.6 文件轉錄（共用單一 FIFO worker）及 MLX LLM 推理（/exec），以 Flask/Waitress 常駐服務形式運行。
 ---
 
