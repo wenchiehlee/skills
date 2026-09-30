@@ -110,17 +110,30 @@ def write_index(skills: list[dict]) -> None:
     print(f"[index] 已寫入 {INDEX_FILE.name}（{len(skills)} 個技能）")
 
 
+def _version_key(version: str) -> tuple[int, ...]:
+    parts = []
+    for p in version.split("."):
+        digits = "".join(ch for ch in p if ch.isdigit())
+        parts.append(int(digits) if digits else 0)
+    return tuple(parts)
+
+
 def render_table(skills: list[dict]) -> str:
+    ordered = sorted(
+        skills,
+        key=lambda s: (s.get("repo_count", 0), _version_key(s["version"])),
+        reverse=True,
+    )
     lines = [
-        "| 技能 | 群組 | 分類 | 版本 | 說明 | repo 數 | 修訂日期 |",
+        "| 技能 | 群組 | 分類 | 版本 | repo 數 | 說明 | 修訂日期 |",
         "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
     ]
-    for s in skills:
+    for s in ordered:
         desc = s["description"].replace("|", "\\|")
         repo_count = s.get("repo_count", 0)
         repo_display = str(repo_count) if repo_count else "—"
         lines.append(
-            f"| [{s['name']}]({s['path']}) | {s['group']} | {s['category']} | {s['version']} | {desc} | {repo_display} | {s['revised_at']} |"
+            f"| [{s['name']}]({s['path']}) | {s['group']} | {s['category']} | {s['version']} | {repo_display} | {desc} | {s['revised_at']} |"
         )
     return "\n".join(lines)
 
