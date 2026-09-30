@@ -8,7 +8,7 @@ description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MA
 對一批台股代號算出以下技術指標的最新快照，輸出成一個CSV（每檔一列）：
 
 - **MA/STD/z-score**：MA20/MA60/MA120/MA240（月/季/半年/年線）各自的均線、標準差、z-score（(現價-MA)/STD，可判斷偏離幾個標準差）
-- **布林通道（BBand）**：以MA20/STD20為基礎，上軌=MA20+2σ、下軌=MA20-2σ
+- **布林通道（BBand，標準定義）**：中軌=MA20（20日簡單移動平均），STD20為20日樣本標準差；上軌=MA20+2σ、下軌=MA20-2σ
 - **RSI(period可調，預設14)**：Wilder 1978原始定義（EMA遞迴平滑版本，不是簡單移動平均）
 - **MACD(12,26,9)**：DIF、訊號線、柱狀圖(histogram)
 - **PEBand（可選）**：若提供 EPS CSV，用 daily close / EPS 建立 common market PE 分布，輸出 μ、樣本 σ、μ±1σ/±2σ 與對應價格帶；EPS scope 明確區分 `trailing_eps`、`forward_eps`、`forward_consensus_eps`
