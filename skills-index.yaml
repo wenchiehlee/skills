@@ -730,9 +730,9 @@ skills:
   category: basic
   maintainer: WJLEE
   source: wj-lee_Barco.github.com/gadget/debug_wasapi.py
-  repo_count: 0
+  repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-08-07'
+  revised_at: '2026-09-30'
 - name: skill-yahoo-finance-fetch
   group: common
   path: common/skill-yahoo-finance-fetch
