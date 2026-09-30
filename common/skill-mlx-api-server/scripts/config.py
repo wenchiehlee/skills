@@ -43,6 +43,26 @@ PORT: int = int(_get("MLX_SERVER_PORT", "5001"))
 SANDBOX_DIR: Path = Path(_get("MLX_SANDBOX_DIR", str(Path.home() / "mlx-sandbox")))
 TIMEOUT_SECONDS: int = int(_get("MLX_TIMEOUT", "180"))
 MAX_CONCURRENT: int = int(_get("MLX_MAX_CONCURRENT", "3"))
+OCR_QUEUE_MAX_SIZE: int = int(_get("MLX_OCR_QUEUE_MAX_SIZE", "8"))
+OCR_QUEUE_WAIT_SECONDS: int = int(_get("MLX_OCR_QUEUE_WAIT_SECONDS", "1800"))
+OCR_ENGINES: set[str] = {
+    engine.strip().lower()
+    for engine in _get("MLX_OCR_ENGINES", "baidu").split(",")
+    if engine.strip()
+}
+PADDLE_VLM_PORT: int = int(_get("MLX_PADDLE_VLM_PORT", "8111"))
+PADDLE_VLM_BASE_URL: str = _get(
+    "MLX_PADDLE_VLM_BASE_URL", f"http://127.0.0.1:{PADDLE_VLM_PORT}"
+)
+PADDLE_VLM_LOG: str = _get(
+    "MLX_PADDLE_VLM_LOG", str(Path.home() / "mlx-api" / "paddle-vlm.log")
+)
+PADDLE_OCR_PYTHON: str = _get(
+    "MLX_PADDLE_OCR_PYTHON", str(Path.home() / "mlx-api" / "paddle-venv" / "bin" / "python")
+)
+PADDLE_OCR_TIMEOUT_SECONDS: int = int(
+    _get("MLX_PADDLE_OCR_TIMEOUT", str(int(_get("MLX_TIMEOUT", "900"))))
+)
 
 # ── Input validation ──────────────────────────────────────────────────────────
 MAX_PROMPT_LENGTH: int = int(_get("MLX_MAX_PROMPT_LENGTH", "16000"))

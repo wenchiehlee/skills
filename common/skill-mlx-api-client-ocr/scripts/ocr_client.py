@@ -128,7 +128,11 @@ def clean_ocr_markdown(markdown_text: str) -> str:
     return text.strip()
 
 
-def transcribe_document_to_markdown(file_path: str | Path, dpi: int = 200, clean: bool = True) -> str:
+def transcribe_document_to_markdown(
+    file_path: str | Path, dpi: int = 200, clean: bool = True,
+    engine: str | None = None, return_metadata: bool = False,
+    app_name: str | None = None,
+) -> str | dict:
     """
     將本地的 PDF 或圖片發送到 Mac-mini OCR API 進行轉錄，並回傳 Markdown 文本。
     
@@ -142,6 +146,9 @@ def transcribe_document_to_markdown(file_path: str | Path, dpi: int = 200, clean
     """
     api_url = os.getenv("OCR_API_URL", "http://mac-mini.tail28f10.ts.net:5001/ocr")
     api_key = os.getenv("OCR_API_KEY")
+    engine = (engine or os.getenv("OCR_ENGINE", "baidu")).strip().lower()
+    if engine not in {"baidu", "paddle"}:
+        raise ValueError("engine must be 'baidu' or 'paddle'")
 
     if not api_key:
         raise ValueError("Missing OCR_API_KEY environment variable. Please check your .env file.")
@@ -153,6 +160,8 @@ def transcribe_document_to_markdown(file_path: str | Path, dpi: int = 200, clean
     headers = {
         "X-API-Key": api_key
     }
+    if app_name:
+        headers["X-App-Name"] = app_name
 
     # 依檔案類型開啟並上傳
     try:
@@ -160,9 +169,7 @@ def transcribe_document_to_markdown(file_path: str | Path, dpi: int = 200, clean
             files = {
                 "file": (path_obj.name, f, "application/octet-stream")
             }
-            data = {
-                "dpi": str(dpi)
-            }
+            data = {"dpi": str(dpi), "engine": engine}
 
             print(f"Sending {path_obj.name} to Mac-mini OCR API...", file=sys.stderr)
             # 設定連線與讀取超時時間，因為 OCR 處理可能需要較長時間，所以預設 timeout 設為 900 秒。
@@ -186,8 +193,13 @@ def transcribe_document_to_markdown(file_path: str | Path, dpi: int = 200, clean
                 timeout_kind="http-504" if response.status_code == 504 else None,
             )
 
-        markdown = response.json().get("markdown", "")
-        return clean_ocr_markdown(markdown) if clean else markdown
+        payload = response.json()
+        markdown = payload.get("markdown", "")
+        markdown = clean_ocr_markdown(markdown) if clean else markdown
+        if return_metadata:
+            return {"markdown": markdown, "engine": payload.get("engine", engine),
+                    "timings": payload.get("timings", {})}
+        return markdown
     except requests.exceptions.ReadTimeout as e:
         raise OCRRequestError(
             f"OCR response timed out after {timeout}s: {e}",
@@ -200,14 +212,15 @@ def transcribe_document_to_markdown(file_path: str | Path, dpi: int = 200, clean
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python ocr_client.py <file_path> [dpi]", file=sys.stderr)
+        print("Usage: python ocr_client.py <file_path> [dpi] [baidu|paddle]", file=sys.stderr)
         sys.exit(1)
         
     file_p = sys.argv[1]
     dpi_val = int(sys.argv[2]) if len(sys.argv) > 2 else 200
+    engine_val = sys.argv[3] if len(sys.argv) > 3 else None
     
     try:
-        result = transcribe_document_to_markdown(file_p, dpi_val)
+        result = transcribe_document_to_markdown(file_p, dpi_val, engine=engine_val)
         print(result)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)

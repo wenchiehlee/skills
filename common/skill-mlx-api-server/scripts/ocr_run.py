@@ -5,11 +5,13 @@ Outputs the resulting Markdown text to stdout.
 """
 
 import argparse
+import json
 import logging
 import os
 import sys
 import tempfile
 import shutil
+import time
 from pathlib import Path
 
 # Configure logging to stderr so it doesn't clutter stdout (which contains our markdown result)
@@ -67,7 +69,7 @@ def main():
 
     model_name = "baidu/Unlimited-OCR"
     logger.info("Loading model and tokenizer '%s'...", model_name)
-    
+    model_load_started = time.monotonic()
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     
     # Load model weights in torch.bfloat16 to match input data type and prevent type mismatch errors
@@ -77,22 +79,25 @@ def main():
         use_safetensors=True,
         torch_dtype=torch.bfloat16
     ).to(device).eval()
+    model_load_seconds = time.monotonic() - model_load_started
     logger.info("Model loaded successfully.")
 
     # Determine input type
     is_pdf = input_path.suffix.lower() == '.pdf'
     tmp_dir = None
-    
+    render_started = time.monotonic()
     if is_pdf:
         tmp_dir, image_files = pdf_to_images(str(input_path), dpi=args.dpi)
     else:
         # Single image
         image_files = [str(input_path)]
+    render_seconds = time.monotonic() - render_started
 
     output_dir = tempfile.mkdtemp(prefix='ocr_out_')
     logger.info("Starting inference on %d images...", len(image_files))
     
     try:
+        inference_started = time.monotonic()
         model.infer_multi(
             tokenizer,
             prompt="<image>Multi page parsing.",
@@ -102,6 +107,7 @@ def main():
             max_length=32768,
             save_results=True
         )
+        inference_seconds = time.monotonic() - inference_started
         
         # Read the generated markdown result
         md_files = [f for f in os.listdir(output_dir) if f.endswith('.md')]
@@ -111,6 +117,15 @@ def main():
                 # Print result to stdout
                 print(f.read())
             logger.info("OCR completed successfully.")
+            print(
+                "OCR_TIMING_JSON=" + json.dumps({
+                    "model_load_s": round(model_load_seconds, 3),
+                    "pdf_render_s": round(render_seconds, 3),
+                    "inference_s": round(inference_seconds, 3),
+                    "pages": len(image_files),
+                }, separators=(",", ":")),
+                file=sys.stderr,
+            )
         else:
             logger.error("No markdown output generated.")
             sys.exit(1)

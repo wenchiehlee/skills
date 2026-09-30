@@ -3,11 +3,17 @@
 from __future__ import annotations
 
 import logging
+import json
 import os
+import signal
 import subprocess
 import sys
 import tempfile
 import threading
+import time
+import urllib.error
+import urllib.request
+from collections import deque
 from pathlib import Path
 
 import config
@@ -15,13 +21,75 @@ import config
 logger = logging.getLogger(__name__)
 
 _semaphore = threading.Semaphore(config.MAX_CONCURRENT)
+_ocr_condition = threading.Condition()
+_ocr_waiters: deque[object] = deque()
+_ocr_active = False
+_ocr_current_engine: str | None = None
+_paddle_vlm_process: subprocess.Popen | None = None
+_paddle_vlm_process_lock = threading.Lock()
+
+_OCR_TIMING_PREFIX = "OCR_TIMING_JSON="
+
+
+def _acquire_ocr_slot() -> float:
+    """Wait for the sole OCR worker in FIFO order, with a bounded queue."""
+    global _ocr_active
+    ticket = object()
+    queued_at = time.monotonic()
+    deadline = time.monotonic() + config.OCR_QUEUE_WAIT_SECONDS
+
+    with _ocr_condition:
+        if len(_ocr_waiters) >= config.OCR_QUEUE_MAX_SIZE:
+            raise ExecutionError("OCR queue is full. Try again later.", status_code=503,
+                                 details={"queue_wait_s": 0.0})
+        _ocr_waiters.append(ticket)
+        queue_position = len(_ocr_waiters)
+        try:
+            while _ocr_waiters[0] is not ticket or _ocr_active:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise ExecutionError(
+                        "Timed out waiting in the OCR queue.", status_code=503,
+                        details={"queue_wait_s": round(time.monotonic() - queued_at, 3)},
+                    )
+                _ocr_condition.wait(remaining)
+            _ocr_waiters.popleft()
+            _ocr_active = True
+        except Exception:
+            try:
+                _ocr_waiters.remove(ticket)
+            except ValueError:
+                pass
+            _ocr_condition.notify_all()
+            raise
+
+    logger.info("OCR worker acquired — queued_position=%d", queue_position)
+    return time.monotonic() - queued_at
+
+
+def _release_ocr_slot() -> None:
+    global _ocr_active, _ocr_current_engine
+    with _ocr_condition:
+        _ocr_active = False
+        _ocr_current_engine = None
+        _ocr_condition.notify_all()
+
+
+def ocr_queue_status() -> dict[str, object]:
+    with _ocr_condition:
+        return {
+            "active": _ocr_active,
+            "active_engine": _ocr_current_engine,
+            "queued": len(_ocr_waiters),
+        }
 
 
 class ExecutionError(Exception):
     """Raised when codex exec fails or times out."""
-    def __init__(self, message: str, status_code: int = 502):
+    def __init__(self, message: str, status_code: int = 502, details: dict | None = None):
         super().__init__(message)
         self.status_code = status_code
+        self.details = details or {}
 
 
 MODEL_MAP = {
@@ -142,50 +210,218 @@ def run(prompt: str, model: str | None = None) -> tuple[str, str]:
         _semaphore.release()
 
 
-def run_ocr(file_path: str, dpi: int = 200) -> str:
+def _paddle_vlm_ready() -> bool:
+    base_url = config.PADDLE_VLM_BASE_URL.rstrip("/")
+    try:
+        with urllib.request.urlopen(f"{base_url}/v1/models", timeout=1) as response:
+            return response.status == 200
+    except Exception:
+        return False
+
+
+def _stop_process_group(process: subprocess.Popen | None, wait_seconds: float = 10) -> None:
+    if process is None or process.poll() is not None:
+        return
+    try:
+        os.killpg(process.pid, signal.SIGTERM)
+        process.wait(timeout=wait_seconds)
+    except (ProcessLookupError, subprocess.TimeoutExpired):
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        try:
+            process.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            logger.error("Process group %d did not exit after SIGKILL", process.pid)
+
+
+def _stop_paddle_vlm() -> float:
+    """Stop MLX-VLM before Baidu runs, freeing its model memory."""
+    global _paddle_vlm_process
+    started = time.monotonic()
+    with _paddle_vlm_process_lock:
+        process = _paddle_vlm_process
+        _paddle_vlm_process = None
+        _stop_process_group(process)
+    return time.monotonic() - started
+
+
+def _ensure_paddle_vlm(deadline: float) -> float:
+    """Start or reuse the single Paddle VLM process; return readiness wait."""
+    global _paddle_vlm_process
+    base_url = config.PADDLE_VLM_BASE_URL.rstrip("/")
+    started = time.monotonic()
+    with _paddle_vlm_process_lock:
+        if _paddle_vlm_process is not None and _paddle_vlm_process.poll() is not None:
+            logger.error("Paddle VLM process exited — rc=%s", _paddle_vlm_process.returncode)
+            _paddle_vlm_process = None
+
+        if _paddle_vlm_process is None:
+            paddle_python = Path(config.PADDLE_OCR_PYTHON)
+            if not paddle_python.is_file():
+                raise ExecutionError(
+                    "PaddleOCR-VL runtime is not installed. Check the paddle-venv deployment.",
+                    status_code=503,
+                )
+            log_path = Path(config.PADDLE_VLM_LOG)
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            log_file = log_path.open("a", encoding="utf-8")
+            cmd = [
+                str(paddle_python), "-m", "mlx_vlm.server",
+                "--host", "127.0.0.1",
+                "--port", str(config.PADDLE_VLM_PORT),
+                "--model", "PaddlePaddle/PaddleOCR-VL-1.6",
+            ]
+            try:
+                _paddle_vlm_process = subprocess.Popen(
+                    cmd,
+                    stdin=subprocess.DEVNULL,
+                    stdout=log_file,
+                    stderr=subprocess.STDOUT,
+                    start_new_session=True,
+                )
+            finally:
+                log_file.close()
+            logger.info("Started Paddle VLM process pid=%d", _paddle_vlm_process.pid)
+
+        while time.monotonic() < deadline:
+            if _paddle_vlm_process is None or _paddle_vlm_process.poll() is not None:
+                rc = _paddle_vlm_process.returncode if _paddle_vlm_process else "unknown"
+                raise ExecutionError(
+                    f"PaddleOCR-VL model server exited during startup (rc={rc}).",
+                    status_code=503,
+                )
+            if _paddle_vlm_ready():
+                return time.monotonic() - started
+            time.sleep(1)
+
+    _stop_paddle_vlm()
+    raise ExecutionError(
+        "PaddleOCR-VL model server did not become ready before timeout.", status_code=504,
+        details={"engine_ready_wait_s": round(time.monotonic() - started, 3)},
+    )
+
+
+def _timing_from_stderr(stderr: str) -> dict[str, float | int]:
+    for line in reversed(stderr.splitlines()):
+        if line.startswith(_OCR_TIMING_PREFIX):
+            try:
+                value = json.loads(line[len(_OCR_TIMING_PREFIX):])
+                if isinstance(value, dict):
+                    return value
+            except (json.JSONDecodeError, TypeError):
+                logger.warning("Ignoring malformed OCR timing record")
+    return {}
+
+
+def run_ocr(file_path: str, dpi: int = 200, engine: str = "baidu") -> tuple[str, dict[str, float | int | str]]:
     """
     Run Baidu Unlimited-OCR on a PDF or image file and return the transcribed markdown.
     Uses subprocess to isolate PyTorch and completely free memory on exit.
     """
-    if not _semaphore.acquire(blocking=False):
-        raise ExecutionError("Server busy, try again later.", status_code=503)
-
-    try:
-        ocr_script = Path(__file__).parent / "ocr_run.py"
-        cmd = [
-            sys.executable, str(ocr_script),
-            "--input", file_path,
-            "--dpi", str(dpi)
-        ]
-
-        logger.info("Running OCR — file=%s dpi=%d", file_path, dpi)
-
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=config.TIMEOUT_SECONDS,
+    global _ocr_current_engine
+    engine = engine.strip().lower()
+    if engine not in config.OCR_ENGINES:
+        raise ExecutionError(
+            f"OCR engine '{engine}' is disabled. Enabled engines: {sorted(config.OCR_ENGINES)}",
+            status_code=400,
         )
+    queued_at = time.monotonic()
+    queue_wait_s = _acquire_ocr_slot()
+    started = time.monotonic()
+    with _ocr_condition:
+        _ocr_current_engine = engine
 
-        output = result.stdout
+    timeout = config.PADDLE_OCR_TIMEOUT_SECONDS if engine == "paddle" else config.TIMEOUT_SECONDS
+    deadline = started + timeout
+    runner_process: subprocess.Popen | None = None
+    ready_wait_s = 0.0
+    engine_release_s = 0.0
+    try:
+        if engine == "baidu":
+            engine_release_s = _stop_paddle_vlm()
+            ocr_script = Path(__file__).parent / "ocr_run.py"
+            cmd = [sys.executable, str(ocr_script), "--input", file_path, "--dpi", str(dpi)]
+            model_repo = "baidu/Unlimited-OCR"
+        elif engine == "paddle":
+            ready_wait_s = _ensure_paddle_vlm(deadline)
+            paddle_python = Path(config.PADDLE_OCR_PYTHON)
+            ocr_script = Path(__file__).parent / "paddleocr_run.py"
+            cmd = [str(paddle_python), str(ocr_script), "--input", file_path, "--dpi", str(dpi),
+                   "--vlm-url", config.PADDLE_VLM_BASE_URL]
+            model_repo = "PaddlePaddle/PaddleOCR-VL-1.6"
+        else:  # defensive: the allowlist is the only supported source of engine names
+            raise ExecutionError(f"Unsupported OCR engine: {engine}", status_code=400)
 
-        if result.returncode != 0:
-            stderr_tail = result.stderr[-1000:] if len(result.stderr) > 1000 else result.stderr
+        logger.info("Running OCR — engine=%s file=%s dpi=%d", engine, Path(file_path).name, dpi)
+
+        inference_started = time.monotonic()
+        runner_process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            start_new_session=True,
+        )
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise subprocess.TimeoutExpired(cmd, timeout)
+        stdout, stderr = runner_process.communicate(timeout=remaining)
+        process_elapsed_s = time.monotonic() - inference_started
+
+        output = stdout
+
+        if runner_process.returncode != 0:
+            stderr_tail = stderr[-1000:] if len(stderr) > 1000 else stderr
             err_msg = (
-                f"OCR execution failed (rc={result.returncode}) "
-                f"stderr_len={len(result.stderr)}. "
+                f"OCR execution failed (rc={runner_process.returncode}) "
+                f"stderr_len={len(stderr)}. "
                 f"TAIL: {stderr_tail}"
             )
             logger.error(err_msg)
             raise ExecutionError(err_msg)
 
-        logger.info("OCR completed — output_len=%d", len(output))
-        return output
+        runner_timings = _timing_from_stderr(stderr)
+        timings: dict[str, float | int | str] = {
+            "queue_wait_s": round(queue_wait_s, 3),
+            "engine_ready_wait_s": round(ready_wait_s, 3),
+            "engine_release_s": round(engine_release_s, 3),
+            "process_elapsed_s": round(process_elapsed_s, 3),
+            "total_elapsed_s": round(time.monotonic() - queued_at, 3),
+            **runner_timings,
+        }
+        logger.info("OCR completed — engine=%s output_len=%d timings=%s", engine, len(output), timings)
+        return output, {"engine": engine, "model": model_repo, **timings}
 
     except subprocess.TimeoutExpired:
-        logger.warning("OCR timed out after %ds", config.TIMEOUT_SECONDS)
-        raise ExecutionError(f"OCR request timed out after {config.TIMEOUT_SECONDS}s.", status_code=504)
+        _stop_process_group(runner_process)
+        if engine == "paddle":
+            _stop_paddle_vlm()
+        logger.warning("OCR timed out — engine=%s timeout=%ds", engine, timeout)
+        raise ExecutionError(
+            f"OCR request timed out after {timeout}s (engine={engine}).", status_code=504,
+            details={
+                "queue_wait_s": round(queue_wait_s, 3),
+                "engine_ready_wait_s": round(ready_wait_s, 3),
+                "process_elapsed_s": round(time.monotonic() - started, 3),
+                "total_elapsed_s": round(time.monotonic() - queued_at, 3),
+            },
+        )
+    except ExecutionError as error:
+        error.details.update({
+            "queue_wait_s": round(queue_wait_s, 3),
+            "engine_ready_wait_s": round(ready_wait_s, 3),
+            "engine_release_s": round(engine_release_s, 3),
+            "process_elapsed_s": round(time.monotonic() - started, 3),
+            "total_elapsed_s": round(time.monotonic() - queued_at, 3),
+        })
+        raise
 
     finally:
-        _semaphore.release()
+        _release_ocr_slot()
 
+
+def shutdown_ocr_engines() -> None:
+    """Free persistent OCR model memory when the API server is stopping."""
+    _stop_paddle_vlm()

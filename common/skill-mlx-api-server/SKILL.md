@@ -1,13 +1,13 @@
 ---
-name: skill-mlx-api-server
-description: 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，提供 Baidu Unlimited-OCR 文件轉錄（/ocr）與 MLX LLM 推理（/exec，Qwen3.5/Gemma4），以 Flask/Waitress 常駐服務形式運行。
+name: mlx-api-server
+description: 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，提供 Baidu Unlimited-OCR 與 PaddleOCR-VL-1.6 文件轉錄（共用單一 FIFO worker）及 MLX LLM 推理（/exec），以 Flask/Waitress 常駐服務形式運行。
 ---
 
 # Mac-mini MLX API Server 技能 (mlx-api-server)
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.1.1（詳見 `metadata.json`） |
+| 版本 | 1.2.0（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-server`） |
 | 維護者 | wenchiehlee |
@@ -15,7 +15,7 @@ description: 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，�
 | 對應 Caller Skill | `common/skill-mac-mini-ocr`（在外部機器呼叫此服務） |
 
 此技能封裝了運行於 Mac-mini 上的 AI 推理伺服器，提供兩大核心服務：
-1. **`POST /ocr`** — Baidu Unlimited-OCR 文件轉錄，將 PDF 或圖片轉為 Markdown
+1. **`POST /ocr`** — Baidu Unlimited-OCR 或 PaddleOCR-VL-1.6 文件轉錄，將 PDF 或圖片轉為 Markdown
 2. **`POST /exec`** — MLX 本地 LLM 推理，支援 Qwen3.5-9B 與 Gemma-4 模型
 
 服務透過 Tailscale VPN 對外提供，由 `launchd` (`com.mlx.apiserver`) 常駐管理，GitHub Actions 每 6 小時自動健康檢查並於異常時自動恢復。
@@ -57,8 +57,9 @@ skill-mlx-api-server/
         ├── /exec → executor.run()
         │           ├── mlx_lm generate（Qwen3.5，enable_thinking=False）
         │           └── mlx_vlm generate（Gemma4，VLM）
-        └── /ocr  → executor.run_ocr() → subprocess ocr_run.py
-                    └── baidu/Unlimited-OCR（PyTorch + MPS）
+        └── /ocr  → 共用 FIFO 單一 worker
+                    ├── baidu → ocr_run.py（PyTorch + MPS）
+                    └── paddle → paddleocr_run.py + 隔離的 paddle-venv / MLX-VLM server
 ```
 
 **網路：**
@@ -89,18 +90,6 @@ skill-mlx-api-server/
 2. 若為 VLM，加入 `_VLM_REPOS`；若為 thinking model，加入 `_NOTHINK_REPOS`。
 3. 更新 `MLX_ALLOWED_MODELS` 環境變數（或 GitHub Vars）。
 
-## 📊 AI Model Usage 統計
-
-`skill-mlx-api-server` 會自行產生 AI 結果，因此 server 端必須直接送出 normalized `llm_call`，不能只依賴呼叫端：
-
-| Endpoint | `service` | `stage` | `provider` | `model` | `model_repo` |
-|----------|-----------|---------|------------|---------|--------------|
-| `/exec` default | `mlx-api-server` | `exec` | `mlx` | `mlx-qwen3` | `mlx-community/Qwen3.5-9B-MLX-4bit` |
-| `/exec` `model=mlx-gemma4` | `mlx-api-server` | `exec` | `mlx` | `mlx-gemma4` | `mlx-community/gemma-4-e4b-it-8bit` |
-| `/ocr` | `mlx-api-server` | `ocr` | `baidu-ocr` | `baidu/Unlimited-OCR` | `baidu/Unlimited-OCR` |
-
-呼叫端應傳 `X-App-Name`，server 端用它填入 `app_name`；沒有提供時 `/exec` fallback 為 `MLX-Exec`，`/ocr` fallback 為 `Baidu-OCR`。跨服務 README 應使用 `app_name × model` last-7-days 來回答單一應用的模型使用來源。
-
 ## ⚙️ 環境變數規格
 
 | 變數名 | 必填 | 預設值 | 說明 |
@@ -111,6 +100,13 @@ skill-mlx-api-server/
 | `MLX_ALLOWED_MODELS` | 可選 | `mlx-qwen3,mlx-gemma4` | 允許的模型別名，逗號分隔 |
 | `MLX_TIMEOUT` | 可選 | `180` | subprocess timeout 秒數（部署時設為 `900`） |
 | `MLX_MAX_CONCURRENT` | 可選 | `3` | 最大並發請求數（`threading.Semaphore`） |
+| `MLX_OCR_QUEUE_MAX_SIZE` | 可選 | `8` | OCR 等候佇列最多等待請求數（不含正在執行的 1 個 OCR） |
+| `MLX_OCR_QUEUE_WAIT_SECONDS` | 可選 | `1800` | OCR 請求在佇列中的最長等待秒數 |
+| `MLX_OCR_ENGINES` | 可選 | `baidu` | 啟用引擎清單：`baidu,paddle`；保留預設可維持 Baidu-only |
+| `MLX_PADDLE_VLM_PORT` | 可選 | `8111` | PaddleOCR-VL 使用的 loopback MLX-VLM server 埠 |
+| `MLX_PADDLE_OCR_TIMEOUT` | 可選 | `900` | Paddle 單一請求逾時秒數 |
+| `MLX_PADDLE_OCR_PYTHON` | 可選 | `~/mlx-api/paddle-venv/bin/python` | Paddle 隔離環境 Python |
+| `MLX_PADDLE_VLM_LOG` | 可選 | `~/mlx-api/paddle-vlm.log` | Paddle 模型 server 日誌 |
 | `MLX_MAX_PROMPT_LENGTH` | 可選 | `16000` | prompt 最大字元數 |
 | `AMPLITUDE_API_KEY` | 可選 | — | Amplitude 埋點 API Key（省略則不送事件） |
 
@@ -122,6 +118,13 @@ MLX_SERVER_PORT=5001
 MLX_ALLOWED_MODELS=mlx-qwen3,mlx-gemma4,qwen3-mlx
 MLX_TIMEOUT=900
 MLX_MAX_CONCURRENT=3
+MLX_OCR_QUEUE_MAX_SIZE=8
+MLX_OCR_QUEUE_WAIT_SECONDS=1800
+MLX_OCR_ENGINES=baidu,paddle
+MLX_PADDLE_VLM_PORT=8111
+MLX_PADDLE_OCR_TIMEOUT=900
+MLX_PADDLE_OCR_PYTHON=/Users/<user>/mlx-api/paddle-venv/bin/python
+MLX_PADDLE_VLM_LOG=/Users/<user>/mlx-api/paddle-vlm.log
 AMPLITUDE_API_KEY=<optional>
 ```
 
@@ -134,11 +137,16 @@ AMPLITUDE_API_KEY=<optional>
 /opt/homebrew/bin/python3.11 -m venv ~/mlx-api/venv
 source ~/mlx-api/venv/bin/activate
 
-# 2. 安裝依賴
+# 2. 安裝服務依賴。Baidu runtime 固定 transformers<5，避免 Paddle 依賴污染。
 #    ⚠️ transformers 必須 <5.0.0（baidu/Unlimited-OCR 尚不支援 transformers 5.x）
 pip install --upgrade pip
 pip install -r scripts/requirements.txt
 pip install mlx-lm "transformers<5.0.0" huggingface_hub sentencepiece
+
+# 另建 Paddle 環境；不要將 Paddle/MLX-VLM 套件裝進 Baidu venv
+/opt/homebrew/bin/python3.11 -m venv ~/mlx-api/paddle-venv
+~/mlx-api/paddle-venv/bin/python -m pip install 'paddlepaddle==3.2.1' -i https://www.paddlepaddle.org.cn/packages/stable/cpu/
+~/mlx-api/paddle-venv/bin/python -m pip install -r scripts/requirements-paddle.txt
 
 # 3. 部署腳本到運行目錄
 mkdir -p ~/mlx-api
@@ -153,6 +161,8 @@ MLX_SERVER_PORT=5001
 MLX_ALLOWED_MODELS=mlx-qwen3,mlx-gemma4,qwen3-mlx
 MLX_TIMEOUT=900
 MLX_MAX_CONCURRENT=3
+MLX_OCR_QUEUE_MAX_SIZE=8
+MLX_OCR_QUEUE_WAIT_SECONDS=1800
 AMPLITUDE_API_KEY=<optional>
 EOF
 chmod 600 ~/mlx-api/.env
@@ -215,7 +225,7 @@ Layer 1 (Transport)   — Tailscale VPN（WireGuard 加密，僅 VPN 內可訪�
 Layer 2 (AuthN)       — X-API-Key header，hmac.compare_digest 防時序攻擊（auth.py）
 Layer 3 (Input)       — prompt ≤ 16,000 chars，model allowlist 驗證（config.py + server.py）
 Layer 4 (Process)     — subprocess list form（防 shell injection），非 root 執行（executor.py）
-Layer 5 (Concurrency) — threading.Semaphore(3)，最多 3 個並發請求（executor.py）
+Layer 5 (Concurrency) — `/exec` 使用 `MLX_MAX_CONCURRENT`；`/ocr` 使用 FIFO 單一 worker，最多排隊 `MLX_OCR_QUEUE_MAX_SIZE` 個請求（executor.py）
 ```
 
 ## ⚡ Qwen3 思考鏈控制（重要）
@@ -304,22 +314,31 @@ OCR 呼叫透過 `_send_amplitude_event_async()` 非同步送出 `llm_call` 事�
 |------|------|
 | `400` | prompt 超長 / model 不在 allowlist |
 | `401` | API Key 錯誤或缺漏 |
-| `503` | 伺服器忙碌（已達 `MAX_CONCURRENT` 上限） |
+| `503` | `/exec` 併發額度已滿，或 OCR 佇列已滿／等待超時 |
 | `504` | 執行超時（超過 `MLX_TIMEOUT` 秒） |
 
 ### `POST /ocr` — 文件 OCR
 
+OCR 由獨立 FIFO 佇列依序執行，一次只跑一個 OCR；排隊數上限由 `MLX_OCR_QUEUE_MAX_SIZE` 控制（預設 8，不含執行中的請求）。等待超過 `MLX_OCR_QUEUE_WAIT_SECONDS`（預設 1800 秒）會回傳 `503`。OCR 不佔用 `/exec` 的併發額度。服務會為排隊中的請求保留 Waitress request threads，避免佇列等待耗盡所有執行緒。
+
 **Request（multipart/form-data）：**
 - `file`：PDF 或圖片（PNG/JPG）
 - `dpi`（選填）：PDF 渲染解析度，預設 `200`
+- `engine`（選填）：`baidu`（相容預設）或 `paddle`
 - 建議設定 header：`X-App-Name: <your-app-name>`（Amplitude 追蹤用）
 
 **Response：**
 ```json
 {
-  "markdown": "# 文件標題\n\n轉錄內容..."
+  "markdown": "# 文件標題\n\n轉錄內容...",
+  "engine": "paddle",
+  "timings": {"queue_wait_s": 0.2, "engine_ready_wait_s": 34.1, "pdf_render_s": 1.3, "inference_s": 22.8, "process_elapsed_s": 24.2, "request_total_s": 60.0}
 }
 ```
+
+兩個引擎共用同一個 FIFO worker，一次只執行一個 OCR。Paddle 模型在 Paddle 請求間保持載入；切回 Baidu 前會先停止 MLX-VLM 以釋放統一記憶體。服務關閉時也會回收模型 server。Paddle 依賴安裝在獨立 `paddle-venv`，避免與 Baidu 的 `transformers<5` 衝突。`/health` 的 `ocr` 欄位可查看 active engine 和 queued 數量。
+
+速度比較使用相同頁面、相同 DPI、各引擎分開連續跑整批，避免每頁切換引擎導致模型反覆冷啟動。分開報告第一筆冷啟動、後續暖機頁面的中位數與 p95；同時保留 `queue_wait_s`、`engine_ready_wait_s`、渲染、辨識與整體 client 時間。品質需另以同一組掃描頁人工比對文字錯誤與表格結構；速度快不能單獨代表 OCR 較好。
 
 ### `GET /health` — 健康檢查
 

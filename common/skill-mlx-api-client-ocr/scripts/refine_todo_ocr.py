@@ -210,7 +210,8 @@ def _extract_single_page_pdf(pdf_path: Path, page_num: int, dest_dir: Path) -> P
     return out_path
 
 
-def refine(md_path: Path, pdf_path: Path | None, pages: set[int] | None, dpi: int) -> int:
+def refine(md_path: Path, pdf_path: Path | None, pages: set[int] | None, dpi: int,
+           engine: str | None = None) -> int:
     """補轉錄 TODO:OCR 頁面，回傳成功補轉錄的頁數。"""
     md_text = md_path.read_text(encoding="utf-8")
     todos = find_todo_pages(md_text)
@@ -245,7 +246,9 @@ def refine(md_path: Path, pdf_path: Path | None, pages: set[int] | None, dpi: in
                 local_fallback = True
             else:
                 try:
-                    ocr_md = clean_ocr_markdown(transcribe_document_to_markdown(single, dpi=dpi)).strip()
+                    ocr_md = clean_ocr_markdown(
+                        transcribe_document_to_markdown(single, dpi=dpi, engine=engine)
+                    ).strip()
                 except Exception as remote_error:
                     timeout_kind = getattr(remote_error, "timeout_kind", None)
                     if timeout_kind:
@@ -269,7 +272,7 @@ def refine(md_path: Path, pdf_path: Path | None, pages: set[int] | None, dpi: in
             if not ocr_md:
                 ocr_md = "> OCR completed; no text recognized on this page."
 
-            engine = "local-tesseract" if local_fallback else "mac-mini"
+            result_engine = "local-tesseract" if local_fallback else f"mac-mini-{engine or os.getenv('OCR_ENGINE', 'baidu')}"
             timeout_count, last_timeout, timeout_kind = _timeout_metadata(md_text, page)
             timeout_fields = (
                 f' mac_mini_timeouts={timeout_count} '
@@ -280,7 +283,7 @@ def refine(md_path: Path, pdf_path: Path | None, pages: set[int] | None, dpi: in
             new_section = (
                 f"<!-- PAGE:{page} -->\n"
                 f"## 第 {page} 頁\n\n"
-                f'<!-- OCR:done source="{todo["source"]}" page={page} date="{today}" engine="{engine}"{timeout_fields} -->\n'
+                f'<!-- OCR:done source="{todo["source"]}" page={page} date="{today}" engine="{result_engine}"{timeout_fields} -->\n'
                 f"{ocr_md}\n\n"
             )
             md_text, n = re.subn(
@@ -316,6 +319,7 @@ if __name__ == "__main__":
     parser.add_argument("--pdf", help="原始 PDF 路徑（預設依標記中的 source 於 Markdown 同目錄尋找）")
     parser.add_argument("--pages", help="只處理指定頁碼，逗號分隔（例：3,7）")
     parser.add_argument("--dpi", type=int, default=200, help="OCR 渲染解析度（預設 200）")
+    parser.add_argument("--engine", choices=("baidu", "paddle"), help="Mac-mini OCR 引擎（預設使用 OCR_ENGINE 或 baidu）")
     parser.add_argument("--list", action="store_true", help="只列出 TODO:OCR 頁面，不執行 OCR")
     args = parser.parse_args()
 
@@ -334,7 +338,7 @@ if __name__ == "__main__":
 
     page_set = {int(p) for p in args.pages.split(",")} if args.pages else None
     try:
-        refine(md_file, Path(args.pdf) if args.pdf else None, page_set, args.dpi)
+        refine(md_file, Path(args.pdf) if args.pdf else None, page_set, args.dpi, args.engine)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
