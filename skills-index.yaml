@@ -80,7 +80,7 @@ skills:
   source: TAIEX.TW
   repo_count: 1
   updated_at: '2026-09-03'
-  revised_at: '2026-09-03'
+  revised_at: '2026-09-30'
 - name: skill-company-enrichment-json
   group: common
   path: common/skill-company-enrichment-json
@@ -128,7 +128,7 @@ skills:
   source: https://github.com/wenchiehlee-money/InvestorConference
   repo_count: 1
   updated_at: '2026-08-17'
-  revised_at: '2026-09-25'
+  revised_at: '2026-09-30'
 - name: skill-company-investorconference-ir-pdf-md
   group: common
   path: common/skill-company-investorconference-ir-pdf-md
@@ -141,7 +141,7 @@ skills:
   source: https://github.com/wenchiehlee-money/InvestorConference
   repo_count: 1
   updated_at: '2026-07-19'
-  revised_at: '2026-08-07'
+  revised_at: '2026-09-30'
 - name: skill-company-mops-financialreport-pdf-md
   group: common
   path: common/skill-company-mops-financialreport-pdf-md
@@ -153,7 +153,7 @@ skills:
   source: https://github.com/wenchiehlee-money/MOPS
   repo_count: 0
   updated_at: '2026-07-19'
-  revised_at: '2026-09-09'
+  revised_at: '2026-09-30'
 - name: skill-company-reputation-research
   group: common
   path: common/skill-company-reputation-research
@@ -166,7 +166,7 @@ skills:
   source: ''
   repo_count: 0
   updated_at: '2026-08-20'
-  revised_at: '2026-08-20'
+  revised_at: '2026-09-30'
 - name: skill-company-revenue-expense-profit-predict
   group: common
   path: common/skill-company-revenue-expense-profit-predict
@@ -212,7 +212,7 @@ skills:
   source: biztrends.TW
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-08-26'
+  revised_at: '2026-09-30'
 - name: skill-company-segment-viz
   group: common
   path: common/skill-company-segment-viz
@@ -248,7 +248,7 @@ skills:
   source: https://github.com/wenchiehlee-money/Facebook.Fetch
   repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-08-07'
+  revised_at: '2026-09-30'
 - name: skill-finmind-fetch
   group: common
   path: common/skill-finmind-fetch
@@ -286,7 +286,7 @@ skills:
   source: https://github.com/wenchiehlee-money/GoogleAlertManager
   repo_count: 1
   updated_at: '2026-08-25'
-  revised_at: '2026-08-25'
+  revised_at: '2026-09-30'
 - name: skill-google-analytics-monitor
   group: common
   path: common/skill-google-analytics-monitor
@@ -313,7 +313,7 @@ skills:
   source: https://github.com/wenchiehlee/GoogleSearch.Factset
   repo_count: 1
   updated_at: '2026-08-25'
-  revised_at: '2026-08-26'
+  revised_at: '2026-09-30'
 - name: skill-institutional-thesis-research
   group: common
   path: common/skill-institutional-thesis-research
@@ -325,7 +325,7 @@ skills:
   source: https://github.com/wenchiehlee-money/TW-institutional-investment-theses
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-08-26'
+  revised_at: '2026-09-30'
 - name: skill-institutional-tw-report-research
   group: common
   path: common/skill-institutional-tw-report-research
@@ -338,7 +338,7 @@ skills:
   source: https://github.com/wenchiehlee-money/TW-institutional-research
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-08-26'
+  revised_at: '2026-09-30'
 - name: skill-investment-decision-coach
   group: common
   path: common/skill-investment-decision-coach
@@ -378,7 +378,7 @@ skills:
   source: https://github.com/ZhongZheng782/Llm-Cli-APIServer
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-09-28'
+  revised_at: '2026-09-30'
 - name: skill-miz-fetch
   group: common
   path: common/skill-miz-fetch
@@ -453,7 +453,7 @@ skills:
   source: https://github.com/wenchiehlee-money/MOPS
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-09-09'
+  revised_at: '2026-09-30'
 - name: skill-pptx-to-md
   group: common
   path: common/skill-pptx-to-md
@@ -505,7 +505,7 @@ skills:
   source: TAIEX.TW
   repo_count: 1
   updated_at: '2026-09-03'
-  revised_at: '2026-09-03'
+  revised_at: '2026-09-30'
 - name: skill-stock-fiscal-quarter-resolve
   group: common
   path: common/skill-stock-fiscal-quarter-resolve
@@ -590,7 +590,7 @@ skills:
   source: biztrends.TW / ConceptStocks / Selenium-Actions.Auction
   repo_count: 3
   updated_at: '2026-07-22'
-  revised_at: '2026-08-07'
+  revised_at: '2026-09-30'
 - name: skill-theme-competitor-analysis
   group: common
   path: common/skill-theme-competitor-analysis
@@ -603,7 +603,7 @@ skills:
   source: biztrends.TW
   repo_count: 2
   updated_at: '2026-09-01'
-  revised_at: '2026-09-24'
+  revised_at: '2026-09-30'
 - name: skill-theme-competitor-groups-curate
   group: common
   path: common/skill-theme-competitor-groups-curate
@@ -616,7 +616,7 @@ skills:
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
   repo_count: 3
   updated_at: '2026-08-04'
-  revised_at: '2026-09-01'
+  revised_at: '2026-09-30'
 - name: skill-theme-cycle-coverage
   group: common
   path: common/skill-theme-cycle-coverage
@@ -628,7 +628,7 @@ skills:
   source: biztrends.TW
   repo_count: 1
   updated_at: ''
-  revised_at: '2026-08-26'
+  revised_at: '2026-09-30'
 - name: skill-theme-cycle-index
   group: common
   path: common/skill-theme-cycle-index
@@ -641,7 +641,7 @@ skills:
   source: biztrends.TW
   repo_count: 1
   updated_at: '2026-07-20'
-  revised_at: '2026-08-26'
+  revised_at: '2026-09-30'
 - name: skill-tw-land-geo-signal
   group: common
   path: common/skill-tw-land-geo-signal
@@ -680,7 +680,7 @@ skills:
     skills/tw-legal-rag/)
   repo_count: 1
   updated_at: '2026-08-31'
-  revised_at: '2026-08-31'
+  revised_at: '2026-09-30'
 - name: skill-tw-legal-search-console
   group: common
   path: common/skill-tw-legal-search-console
@@ -692,7 +692,7 @@ skills:
   source: TW-person-legal-search
   repo_count: 1
   updated_at: '2026-08-31'
-  revised_at: '2026-08-31'
+  revised_at: '2026-09-30'
 - name: skill-usb-gadget-debug
   group: common
   path: common/skill-usb-gadget-debug
