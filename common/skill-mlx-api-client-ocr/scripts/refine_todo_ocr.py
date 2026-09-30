@@ -57,6 +57,7 @@ OCR_TIMEOUT_RE = re.compile(
     r'<!-- OCR:timeout page=(?P<page>\d+) count=(?P<count>\d+) '
     r'last="(?P<last>[^"]+)" kind="(?P<kind>[\w-]+)" -->'
 )
+NO_TEXT_RESULT = "> OCR completed; no text recognized on this page."
 
 
 def _record_ocr_timeout(md_text: str, page: int, kind: str, timestamp: str) -> tuple[str, int]:
@@ -210,6 +211,70 @@ def _extract_single_page_pdf(pdf_path: Path, page_num: int, dest_dir: Path) -> P
     return out_path
 
 
+def _extract_embedded_page_text(pdf_path: Path, page_num: int) -> str:
+    """Return the original PDF text layer for one page, or empty when absent."""
+    try:
+        import fitz
+
+        doc = fitz.open(str(pdf_path))
+        try:
+            if not (1 <= page_num <= doc.page_count):
+                raise ValueError(f"頁碼超出範圍：{page_num}（共 {doc.page_count} 頁）")
+            return (doc.load_page(page_num - 1).get_text("text") or "").strip()
+        finally:
+            doc.close()
+    except ImportError:
+        from pypdf import PdfReader
+
+        reader = PdfReader(str(pdf_path))
+        if not (1 <= page_num <= len(reader.pages)):
+            raise ValueError(f"頁碼超出範圍：{page_num}（共 {len(reader.pages)} 頁）")
+        return (reader.pages[page_num - 1].extract_text() or "").strip()
+
+
+def repair_empty_ocr_results(md_path: Path, pdf_path: Path | None,
+                             pages: set[int] | None = None) -> int:
+    """Replace old empty-OCR placeholders with the source PDF's text layer."""
+    md_text = md_path.read_text(encoding="utf-8")
+    if pdf_path is None:
+        source_match = re.search(
+            r'<!-- mac-mini-ocr:hybrid-base source="(?P<source>[^"]+)"', md_text
+        )
+        if not source_match:
+            raise ValueError("找不到來源 PDF；請使用 --pdf 指定")
+        pdf_path = md_path.parent / source_match.group("source")
+    if not pdf_path.exists():
+        raise FileNotFoundError(f"找不到原始 PDF：{pdf_path}")
+
+    repaired = 0
+    page_sections = re.compile(r"<!-- PAGE:(?P<page>\d+) -->.*?(?=<!-- PAGE:\d+ -->|\Z)", re.DOTALL)
+    for match in reversed(list(page_sections.finditer(md_text))):
+        page = int(match.group("page"))
+        if pages and page not in pages:
+            continue
+        section = match.group(0)
+        if NO_TEXT_RESULT not in section:
+            continue
+        embedded_text = _extract_embedded_page_text(pdf_path, page)
+        if not embedded_text:
+            continue
+
+        section = section.replace(NO_TEXT_RESULT, embedded_text, 1)
+        done_marker = re.search(r"<!-- OCR:done (?P<attrs>.*?) -->", section)
+        if done_marker and "content_source=" not in done_marker.group("attrs"):
+            attrs = done_marker.group("attrs")
+            marker = f'<!-- OCR:done {attrs} content_source="pdf-text-layer-fallback" -->'
+            section = section[:done_marker.start()] + marker + section[done_marker.end():]
+        md_text = md_text[:match.start()] + section + md_text[match.end():]
+        repaired += 1
+        print(f"[repair] 第 {page} 頁已由 PDF 內嵌文字層修復。", file=sys.stderr)
+
+    if repaired:
+        md_path.write_text(md_text, encoding="utf-8", newline="\n")
+    print(f"[repair] 完成：修復 {repaired} 頁。")
+    return repaired
+
+
 def refine(md_path: Path, pdf_path: Path | None, pages: set[int] | None, dpi: int,
            engine: str | None = None) -> int:
     """補轉錄 TODO:OCR 頁面，回傳成功補轉錄的頁數。"""
@@ -269,8 +334,19 @@ def refine(md_path: Path, pdf_path: Path | None, pages: set[int] | None, dpi: in
                     ocr_md = _ocr_image_with_tesseract(single).strip()
                     local_fallback = True
 
+            content_source = "mac-mini-ocr"
             if not ocr_md:
-                ocr_md = "> OCR completed; no text recognized on this page."
+                embedded_text = _extract_embedded_page_text(pdf_path, page)
+                if embedded_text:
+                    ocr_md = embedded_text
+                    content_source = "pdf-text-layer-fallback"
+                    print(
+                        f"[refine] 第 {page} 頁 OCR 沒有文字，改用 PDF 內嵌文字層。",
+                        file=sys.stderr,
+                    )
+                else:
+                    ocr_md = NO_TEXT_RESULT
+                    content_source = "empty-ocr"
 
             result_engine = "local-tesseract" if local_fallback else f"mac-mini-{engine or os.getenv('OCR_ENGINE', 'baidu')}"
             timeout_count, last_timeout, timeout_kind = _timeout_metadata(md_text, page)
@@ -283,7 +359,7 @@ def refine(md_path: Path, pdf_path: Path | None, pages: set[int] | None, dpi: in
             new_section = (
                 f"<!-- PAGE:{page} -->\n"
                 f"## 第 {page} 頁\n\n"
-                f'<!-- OCR:done source="{todo["source"]}" page={page} date="{today}" engine="{result_engine}"{timeout_fields} -->\n'
+                f'<!-- OCR:done source="{todo["source"]}" page={page} date="{today}" engine="{result_engine}" content_source="{content_source}"{timeout_fields} -->\n'
                 f"{ocr_md}\n\n"
             )
             md_text, n = re.subn(
@@ -320,6 +396,8 @@ if __name__ == "__main__":
     parser.add_argument("--pages", help="只處理指定頁碼，逗號分隔（例：3,7）")
     parser.add_argument("--dpi", type=int, default=200, help="OCR 渲染解析度（預設 200）")
     parser.add_argument("--engine", choices=("baidu", "paddle"), help="Mac-mini OCR 引擎（預設使用 OCR_ENGINE 或 baidu）")
+    parser.add_argument("--repair-empty", action="store_true",
+                        help="不重跑 OCR；將既有空結果改用 PDF 內嵌文字層修復")
     parser.add_argument("--list", action="store_true", help="只列出 TODO:OCR 頁面，不執行 OCR")
     args = parser.parse_args()
 
@@ -338,7 +416,11 @@ if __name__ == "__main__":
 
     page_set = {int(p) for p in args.pages.split(",")} if args.pages else None
     try:
-        refine(md_file, Path(args.pdf) if args.pdf else None, page_set, args.dpi, args.engine)
+        pdf_file = Path(args.pdf) if args.pdf else None
+        if args.repair_empty:
+            repair_empty_ocr_results(md_file, pdf_file, page_set)
+        else:
+            refine(md_file, pdf_file, page_set, args.dpi, args.engine)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)

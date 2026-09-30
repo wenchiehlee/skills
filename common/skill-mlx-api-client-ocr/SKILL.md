@@ -7,7 +7,7 @@ description: 使用自建在 Mac-mini 上的 OCR API 服務，將 PDF 或圖片�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.7.0（詳見 `metadata.json`） |
+| 版本 | 1.7.1（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/FamilyHealthyCheck |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-client-ocr`） |
 | 維護者 | wenchiehlee |
@@ -28,6 +28,7 @@ skill-mlx-api-client-ocr/
     ├── benchmark_ocr_engines.py # 同頁面串行比較 Baidu / Paddle 的速度
     ├── pdf_fallback.py    # Mac-mini 離線時的本地非 OCR PDF→Markdown 退援轉換
     ├── refine_todo_ocr.py # 補轉錄 Markdown 中標記 TODO:OCR 的頁面
+    ├── test_refine_todo_ocr.py # 空 OCR 回退到 PDF 內嵌文字的迴歸測試
     ├── convert_ir_pdfs.py # 批次處理法說會簡報 PDF 轉錄工具
     └── heic_convert.py    # HEIC 圖片（手機拍攝文件）轉 PNG 後送 OCR 轉錄
 ```
@@ -132,6 +133,7 @@ python scripts/refine_todo_ocr.py output.md --pdf path/to/report.pdf
 *   `reason=scanned-page`：該頁幾乎沒有文字層（掃描影像頁），整頁需要 OCR。
 *   `reason=embedded-images`：該頁有文字層但含內嵌圖片，且使用者明確要求 `--mark-embedded-images` 時才標記。
 *   補轉錄完成後，標記會被替換為 `<!-- OCR:done source="..." page=N date="..." -->`，OCR 結果直接取代該頁內容。
+*   若 API 回傳成功但 Markdown 為空，client 會回退至來源 PDF 的內嵌文字層；`OCR:done` 會以 `content_source="pdf-text-layer-fallback"` 註明實際內容來源。修復已經寫入的空結果時，執行 `python scripts/refine_todo_ocr.py report.md --pdf report.pdf --repair-empty`，可只修復空結果而不重跑 OCR。
 *   Mac-mini 回傳 HTTP 504，或 client 的 OCR response read timeout 時，`refine_todo_ocr.py` 會在該頁 TODO 下方寫入／累加 `<!-- OCR:timeout page=N count=K last="..." kind="http-504|client-read-timeout" -->`，並在本機 fallback 前立即存檔。若重試後仍失敗，TODO 和 timeout 記錄都會保留；若本機 fallback 完成，`OCR:done` 標記會帶上 `mac_mini_timeouts`、最後 timeout 時間與類型，保留該頁累計次數。
 *   Mac-mini OCR API 若回傳 detector/debug 標記或 `save results` 區塊，client 會在寫檔前清理，只保留可讀 Markdown。
 *   注意：對純掃描 PDF（如掃描的健檢報告）只能先產生整頁 TODO:OCR 標記的骨架；表格與版面資訊仍需等 OCR 補轉錄後才可用。
