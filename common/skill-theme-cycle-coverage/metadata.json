@@ -2,7 +2,25 @@
   "name": "skill-theme-cycle-coverage",
   "version": "0.2.3",
   "description": "Build AI trend coverage, validity, issue register, and inference quality-gate outputs from company canonical cycle data.",
+  "maintainer": "wenchiehlee",
+  "source": "biztrends.TW",
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-theme-cycle-coverage",
   "files": [
-    "self_update.py"
+    "metadata.json",
+    "scripts/run_ai_trend_analytics.py",
+    "self_update.py",
+    "SKILL.md"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-theme-cycle-coverage"
+    },
+    {
+      "repo": "wenchiehlee-money/biztrends.TW",
+      "role": "consumer",
+      "local_path": "github.com/biztrends.TW/skills/skill-theme-cycle-coverage"
+    }
   ]
 }

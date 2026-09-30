@@ -19,6 +19,11 @@
       "repo": "wenchiehlee/skills",
       "local_path": "github.com/skills/common/skill-facebook-fetch",
       "role": "registry"
+    },
+    {
+      "repo": "wenchiehlee-money/Facebook.Fetch",
+      "local_path": "github.com/Facebook.Fetch/skills/skill-facebook-fetch",
+      "role": "consumer"
     }
   ]
 }

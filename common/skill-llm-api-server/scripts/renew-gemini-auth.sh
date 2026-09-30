@@ -1,5 +1,8 @@
 #!/bin/bash
-# 在筆電上執行此腳本以更新 Gemini CLI OAuth token 並同步到 NAS
+# ⚠️ 已停用：gemini-cli 的消費者 OAuth 登入已於 2026-06-18 被 Google 終止
+# （`gemini auth login` 會回傳 invalid_grant / exitCode 41）。
+# `/gemini/exec` 現已改走 GEMINI_API_KEY 直連 Gemini API，不再需要這支腳本。
+# 保留於此僅供歷史參考；請改到 GitHub repo Secrets 設定 GEMINI_API_KEY。
 set -e
 
 NAS_HOST="newton.tail28f10.ts.net"

@@ -94,6 +94,23 @@ The runner does this in order:
 5. Unless `--no-refine` is passed, repair `TODO:OCR` pages with `skill-mac-mini-ocr/scripts/refine_todo_ocr.py` when the Mac-mini OCR API is reachable.
 6. Report total PDFs, missing MD sidecars, invalid PDFs, converted files, and remaining `TODO:OCR` counts.
 
+### Batch-repairing the whole `TODO:OCR` backlog
+
+`run_mops_fetch.py` only refines `TODO:OCR` pages for the one company/year/quarter it was invoked with. When the health report's `ocr_needed_count` (표二's `mops_pdf_sync` row) is non-zero and you don't already know which company/quarter it is, don't loop `run_mops_fetch.py` over every candidate — scan and repair the whole `downloads/` tree in one pass:
+
+```bash
+# List every Markdown file still carrying TODO:OCR markers, across all companies
+python skills/skill-mops-fetch/scripts/refine_pending_ocr.py --dry-run
+
+# Actually call skill-mlx-api-client-ocr's refine_todo_ocr.py on each one
+python skills/skill-mops-fetch/scripts/refine_pending_ocr.py
+
+# Cap how many get attempted in one run (useful if the OCR API is slow)
+python skills/skill-mops-fetch/scripts/refine_pending_ocr.py --limit 5
+```
+
+It reuses `run_mops_fetch.py`'s own `find_mops_repo`/`find_mac_mini_ocr_skill`/`count_todo`/`run_command` helpers, so behavior — including leaving `TODO:OCR` markers in place when Mac-mini OCR is unreachable — is identical to running the per-company workflow; this is purely a bulk driver over the same logic, not a second implementation.
+
 ## Batch, watchlist, early-filer, and health steps
 
 These are run directly (not through the runner script above), but are part of the same fetch pipeline this skill documents:

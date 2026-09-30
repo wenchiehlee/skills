@@ -12,6 +12,7 @@ skills:
   category: basic
   maintainer: WJLEE
   source: wj-lee_Barco.github.com/gadget/skills/Android BaseUnit-adb
+  repo_count: 0
   updated_at: '2026-07-21'
   revised_at: '2026-08-07'
 - name: skill-company-data-index-sync
@@ -22,6 +23,7 @@ skills:
   category: financial-data
   maintainer: wenchiehlee
   source: TAIEX.TW
+  repo_count: 1
   updated_at: '2026-07-07'
   revised_at: '2026-08-26'
 - name: skill-company-decision-report
@@ -32,6 +34,7 @@ skills:
   category: financial-strategy
   maintainer: wenchiehlee
   source: TAIEX.TW
+  repo_count: 1
   updated_at: '2026-07-07'
   revised_at: '2026-08-26'
 - name: skill-company-download-logo
@@ -42,6 +45,7 @@ skills:
   category: basic
   maintainer: wenchiehlee
   source: ''
+  repo_count: 1
   updated_at: '2026-07-07'
   revised_at: '2026-08-07'
 - name: skill-company-earnings-compare
@@ -52,6 +56,7 @@ skills:
   category: financial-accounting
   maintainer: wenchiehlee
   source: TAIEX.TW
+  repo_count: 1
   updated_at: '2026-07-07'
   revised_at: '2026-08-26'
 - name: skill-company-earnings-monitor
@@ -62,8 +67,20 @@ skills:
   category: financial-data
   maintainer: wenchiehlee
   source: TAIEX.TW
+  repo_count: 1
   updated_at: '2026-07-07'
   revised_at: '2026-08-26'
+- name: skill-company-earnings-social-verify
+  group: common
+  path: common/skill-company-earnings-social-verify
+  version: 1.0.1
+  description: 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異
+  category: basic
+  maintainer: wenchiehlee
+  source: TAIEX.TW
+  repo_count: 1
+  updated_at: '2026-09-03'
+  revised_at: '2026-09-03'
 - name: skill-company-enrichment-json
   group: common
   path: common/skill-company-enrichment-json
@@ -73,6 +90,7 @@ skills:
   category: basic
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/My-TW-Coverage
+  repo_count: 2
   updated_at: '2026-09-03'
   revised_at: '2026-09-03'
 - name: skill-company-enrichment-render
@@ -84,6 +102,7 @@ skills:
   category: financial-data
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
+  repo_count: 1
   updated_at: '2026-07-31'
   revised_at: '2026-09-30'
 - name: skill-company-investorconference-digest
@@ -95,6 +114,7 @@ skills:
   category: basic
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
+  repo_count: 1
   updated_at: '2026-07-23'
   revised_at: '2026-09-25'
 - name: skill-company-investorconference-ingest
@@ -106,6 +126,7 @@ skills:
   category: basic
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
+  repo_count: 1
   updated_at: '2026-08-17'
   revised_at: '2026-09-25'
 - name: skill-company-investorconference-ir-pdf-md
@@ -118,8 +139,21 @@ skills:
   category: financial-data
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
+  repo_count: 1
   updated_at: '2026-07-19'
   revised_at: '2026-08-07'
+- name: skill-company-mops-financialreport-pdf-md
+  group: common
+  path: common/skill-company-mops-financialreport-pdf-md
+  version: 1.0.1
+  description: Download Taiwan MOPS quarterly financial-report PDFs, then convert
+    same-stem Markdown sidecars with skill-mac-mini-ocr hybrid PDF/OCR workflow.
+  category: financial-data
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee-money/MOPS
+  repo_count: 0
+  updated_at: '2026-07-19'
+  revised_at: '2026-09-09'
 - name: skill-company-reputation-research
   group: common
   path: common/skill-company-reputation-research
@@ -130,6 +164,7 @@ skills:
   category: basic
   maintainer: wenchiehlee
   source: ''
+  repo_count: 0
   updated_at: '2026-08-20'
   revised_at: '2026-08-20'
 - name: skill-company-revenue-expense-profit-predict
@@ -140,6 +175,7 @@ skills:
   category: financial-forecasting
   maintainer: ''
   source: ''
+  repo_count: 1
   updated_at: ''
   revised_at: '2026-08-26'
 - name: skill-company-revenue-forecast-benchmark
@@ -150,6 +186,7 @@ skills:
   category: financial-forecasting
   maintainer: WJLEE
   source: biztrends.TW/Skills/skill-company-revenue-forecast-benchmark.md
+  repo_count: 1
   updated_at: '2026-07-05'
   revised_at: '2026-08-26'
 - name: skill-company-revenue-predict
@@ -160,19 +197,21 @@ skills:
   category: financial-forecasting
   maintainer: ''
   source: ''
+  repo_count: 1
   updated_at: ''
   revised_at: '2026-08-26'
 - name: skill-company-revenue-segment-weights
   group: common
   path: common/skill-company-revenue-segment-weights
-  version: 1.3.1
+  version: 1.4.0
   description: 更新與稽核 company revenue segment weights evidence、quarterly candidates、QA
     report 與 active snapshot；目前支援 biztrends.TW 台股 InvestorConference/MOPS/IR Markdown
     evidence，並在更新 company_segment_weights.csv 前產出資料解讀 QA。
   category: financial-strategy
   maintainer: wenchiehlee
   source: biztrends.TW
-  updated_at: '2026-07-19'
+  repo_count: 1
+  updated_at: '2026-09-30'
   revised_at: '2026-08-26'
 - name: skill-company-segment-viz
   group: common
@@ -182,6 +221,7 @@ skills:
   category: financial-accounting
   maintainer: wenchiehlee
   source: TAIEX.TW
+  repo_count: 1
   updated_at: '2026-07-07'
   revised_at: '2026-08-26'
 - name: skill-document-diagram-design
@@ -194,6 +234,7 @@ skills:
   category: document
   maintainer: wenchiehlee-money
   source: https://github.com/cathrynlavery/diagram-design
+  repo_count: 0
   updated_at: '2026-09-05'
   revised_at: '2026-09-21'
 - name: skill-facebook-fetch
@@ -205,6 +246,7 @@ skills:
   category: financial-data
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/Facebook.Fetch
+  repo_count: 1
   updated_at: '2026-07-21'
   revised_at: '2026-08-07'
 - name: skill-finmind-fetch
@@ -216,6 +258,7 @@ skills:
   category: financial-data
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/Python-Actions.FinMind
+  repo_count: 2
   updated_at: '2026-09-22'
   revised_at: '2026-09-30'
 - name: skill-goodinfo-fetch
@@ -228,6 +271,7 @@ skills:
   category: financial-data
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-investment/Python-Actions.GoodInfo
+  repo_count: 3
   updated_at: '2026-08-17'
   revised_at: '2026-08-17'
 - name: skill-google-alert-fetch
@@ -240,6 +284,7 @@ skills:
   category: financial-data
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/GoogleAlertManager
+  repo_count: 1
   updated_at: '2026-08-25'
   revised_at: '2026-08-25'
 - name: skill-google-analytics-monitor
@@ -251,6 +296,7 @@ skills:
   category: analytics
   maintainer: wenchiehlee
   source: https://pypi.org/project/google-analytics-cli/
+  repo_count: 0
   updated_at: '2026-07-18'
   revised_at: '2026-08-07'
 - name: skill-googlesearch-factsets-fetch
@@ -265,30 +311,33 @@ skills:
   category: financial-data
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/GoogleSearch.Factset
+  repo_count: 1
   updated_at: '2026-08-25'
   revised_at: '2026-08-26'
 - name: skill-institutional-thesis-research
   group: common
   path: common/skill-institutional-thesis-research
-  version: 1.1.1
+  version: 1.2.0
   description: Maintain auditable five-institution investment thesis research and
     interpret articles/news through selected institutional lenses for TW-institutional-investment-theses.
   category: financial-strategy
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/TW-institutional-investment-theses
-  updated_at: '2026-08-20'
+  repo_count: 1
+  updated_at: '2026-09-30'
   revised_at: '2026-08-26'
 - name: skill-institutional-tw-report-research
   group: common
   path: common/skill-institutional-tw-report-research
-  version: 0.1.1
+  version: 0.1.2
   description: 'Maintain auditable Taiwan listed/OTC institutional research intelligence:
     broker/advisory reports, ratings, target prices, EPS revisions, investor-conference
     linkage, consensus, and TWSE/TPEx institutional-flow comparison.'
   category: financial-strategy
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/TW-institutional-research
-  updated_at: '2026-08-26'
+  repo_count: 1
+  updated_at: '2026-09-30'
   revised_at: '2026-08-26'
 - name: skill-investment-decision-coach
   group: common
@@ -302,6 +351,7 @@ skills:
   category: financial-strategy
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/Miz.Fetch
+  repo_count: 1
   updated_at: '2026-09-03'
   revised_at: '2026-09-03'
 - name: skill-llm-api-client
@@ -313,19 +363,21 @@ skills:
   category: library
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/llm
+  repo_count: 1
   updated_at: '2026-09-01'
   revised_at: '2026-09-01'
 - name: skill-llm-api-server
   group: common
   path: common/skill-llm-api-server
-  version: 1.1.1
+  version: 1.2.0
   description: 在 Synology NAS Docker 容器中運行的 LLM CLI 橋接伺服器，將 OpenAI codex-cli（ChatGPT
     Pro）與 Google gemini-cli 封裝為 Flask/Waitress HTTP API（/exec、/gemini/exec、/smart/exec），供
     llm 函式庫的 CodexProvider 遠端呼叫。
   category: server
   maintainer: wenchiehlee
   source: https://github.com/ZhongZheng782/Llm-Cli-APIServer
-  updated_at: '2026-08-30'
+  repo_count: 1
+  updated_at: '2026-09-30'
   revised_at: '2026-09-28'
 - name: skill-miz-fetch
   group: common
@@ -337,6 +389,7 @@ skills:
   category: document
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/Miz.Fetch
+  repo_count: 1
   updated_at: '2026-08-12'
   revised_at: '2026-08-12'
 - name: skill-mlx-api-client-ocr
@@ -348,6 +401,7 @@ skills:
   category: document
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/FamilyHealthyCheck
+  repo_count: 5
   updated_at: '2026-08-30'
   revised_at: '2026-09-01'
 - name: skill-mlx-api-client-whisper
@@ -359,6 +413,7 @@ skills:
   category: document
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/InvestorConference
+  repo_count: 2
   updated_at: '2026-08-30'
   revised_at: '2026-08-30'
 - name: skill-mlx-api-server
@@ -370,6 +425,7 @@ skills:
   category: server
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts
+  repo_count: 1
   updated_at: '2026-08-30'
   revised_at: '2026-08-30'
 - name: skill-mlx-api-server-whisper
@@ -381,12 +437,13 @@ skills:
   category: server
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server-whisper/scripts
+  repo_count: 1
   updated_at: '2026-08-12'
   revised_at: '2026-08-25'
 - name: skill-mops-fetch
   group: common
   path: common/skill-mops-fetch
-  version: 1.2.0
+  version: 1.3.0
   description: 'Fetch Taiwan MOPS data end to end: download quarterly financial-report
     PDFs, convert same-stem Markdown sidecars with the skill-mac-mini-ocr hybrid PDF/OCR
     workflow, track official filing deadlines, and orchestrate the repo''s batch/early-filer/health-report
@@ -394,7 +451,8 @@ skills:
   category: financial-data
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/MOPS
-  updated_at: '2026-09-09'
+  repo_count: 1
+  updated_at: '2026-09-30'
   revised_at: '2026-09-09'
 - name: skill-pptx-to-md
   group: common
@@ -404,6 +462,7 @@ skills:
   category: document
   maintainer: wenchiehlee
   source: ''
+  repo_count: 0
   updated_at: '2026-07-09'
   revised_at: '2026-08-25'
 - name: skill-scribd-pdf-fetch
@@ -415,6 +474,7 @@ skills:
   category: document
   maintainer: wenchiehlee-money
   source: ''
+  repo_count: 2
   updated_at: '2026-09-02'
   revised_at: '2026-09-02'
 - name: skill-stock-dynamic-valuation-box
@@ -432,8 +492,20 @@ skills:
   category: financial-strategy
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
+  repo_count: 2
   updated_at: '2026-09-28'
   revised_at: '2026-09-28'
+- name: skill-stock-earnings-calendar-monitor
+  group: common
+  path: common/skill-stock-earnings-calendar-monitor
+  version: 1.0.1
+  description: 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板
+  category: basic
+  maintainer: wenchiehlee
+  source: TAIEX.TW
+  repo_count: 1
+  updated_at: '2026-09-03'
+  revised_at: '2026-09-03'
 - name: skill-stock-fiscal-quarter-resolve
   group: common
   path: common/skill-stock-fiscal-quarter-resolve
@@ -444,6 +516,7 @@ skills:
   category: financial-data
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/skills
+  repo_count: 3
   updated_at: '2026-09-25'
   revised_at: '2026-09-25'
 - name: skill-stock-investorevent-fetch
@@ -456,6 +529,7 @@ skills:
   category: financial-data
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
+  repo_count: 3
   updated_at: '2026-08-27'
   revised_at: '2026-09-25'
 - name: skill-stock-ma-rsi-bband-macd-peband
@@ -468,6 +542,7 @@ skills:
   category: financial-strategy
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
+  repo_count: 2
   updated_at: '2026-09-23'
   revised_at: '2026-09-23'
 - name: skill-stock-market-cost-distribution
@@ -478,6 +553,7 @@ skills:
   category: financial-forecasting
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/MarketCostDistribution
+  repo_count: 1
   updated_at: '2026-07-15'
   revised_at: '2026-08-07'
 - name: skill-stock-pipeline-health-monitor
@@ -489,6 +565,7 @@ skills:
   category: financial-data
   maintainer: wenchiehlee
   source: biztrends.TW
+  repo_count: 1
   updated_at: '2026-09-23'
   revised_at: '2026-09-25'
 - name: skill-stock-topcrash
@@ -499,6 +576,7 @@ skills:
   category: financial-strategy
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
+  repo_count: 1
   updated_at: '2026-08-10'
   revised_at: '2026-08-25'
 - name: skill-stock-universe-onboarding
@@ -510,6 +588,7 @@ skills:
   category: financial-data
   maintainer: wenchiehlee
   source: biztrends.TW / ConceptStocks / Selenium-Actions.Auction
+  repo_count: 3
   updated_at: '2026-07-22'
   revised_at: '2026-08-07'
 - name: skill-theme-competitor-analysis
@@ -522,6 +601,7 @@ skills:
   category: financial-strategy
   maintainer: wenchiehlee
   source: biztrends.TW
+  repo_count: 2
   updated_at: '2026-09-01'
   revised_at: '2026-09-24'
 - name: skill-theme-competitor-groups-curate
@@ -534,6 +614,7 @@ skills:
   category: financial-strategy
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
+  repo_count: 3
   updated_at: '2026-08-04'
   revised_at: '2026-09-01'
 - name: skill-theme-cycle-coverage
@@ -543,8 +624,9 @@ skills:
   description: Build AI trend coverage, validity, issue register, and inference quality-gate
     outputs from company canonical cycle data.
   category: basic
-  maintainer: ''
-  source: ''
+  maintainer: wenchiehlee
+  source: biztrends.TW
+  repo_count: 1
   updated_at: ''
   revised_at: '2026-08-26'
 - name: skill-theme-cycle-index
@@ -557,6 +639,7 @@ skills:
   category: financial-strategy
   maintainer: wenchiehlee
   source: biztrends.TW
+  repo_count: 1
   updated_at: '2026-07-20'
   revised_at: '2026-08-26'
 - name: skill-tw-land-geo-signal
@@ -568,6 +651,7 @@ skills:
   category: geo-data
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/LandAsset
+  repo_count: 1
   updated_at: '2026-07-25'
   revised_at: '2026-08-25'
 - name: skill-tw-land-realty-comps
@@ -578,6 +662,7 @@ skills:
   category: financial-data
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/LandAsset
+  repo_count: 2
   updated_at: '2026-07-25'
   revised_at: '2026-08-25'
 - name: skill-tw-legal-rag
@@ -593,6 +678,7 @@ skills:
   maintainer: wenchiehlee
   source: TW-person-legal-search (vendored from https://github.com/aa0101181514/tw-legal-rag,
     skills/tw-legal-rag/)
+  repo_count: 1
   updated_at: '2026-08-31'
   revised_at: '2026-08-31'
 - name: skill-tw-legal-search-console
@@ -604,6 +690,7 @@ skills:
   category: basic
   maintainer: wenchiehlee
   source: TW-person-legal-search
+  repo_count: 1
   updated_at: '2026-08-31'
   revised_at: '2026-08-31'
 - name: skill-usb-gadget-debug
@@ -615,6 +702,7 @@ skills:
   category: basic
   maintainer: WJLEE
   source: wj-lee_Barco.github.com/gadget/debug_usb.py
+  repo_count: 0
   updated_at: '2026-07-21'
   revised_at: '2026-08-07'
 - name: skill-usb-gadget-monitor
@@ -628,6 +716,7 @@ skills:
   category: analytics
   maintainer: WJLEE
   source: wj-lee_Barco.github.com/gadget/android_baseunit_monitor.py
+  repo_count: 0
   updated_at: '2026-07-21'
   revised_at: '2026-08-07'
 - name: skill-usb-uvc-4k-capture
@@ -641,6 +730,7 @@ skills:
   category: basic
   maintainer: WJLEE
   source: wj-lee_Barco.github.com/gadget/uvc_camera_forward.c
+  repo_count: 0
   updated_at: '2026-07-21'
   revised_at: '2026-08-07'
 - name: skill-usb-wasapi-capture-debug
@@ -652,6 +742,7 @@ skills:
   category: basic
   maintainer: WJLEE
   source: wj-lee_Barco.github.com/gadget/debug_wasapi.py
+  repo_count: 0
   updated_at: '2026-07-21'
   revised_at: '2026-08-07'
 - name: skill-yahoo-finance-fetch
@@ -664,6 +755,7 @@ skills:
   category: financial-data
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/Yahoo.Finance
+  repo_count: 1
   updated_at: '2026-08-18'
   revised_at: '2026-08-18'
 - name: skill-youtube-channel-fetch
@@ -679,6 +771,7 @@ skills:
   category: document
   maintainer: wenchiehlee
   source: https://github.com/ZhongZheng782/YoutubeAudio.Fetch
+  repo_count: 1
   updated_at: '2026-09-17'
   revised_at: '2026-09-17'
 - name: skill-youtube-channel-srt-keyframe-extract
@@ -690,5 +783,6 @@ skills:
   category: document
   maintainer: wenchiehlee
   source: https://github.com/ZhongZheng782/YoutubeAudio.Fetch
+  repo_count: 1
   updated_at: '2026-09-02'
   revised_at: '2026-09-02'

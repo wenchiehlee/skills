@@ -80,6 +80,8 @@ def collect_skills() -> list[dict]:
             except Exception as e:
                 print(f"[index] 略過 {meta_path}（metadata.json 解析失敗：{e}）", file=sys.stderr)
                 continue
+            deployments = meta.get("deployments", [])
+            repo_count = len([d for d in deployments if d.get("role") != "registry"])
             skills.append({
                 "name": skill_dir.name,
                 "group": group_dir.name,
@@ -89,6 +91,7 @@ def collect_skills() -> list[dict]:
                 "category": meta.get("category", "basic"),
                 "maintainer": meta.get("maintainer", ""),
                 "source": meta.get("source", ""),
+                "repo_count": repo_count,
                 "updated_at": meta.get("updated_at", ""),
                 "revised_at": _git_last_commit_date(skill_dir) or _mtime_date(skill_dir),
             })
@@ -109,13 +112,15 @@ def write_index(skills: list[dict]) -> None:
 
 def render_table(skills: list[dict]) -> str:
     lines = [
-        "| 技能 | 群組 | 分類 | 版本 | 說明 | 修訂日期 |",
-        "| :--- | :--- | :--- | :--- | :--- | :--- |",
+        "| 技能 | 群組 | 分類 | 版本 | 說明 | repo 數 | 修訂日期 |",
+        "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
     ]
     for s in skills:
         desc = s["description"].replace("|", "\\|")
+        repo_count = s.get("repo_count", 0)
+        repo_display = str(repo_count) if repo_count else "—"
         lines.append(
-            f"| [{s['name']}]({s['path']}) | {s['group']} | {s['category']} | {s['version']} | {desc} | {s['revised_at']} |"
+            f"| [{s['name']}]({s['path']}) | {s['group']} | {s['category']} | {s['version']} | {desc} | {repo_display} | {s['revised_at']} |"
         )
     return "\n".join(lines)
 

@@ -1,6 +1,9 @@
 """
-Tests for gemini-cli related endpoints in main.py.
-Uses Flask test client + unittest.mock to avoid real subprocess calls.
+Tests for gemini-related endpoints in main.py.
+
+gemini-cli's consumer OAuth login was terminated by Google on 2026-06-18
+(invalid_grant). /gemini/exec and /smart/exec (gemini) now call agy
+(Antigravity CLI, OAuth, main._run_agy) instead of the old gemini binary.
 """
 import subprocess
 from unittest.mock import MagicMock, patch
@@ -35,14 +38,15 @@ def _make_proc(returncode=0, stdout="", stderr=""):
 # -- GET /gemini/status --------------------------------------------------------
 
 def test_gemini_status_installed(client):
-    with patch("main.subprocess.run", return_value=_make_proc(stdout="0.40.1")) as m:
+    with patch("main.subprocess.run", return_value=_make_proc(stdout="agy 1.1.22")) as m:
         r = client.get("/gemini/status")
 
     assert r.status_code == 200
     data = r.get_json()
     assert data["gemini_cli"] == "installed"
-    assert data["version"] == "0.40.1"
-    m.assert_called_once_with(["gemini", "--version"], capture_output=True, text=True, timeout=10)
+    assert data["tool"] == "agy"
+    assert data["version"] == "agy 1.1.22"
+    m.assert_called_once_with(["agy", "--version"], capture_output=True, text=True, timeout=10)
 
 
 def test_gemini_status_not_found(client):
@@ -54,7 +58,7 @@ def test_gemini_status_not_found(client):
 
 
 def test_gemini_status_timeout(client):
-    with patch("main.subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="gemini", timeout=10)):
+    with patch("main.subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="agy", timeout=10)):
         r = client.get("/gemini/status")
 
     assert r.status_code == 504
@@ -74,7 +78,7 @@ def test_gemini_status_error_returncode(client):
 # -- POST /gemini/exec ---------------------------------------------------------
 
 def test_exec_gemini_success(client):
-    with patch("main.subprocess.run", return_value=_make_proc(stdout="print('hello')\n")) as m:
+    with patch("main._run_agy", return_value="print('hello')\n") as m:
         r = client.post(
             "/gemini/exec",
             json={"prompt": "write hello world in python", "model": "gemini-2.5-flash"},
@@ -82,24 +86,18 @@ def test_exec_gemini_success(client):
 
     assert r.status_code == 200
     assert r.get_json()["output"] == "print('hello')"
-    cmd_used = m.call_args[0][0]
-    assert cmd_used == [
-        "gemini",
-        "--skip-trust",
-        "-m",
-        "gemini-2.5-flash",
-        "-p",
-        "write hello world in python",
-    ]
+    m.assert_called_once_with(
+        "write hello world in python", model="gemini-2.5-flash", json_mode=False, timeout=120,
+    )
 
 
 def test_exec_gemini_success_without_model(client):
-    with patch("main.subprocess.run", return_value=_make_proc(stdout="ok")) as m:
+    with patch("main._run_agy", return_value="ok") as m:
         r = client.post("/gemini/exec", json={"prompt": "hello"})
 
     assert r.status_code == 200
     assert r.get_json()["output"] == "ok"
-    assert m.call_args[0][0] == ["gemini", "--skip-trust", "-p", "hello"]
+    m.assert_called_once_with("hello", model="", json_mode=False, timeout=120)
 
 
 def test_exec_gemini_missing_prompt(client):
@@ -122,7 +120,7 @@ def test_exec_gemini_no_json_body(client):
 
 
 def test_exec_gemini_timeout(client):
-    with patch("main.subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="gemini", timeout=120)):
+    with patch("main._run_agy", side_effect=subprocess.TimeoutExpired(cmd="agy", timeout=120)):
         r = client.post("/gemini/exec", json={"prompt": "something slow"})
 
     assert r.status_code == 504
@@ -130,7 +128,7 @@ def test_exec_gemini_timeout(client):
 
 
 def test_exec_gemini_cli_failure(client):
-    with patch("main.subprocess.run", return_value=_make_proc(returncode=1, stderr="not authenticated")):
+    with patch("main._run_agy", side_effect=RuntimeError("agy exited 1: not authenticated")):
         r = client.post("/gemini/exec", json={"prompt": "hello"})
 
     assert r.status_code == 500
@@ -156,7 +154,7 @@ def test_exec_gemini_authorized_with_key(client):
     original = m_module.CODEX_API_KEY
     m_module.CODEX_API_KEY = "secret-key"
     try:
-        with patch("main.subprocess.run", return_value=_make_proc(stdout="ok")):
+        with patch("main._run_agy", return_value="ok"):
             r = client.post(
                 "/gemini/exec",
                 json={"prompt": "hello"},
@@ -170,53 +168,53 @@ def test_exec_gemini_authorized_with_key(client):
 # -- GET /gemini/help ----------------------------------------------------------
 
 def test_gemini_help(client):
-    with patch("main.subprocess.run", return_value=_make_proc(stdout="Usage: gemini ...")) as m:
+    with patch("main.subprocess.run", return_value=_make_proc(stdout="Usage: agy ...")) as m:
         r = client.get("/gemini/help")
 
     assert r.status_code == 200
     data = r.get_json()
     assert "Usage" in data["stdout"]
-    assert m.call_args[0][0] == ["gemini", "--help"]
+    assert m.call_args[0][0] == ["agy", "--help"]
 
 
 def test_gemini_help_error(client):
-    with patch("main.subprocess.run", side_effect=FileNotFoundError("gemini not found")):
+    with patch("main.subprocess.run", side_effect=FileNotFoundError("agy not found")):
         r = client.get("/gemini/help")
 
     assert r.status_code == 500
     assert "error" in r.get_json()
 
 
-# -- _run_cli internal behaviour ----------------------------------------------
+# -- _run_agy internal behaviour ------------------------------------------------
 
-def test_run_cli_gemini_command_structure(client):
+def test_run_agy_command_structure():
+    import main as m_module
+
     captured = {}
 
     def fake_run(cmd, **kwargs):
         captured["cmd"] = cmd
-        captured["env"] = kwargs.get("env")
         return _make_proc(stdout="result")
 
     with patch("main.subprocess.run", side_effect=fake_run):
-        r = client.post(
-            "/gemini/exec",
-            json={"prompt": "my prompt", "model": "gemini-2.5-flash", "json_mode": True},
-        )
+        out = m_module._run_agy("my prompt", model="gemini-2.5-flash", json_mode=True)
 
-    assert r.status_code == 200
+    assert out == "result"
     assert captured["cmd"] == [
-        "gemini",
-        "--skip-trust",
-        "-m",
-        "gemini-2.5-flash",
-        "-p",
-        "my prompt",
+        "agy", "-p", "my prompt", "--dangerously-skip-permissions", "--model", "gemini-2.5-flash",
     ]
-    assert captured["env"]["GEMINI_SANDBOX"] == "false"
+
+
+def test_run_agy_raises_on_nonzero_exit():
+    import main as m_module
+
+    with patch("main.subprocess.run", return_value=_make_proc(returncode=1, stderr="boom")):
+        with pytest.raises(RuntimeError, match="boom"):
+            m_module._run_agy("hello")
 
 
 def test_run_cli_gemini_strips_trailing_whitespace(client):
-    with patch("main.subprocess.run", return_value=_make_proc(stdout="  output with spaces  \n")):
+    with patch("main._run_agy", return_value="  output with spaces  \n"):
         r = client.post("/gemini/exec", json={"prompt": "hello"})
 
     assert r.get_json()["output"] == "output with spaces"
@@ -226,8 +224,8 @@ def test_run_cli_gemini_strips_trailing_whitespace(client):
 
 def test_smart_exec_draft_auth_failure_returns_diagnostics(client):
     with patch("main.routing_manager.get_promoted_provider", return_value=None), patch(
-        "main.subprocess.run",
-        return_value=_make_proc(returncode=1, stderr="401 Unauthorized"),
+        "main._run_agy",
+        side_effect=RuntimeError("agy exited 1: 401 Unauthorized"),
     ):
         r = client.post(
             "/smart/exec",
@@ -250,11 +248,10 @@ def test_smart_exec_draft_auth_failure_returns_diagnostics(client):
 
 def test_smart_exec_judge_timeout_returns_diagnostics(client):
     with patch("main.routing_manager.get_promoted_provider", return_value=None), patch(
+        "main._run_agy", return_value="draft answer",
+    ), patch(
         "main.subprocess.run",
-        side_effect=[
-            _make_proc(stdout="draft answer"),
-            subprocess.TimeoutExpired(cmd="codex", timeout=120),
-        ],
+        side_effect=subprocess.TimeoutExpired(cmd="codex", timeout=120),
     ):
         r = client.post(
             "/smart/exec",

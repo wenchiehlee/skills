@@ -7,10 +7,12 @@
   "source": "TW-person-legal-search (vendored from https://github.com/aa0101181514/tw-legal-rag, skills/tw-legal-rag/)",
   "updated_at": "2026-08-31",
   "notice": "Vendored third-party skill under Elastic License 2.0 (CLI/skill); the hosted retrieval service and judgment corpus are not covered by that license — see SKILL.md and upstream TERMS.md. Not MIT-licensed like the rest of this registry.",
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-tw-legal-rag",
   "files": [
     "metadata.json",
     "SKILL.md",
-    "scripts/search_judgments.py"
+    "scripts/search_judgments.py",
+    "self_update.py"
   ],
   "deployments": [
     {
@@ -21,7 +23,7 @@
     {
       "repo": "wenchiehlee-money/TW-person-legal-search",
       "role": "consumer",
-      "local_path": "github.com/TW-person-legal-search/.claude/skills/skill-tw-legal-rag"
+      "local_path": "github.com/TW-person-legal-search/skills/skill-tw-legal-rag"
     }
   ]
 }

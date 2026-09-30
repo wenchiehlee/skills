@@ -6,8 +6,34 @@
   "maintainer": "wenchiehlee",
   "source": "biztrends.TW / ConceptStocks / Selenium-Actions.Auction",
   "updated_at": "2026-07-22",
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-stock-universe-onboarding",
   "dependencies": [],
   "files": [
-    "self_update.py"
+    "metadata.json",
+    "scripts/add_stock_universe.py",
+    "self_update.py",
+    "SKILL.md"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-stock-universe-onboarding"
+    },
+    {
+      "repo": "wenchiehlee-money/biztrends.TW",
+      "role": "consumer",
+      "local_path": "github.com/biztrends.TW/skills/skill-stock-universe-onboarding"
+    },
+    {
+      "repo": "wenchiehlee-money/My-TW-Coverage",
+      "role": "consumer",
+      "local_path": "github.com/My-TW-Coverage/skills/skill-stock-universe-onboarding"
+    },
+    {
+      "repo": "wenchiehlee-money/TW-institutional-research",
+      "role": "consumer",
+      "local_path": "github.com/TW-institutional-research/skills/skill-stock-universe-onboarding"
+    }
   ]
 }

@@ -91,6 +91,36 @@ def test_exec_codex_success(client):
     assert "--yolo" in cmd_used
 
 
+def test_exec_codex_with_model(client):
+    captured = {}
+
+    def fake_run(cmd, **kwargs):
+        captured["cmd"] = cmd
+        return _make_proc(stdout="ok")
+
+    with patch("main.subprocess.run", side_effect=fake_run):
+        r = client.post("/exec", json={"prompt": "hello", "model": "gpt-5-codex"})
+
+    assert r.status_code == 200
+    assert "--model" in captured["cmd"]
+    assert captured["cmd"][captured["cmd"].index("--model") + 1] == "gpt-5-codex"
+    assert captured["cmd"][-1] == "hello"
+
+
+def test_exec_codex_without_model_omits_flag(client):
+    captured = {}
+
+    def fake_run(cmd, **kwargs):
+        captured["cmd"] = cmd
+        return _make_proc(stdout="ok")
+
+    with patch("main.subprocess.run", side_effect=fake_run):
+        r = client.post("/exec", json={"prompt": "hello"})
+
+    assert r.status_code == 200
+    assert "--model" not in captured["cmd"]
+
+
 def test_exec_codex_missing_prompt(client):
     r = client.post("/exec", json={})
     assert r.status_code == 400

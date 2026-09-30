@@ -7,6 +7,7 @@
   "source": "https://github.com/wenchiehlee-money/InvestorConference",
   "updated_at": "2026-08-17",
   "license": "MIT",
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-company-investorconference-ingest",
   "tags": [
     "investor-conference",
     "earnings-call",
@@ -24,6 +25,28 @@
     "skill-stock-fiscal-quarter-resolve>=1.0.0"
   ],
   "files": [
-    "self_update.py"
+    "metadata.json",
+    "scripts/audio_storage_bridge.py",
+    "scripts/audio_utils.py",
+    "scripts/audit_audio_metadata.py",
+    "scripts/download_with_playwright.py",
+    "scripts/fetch_official_ir_financials.py",
+    "scripts/fetch_yahoo_transcript.py",
+    "scripts/ingest.py",
+    "scripts/migrate_audio_to_gh_releases.py",
+    "self_update.py",
+    "SKILL.md"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-company-investorconference-ingest"
+    },
+    {
+      "repo": "wenchiehlee-money/InvestorConference",
+      "role": "consumer",
+      "local_path": "github.com/InvestorConference/skills/skill-company-investorconference-ingest"
+    }
   ]
 }

@@ -17,7 +17,31 @@ app = Flask(__name__)
 CODEX_API_KEY = os.getenv("CODEX_API_KEY", "")
 CODEX_TIMEOUT = int(os.getenv("CODEX_TIMEOUT", "120"))
 GEMINI_TIMEOUT = int(os.getenv("GEMINI_TIMEOUT", "120"))
+GEMINI_DEFAULT_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 ROUTING_FILE = os.getenv("ROUTING_FILE", "/app/data/routing.json")
+
+
+def _run_agy(prompt: str, model: str = "", json_mode: bool = False, timeout: int = GEMINI_TIMEOUT) -> str:
+    """呼叫 agy（Antigravity CLI，取代已停用的 gemini-cli）的非互動模式。
+
+    subprocess.run 的 timeout 同時是對 issue #318（`agy -p` 在非 TTY 環境下可能
+    卡住不回傳）的安全網：卡住的子行程會在 timeout 秒後被強制終止。
+    """
+    cmd = ["agy", "-p", prompt, "--dangerously-skip-permissions"]
+    if model:
+        cmd.extend(["--model", model])
+    # json_mode 目前透過 prompt 指示達成，agy 尚無對應的強制 JSON 輸出旗標
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        stdin=subprocess.DEVNULL,
+        timeout=timeout,
+    )
+    if result.returncode != 0:
+        detail = result.stderr.strip() or result.stdout.strip()
+        raise RuntimeError(f"agy exited {result.returncode}: {detail}")
+    return result.stdout.strip()
 
 
 class ServerRoutingManager:
@@ -93,16 +117,28 @@ def _classify_cli_error(exc: Exception) -> str:
 
 def _run_cli(cli_name: str, prompt: str, model: str = "", json_mode: bool = False) -> str:
     """共通 CLI 執行邏輯。"""
+    if cli_name == "gemini":
+        # gemini-cli 的 OAuth 登入已於 2026-06-18 隨消費者方案停用（invalid_grant），
+        # 改用 agy（Antigravity CLI，OAuth 登入已於本機完成，見
+        # skills/skill-llm-api-server/scripts/renew-agy-auth.sh）。
+        start = time.monotonic()
+        logger.info("CLI start: cli=agy prompt_chars=%s model=%s json_mode=%s",
+                    len(prompt), model or GEMINI_DEFAULT_MODEL, json_mode)
+        try:
+            output = _run_agy(prompt, model=model, json_mode=json_mode, timeout=GEMINI_TIMEOUT)
+        except Exception:
+            logger.warning("CLI failed: cli=agy elapsed=%.1fs", time.monotonic() - start)
+            raise
+        logger.info("CLI success: cli=agy elapsed=%.1fs output_chars=%s",
+                    time.monotonic() - start, len(output))
+        return output.strip()
+
     if cli_name == "codex":
-        cmd = ["codex", "exec", "--skip-git-repo-check", "--yolo", prompt]
-        timeout = CODEX_TIMEOUT
-    elif cli_name == "gemini":
-        cmd = ["gemini", "--skip-trust"]
+        cmd = ["codex", "exec", "--skip-git-repo-check", "--yolo"]
         if model:
-            cmd.extend(["-m", model])
-        # json_mode is handled via prompt instructions, no CLI flag needed
-        cmd.extend(["-p", prompt])
-        timeout = GEMINI_TIMEOUT
+            cmd.extend(["--model", model])
+        cmd.append(prompt)
+        timeout = CODEX_TIMEOUT
     else:
         raise ValueError(f"Unknown CLI: {cli_name}")
 
@@ -179,11 +215,12 @@ def exec_codex():
 
     body = request.get_json(silent=True) or {}
     prompt = body.get("prompt", "").strip()
+    model = body.get("model", "").strip()
     if not prompt:
         return jsonify({"error": "prompt is required"}), 400
 
     try:
-        output = _run_cli("codex", prompt)
+        output = _run_cli("codex", prompt, model=model)
         return jsonify({"output": output})
     except subprocess.TimeoutExpired:
         return jsonify({"error": f"codex timed out after {CODEX_TIMEOUT}s"}), 504
@@ -207,21 +244,18 @@ def codex_help(subcommand=None):
 
 @app.route("/gemini/status")
 def gemini_status():
+    # gemini-cli 的 OAuth 登入已於 2026-06-18 隨消費者方案停用（invalid_grant）。
+    # /gemini/exec 已改用 agy（OAuth，見 renew-agy-auth.sh）。
     try:
-        result = subprocess.run(
-            ["gemini", "--version"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
+        result = subprocess.run(["agy", "--version"], capture_output=True, text=True, timeout=10)
         if result.returncode == 0:
             version = result.stdout.strip() or result.stderr.strip()
-            return jsonify({"gemini_cli": "installed", "version": version})
-        return jsonify({"gemini_cli": "error", "detail": result.stderr.strip()}), 500
+            return jsonify({"gemini_cli": "installed", "tool": "agy", "auth_mode": "oauth", "version": version})
+        return jsonify({"gemini_cli": "error", "tool": "agy", "detail": result.stderr.strip()}), 500
     except FileNotFoundError:
-        return jsonify({"gemini_cli": "not_found"}), 503
+        return jsonify({"gemini_cli": "not_found", "tool": "agy"}), 503
     except subprocess.TimeoutExpired:
-        return jsonify({"gemini_cli": "timeout"}), 504
+        return jsonify({"gemini_cli": "timeout", "tool": "agy"}), 504
 
 
 @app.route("/gemini/exec", methods=["POST"])
@@ -250,7 +284,7 @@ def exec_gemini():
 def gemini_help():
     try:
         result = subprocess.run(
-            ["gemini", "--help"],
+            ["agy", "--help"],
             capture_output=True,
             text=True,
             stdin=subprocess.DEVNULL,
