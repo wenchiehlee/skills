@@ -61,9 +61,9 @@ def find_script(script_name):
         "assembler_revenue_history.py": "skill-company-decision-report",
         "generate_reports.py": "skill-company-decision-report",
         "data_collector.py": "skill-company-data-index-sync",
-        "compare_references.py": "skill-company-earnings-compare",
-        "check_calendar_gaps.py": "skill-company-earnings-monitor",
-        "update_readme.py": "skill-company-earnings-monitor",
+        "compare_references.py": "skill-company-earnings-social-verify",
+        "check_calendar_gaps.py": "skill-stock-earnings-calendar-monitor",
+        "update_readme.py": "skill-stock-earnings-calendar-monitor",
         "generate_revenue_breakdown.py": "skill-company-segment-viz"
     }
     target_skill = skills_map.get(script_name)
