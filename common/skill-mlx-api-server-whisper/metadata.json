@@ -5,7 +5,7 @@
   "version": "2.0.1",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
-  "source": "https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server-whisper/scripts",
+  "source": "https://github.com/ZhongZheng782/Mac-mini/tree/main/skills/skill-mlx-api-server-whisper/scripts",
   "updated_at": "2026-08-12",
   "license": "MIT",
   "tags": [
@@ -77,7 +77,7 @@
       "role": "registry"
     },
     {
-      "repo": "wenchiehlee/Mac-mini",
+      "repo": "ZhongZheng782/Mac-mini",
       "local_path": "github.com/Mac-mini/skills/skill-mlx-api-server-whisper",
       "role": "consumer"
     }

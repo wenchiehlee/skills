@@ -390,7 +390,7 @@ skills:
     與 GLM-OCR 文件轉錄（共用單一 FIFO worker）及 MLX LLM 推理（/exec），以 Flask/Waitress 常駐服務形式運行。
   category: server
   maintainer: wenchiehlee
-  source: https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts
+  source: https://github.com/ZhongZheng782/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts
   repo_count: 1
   updated_at: '2026-09-30'
   revised_at: '2026-09-30'
@@ -402,7 +402,7 @@ skills:
     轉錄 → LLM postprocess → CER 校驗 → GT 校正迴圈），透過 issue 驅動、支援多種音訊來源（法說會、YouTube 財經影片…）。
   category: server
   maintainer: wenchiehlee
-  source: https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server-whisper/scripts
+  source: https://github.com/ZhongZheng782/Mac-mini/tree/main/skills/skill-mlx-api-server-whisper/scripts
   repo_count: 1
   updated_at: '2026-08-12'
   revised_at: '2026-08-25'
