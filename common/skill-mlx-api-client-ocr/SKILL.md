@@ -115,8 +115,18 @@ python scripts/refine_todo_ocr.py output.md --pdf path/to/report.pdf
 *   `reason=scanned-page`：該頁幾乎沒有文字層（掃描影像頁），整頁需要 OCR。
 *   `reason=embedded-images`：該頁有文字層但含內嵌圖片，且使用者明確要求 `--mark-embedded-images` 時才標記。
 *   補轉錄完成後，標記會被替換為 `<!-- OCR:done source="..." page=N date="..." -->`，OCR 結果直接取代該頁內容。
+*   Mac-mini 回傳 HTTP 504，或 client 的 OCR response read timeout 時，`refine_todo_ocr.py` 會在該頁 TODO 下方寫入／累加 `<!-- OCR:timeout page=N count=K last="..." kind="http-504|client-read-timeout" -->`，並在本機 fallback 前立即存檔。若重試後仍失敗，TODO 和 timeout 記錄都會保留；若本機 fallback 完成，`OCR:done` 標記會帶上 `mac_mini_timeouts`、最後 timeout 時間與類型，保留該頁累計次數。
 *   Mac-mini OCR API 若回傳 detector/debug 標記或 `save results` 區塊，client 會在寫檔前清理，只保留可讀 Markdown。
 *   注意：對純掃描 PDF（如掃描的健檢報告）只能先產生整頁 TODO:OCR 標記的骨架；表格與版面資訊仍需等 OCR 補轉錄後才可用。
+
+Timeout 記錄範例：
+
+```html
+<!-- TODO:OCR source="report.pdf" page=31 reason=scanned-page -->
+<!-- OCR:timeout page=31 count=2 last="2026-09-30T12:33:29+08:00" kind="http-504" -->
+```
+
+`count` 只在 server 明確回傳 `504` 或 OCR response read timeout 時增加；連線失敗和其他 HTTP 錯誤不計入。`kind` 區分 server timeout 與 client read timeout，避免把尚未確認的 server 狀態誤記為 900 秒 server timeout。
 
 ### 📸 方式 E：HEIC 圖片轉錄
 

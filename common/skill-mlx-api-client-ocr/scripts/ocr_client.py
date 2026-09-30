@@ -33,6 +33,21 @@ SAVE_RESULTS_MARKER = "===============save results:==============="
 HTML_TABLE_RE = re.compile(r"<table\b.*?</table>", re.IGNORECASE | re.DOTALL)
 
 
+class OCRRequestError(RuntimeError):
+    """OCR API failure with HTTP status or timeout provenance for callers."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        status_code: int | None = None,
+        timeout_kind: str | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+        self.timeout_kind = timeout_kind
+
+
 def _html_table_to_markdown(html: str) -> str:
     """Convert a single <table>...</table> block to a GFM pipe table.
 
@@ -152,19 +167,34 @@ def transcribe_document_to_markdown(file_path: str | Path, dpi: int = 200, clean
             print(f"Sending {path_obj.name} to Mac-mini OCR API...", file=sys.stderr)
             # 設定連線與讀取超時時間，因為 OCR 處理可能需要較長時間，所以預設 timeout 設為 900 秒。
             timeout = int(os.getenv("OCR_TIMEOUT_SECONDS", "900"))
-            response = requests.post(api_url, headers=headers, files=files, data=data, timeout=timeout)
+            response = requests.post(
+                api_url,
+                headers=headers,
+                files=files,
+                data=data,
+                timeout=(15, timeout),
+            )
 
         if response.status_code != 200:
             try:
                 error_msg = response.json().get("error", "Unknown error")
             except Exception:
                 error_msg = response.text or "Unknown error"
-            raise RuntimeError(f"OCR request failed ({response.status_code}): {error_msg}")
+            raise OCRRequestError(
+                f"OCR request failed ({response.status_code}): {error_msg}",
+                status_code=response.status_code,
+                timeout_kind="http-504" if response.status_code == 504 else None,
+            )
 
         markdown = response.json().get("markdown", "")
         return clean_ocr_markdown(markdown) if clean else markdown
-    except requests.exceptions.Timeout as e:
-        raise RuntimeError(f"OCR request timed out: {e}")
+    except requests.exceptions.ReadTimeout as e:
+        raise OCRRequestError(
+            f"OCR response timed out after {timeout}s: {e}",
+            timeout_kind="client-read-timeout",
+        ) from e
+    except requests.exceptions.ConnectTimeout as e:
+        raise OCRRequestError(f"OCR connection timed out: {e}") from e
     except requests.exceptions.RequestException as e:
         raise RuntimeError(f"OCR network request failed: {e}")
 

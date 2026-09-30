@@ -42,7 +42,10 @@ if platform.system() == "Windows":
 
 # 讓 ocr_client 可以在「python scripts/refine_todo_ocr.py」與模組導入兩種情境下被找到
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from ocr_client import clean_ocr_markdown, transcribe_document_to_markdown  # noqa: E402
+from ocr_client import (  # noqa: E402
+    clean_ocr_markdown,
+    transcribe_document_to_markdown,
+)
 
 TODO_RE = re.compile(r'<!-- TODO:OCR source="(?P<source>[^"]+)" page=(?P<page>\d+) reason=(?P<reason>[\w-]+) -->')
 LEGACY_TODO_RE = re.compile(
@@ -50,6 +53,73 @@ LEGACY_TODO_RE = re.compile(
     re.MULTILINE,
 )
 PAGE_SECTION_RE = r'<!-- PAGE:{page} -->.*?(?=<!-- PAGE:\d+ -->|\Z)'
+OCR_TIMEOUT_RE = re.compile(
+    r'<!-- OCR:timeout page=(?P<page>\d+) count=(?P<count>\d+) '
+    r'last="(?P<last>[^"]+)" kind="(?P<kind>[\w-]+)" -->'
+)
+
+
+def _record_ocr_timeout(md_text: str, page: int, kind: str, timestamp: str) -> tuple[str, int]:
+    """Persist a per-page timeout counter beside its TODO marker immediately."""
+    section_re = re.compile(PAGE_SECTION_RE.format(page=page), re.DOTALL)
+    section_match = section_re.search(md_text)
+    section = section_match.group(0) if section_match else ""
+
+    scope = section if section else md_text
+    previous = next(
+        (m for m in OCR_TIMEOUT_RE.finditer(scope) if int(m.group("page")) == page),
+        None,
+    )
+    count = int(previous.group("count")) + 1 if previous else 1
+    marker = (
+        f'<!-- OCR:timeout page={page} count={count} '
+        f'last="{timestamp}" kind="{kind}" -->'
+    )
+
+    if previous and section:
+        updated_section = section[:previous.start()] + marker + section[previous.end():]
+    elif previous:
+        md_text = md_text[:previous.start()] + marker + md_text[previous.end():]
+        updated_section = ""
+    else:
+        todo_match = next(
+            (m for m in TODO_RE.finditer(section) if int(m.group("page")) == page),
+            None,
+        )
+        if todo_match:
+            insert_at = todo_match.end()
+        else:
+            page_marker = re.search(rf"<!-- PAGE:{page} -->", section)
+            insert_at = page_marker.end() if page_marker else 0
+        updated_section = section[:insert_at] + "\n" + marker + section[insert_at:]
+
+    if section_match:
+        md_text = md_text[:section_match.start()] + updated_section + md_text[section_match.end():]
+    elif previous:
+        pass
+    else:
+        # Support TODO comments in Markdown files without PAGE section wrappers.
+        todo_match = next(
+            (m for m in TODO_RE.finditer(md_text) if int(m.group("page")) == page),
+            None,
+        )
+        if todo_match:
+            md_text = md_text[:todo_match.end()] + "\n" + marker + md_text[todo_match.end():]
+        else:
+            md_text += f"\n{marker}\n"
+    return md_text, count
+
+
+def _timeout_metadata(md_text: str, page: int) -> tuple[int, str, str]:
+    section_match = re.search(PAGE_SECTION_RE.format(page=page), md_text, re.DOTALL)
+    scope = section_match.group(0) if section_match else md_text
+    previous = next(
+        (m for m in OCR_TIMEOUT_RE.finditer(scope) if int(m.group("page")) == page),
+        None,
+    )
+    if not previous:
+        return 0, "", ""
+    return int(previous.group("count")), previous.group("last"), previous.group("kind")
 
 
 def find_todo_pages(md_text: str) -> list[dict]:
@@ -177,6 +247,19 @@ def refine(md_path: Path, pdf_path: Path | None, pages: set[int] | None, dpi: in
                 try:
                     ocr_md = clean_ocr_markdown(transcribe_document_to_markdown(single, dpi=dpi)).strip()
                 except Exception as remote_error:
+                    timeout_kind = getattr(remote_error, "timeout_kind", None)
+                    if timeout_kind:
+                        timestamp = datetime.datetime.now().astimezone().isoformat(timespec="seconds")
+                        md_text, timeout_count = _record_ocr_timeout(
+                            md_text, page, timeout_kind, timestamp
+                        )
+                        # Save before local fallback so the attempt remains recorded
+                        # even if fallback fails or the process is interrupted.
+                        md_path.write_text(md_text, encoding="utf-8", newline="\n")
+                        print(
+                            f"[refine] 第 {page} 頁 Mac-mini timeout 次數：{timeout_count} ({timeout_kind})",
+                            file=sys.stderr,
+                        )
                     if single.suffix.lower() != ".png":
                         raise
                     print(f"[refine] Mac-mini OCR 失敗，改用本機 Tesseract：{remote_error}", file=sys.stderr)
@@ -187,10 +270,17 @@ def refine(md_path: Path, pdf_path: Path | None, pages: set[int] | None, dpi: in
                 ocr_md = "> OCR completed; no text recognized on this page."
 
             engine = "local-tesseract" if local_fallback else "mac-mini"
+            timeout_count, last_timeout, timeout_kind = _timeout_metadata(md_text, page)
+            timeout_fields = (
+                f' mac_mini_timeouts={timeout_count} '
+                f'last_timeout="{last_timeout}" timeout_kind="{timeout_kind}"'
+                if timeout_count
+                else ""
+            )
             new_section = (
                 f"<!-- PAGE:{page} -->\n"
                 f"## 第 {page} 頁\n\n"
-                f'<!-- OCR:done source="{todo["source"]}" page={page} date="{today}" engine="{engine}" -->\n'
+                f'<!-- OCR:done source="{todo["source"]}" page={page} date="{today}" engine="{engine}"{timeout_fields} -->\n'
                 f"{ocr_md}\n\n"
             )
             md_text, n = re.subn(
