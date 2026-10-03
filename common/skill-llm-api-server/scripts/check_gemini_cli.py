@@ -4,7 +4,6 @@ Smoke test for the Gemini CLI API endpoints.
 
 Usage:
     python check_gemini_cli.py
-    CODEX_API_URL=https://api.wenchiehlee.synology.me:8443 \
     CODEX_API_KEY=your-key \
     python check_gemini_cli.py
 """
@@ -16,7 +15,7 @@ import urllib.error
 import urllib.request
 
 
-API_URL = os.getenv("CODEX_API_URL", "http://llm-cli-api.tail28f10.ts.net:5001").rstrip("/")
+API_URL = "http://llm-cli-api.tail28f10.ts.net:5001"
 API_KEY = os.getenv("CODEX_API_KEY", "")
 MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 TIMEOUT = int(os.getenv("GEMINI_TEST_TIMEOUT", "180"))

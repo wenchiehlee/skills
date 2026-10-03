@@ -38,7 +38,7 @@ skill-llm-api-server/
 
 ### `check_*.py` 與 `test_*.py` 的差異
 
-`check_codex_cli.py` / `check_gemini_cli.py` 是**線上 smoke test**，會對已部署的 API（`CODEX_API_URL`）發出真實 HTTP 請求，用於部署後驗證。`test_codex.py` / `test_gemini.py` 是**離線 pytest 單元測試**，用 `unittest.mock` 攔截 `subprocess.run`，直接測試 `main.py` 的路由邏輯（`_check_api_key`、timeout、非 0 exit code 等），不需要網路或真實 CLI：
+`check_codex_cli.py` / `check_gemini_cli.py` 是**線上 smoke test**，會對已部署的 API（內建 Codex server endpoints）發出真實 HTTP 請求，用於部署後驗證。`test_codex.py` / `test_gemini.py` 是**離線 pytest 單元測試**，用 `unittest.mock` 攔截 `subprocess.run`，直接測試 `main.py` 的路由邏輯（`_check_api_key`、timeout、非 0 exit code 等），不需要網路或真實 CLI：
 ```bash
 cd scripts
 pip install pytest

@@ -5,7 +5,6 @@ Single-exp mode (recommended):  only exp1 needed — LLM adds punctuation + fixe
 Multi-exp mode:                  exp1+exp2+exp3 — LLM selects best version across 3 runs
 
 Usage:
-  export CODEX_API_URL=http://127.0.0.1:5001
   export CODEX_API_KEY=...
 
   # Single-exp (fast, exp1 only):

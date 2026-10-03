@@ -67,7 +67,6 @@ provider 備援鏈預設為 `codex → gemini → mlx`）。依你實際要用�
 # 例：走 Gemini（金鑰輪轉）
 GEMINI_API_KEY=<你的 Gemini API key>
 # 例：走 Codex-API-Server（NAS 端 codex-cli / gemini-cli 橋接）
-CODEX_API_URL=<伺服器網址>
 CODEX_API_KEY=<驗證金鑰>
 # 例：走本機 MLX 推論
 MLX_API_URL=<MLX 伺服器網址>

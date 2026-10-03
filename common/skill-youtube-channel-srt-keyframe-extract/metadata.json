@@ -26,7 +26,7 @@
       "ffmpeg (external CLI)"
     ],
     "env": [
-      "GEMINI_API_KEY (or CODEX_API_URL/CODEX_API_KEY, or MLX_API_URL/MLX_SERVER_API_KEY — see ../llm)"
+      "GEMINI_API_KEY (or CODEX_API_KEY, or MLX_API_URL/MLX_SERVER_API_KEY — see skill-llm-api-client)"
     ]
   },
   "files": [

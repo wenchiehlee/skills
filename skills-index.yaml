@@ -352,7 +352,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/llm
   repo_count: 1
-  updated_at: '2026-09-01'
+  updated_at: '2026-10-03'
   revised_at: '2026-09-01'
 - name: skill-llm-api-server
   group: common
@@ -591,7 +591,7 @@ skills:
   maintainer: wenchiehlee
   source: biztrends.TW
   repo_count: 2
-  updated_at: '2026-09-01'
+  updated_at: '2026-10-03'
   revised_at: '2026-09-30'
 - name: skill-theme-competitor-groups-curate
   group: common

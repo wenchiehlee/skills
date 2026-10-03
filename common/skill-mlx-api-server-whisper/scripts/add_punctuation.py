@@ -5,7 +5,6 @@ Uses ../llm (LLMClient) with Codex-API-Server -> Gemini fallback.
 
 Usage:
   pip install "llm @ git+https://github.com/wenchiehlee/llm.git"
-  export CODEX_API_URL=https://...
   export CODEX_API_KEY=...
   python mlx-api-server-whisper/add_punctuation.py \\
       --input  mlx-api-server-whisper/whisper-sandbox/2357_2025_q4_final.md \\
