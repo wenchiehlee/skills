@@ -84,27 +84,27 @@ skills:
 - name: skill-company-enrichment-json
   group: common
   path: common/skill-company-enrichment-json
-  version: 0.1.2
+  version: 0.2.0
   description: Extract and review My-TW-Coverage Markdown enrichment as atomic JSON
     using the biztrends.TW focus list.
   category: basic
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/My-TW-Coverage
   repo_count: 2
-  updated_at: '2026-09-03'
-  revised_at: '2026-09-03'
+  updated_at: '2026-10-03'
+  revised_at: '2026-10-03'
 - name: skill-company-enrichment-render
   group: common
   path: common/skill-company-enrichment-render
-  version: 1.0.2
+  version: 1.1.0
   description: Render My-TW-Coverage canonical enrichment JSON into organized Markdown
     without using Pilot_Reports as an active source.
   category: financial-data
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
   repo_count: 1
-  updated_at: '2026-09-30'
-  revised_at: '2026-09-30'
+  updated_at: '2026-10-03'
+  revised_at: '2026-10-03'
 - name: skill-company-investorconference-digest
   group: common
   path: common/skill-company-investorconference-digest
@@ -469,7 +469,7 @@ skills:
 - name: skill-stock-dynamic-valuation-box
   group: common
   path: common/skill-stock-dynamic-valuation-box
-  version: 1.9.0
+  version: 1.10.0
   description: Render no-look-ahead Taiwan-stock time-price diagrams (2–5 year windows)
     with dynamic TTM P/E valuation boxes (μ±1σ/±2σ), an optional forward-EPS/forward-PE
     overlay sourced from Yahoo Finance and/or FactSet consensus feeds, optional matched
@@ -482,8 +482,8 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
   repo_count: 2
-  updated_at: '2026-09-28'
-  revised_at: '2026-09-28'
+  updated_at: '2026-10-03'
+  revised_at: '2026-10-03'
 - name: skill-stock-earnings-calendar-monitor
   group: common
   path: common/skill-stock-earnings-calendar-monitor
@@ -596,7 +596,7 @@ skills:
 - name: skill-theme-competitor-groups-curate
   group: common
   path: common/skill-theme-competitor-groups-curate
-  version: 0.1.0
+  version: 0.3.0
   description: 維護 data/themes/*.json 的 competitive_groups 與 extra_entities，讓 output/themes/*.md
     主題頁面依真實產品/商業模式競爭關係分組，並與 data/enrichment_all/*.json 的 relationships.competitors
     交叉比對一致性。
@@ -604,8 +604,8 @@ skills:
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
   repo_count: 3
-  updated_at: '2026-08-04'
-  revised_at: '2026-09-30'
+  updated_at: '2026-10-03'
+  revised_at: '2026-10-03'
 - name: skill-theme-cycle-coverage
   group: common
   path: common/skill-theme-cycle-coverage
