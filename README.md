@@ -80,7 +80,7 @@
 | [skill-google-analytics-monitor](common/skill-google-analytics-monitor) | common | analytics | 1.0.1 | — | 使用 google-analytics-cli 產生 GA4 網站監控 Markdown/README 報告，包含 YAML daily metadata、即時活躍人數、近 7/28 天短期趨勢、近 3 個月流量趨勢、來源/媒介、Top 10 URL、熱門頁面、事件與異常觀察。 | 2026-08-07 |
 | [skill-pptx-to-md](common/skill-pptx-to-md) | common | document | 1.0.1 | — | 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。 | 2026-08-25 |
 
-最後產生日期：2026-10-02
+最後產生日期：2026-10-03
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理
