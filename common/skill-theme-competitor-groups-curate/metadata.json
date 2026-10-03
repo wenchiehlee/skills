@@ -18,15 +18,15 @@
     }
   ],
   "files": [
+    "SKILL.md",
     "metadata.json",
+    "references/canonical_group_names.json",
     "references/curation_status.md",
     "references/known_gaps.md",
     "scripts/check_group_consistency.py",
-    "self_update.py",
-    "SKILL.md",
-    "references/canonical_group_names.json",
     "scripts/check_group_names.py",
-    "scripts/report_group_overlap.py"
+    "scripts/report_group_overlap.py",
+    "self_update.py"
   ],
   "deployments": [
     {

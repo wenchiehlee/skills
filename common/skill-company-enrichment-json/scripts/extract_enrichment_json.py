@@ -265,6 +265,12 @@ def build_json(focus: FocusRow, path: Path, coverage_root: Path) -> dict[str, An
             "customers_suppliers_md": rel_text,
             "financial_md": sections.get("財務概況 (單位: 百萬台幣, 只有 Margin 為 %)", ""),
         },
+        "chart": {
+            "kind": "dynamic_valuation_box",
+            "generator": "../skills/common/skill-stock-dynamic-valuation-box/scripts/render_dynamic_valuation_box.py",
+            "svg_path": f"output/dynamic_valuation_box/{focus.ticker}_dynamic_valuation_box_3y.svg",
+            "status": "not_generated",
+        },
         "quality": {
             "parser_status": "parsed",
             "review_status": "needs_review",

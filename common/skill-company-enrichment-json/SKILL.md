@@ -90,6 +90,9 @@ Canonical JSON should keep both structured atoms and original Markdown snippets:
 - `annotations`: reviewed links from presentation claims to evidence objects, including badge-rendering intent.
 - `themes`: reviewed links from company context to `data/themes/*.json` theme objects.
 - `links`: optional resolved navigation links whose `kind` is `entity`, `theme`, or `evidence`.
+- `chart`: optional chart metadata for rendered visual artifacts. Store the chart kind,
+  source generator, expected SVG path, and generation status; keep SVG out of canonical
+  enrichment atoms.
 - `quality`: parser status, review status, warnings, and counts.
 
 Do not treat the first parsed JSON as approved. It remains a review artifact until its atoms are approved.
@@ -183,3 +186,6 @@ For each focus ticker:
 - This skill does not directly update `biztrends.TW/data/company_segment_weights.csv`.
 - This skill does not render `output/themes`; use `skill-company-enrichment-render` / `skills/skill-company-enrichment-render/scripts/build_themes.py` after theme links are reviewed.
 - Do not treat legacy `source_text.*_md` as final storage for evidence; use it only as transitional non-lossy preservation until atomic evidence is complete.
+- This skill does not calculate chart data. When a company needs a valuation chart, use
+  `../skills/common/skill-stock-dynamic-valuation-box` to generate the SVG and record its
+  artifact metadata in `chart`; the render skill is responsible for linking the SVG.
