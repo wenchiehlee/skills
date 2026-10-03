@@ -1,13 +1,12 @@
 {
   "name": "skill-company-earnings-social-verify",
   "description": "財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "maintainer": "wenchiehlee",
   "source": "TAIEX.TW",
-  "updated_at": "2026-09-03",
+  "updated_at": "2026-10-03",
   "files": [
     "metadata.json",
-    "scripts/compare_references.py",
     "self_update.py",
     "SKILL.md"
   ],

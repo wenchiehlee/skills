@@ -73,14 +73,14 @@ skills:
 - name: skill-company-earnings-social-verify
   group: common
   path: common/skill-company-earnings-social-verify
-  version: 1.0.1
+  version: 1.0.2
   description: 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異
   category: basic
   maintainer: wenchiehlee
   source: TAIEX.TW
   repo_count: 1
-  updated_at: '2026-09-03'
-  revised_at: '2026-09-30'
+  updated_at: '2026-10-03'
+  revised_at: '2026-10-03'
 - name: skill-company-enrichment-json
   group: common
   path: common/skill-company-enrichment-json
@@ -278,15 +278,15 @@ skills:
 - name: skill-google-analytics-monitor
   group: common
   path: common/skill-google-analytics-monitor
-  version: 1.0.1
+  version: 1.0.2
   description: 使用 google-analytics-cli 產生 GA4 網站監控 Markdown/README 報告，包含 YAML daily
     metadata、即時活躍人數、近 7/28 天短期趨勢、近 3 個月流量趨勢、來源/媒介、Top 10 URL、熱門頁面、事件與異常觀察。
   category: analytics
   maintainer: wenchiehlee
   source: https://pypi.org/project/google-analytics-cli/
   repo_count: 0
-  updated_at: '2026-07-18'
-  revised_at: '2026-08-07'
+  updated_at: '2026-10-03'
+  revised_at: '2026-10-03'
 - name: skill-googlesearch-factsets-fetch
   group: common
   path: common/skill-googlesearch-factsets-fetch
@@ -487,14 +487,14 @@ skills:
 - name: skill-stock-earnings-calendar-monitor
   group: common
   path: common/skill-stock-earnings-calendar-monitor
-  version: 1.0.1
+  version: 1.0.2
   description: 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板
   category: basic
   maintainer: wenchiehlee
   source: TAIEX.TW
   repo_count: 1
-  updated_at: '2026-09-03'
-  revised_at: '2026-09-30'
+  updated_at: '2026-10-03'
+  revised_at: '2026-10-03'
 - name: skill-stock-fiscal-quarter-resolve
   group: common
   path: common/skill-stock-fiscal-quarter-resolve
