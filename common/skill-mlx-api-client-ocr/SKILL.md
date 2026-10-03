@@ -7,7 +7,7 @@ description: 使用自建在 Mac-mini 上的 OCR API 服務，將 PDF 或圖片�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.7.1（詳見 `metadata.json`） |
+| 版本 | 1.7.2（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/FamilyHealthyCheck |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-client-ocr`） |
 | 維護者 | wenchiehlee |
@@ -50,14 +50,19 @@ pip install pillow-heif
 （`pypdf` 供離線退援模式使用；若只用線上 OCR 可省略。）
 
 ### 2. 配置環境變數
-在目標專案的根目錄下建立 `.env` 檔案（並務必在 `.gitignore` 中排除 `.env`），寫入您的 Mac-mini API 伺服器位址與 API 金鑰：
+在目標專案的根目錄下建立 `.env` 檔案（並務必在 `.gitignore` 中排除 `.env`），只寫入 Mac-mini OCR API 金鑰與其他可選設定；OCR endpoint 已固定為 `http://mac-mini.tail28f10.ts.net:5001/ocr`：
 ```env
 # Mac-mini OCR API 設定
-OCR_API_URL=http://mac-mini.tail28f10.ts.net:5001/ocr
 OCR_API_KEY=<your-api-key>
 # 選用：baidu（預設）或 paddle
 OCR_ENGINE=baidu
 ```
+
+### 3. OCR server live check
+
+Before every OCR upload, the client performs an unauthenticated `GET http://mac-mini.tail28f10.ts.net:5001/health` check. The request proceeds only when HTTP status is `200` and the JSON response contains `status: "ok"`; connection errors, timeouts, non-200 responses, and non-OK statuses fail before the document is uploaded.
+
+The live-check timeout is 5 seconds. Use `check_ocr_server_live()` directly when a workflow needs to verify server availability without uploading a document.
 
 ## 📊 AI Model Usage 統計
 
