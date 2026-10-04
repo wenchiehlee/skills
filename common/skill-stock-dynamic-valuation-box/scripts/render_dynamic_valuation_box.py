@@ -890,7 +890,7 @@ def _plot(
     # revision history and the eventual target-year value easy to read.
     forward_points = []  # (x, y, source_label, target_year, color, source_index)
     terminal_points = []  # (x, y, source_label, target_year, color, source_index)
-    line_styles = {2025: "-", 2026: "--", 2027: "-.", 2028: ":"}
+    line_styles = {2025: ":", 2026: ":", 2027: ":", 2028: ":"}
     for source_index, source_label in enumerate(("Yahoo", "FactSet")):
         info = source_forward.get(source_label)
         if info is None:
