@@ -249,32 +249,110 @@ def codex_status():
 @app.route("/tunnel/status")
 def tunnel_status():
     tunnel_id = os.getenv("OPENAI_TUNNEL_ID", "")
+    has_runtime_key = bool(os.getenv("OPENAI_TUNNEL_RUNTIME_KEY"))
     pid_file = Path("/tmp/openai_tunnel.pid")
     health_url_file = Path("/app/data/openai-tunnel/tunnel-health.url")
-    is_running = False
-    pid = None
+    log_file = Path("/tmp/openai_tunnel.log")
+
+    supervisor_running = False
+    supervisor_pid = None
     if pid_file.exists():
         try:
-            pid = int(pid_file.read_text().strip())
-            os.kill(pid, 0)
-            is_running = True
+            supervisor_pid = int(pid_file.read_text().strip())
+            os.kill(supervisor_pid, 0)
+            supervisor_running = True
         except (ValueError, OSError):
-            is_running = False
+            supervisor_running = False
+
+    client_pids = []
+    try:
+        res = subprocess.run(["pgrep", "-f", "tunnel-client run"], capture_output=True, text=True)
+        if res.returncode == 0:
+            client_pids = [int(p) for p in res.stdout.strip().split() if p.isdigit()]
+    except Exception:
+        pass
+
+    client_running = len(client_pids) > 0
 
     health_url = None
+    health_status = None
     if health_url_file.exists():
         try:
             health_url = health_url_file.read_text().strip()
+            if health_url:
+                try:
+                    import urllib.request
+                    with urllib.request.urlopen(f"{health_url}/readyz", timeout=2) as r:
+                        health_status = r.read().decode("utf-8", errors="replace").strip()
+                except Exception as he:
+                    health_status = f"unreachable: {he}"
         except OSError:
             pass
 
+    log_tail = []
+    if log_file.exists():
+        try:
+            lines = log_file.read_text(encoding="utf-8", errors="replace").splitlines()
+            log_tail = lines[-25:]
+        except Exception as e:
+            log_tail = [f"Error reading log: {e}"]
+
     return jsonify({
         "tunnel_id": tunnel_id or None,
-        "configured": bool(tunnel_id and os.getenv("OPENAI_TUNNEL_RUNTIME_KEY")),
-        "running": is_running,
-        "pid": pid,
+        "configured": bool(tunnel_id and has_runtime_key),
+        "running": client_running,
+        "supervisor_running": supervisor_running,
+        "supervisor_pid": supervisor_pid,
+        "client_pids": client_pids,
         "health_url": health_url,
+        "health_status": health_status,
+        "log_tail": log_tail,
     })
+
+
+@app.route("/tunnel/doctor")
+def tunnel_doctor():
+    profiles_dir = "/app/data/openai-tunnel/profiles"
+    env = {**os.environ}
+    if os.getenv("OPENAI_TUNNEL_RUNTIME_KEY"):
+        env["CONTROL_PLANE_API_KEY"] = os.getenv("OPENAI_TUNNEL_RUNTIME_KEY")
+    if os.getenv("OPENAI_TUNNEL_ID"):
+        env["CONTROL_PLANE_TUNNEL_ID"] = os.getenv("OPENAI_TUNNEL_ID")
+    try:
+        res = subprocess.run(
+            ["tunnel-client", "doctor", "--profile", "local-workspace", "--profile-dir", profiles_dir, "--explain"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            env=env,
+        )
+        return jsonify({
+            "exit_code": res.returncode,
+            "stdout": res.stdout,
+            "stderr": res.stderr,
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/tunnel/restart", methods=["POST"])
+def tunnel_restart():
+    if not _check_api_key():
+        return jsonify({"error": "Unauthorized"}), 401
+    pid_file = Path("/tmp/openai_tunnel.pid")
+    if pid_file.exists():
+        try:
+            old_pid = int(pid_file.read_text().strip())
+            os.kill(old_pid, 9)
+        except Exception:
+            pass
+    try:
+        subprocess.run(["pkill", "-9", "-f", "tunnel-client"], capture_output=True)
+    except Exception:
+        pass
+    if Path("/app/scripts/start-openai-tunnel.sh").exists():
+        subprocess.Popen(["bash", "/app/scripts/start-openai-tunnel.sh"])
+    return jsonify({"status": "restarting"})
 
 
 # ── Codex exec 端點（相容 llm CodexProvider：POST /exec）────────────────────

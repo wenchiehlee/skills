@@ -1,23 +1,25 @@
 ---
 name: skill-llm-api-server
-description: 在 Synology NAS Docker 容器中運行的 LLM CLI 橋接伺服器，將 OpenAI codex-cli（ChatGPT Pro 訂閱）與 Google gemini-cli 封裝為 Flask/Waitress HTTP API，提供 /exec、/gemini/exec、/smart/exec 端點，供 llm 函式庫（skill-llm-api-client）遠端呼叫。
+description: 在 Synology NAS Docker 容器中運行的 LLM CLI 與 MCP 橋接伺服器，將 OpenAI codex-cli（ChatGPT Pro）、Google Antigravity CLI（agy）與 OpenAI Secure MCP Tunnel 封裝為 HTTP API 與安全通道，提供 /exec、/gemini/exec、/gemini/models、/tunnel/status 端點，供 llm 客戶端與 ChatGPT 遠端呼叫。
 ---
 
 # LLM CLI API Server 技能 (skill-llm-api-server)
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.1.1（詳見 `metadata.json`） |
+| 版本 | 1.3.0（詳見 `metadata.json`） |
 | 來源 | https://github.com/ZhongZheng782/Llm-Cli-APIServer |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-llm-api-server`） |
 | 維護者 | wenchiehlee |
 | 執行位置 | **Synology NAS**（Docker 容器 + self-hosted GitHub Actions runner） |
-| 對應 Caller Skill | `common/skill-llm-api-client`（`llm` 函式庫的 `CodexProvider`） |
+| 對應 Caller Skill | `common/skill-llm-api-client`（`llm` 函式庫的 `CodexProvider`）與 ChatGPT MCP Connectors |
 
-此技能封裝了運行於 Synology NAS Docker 容器中的 LLM CLI 橋接伺服器，將需要瀏覽器/訂閱授權登入的 CLI 工具轉為可遠端呼叫的 HTTP API：
+此技能封裝了運行於 Synology NAS Docker 容器中的 LLM CLI 橋接伺服器，將需要瀏覽器/訂閱授權登入的 CLI 工具與 MCP 服務轉為可遠端呼叫的 HTTP API 與主動出站通道：
 1. **`POST /exec`** — 呼叫 `codex-cli`，使用 ChatGPT Pro 訂閱權限執行推理
-2. **`POST /gemini/exec`** — 呼叫 `gemini-cli`，適用於 IP 受限或需集中管理金鑰的場景
-3. **`POST /smart/exec`** — 伺服器端智慧路由（Draft & Judge），在 NAS 內部完成「自我反思」評審，避免往返延遲
+2. **`POST /gemini/exec`** — 呼叫 `agy`（Google Antigravity CLI，取代舊 gemini-cli），支援多模型與 `effort` 思考層級
+3. **`GET /gemini/models`** — 查詢 `agy` 目前支援的模型列表（Gemini 3.8 Flash、Claude、GPT-OSS）與思考等級
+4. **`POST /smart/exec`** — 伺服器端智慧路由（Draft & Judge），在 NAS 內部完成「自我反思」評審，避免往返延遲
+5. **OpenAI Secure MCP Tunnel (`tunnel-client`)** — 主動向 OpenAI Control Plane 建立出站連線，讓 ChatGPT 網頁版/App 直接免開 Port/IP 存取 NAS 工作區 tools
 
 ## 📦 技能結構說明
 
@@ -38,7 +40,7 @@ skill-llm-api-server/
 
 ### `check_*.py` 與 `test_*.py` 的差異
 
-`check_codex_cli.py` / `check_gemini_cli.py` 是**線上 smoke test**，會對已部署的 API（`CODEX_API_URL`）發出真實 HTTP 請求，用於部署後驗證。`test_codex.py` / `test_gemini.py` 是**離線 pytest 單元測試**，用 `unittest.mock` 攔截 `subprocess.run`，直接測試 `main.py` 的路由邏輯（`_check_api_key`、timeout、非 0 exit code 等），不需要網路或真實 CLI：
+`check_codex_cli.py` / `check_gemini_cli.py` 是**線上 smoke test**，會對已部署的 API（內建 Codex server endpoints）發出真實 HTTP 請求，用於部署後驗證。`test_codex.py` / `test_gemini.py` 是**離線 pytest 單元測試**，用 `unittest.mock` 攔截 `subprocess.run`，直接測試 `main.py` 的路由邏輯（`_check_api_key`、timeout、非 0 exit code 等），不需要網路或真實 CLI：
 ```bash
 cd scripts
 pip install pytest
@@ -56,23 +58,32 @@ Docker/部署相關檔案（`Dockerfile`、`docker-compose.yml`、`entrypoint.sh
 ## 🏗️ 架構概覽
 
 ```
-[外部機器 — llm 函式庫 (skill-llm-api-client) / GitHub Actions]
+[外部呼叫端 — llm 函式庫 (skill-llm-api-client) / GitHub Actions / 本機 CLI]
         ↓  HTTP POST /exec, /gemini/exec, /smart/exec（X-API-Key header）
 [api.wenchiehlee.synology.me:8443]  ← Cloudflare / Synology reverse proxy
         ↓
 [Docker container :5001]  ← Flask/Waitress main.py
-        ├── /exec         → subprocess ["codex", "exec", "--skip-git-repo-check", "--yolo", (--model <model>,) prompt]
-        ├── /gemini/exec  → subprocess ["gemini", "--skip-trust", "-p", prompt]
-        └── /smart/exec   → Draft (draft_cli) → Judge (judge_cli) → ServerRoutingManager（晉升狀態存 routing.json）
+        ├── /exec           → subprocess ["codex", "exec", "--skip-git-repo-check", "--yolo", (--model <model>,) prompt]
+        ├── /gemini/exec    → subprocess ["agy", "-p", prompt, (--model <model>,)] (OAuth, 支援 effort)
+        ├── /gemini/models  → 回傳 agy 目前支援之可用模型清單與思考層級 (low, medium, high)
+        ├── /smart/exec     → Draft (draft_cli) → Judge (judge_cli) → ServerRoutingManager（晉升狀態存 routing.json）
+        └── /tunnel/status  → 監控 OpenAI Secure Tunnel 背景程序與健康狀態
+
+[ChatGPT 網頁版 / ChatGPT App / OpenAI Responses API]
+        ↓ (透過 OpenAI Control Plane 安全通道，無需外網 IP、無需 Port Forwarding)
+[tunnel-client : outbound WebSocket]  ← OpenAI 官方通道客戶端（start-openai-tunnel.sh 背景守護）
+        ↓ stdio
+[local_workspace_mcp]  ← 本地 MCP 伺服器（掛載 /app 工作區，提供 ChatGPT 檔案與終端機工具）
 ```
 
 **網路：**
-| 項目 | 值 |
-|------|----|
-| 外網 HTTPS (WAN) | `https://api.wenchiehlee.synology.me:8443` |
-| 內網 Tailscale（容器直連，推薦） | `http://llm-cli-api.tail28f10.ts.net:5001` |
-| 內網 Tailscale（NAS 轉發） | `http://newton.tail28f10.ts.net:5055` |
-| 容器內部埠 | `5001`（Waitress/Flask），對外映射 `5055` |
+| 項目 | 值 | 說明 |
+|------|----|------|
+| 外網 HTTPS (WAN) | `https://api.wenchiehlee.synology.me:8443` | 供外部 client/GitHub Actions 呼叫 |
+| 內網 Tailscale（容器直連，推薦） | `http://llm-cli-api.tail28f10.ts.net:5001` | 私網端對端加密直連 |
+| 內網 Tailscale（NAS 轉發） | `http://newton.tail28f10.ts.net:5055` | 經 NAS host port 轉發 |
+| 容器內部埠 | `5001`（Waitress/Flask），對外映射 `5055` | API 伺服器監聽埠 |
+| OpenAI Secure MCP Tunnel | `tunnel_6ac1b9e0779c819190ebb87b8e1570e6` | ChatGPT 專用主動出站通道（免開 Port） |
 
 ## ⚙️ 環境變數規格
 
@@ -81,8 +92,10 @@ Docker/部署相關檔案（`Dockerfile`、`docker-compose.yml`、`entrypoint.sh
 | `SSH_ROOT_PASSWORD` | ✅ | — | 容器 SSH root 密碼，`entrypoint.sh` 啟動時注入 |
 | `CODEX_API_KEY` | 可選 | — | 保護 `/exec`、`/gemini/exec`、`/smart/exec` 的 `X-API-Key` header 值；留空則不驗證 |
 | `CODEX_TIMEOUT` | 可選 | `120` | `codex exec` subprocess timeout（秒） |
-| `GEMINI_TIMEOUT` | 可選 | `120` | `gemini` subprocess timeout（秒） |
+| `GEMINI_TIMEOUT` | 可選 | `120` | `agy` subprocess timeout（秒） |
 | `ROUTING_FILE` | 可選 | `/app/data/routing.json` | Smart Routing 晉升狀態持久化路徑 |
+| `OPENAI_TUNNEL_ID` | 可選 | — | OpenAI Secure Tunnel ID（格式如 `tunnel_...`），供 ChatGPT 辨識通道 |
+| `OPENAI_TUNNEL_RUNTIME_KEY` | 可選 | — | OpenAI Platform 建立之 Runtime API Key，供 `tunnel-client` 登入 Control Plane |
 | `UPTIMEROBOT_API_KEY` | 可選 | — | 外部監測用（非程式碼直接使用） |
 
 `.env` 範例：
@@ -91,6 +104,8 @@ SSH_ROOT_PASSWORD=your_ssh_root_password_here
 CODEX_API_KEY=your_server_api_key_here
 CODEX_TIMEOUT=120
 GEMINI_TIMEOUT=120
+OPENAI_TUNNEL_ID=tunnel_6ac1b9e0779c819190ebb87b8e1570e6
+OPENAI_TUNNEL_RUNTIME_KEY=sk-tunnel-rt-xxxxxx
 UPTIMEROBOT_API_KEY=your_uptimerobot_api_key_here
 ```
 
@@ -146,14 +161,68 @@ curl -X POST https://api.wenchiehlee.synology.me:8443/exec \
 `model` 選填；省略時沿用 `codex` CLI 自身預設值，帶了才會在指令加上 `--model <model>`。
 回應：`{"output": "print('Hello, World!')"}`
 
-### `POST /gemini/exec` — Gemini 推理
+### `POST /gemini/exec` — Gemini (AGY CLI) 推理
+
+呼叫 NAS 容器內的 `agy`（Google Antigravity CLI），支援最新多模型選擇與 `effort` 思考層級調節：
 
 ```bash
 curl -X POST https://api.wenchiehlee.synology.me:8443/gemini/exec \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
-  -d '{"prompt": "...", "model": "gemini-2.5-flash", "json_mode": false}'
+  -d '{"prompt": "分析這份財報重點", "model": "Gemini 3.8 Flash (High)", "effort": "high", "json_mode": false}'
 ```
+
+- `model`：支援官方顯示名稱或別名（如 `gemini-3.8-flash`、`Gemini 3.8 Flash (Medium)`、`Claude Sonnet 4.6 (Thinking)`、`GPT-OSS 120B (Medium)`）。
+- `effort`：可選 `low` / `medium` / `high`，伺服器會自動融合至模型選擇。
+- 錯誤分類：若額度耗盡回傳 HTTP `429` 且 `error_type: "quota_exceeded"`。
+
+### `GET /gemini/models` — 查詢 AGY 可用模型清單
+
+回傳目前容器內 `agy` CLI 支援的模型名稱與思考層級：
+
+```bash
+curl https://api.wenchiehlee.synology.me:8443/gemini/models
+```
+
+回應範例：
+```json
+{
+  "available_efforts": ["low", "medium", "high"],
+  "available_models": [
+    "Gemini 3.8 Flash (High)", "Gemini 3.8 Flash (Medium)", "Gemini 3.8 Flash (Low)",
+    "Gemini 3.7 Flash (High)", "Gemini 3.7 Flash (Medium)", "Gemini 3.7 Flash (Low)",
+    "Gemini 3.6 Flash (High)", "Gemini 3.6 Flash (Medium)", "Gemini 3.6 Flash (Low)",
+    "Gemini 3.1 Pro (High)", "Gemini 3.1 Pro (Low)",
+    "Claude Sonnet 4.6 (Thinking)", "Claude Opus 4.6 (Thinking)",
+    "GPT-OSS 120B (Medium)"
+  ],
+  "current_default": "Gemini 3.8 Flash (Medium)"
+}
+```
+
+### `GET /tunnel/status`、`GET /tunnel/doctor`、`POST /tunnel/restart` — OpenAI Secure Tunnel
+
+OpenAI 官方通道客戶端（`tunnel-client`）在 NAS 背景運行，為 ChatGPT 提供安全連線：
+
+1. **`GET /tunnel/status`** — 檢查通道狀態：
+   ```json
+   {
+     "configured": true,
+     "running": true,
+     "supervisor_running": true,
+     "tunnel_id": "tunnel_6ac1b9e0779c819190ebb87b8e1570e6",
+     "health_url": "http://127.0.0.1:42906",
+     "health_status": "ok"
+   }
+   ```
+2. **`GET /tunnel/doctor`** — 執行通道健康檢查診斷（`tunnel-client doctor`）。
+3. **`POST /tunnel/restart`** — 重新啟動通道背景守護行程（需 `X-API-Key`）。
+
+#### 💡 ChatGPT Connector 設定須知
+- **不需要填寫任何 IP 或 Port**：ChatGPT 透過 OpenAI 雲端 Control Plane 轉發，無需開放防火牆或對外 Port。
+- 於 [ChatGPT 設定 -> Connectors](https://chatgpt.com/#settings/Connectors) 中選擇 **Secure MCP Tunnel** 並填入您的 Tunnel ID：
+  `tunnel_6ac1b9e0779c819190ebb87b8e1570e6`。
+- 只要 `/tunnel/status` 顯示 `running: true` 且 `health_status: "ok"`，ChatGPT 即可隨時使用 NAS 容器工作區的檔案管理與指令執行工具。
 
 ### `POST /smart/exec` — 伺服器端智慧路由
 
@@ -171,11 +240,13 @@ Request：`{"task_name": "...", "prompt": "...", "draft_cli": "gemini", "judge_c
   "error": "gemini exited 1: 401 Unauthorized"
 }
 ```
-`fallback_reason` 分類：`timeout` / `auth_failure` / `cli_not_found` / `nonzero_exit` / `unknown_error`。
+`fallback_reason` 分類：`timeout` / `auth_failure` / `quota_exceeded` / `cli_not_found` / `nonzero_exit` / `unknown_error`。
 
 ### `GET /`、`GET /codex/status`、`GET /gemini/status` — 健康檢查
 
-`GET /` → `{"status": "ready", "service": "LLM CLI API Server"}`（無需認證）
+- `GET /` → `{"status": "ready", "service": "LLM CLI API Server"}`（無需認證）
+- `GET /codex/status` → `{"codex_cli": "installed", "version": "codex-cli 0.160.0"}`
+- `GET /gemini/status` → `{"auth_mode": "oauth", "gemini_cli": "installed", "tool": "agy", "version": "1.2.16"}`
 
 ## 📊 AI Model Usage 統計契約
 

@@ -4,7 +4,6 @@ Smoke test for the Codex CLI API endpoints.
 
 Usage:
     python check_codex_cli.py
-    CODEX_API_URL=https://api.wenchiehlee.synology.me:8443 \
     CODEX_API_KEY=your-key \
     python check_codex_cli.py
 """
@@ -15,8 +14,37 @@ import sys
 import urllib.error
 import urllib.request
 
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
-API_URL = os.getenv("CODEX_API_URL", "http://llm-cli-api.tail28f10.ts.net:5001").rstrip("/")
+DEFAULT_CANDIDATES = [
+    "https://api.wenchiehlee.synology.me:8443",
+    "http://llm-cli-api.tail28f10.ts.net:5001",
+]
+
+
+def resolve_api_url() -> str:
+    env_url = os.getenv("CODEX_API_URL", "").strip().rstrip("/")
+    if env_url:
+        return env_url
+    for cand in DEFAULT_CANDIDATES:
+        try:
+            req = urllib.request.Request(f"{cand}/codex/status", method="GET")
+            if os.getenv("CODEX_API_KEY"):
+                req.add_header("X-API-Key", os.getenv("CODEX_API_KEY"))
+            with urllib.request.urlopen(req, timeout=2.5) as resp:
+                if resp.status == 200:
+                    return cand
+        except Exception:
+            continue
+    return DEFAULT_CANDIDATES[0]
+
+
+API_URL = resolve_api_url()
 API_KEY = os.getenv("CODEX_API_KEY", "")
 TIMEOUT = int(os.getenv("CODEX_TEST_TIMEOUT", "180"))
 

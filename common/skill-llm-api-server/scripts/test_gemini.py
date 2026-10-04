@@ -269,3 +269,46 @@ def test_smart_exec_judge_timeout_returns_diagnostics(client):
     assert data["fallback_reason"] == "timeout"
     assert data["failed_stage"] == "judge"
     assert data["provider"] == "codex"
+
+
+# -- GET /gemini/models & effort handling -------------------------------------
+
+def test_gemini_models_endpoint(client):
+    r = client.get("/gemini/models")
+    assert r.status_code == 200
+    data = r.get_json()
+    assert data["current_default"] == "Gemini 3.8 Flash (Medium)"
+    assert "Gemini 3.8 Flash (High)" in data["available_models"]
+    assert "high" in data["available_efforts"]
+
+
+def test_exec_gemini_with_effort(client):
+    with patch("main._run_agy", return_value="effort result") as m:
+        r = client.post(
+            "/gemini/exec",
+            json={"prompt": "think deep", "model": "Gemini 3.8 Flash", "effort": "high"},
+        )
+    assert r.status_code == 200
+    assert r.get_json()["output"] == "effort result"
+    m.assert_called_once_with("think deep", model="Gemini 3.8 Flash", json_mode=False, timeout=120, effort="high")
+
+
+def test_run_agy_appends_effort_to_model():
+    import main as m_module
+    captured = {}
+
+    def fake_run(cmd, **kwargs):
+        captured["cmd"] = cmd
+        m = MagicMock()
+        m.returncode = 0
+        m.stdout = "result\n"
+        m.stderr = ""
+        return m
+
+    with patch("main.subprocess.run", side_effect=fake_run):
+        out = m_module._run_agy("think deep", model="Gemini 3.8 Flash", effort="high")
+
+    assert out == "result"
+    assert captured["cmd"] == [
+        "agy", "-p", "think deep", "--dangerously-skip-permissions", "--model", "Gemini 3.8 Flash (High)",
+    ]
