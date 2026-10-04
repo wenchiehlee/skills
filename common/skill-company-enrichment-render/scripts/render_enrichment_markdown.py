@@ -283,7 +283,7 @@ def load_segment_weight_summaries(path: Path) -> dict[str, str]:
             segment = str(row.get("segment_name", "")).strip()
             weight = format_approx_pct(str(row.get("weight_pct", "")).strip())
             if segment and weight != "-":
-                parts.append(f"{segment} (~{weight})")
+                parts.append(f"{segment} (約{weight})")
         if parts:
             summaries[ticker] = "- **主要平台:** " + ", ".join(parts) + "."
     return summaries
