@@ -945,7 +945,7 @@ def _plot(
         eps_axis.legend(loc="upper left", fontsize=8, frameon=False)
     eps_axis.axvline(cutoff, color="#555555", lw=0.8, ls="--", alpha=0.7, zorder=1)
     eps_axis.text(cutoff, 0.98, "Today", transform=eps_axis.get_xaxis_transform(), ha="right", va="top", fontsize=7, color="#555555")
-    eps_axis.set_title("Panel 4 | Trailing TTM EPS vs Yahoo / FactSet consensus", loc="left", fontsize=10, pad=4)
+    eps_axis.set_title("Trailing TTM EPS vs Yahoo / FactSet consensus", loc="left", fontsize=10, pad=4)
     eps_axis.set_ylabel("EPS")
     eps_axis.grid(axis="y", color="#e6e6e6", lw=0.7)
     eps_axis.xaxis.set_major_locator(mdates.MonthLocator(interval=max(3, years * 2)))
