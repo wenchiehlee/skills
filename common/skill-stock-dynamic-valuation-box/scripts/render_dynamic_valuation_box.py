@@ -732,7 +732,20 @@ def _plot(
             if panel_revisions.empty:
                 continue
             panel_revisions = panel_revisions.sort_values("source_asof_date")
-            curve_dates = list(panel_revisions["source_asof_date"])
+            # Panel 4 uses each target FY as its own visual timeline. Keep
+            # the release month/day and EPS revision value, but move the
+            # release node into target_year (e.g. 2026-09-04 -> 2027-09-04
+            # for FY2027E). This prevents FY2027E/FY2028E revisions from
+            # collapsing into the same 2026 slice while preserving their
+            # within-year revision sequence.
+            curve_dates = [
+                pd.Timestamp(
+                    year=target_year,
+                    month=release_date.month,
+                    day=min(release_date.day, pd.Timestamp(year=target_year, month=release_date.month, day=1).days_in_month),
+                )
+                for release_date in panel_revisions["source_asof_date"]
+            ]
             curve_values = [float(value) for value in panel_revisions["forward_eps"]]
             terminal_added = curve_dates[-1] < x
             if terminal_added:
@@ -869,8 +882,9 @@ def _plot(
     eps_axis.scatter(eps_view["available_date"], eps_view["ttm_eps"], color="#6a329f", s=26, zorder=3)
 
     # Yahoo and FactSet forward-EPS curves are plotted separately, unmerged.
-    # Each FY segment preserves the date of every estimate revision, then
-    # carries the last known value horizontally to that FY's 12/31 terminal
+    # Each FY segment preserves the month/day of every estimate revision but
+    # places it inside the target FY (e.g. 2026-09-04 -> 2027-09-04 for
+    # FY2027E), then carries the last known value to that FY's 12/31 terminal
     # node. Released estimates are circles; the FY-end terminal is a triangle
     # and is the only node carrying the FY label. This makes both the estimate
     # revision history and the eventual target-year value easy to read.

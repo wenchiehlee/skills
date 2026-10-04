@@ -1,6 +1,6 @@
 {
   "name": "skill-stock-dynamic-valuation-box",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "source": "https://github.com/wenchiehlee-money/GoogleSheet.Banks",
   "maintainer": "wenchiehlee",
   "description": "Render no-look-ahead Taiwan-stock time-price diagrams (2–5 year windows) with dynamic TTM P/E valuation boxes (μ±1σ/±2σ), an optional forward-EPS/forward-PE overlay sourced from Yahoo Finance and/or FactSet consensus feeds, optional matched buy/sell markers, and monthly-revenue/YoY panels, using unadjusted price + statutory-deadline-gated nominal EPS, with a pooled multi-token FinMind rotation so one run can outlast a single account's daily quota. The μ/σ/±1σ/±2σ PE-band math itself is shared with skill-stock-ma-rsi-bband-macd-peband's calc_pe_band_series() rather than reimplemented here.",
