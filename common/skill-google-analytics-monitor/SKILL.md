@@ -37,13 +37,13 @@ GA_REPORT_SHOW_PROPERTY_ID=false
 4. 執行輔助腳本產生 Markdown：
 
 ```bash
-python ../skills/common/skill-google-analytics-monitor/scripts/generate_ga_monitor_report.py
+python skills/skill-google-analytics-monitor/scripts/generate_ga_monitor_report.py
 ```
 
 可用參數覆寫 `.env`：
 
 ```bash
-python ../skills/common/skill-google-analytics-monitor/scripts/generate_ga_monitor_report.py \
+python skills/skill-google-analytics-monitor/scripts/generate_ga_monitor_report.py \
   --property-id 123456789 \
   --site-name example.com \
   --months 3 \
