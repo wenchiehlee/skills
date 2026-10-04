@@ -7,6 +7,130 @@ description: Provide Traditional Chinese expert-level investment decision coachi
 
 此技能用於把 `books/` 內書籍與各書的 `投資策略框架.md`，轉成可日常執行的投資決策教練流程。預設以繁體中文輸出。
 
+## 核心架構：推理規則、增強知識與檢索
+
+本技能由三個互補層次組成，不可把生成的書本知識視為 `SKILL.md` 的替代品：
+
+```text
+SKILL.md = Reasoning Rules
+Augmented Knowledge = Domain Knowledge
+Query Engine = Knowledge Retrieval
+```
+
+完整表述是：
+
+> 增強知識是投資決策教練的延伸知識引擎，負責將投資書籍轉成可檢索、可關聯、可追溯的知識，供 `SKILL.md` 定義的投資推理流程使用。
+
+三者共同形成完整的投資決策教練：`SKILL.md` 決定如何思考與回答，增強知識提供投資書籍中的概念與證據，檢索層則在問題出現時找出相關內容。
+
+### 增強知識的生命週期
+
+處理 `books/` 中的投資書籍時，依照以下生命週期工作：
+
+```text
+Ingest → Digest → Augment → Retrieve → Infer
+```
+
+1. **Ingest（攝取）**：掃描使用者指定的書籍資料夾，登錄章節 Markdown、`metadata.md`、`書籍摘要.md`、`投資策略框架.md` 與檔案雜湊；不修改原始書籍檔案。
+2. **Digest（消化）**：把章節整理成概念、投資原則、因果機制、假設、證據位置、風險與失效條件。
+3. **Augment（增強）**：建立跨章節與跨書籍的關聯、互補框架、衝突、決策規則、常見誤用與可觀察的驗證訊號。
+4. **Retrieve（檢索）**：使用者提問時，依問題選取相關書籍、概念、證據與原始章節；不要每次問題都重讀整個書庫。
+5. **Infer（推理）**：把檢索結果放入本技能既有的第一性原理、80/20、長期主義、複利、估值、風險與行動流程中，形成投資判斷。
+
+### 確定性攝取工具
+
+第一階段使用 scripts/scan_investment_books.py 建立可追溯的來源索引：
+
+    python skills/skill-investment-decision-coach/scripts/scan_investment_books.py books/
+
+它可以接收單一本書的資料夾或包含多本書的 books/ 根目錄，並為每本書產生 .knowledge/manifest.json 與 .knowledge/chapter-index.md。這個工具只負責掃描、分類、計算雜湊與列出標題，不會自行生成作者未說過的內容，也不會覆寫原始 Markdown。Digest 與 augment 層應以 manifest 的來源檔案和標題作為輸入。
+
+### Digest 與 Augment 建置入口
+
+在來源索引完成後，可先用 dry-run 產生每章節的 digest prompt：
+
+    python skills/skill-investment-decision-coach/scripts/build_augmented_knowledge.py books/金錢心理學
+
+dry-run 只寫入 books/金錢心理學/.work/digest-prompts/，不呼叫模型。確認輸入與來源後，才使用 --generate 呼叫 repository 既有的 LLMClient，將帶有來源雜湊、provider、model 與章節路徑的結果保存到：
+
+    books/金錢心理學/.knowledge/chapter-digests.json
+
+模型輸出必須是結構化 JSON，至少包含章節摘要、概念、投資原則、因果機制、決策問題、風險／失效條件與原始標題證據。後續跨章節 augment 必須以這些帶來源的 digest 為輸入，不得把未標註來源的自由生成文字當作書籍證據。
+
+### Query Engine：增強知識檢索
+
+使用者提出投資問題時，先使用 scripts/query_augmented_knowledge.py 從增強知識層找出相關 context：
+
+    python skills/skill-investment-decision-coach/scripts/query_augmented_knowledge.py books/ "安全邊際 風險 波動" --top-k 8 --output .work/query-context.md
+
+Query Engine 的責任是：
+
+- 搜尋 .knowledge/chapter-digests.json。
+- 找出相關的投資策略框架與原始章節。
+- 依關鍵概念與命中證據排序。
+- 保留來源路徑、source hash、章節片段與 digest model。
+- 輸出供本技能推理流程使用的 context。
+
+Query Engine 不負責做最後投資判斷。載入 context 後，仍必須依照本技能既有的十步投資決策流程，區分書中原則、當前事實、交叉整理、助理推論與條件式建議。若檢索結果與原始章節不一致，以原始章節為準，並標示索引需要更新。
+
+### 推理封包與品質閘門
+
+在正式推理前，先執行：
+
+```bash
+python skills/skill-investment-decision-coach/scripts/validate_augmented_knowledge.py books/金錢心理學
+```
+
+`validation.json` 的 `error` 表示不得直接使用該 digest；`warning` 表示來源、標題或 OCR 需要人工複核。若問題來自原始 OCR 的章節標題錯置，不可直接改寫原始書檔；應在該書 `.knowledge/source-quality.json` 記錄來源問題，保留正文與 digest，並在回答中降低該來源標題的權重。
+
+若 context 超過 provider 可接受大小，`infer_investment_decision.py --generate` 會先依來源區段分批摘要，再把 batch summaries 交給最終推理；完整原始 context 仍保留在輸出檔，不會因傳送限制而遺失。
+
+完成檢索後，可先建立推理封包：
+
+```bash
+python skills/skill-investment-decision-coach/scripts/infer_investment_decision.py \
+  books/ "市場大跌時，如何判斷只是波動，還是 thesis breaker？" \
+  --top-k 8 --output .work/inference-packet.md
+```
+
+只有在使用者明確要求生成回答，且已確認 provider、model 與資料授權時，才加上 `--generate --provider codex --model gpt-5.6-luna`。生成回答仍必須遵守本文件的十步流程與來源分層。
+
+### 增強知識的儲存與更新
+
+每本書可在其資料夾下使用 `.knowledge/` 儲存可重用的衍生知識，例如：
+
+```text
+books/{書名}/.knowledge/
+├── manifest.json
+├── chapter-index.md
+├── concepts.json
+├── principles.json
+├── causal-models.json
+├── decision-rules.md
+├── risk-and-failure-modes.md
+├── cross-chapter-synthesis.md
+└── evidence-index.json
+```
+
+- `manifest.json` 必須記錄來源檔案雜湊、處理狀態與知識版本，供增量更新使用。
+- `.knowledge/` 是可重建但可長期保存的知識層；原始 `books/` Markdown 是最高優先級的書籍證據。
+- 臨時切分檔、處理日誌與失敗的中間輸出應放在 `.work/` 或其他明確的暫存位置，不得混入正式知識索引。
+- 當來源 Markdown 改變，只重新消化受影響章節及其依賴的跨章節結果；不可因更新衍生知識而覆寫原始內容。
+- 若 `.knowledge/` 不存在、版本過期或索引不完整，先建立或修復索引；若目前任務只需要少量內容，可先讀原始章節並將完整建置降級為後續工作。
+
+### 問題回答時的知識邊界
+
+回答投資問題時，依序區分：
+
+1. `SKILL.md` 定義的推理規則與方法論。
+2. 原始書籍章節中的直接內容。
+3. 增強知識中的跨章節／跨書籍整理。
+4. 當前查證的市場、公司、財報、價格、法規或新聞事實。
+5. 助理根據上述內容做出的推論。
+6. 給使用者的條件式、風險導向行動建議。
+
+輸出時要明確標示這些層次，不可把增強知識中的推導誤寫成作者原話，也不可用書本內容代替需要即時查證的市場事實。重要結論應回指原始 Markdown 檔案與章節標題；若增強知識與原始章節不一致，以原始章節為準並標示索引需要更新。
+
 ## 語言與風格
 
 - 預設使用繁體中文（zh-TW）。除非使用者明確要求英文或其他語言，不使用簡體中文。

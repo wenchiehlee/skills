@@ -308,17 +308,18 @@ skills:
 - name: skill-investment-decision-coach
   group: common
   path: common/skill-investment-decision-coach
-  version: 1.0.5
+  version: 1.1.0
   description: Provide Traditional Chinese expert-level investment decision coaching
-    based on digested book knowledge and an investment methodology library, helping
-    users compare investor and book-derived frameworks, build daily practical investment
-    systems, evaluate opportunities, manage risk, avoid behavioral mistakes, and maintain
-    coherent naming/category taxonomy for finance-related skills.
+    using an augmented, traceable knowledge layer built from investment book Markdown
+    files and an investment methodology library. Scan, digest, cross-link, retrieve,
+    and apply book-derived frameworks to evaluate opportunities, manage risk, avoid
+    behavioral mistakes, build practical investment systems, and maintain coherent
+    finance-skill taxonomy.
   category: financial-strategy
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/Miz.Fetch
   repo_count: 1
-  updated_at: '2026-09-03'
+  updated_at: '2026-10-02'
   revised_at: '2026-09-03'
 - name: skill-llm-api-client
   group: common
