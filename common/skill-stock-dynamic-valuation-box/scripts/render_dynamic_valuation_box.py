@@ -722,14 +722,33 @@ def _plot(
             continue
         known = known.loc[known.groupby("target_year")["forward_eps"].shift().ne(known["forward_eps"])]
         year_latest = []  # (x, target_year, forward_eps) — one per year
+        panel_curves = []  # release-date revisions plus an FY-end terminal node
         for target_year, revisions in known.groupby("target_year"):
             revisions = revisions.sort_values("source_asof_date")
-            x = pd.Timestamp(year=int(target_year), month=12, day=31)
-            year_latest.append((x, int(target_year), revisions["forward_eps"].iloc[-1]))
+            target_year = int(target_year)
+            x = pd.Timestamp(year=target_year, month=12, day=31)
+            year_latest.append((x, target_year, revisions["forward_eps"].iloc[-1]))
+            panel_revisions = revisions[revisions["source_asof_date"] <= x].copy()
+            if panel_revisions.empty:
+                continue
+            panel_revisions = panel_revisions.sort_values("source_asof_date")
+            curve_dates = list(panel_revisions["source_asof_date"])
+            curve_values = [float(value) for value in panel_revisions["forward_eps"]]
+            terminal_added = curve_dates[-1] < x
+            if terminal_added:
+                curve_dates.append(x)
+                curve_values.append(curve_values[-1])
+            panel_curves.append({
+                "target_year": target_year,
+                "dates": curve_dates,
+                "values": curve_values,
+                "terminal_added": terminal_added,
+            })
         year_latest.sort(key=lambda item: item[0])
         source_forward[source_label] = {
             "color": color, "marker": marker, "known": known,
-            "year_latest": year_latest, "latest_report_date": known["source_asof_date"].max().date(),
+            "year_latest": year_latest, "panel_curves": panel_curves,
+            "latest_report_date": known["source_asof_date"].max().date(),
         }
 
     # sharex=True so the two panels line up on one timeline: a forward-EPS
@@ -849,65 +868,66 @@ def _plot(
     eps_axis.step(line_x, line_y, where="post", color="#6a329f", lw=2, label="Trailing TTM EPS")
     eps_axis.scatter(eps_view["available_date"], eps_view["ttm_eps"], color="#6a329f", s=26, zorder=3)
 
-    # Yahoo and FactSet forward-EPS curves are plotted separately, unmerged —
-    # each source's own estimates placed at the calendar year they actually
-    # forecast, not at publish date. The two sources routinely disagree on the
-    # same target year (see project notes); showing them side by side is the
-    # point, not a defect to reconcile.
-    #
-    # Every known revision for a given (source, target year) is shown, not
-    # just the latest — a consensus that moved from 64 to 99 over several
-    # reports is a materially different fact than one that was always 99, and
-    # collapsing to "whichever was newest" erased that history. Older
-    # revisions render smaller/fainter, a thin dotted line traces the
-    # revision path at that year's fixed x, and only the latest value gets a
-    # text label to avoid clutter. A second dotted line then connects each
-    # source's latest-known value across consecutive target years, so the
-    # shape of its forward curve (e.g. FY2026E -> FY2027E -> FY2028E) reads at
-    # a glance instead of as isolated dots.
+    # Yahoo and FactSet forward-EPS curves are plotted separately, unmerged.
+    # Each FY segment preserves the date of every estimate revision, then
+    # carries the last known value horizontally to that FY's 12/31 terminal
+    # node. Released estimates are circles; the FY-end terminal is a triangle
+    # and is the only node carrying the FY label. This makes both the estimate
+    # revision history and the eventual target-year value easy to read.
     forward_points = []  # (x, y, source_label, target_year, color, source_index)
+    terminal_points = []  # (x, y, source_label, target_year, color, source_index)
+    line_styles = {2025: "-", 2026: "--", 2027: "-.", 2028: ":"}
     for source_index, source_label in enumerate(("Yahoo", "FactSet")):
         info = source_forward.get(source_label)
         if info is None:
             continue
-        color, marker, known, year_latest = info["color"], info["marker"], info["known"], info["year_latest"]
-        for target_year, revisions in known.groupby("target_year"):
-            revisions = revisions.sort_values("source_asof_date")
-            x = next(item[0] for item in year_latest if item[1] == int(target_year))
-            n = len(revisions)
-            for i, forward_eps in enumerate(revisions["forward_eps"]):
-                is_latest = i == n - 1
+        color, year_latest, panel_curves = info["color"], info["year_latest"], info["panel_curves"]
+        for curve_index, curve in enumerate(sorted(panel_curves, key=lambda item: item["target_year"])):
+            target_year = curve["target_year"]
+            curve_dates, curve_values = curve["dates"], curve["values"]
+            eps_axis.plot(
+                curve_dates, curve_values, color=color, lw=1.5,
+                ls=line_styles.get(target_year, "-"), alpha=0.9,
+                zorder=3, label=f"{source_label} consensus" if curve_index == 0 else None,
+            )
+            released_end = len(curve_dates) - 1 if curve["terminal_added"] else len(curve_dates)
+            if released_end:
                 eps_axis.scatter(
-                    [x], [forward_eps], color=color, marker=marker, zorder=4 if is_latest else 3,
-                    s=55 if is_latest else 22 + 18 * i / max(n - 1, 1),
-                    alpha=1.0 if is_latest else 0.35 + 0.4 * i / max(n - 1, 1),
+                    curve_dates[:released_end], curve_values[:released_end],
+                    color=color, marker="o", s=28, alpha=0.92, zorder=4,
                 )
-            if n > 1:
-                eps_axis.plot([x, x], [revisions["forward_eps"].iloc[0], revisions["forward_eps"].iloc[-1]], color=color, lw=1, ls=":", alpha=0.55, zorder=2)
-        eps_axis.plot([p[0] for p in year_latest], [p[2] for p in year_latest], color=color, lw=1, ls=":", zorder=3, label=f"{source_label} forward EPS (latest per FY, as of {info['latest_report_date']})")
+            if curve["terminal_added"]:
+                eps_axis.scatter(
+                    [curve_dates[-1]], [curve_values[-1]], color=color,
+                    marker="^", s=62, zorder=5,
+                )
+            terminal_points.append((curve_dates[-1], curve_values[-1], source_label, target_year, color, source_index))
         for x, target_year, forward_eps in year_latest:
             forward_points.append((x, forward_eps, source_label, target_year, color, source_index))
 
-    any_forward_curve = bool(forward_points)
+    any_forward_curve = bool(forward_points or terminal_points)
     # Shared axis: extend both panels together to cover the furthest-out
     # forward-curve point, rather than letting each panel's own autoscale
     # fight over the (linked) shared x-limits.
-    range_end = max([view.index.max()] + [p[0] for p in forward_points])
+    range_points = forward_points + terminal_points
+    range_end = max([view.index.max()] + [p[0] for p in range_points])
     axis.set_xlim(view.index.min(), range_end)
-    # Forward-curve label offsets are sized as a fraction of the actual
-    # y-range, not a fixed point distance, so a point sitting far above
-    # everything else doesn't push its own label past the panel's own top
-    # edge — a fixed-points offset does exactly that once the y-range grows,
-    # bleeding text into the panel above it.
     eps_axis.margins(y=0.25)
     if any_forward_curve:
-        all_y = pd.concat([eps_view["ttm_eps"], pd.Series([p[1] for p in forward_points])])
+        all_y = pd.concat([eps_view["ttm_eps"], pd.Series([p[1] for p in range_points])])
         y_span = max(all_y.max() - all_y.min(), 1e-9)
-        for x, y, source_label, target_year, color, source_index in forward_points:
+        for x, y, source_label, target_year, color, source_index in terminal_points:
             text_y = y + (0.07 + 0.09 * source_index) * y_span
-            eps_axis.annotate(f"{source_label} FY{target_year}E {y:.1f} (as of {source_forward[source_label]['known']['source_asof_date'].max().date()})", xy=(x, y), xytext=(x, text_y), textcoords="data", fontsize=7.5, color=color, ha="center", va="bottom")
+            eps_axis.annotate(
+                f"{source_label} FY{target_year}E {y:.1f}", xy=(x, y),
+                xytext=(x, text_y), textcoords="data", fontsize=7.5,
+                color=color, ha="center", va="bottom",
+            )
         eps_axis.legend(loc="upper left", fontsize=8, frameon=False)
-    eps_axis.set_ylabel("Trailing EPS")
+    eps_axis.axvline(cutoff, color="#555555", lw=0.8, ls="--", alpha=0.7, zorder=1)
+    eps_axis.text(cutoff, 0.98, "Today", transform=eps_axis.get_xaxis_transform(), ha="right", va="top", fontsize=7, color="#555555")
+    eps_axis.set_title("Panel 4 | Trailing TTM EPS vs Yahoo / FactSet consensus", loc="left", fontsize=10, pad=4)
+    eps_axis.set_ylabel("EPS")
     eps_axis.grid(axis="y", color="#e6e6e6", lw=0.7)
     eps_axis.xaxis.set_major_locator(mdates.MonthLocator(interval=max(3, years * 2)))
     eps_axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
@@ -1086,9 +1106,16 @@ def _plot(
 
 def _discover_forward_feed(filename: str) -> str | None:
     """Find the standard sibling-repo forward-EPS feed when no path is given."""
+    # Yahoo Finance and FactSet are upstream feeds, but this renderer consumes
+    # only the canonical copy synchronized into biztrends.TW. That preserves
+    # the intended dependency direction: Yahoo.Finance -> biztrends.TW ->
+    # My-TW-Coverage, and prevents a local direct-upstream path from silently
+    # bypassing the integration repository.
     candidates = [
-        Path.cwd().parent / "Yahoo.Finance" / "data" / "reports" / filename,
-        Path("/app/projects/Yahoo.Finance/data/reports") / filename,
+        Path.cwd().parent / "biztrends.TW" / "data" / "Yahoo.Finance" / filename,
+        Path.cwd().parent / "biztrends.TW" / "data" / "GoogleSearch.Factset" / filename,
+        Path("/app/projects/biztrends.TW/data/Yahoo.Finance") / filename,
+        Path("/app/projects/biztrends.TW/data/GoogleSearch.Factset") / filename,
     ]
     for candidate in candidates:
         if candidate.is_file():

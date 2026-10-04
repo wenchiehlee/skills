@@ -25,6 +25,7 @@ skill-stock-dynamic-valuation-box/
 
 ## 版本
 
+- 1.11.0 (2026-10-04)：Panel 4 的 Yahoo/FactSet consensus 改為依實際 release date 畫 revision curve；每個 FY 年底追加最後已知值的 `▲` terminal node，所有 release node 使用 `●`，年度以線型區分、來源以顏色區分。forward feed 自動 discovery 僅使用 `biztrends.TW` 的 canonical synchronized artifacts。
 - 1.9.0 (2026-09-28)：新增`--price-csv`（預設指向`../Python-Actions.FinMind/
   data/stage1_raw/raw_daily_k_chart_flow.csv`）——`TaiwanStockPrice`是這個
   skill最重的一次FinMind呼叫（每次都要拉`--years + 3`年的每日收盤價），實測

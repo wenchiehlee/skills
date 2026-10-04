@@ -64,8 +64,8 @@ python skills/skill-stock-dynamic-valuation-box/scripts/render_dynamic_valuation
   --symbols 3045 2412 \
   --years 2 \
   --trades-csv data/trades.csv \
-  --yahoo-consensus-csv ../Yahoo.Finance/data/reports/raw_yahoo_finance_consensus_daily.csv \
-  --factset-report-csv ../Yahoo.Finance/data/reports/raw_factset_detailed_report.csv \
+  --yahoo-consensus-csv ../biztrends.TW/data/Yahoo.Finance/raw_yahoo_finance_consensus_daily.csv \
+  --factset-report-csv ../biztrends.TW/data/GoogleSearch.Factset/raw_factset_detailed_report.csv \
   --output-dir output/dynamic_valuation_box
 ```
 
@@ -92,9 +92,9 @@ symbol,date,side,price,lots
 
 Three ways to supply forward/consensus EPS — the script does not fetch or forecast these itself, and any combination may be used together (see rule 5 for how sources are reconciled):
 
-**`--yahoo-consensus-csv`** — Yahoo Finance's own dated feed, unmodified. Required columns: `stock_code`, `forecast_asof_date`, `earnings_1y_avg` (a sibling `Yahoo.Finance` repo's `data/reports/raw_yahoo_finance_consensus_daily.csv` already has this shape).
+**`--yahoo-consensus-csv`** — Yahoo Finance's own dated feed, unmodified. Required columns: `stock_code`, `forecast_asof_date`, `earnings_1y_avg` (the `biztrends.TW/data/Yahoo.Finance/raw_yahoo_finance_consensus_daily.csv` synchronized artifact already has this shape).
 
-**`--factset-report-csv`** — FactSet's own dated report feed, unmodified. Required columns: `代號` or `股票代號`, `MD日期`, and named-year `<year>EPS平均值` columns (a sibling repo's `data/reports/raw_factset_detailed_report.csv` already has this shape).
+**`--factset-report-csv`** — FactSet's own dated report feed, unmodified. Required columns: `代號` or `股票代號`, `MD日期`, and named-year `<year>EPS平均值` columns (the `biztrends.TW/data/GoogleSearch.Factset/raw_factset_detailed_report.csv` synchronized artifact already has this shape).
 
 **`--forward-eps-csv`** — this skill's own normalized shape, for any other source once reshaped:
 
@@ -109,7 +109,7 @@ symbol,as_of_date,forward_eps
 
 On the top panel, the trailing TTM box stays the primary green/red region; a single pooled forward-PE mean and `±1σ` line overlay it in dashed orange (whichever source's estimate was newest as of that trading day — see rule 5).
 
-On the bottom EPS panel, Yahoo and FactSet are **not** pooled: each source's own markers (diamond = Yahoo, square = FactSet) are positioned at the calendar year they actually forecast, not at publish date. The two sources routinely disagree on the same target year (sometimes by 20–40%+); this deliberately keeps that spread visible instead of silently picking whichever is newest. Every known revision for a given (source, target year) is plotted, not just the latest — older revisions render smaller and fainter, with a thin dotted vertical line tracing the revision path at that year's fixed x-position, so a consensus that moved from 64 to 99 across several reports reads as a visible climb rather than a single static number. Only the latest value per year gets a text label. A second thin dotted line then connects each source's latest-known value across consecutive target years (e.g. FY2026E → FY2027E → FY2028E), tracing the shape of its forward curve. The two panels share one x-axis, so a forward-EPS point's position is directly comparable to the price panel's date grid; when a target year runs past the requested `--years` window (e.g. FactSet's FY2028E), both panels' x-range extends together, compressing the visible price history rather than desynchronizing the two timelines.
+On the bottom EPS panel, Yahoo and FactSet are **not** pooled. Each source has one curve segment for FY2025E, FY2026E, FY2027E, and FY2028E. Every released estimate is plotted at its actual release date as a circle (`●`), and the last known value is carried horizontally to that fiscal year's 12/31 terminal node shown as a triangle (`▲`) with the `Source FY202xE value` label. Line styles distinguish target years while source colors distinguish Yahoo and FactSet. The source files are consumed only from the canonical `biztrends.TW` synchronized artifacts, not directly from `Yahoo.Finance`.
 
 ## Data and validation
 
