@@ -25,6 +25,7 @@ skill-stock-dynamic-valuation-box/
 
 ## 版本
 
+- 1.17.0 (2026-10-04)：所有 panels 統一顯示月格線與目前日期 `Today` 垂直線；Panel 4 review overlay 也同步恢復月格線。
 - 1.15.0 (2026-10-04)：Yahoo 與 FactSet 的所有 FY consensus 曲線統一使用 2028E 採用的點線樣式；來源仍以顏色區分，terminal node 仍使用 `▲`。
 - 1.14.0 (2026-10-04)：同一 FY 的 Yahoo/FactSet terminal label 改為固定在同一 terminal X 座標上下分層，並以引導線連回 `▲`，避免水平位移造成年度誤判。
 - 1.13.0 (2026-10-04)：同一 FY 的 Yahoo/FactSet terminal label 改為左右錯開（Yahoo 向左、FactSet 向右），避免 EPS 值接近時文字重疊。
