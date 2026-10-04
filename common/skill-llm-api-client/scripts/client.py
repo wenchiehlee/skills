@@ -17,13 +17,17 @@ MAX_PROMPT_LENGTH = 50_000
 
 
 def _build_provider(name: str, model: str | None = None) -> BaseProvider:
-    if name == "gemini":
+    n = (name or "").lower().strip()
+    if n in ("gemini", "gemini-api"):
         from .providers.gemini import GeminiProvider
         return GeminiProvider(model=model)
-    if name in ("codex", "llm-cli"):
+    if n in ("agy", "gemini-cli"):
+        from .providers.codex import CodexProvider
+        return CodexProvider(model=model or "Gemini 3.8 Flash (Medium)")
+    if n in ("codex", "codex-cli", "llm-cli", "chatgpt"):
         from .providers.codex import CodexProvider
         return CodexProvider(model=model)
-    if name == "mlx":
+    if n == "mlx":
         from .providers.mlx import MLXProvider
         return MLXProvider(model=model)
     raise ValueError(f"Unknown provider: {name}")
