@@ -311,7 +311,7 @@ class LLMClient:
                 with LLMCallTracker(
                     p.name, p.model, prompt, model_repo=getattr(p, "model_repo", ""),
                     routing_task=routing_task, draft_provider=draft_provider,
-                    smart_route_status=smart_route_status
+                    smart_route_status=smart_route_status, effort=getattr(p, "effort", "")
                 ) as tracker:
                     result = p.generate(prompt, json_mode=json_mode, max_tokens=max_tokens)
                     tracker.result = result
@@ -346,7 +346,7 @@ class LLMClient:
             with LLMCallTracker(
                 p.name, p.model, prompt, model_repo=getattr(p, "model_repo", ""),
                 routing_task=routing_task, draft_provider=draft_provider,
-                smart_route_status=smart_route_status
+                smart_route_status=smart_route_status, effort=getattr(p, "effort", "")
             ):
                 raise ValueError(f"prompt 超過長度上限（{len(prompt)} > {MAX_PROMPT_LENGTH}）")
 
@@ -356,7 +356,7 @@ class LLMClient:
                 with LLMCallTracker(
                     p.name, p.model, prompt, model_repo=getattr(p, "model_repo", ""),
                     routing_task=routing_task, draft_provider=draft_provider,
-                    smart_route_status=smart_route_status
+                    smart_route_status=smart_route_status, effort=getattr(p, "effort", "")
                 ) as tracker:
                     text = p.generate(prompt, json_mode=True, max_tokens=max_tokens)
                     tracker.result = text
