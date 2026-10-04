@@ -574,7 +574,7 @@ skills:
 - name: skill-theme-competitor-groups-curate
   group: common
   path: common/skill-theme-competitor-groups-curate
-  version: 0.1.0
+  version: 0.3.0
   description: 維護 data/themes/*.json 的 competitive_groups 與 extra_entities，讓 output/themes/*.md
     主題頁面依真實產品/商業模式競爭關係分組，並與 data/enrichment_all/*.json 的 relationships.competitors
     交叉比對一致性。
@@ -582,7 +582,7 @@ skills:
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
   repo_count: 3
-  updated_at: '2026-08-04'
+  updated_at: '2026-10-03'
   revised_at: '2026-09-30'
 - name: skill-theme-cycle-coverage
   group: common

@@ -183,6 +183,31 @@ layout.
      `skill-company-enrichment-json`, not this skill; do not edit
      `data/enrichment_all/*.json` from this skill without the user's explicit go-ahead.
 
+Before editing, compare similarly named or potentially overlapping groups using the
+Jaccard metric (intersection tickers divided by union tickers):
+
+```bash
+python skills/skill-theme-competitor-groups-curate/scripts/report_group_overlap.py --threshold 0.30
+```
+
+Group A and Group B are reported only when they are in different themes, have different
+names, and their Jaccard overlap is strictly above the threshold. Use this report to
+identify candidates for canonical-name review; overlap alone does not authorize merging
+groups with different products or business models.
+
+Also check competitor-group names before finalizing:
+
+```bash
+python skills/skill-theme-competitor-groups-curate/scripts/check_group_names.py
+```
+
+A group name is a cross-theme label, not a theme-specific caption. Reuse the canonical
+name in `references/canonical_group_names.json` when the same product/business-model
+competitor set appears in another theme. Do not create a second name merely by adding a
+market context such as `CSP`, `AI`, or `機櫃`. Keep that context in the theme name, group
+note, or company role instead. If an existing name is a true alias, add it to the registry
+and rename the data in the same change; do not silently leave both names in use.
+
 5. **Edit `data/themes/<theme>.json`.**
 
    - `competitive_groups`: an ordered list of `{"name": "...", "tickers": [...]}`. Order
@@ -196,6 +221,10 @@ layout.
      the same segment are tagged, or `related` if there's no clean match.
    - Group names should be a real segment name in Traditional Chinese (e.g. `ODM/系統整合 (AI
      伺服器代工)`, `散熱模組/液冷`), not a copy of the raw subcategory/GICS string.
+   - Before inventing a name, search `references/canonical_group_names.json` and all existing
+     `competitive_groups`. Similar product/business-model groups must reuse one canonical
+     name across themes. For example, `CSP 主力 AI 伺服器/機櫃 ODM 代工` is an alias of
+     `ODM/系統整合 (AI 伺服器代工)`, not a separate group.
 
 6. **Rebuild the full site, not just one theme.** `build_themes.py "<tag>"` (single-theme mode)
    overwrites `output/themes/README.md` with only that one theme's entry, wiping every other
