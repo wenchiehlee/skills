@@ -335,7 +335,7 @@ skills:
 - name: skill-llm-api-server
   group: common
   path: common/skill-llm-api-server
-  version: 1.2.1
+  version: 1.2.2
   description: 在 Synology NAS Docker 容器中運行的 LLM CLI 橋接伺服器，將 OpenAI codex-cli（ChatGPT
     Pro）與 Google gemini-cli 封裝為 Flask/Waitress HTTP API（/exec、/gemini/exec、/smart/exec），供
     llm 函式庫的 CodexProvider 遠端呼叫。
