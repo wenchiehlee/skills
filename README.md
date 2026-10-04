@@ -19,7 +19,6 @@
 <!-- SKILLS-TABLE:START -->
 | 技能 | 群組 | 分類 | 版本 | repo 數 | 說明 | 修訂日期 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| [skill-llm-api-client](common/skill-llm-api-client) | common | library | 1.0.7 | 8 | 統一的 LLM 客戶端函式庫（llm），封裝 Gemini API 金鑰輪轉、skill-llm-api-server 的 codex-cli/gemini-cli 橋接、以及本地 MLX 推論，內建 codex → gemini → mlx 自動備援鏈與智慧路由（Smart Routing）。 | 2026-10-04 |
 | [skill-mlx-api-client-ocr](common/skill-mlx-api-client-ocr) | common | document | 1.7.2 | 5 | 呼叫 Mac-mini MLX API Server 的 OCR 客戶端（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-10-04 |
 | [skill-stock-investorevent-fetch](common/skill-stock-investorevent-fetch) | common | financial-data | 1.2.1 | 3 | Regenerate raw_event_upcoming_earnings.csv from TW/US watchlists (MOPS + yfinance), classifying every event as 財報, 法說會, or 受邀法說, with consistent date/fiscal-quarter mapping shared across InvestorConference and InvestorEvents. | 2026-09-25 |
 | [skill-goodinfo-fetch](common/skill-goodinfo-fetch) | common | financial-data | 1.1.0 | 3 | Unified dispatcher across the GoodInfo.tw data pipeline: download raw XLS (Python-Actions.GoodInfo), convert to CSV via stage1 extraction (Python-Actions.GoodInfo.Analyzer), and enrich company-level metadata (Python-Actions.GoodInfo.CompanyInfo). | 2026-08-17 |
@@ -31,6 +30,7 @@
 | [skill-finmind-fetch](common/skill-finmind-fetch) | common | financial-data | 1.8.0 | 2 | Fetch FinMind Taiwan stock margin/price data and quarterly financial-ratio data, exporting GoodInfo Analyzer-compatible CSVs. | 2026-09-30 |
 | [skill-tw-land-realty-comps](common/skill-tw-land-realty-comps) | common | financial-data | 1.1.1 | 2 | 下載並彙整內政部不動產成交案件實際資訊資料供應系統（實價登錄）季資料，篩選指定地號/門牌周邊的土地或房屋成交紀錄，輸出近鄰統計、同棟/同段明細、年度活動與加權估值，供土地或房屋資產分析使用。 | 2026-08-25 |
 | [skill-mlx-api-client-whisper](common/skill-mlx-api-client-whisper) | common | document | 1.0.3 | 2 | 以 GitHub issue 觸發 Mac-mini 上的 whisper 轉錄 pipeline（skill-mlx-api-server-whisper），並輪詢結果是否已同步回本 repo。支援法說會音訊、YouTube 財經影片等多種來源。 | 2026-08-30 |
+| [skill-llm-api-client](common/skill-llm-api-client) | common | library | 1.0.2 | 2 | 統一的 LLM 客戶端函式庫（llm），封裝 Gemini API 金鑰輪轉、skill-llm-api-server 的 codex-cli/gemini-cli 橋接、以及本地 MLX 推論，內建 codex → gemini → mlx 自動備援鏈與智慧路由（Smart Routing）。 | 2026-10-03 |
 | [skill-scribd-pdf-fetch](common/skill-scribd-pdf-fetch) | common | document | 1.0.1 | 2 | 從 Scribd 文件網址下載乾淨的 PDF 副本，透過外部工具 themrsami/scribd-downloader（headless Chrome + CDP 逐頁列印）執行，本登錄庫不複製該工具原始碼；自動修補 Chrome 130+ 因 excludeSwitches 選項導致啟動即崩潰的相容性問題。 | 2026-09-02 |
 | [skill-company-enrichment-json](common/skill-company-enrichment-json) | common | basic | 0.1.2 | 2 | Extract and review My-TW-Coverage Markdown enrichment as atomic JSON using the biztrends.TW focus list. | 2026-09-03 |
 | [skill-theme-competitor-analysis](common/skill-theme-competitor-analysis) | common | financial-strategy | 0.1.2 | 2 | 依指定 stock id，使用 supply-chain product peer seed 與 relationship rules 區分 brand competitor、ODM peer、server peer 與 supplier/component，並輸出最近三年季度 Revenue、Revenue YoY、Profit、Profit YoY、GM 競爭者分析表。 | 2026-09-30 |
@@ -44,10 +44,10 @@
 | [skill-mlx-api-server](common/skill-mlx-api-server) | common | server | 1.3.0 | 1 | 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，提供 Baidu Unlimited-OCR 與 GLM-OCR 文件轉錄（共用單一 FIFO worker）及 MLX LLM 推理（/exec），以 Flask/Waitress 常駐服務形式運行。 | 2026-09-30 |
 | [skill-mops-fetch](common/skill-mops-fetch) | common | financial-data | 1.3.0 | 1 | Fetch Taiwan MOPS data end to end: download quarterly financial-report PDFs, convert same-stem Markdown sidecars with the skill-mac-mini-ocr hybrid PDF/OCR workflow, track official filing deadlines, and orchestrate the repo's batch/early-filer/health-report fetch pipeline. | 2026-09-30 |
 | [skill-facebook-fetch](common/skill-facebook-fetch) | common | financial-data | 1.2.3 | 1 | 管理 Facebook.Fetch 專案的每日粉專/珍藏清單貼文抓取 — 本機執行與 GitHub Actions 共用同一支 run_daily_fetch.py，更新過期的 FB_COOKIE、手動觸發並監看 daily_fetch workflow、排查已知的資料夾命名衝突與 sync 觸發失敗問題。 | 2026-09-30 |
-| [skill-llm-api-server](common/skill-llm-api-server) | common | server | 1.2.1 | 1 | 在 Synology NAS Docker 容器中運行的 LLM CLI 橋接伺服器，將 OpenAI codex-cli（ChatGPT Pro）與 Google gemini-cli 封裝為 Flask/Waitress HTTP API（/exec、/gemini/exec、/smart/exec），供 llm 函式庫的 CodexProvider 遠端呼叫。 | 2026-10-04 |
 | [skill-youtube-channel-srt-keyframe-extract](common/skill-youtube-channel-srt-keyframe-extract) | common | document | 1.2.1 | 1 | 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡報／數字等視覺重點的時間點，下載對應影片並擷取該時間點的畫面存成帶時間碼的 JPEG，索引 md 裡每張截圖都附上該時間區段的實際逐字稿片段（可關鍵字搜尋）與 LLM 話題推測。 | 2026-10-03 |
 | [skill-google-alert-fetch](common/skill-google-alert-fetch) | common | financial-data | 1.2.0 | 1 | 維運 GoogleAlertManager 的 Google Alerts 抓取管線，並提供內建 scripts/google_alert_fetch.py 以更新股票觀察/專注清單 CSV、檢查 README/focus CSV 一致性、依 focus CSV 重建 README、同步/匯出 RSS、抓取文章、LLM 分析評分、人工標註與 sync-stale issue 自動化。 | 2026-09-30 |
 | [skill-institutional-thesis-research](common/skill-institutional-thesis-research) | common | financial-strategy | 1.2.0 | 1 | Maintain auditable five-institution investment thesis research and interpret articles/news through selected institutional lenses for TW-institutional-investment-theses. | 2026-09-30 |
+| [skill-llm-api-server](common/skill-llm-api-server) | common | server | 1.2.2 | 1 | 在 Synology NAS Docker 容器中運行的 LLM CLI 橋接伺服器，將 OpenAI codex-cli（ChatGPT Pro）與 Google gemini-cli 封裝為 Flask/Waitress HTTP API（/exec、/gemini/exec、/smart/exec），供 llm 函式庫的 CodexProvider 遠端呼叫。 | 2026-09-30 |
 | [skill-stock-pipeline-health-monitor](common/skill-stock-pipeline-health-monitor) | common | financial-data | 1.1.0 | 1 | 複合技能：委派給所有 skill-*-fetch 抓取技能，維護 Data Health Dashboard 新鮮度、資料系統架構 Repo 角色對照表，並稽核跨 repo CSV 同步 YAML 與 GoodInfo/FinMind 智慧選源。 | 2026-09-25 |
 | [skill-tw-legal-search-console](common/skill-tw-legal-search-console) | common | basic | 1.1.0 | 1 | 台灣人物法律查核搜尋主控台——支援兩種輸入模式：(1) 一篇提及人物的新聞連結 (2) 人名（建議附地區/公司/職稱等輔助資訊）。整合 tw-legal-rag（22,534,636 筆裁判書語義檢索，含引用防護）、司法院裁判書系統即時備援查詢與新聞搜尋佐證，依身分比對信心與風險分級規則產出查核報告。當使用者提供新聞連結或人名，要求「查有無官司」「法律查核」「背景調查」時使用。 | 2026-09-30 |
 | [skill-yahoo-finance-fetch](common/skill-yahoo-finance-fetch) | common | financial-data | 1.1.0 | 1 | Fetch Yahoo Finance analyst estimates, daily/60-minute price history, and Wayback Machine historical consensus for Taiwan and US stocks into long-format raw CSVs. | 2026-08-18 |
@@ -80,7 +80,7 @@
 | [skill-google-analytics-monitor](common/skill-google-analytics-monitor) | common | analytics | 1.0.1 | — | 使用 google-analytics-cli 產生 GA4 網站監控 Markdown/README 報告，包含 YAML daily metadata、即時活躍人數、近 7/28 天短期趨勢、近 3 個月流量趨勢、來源/媒介、Top 10 URL、熱門頁面、事件與異常觀察。 | 2026-08-07 |
 | [skill-pptx-to-md](common/skill-pptx-to-md) | common | document | 1.0.1 | — | 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。 | 2026-08-25 |
 
-最後產生日期：2026-10-04
+最後產生日期：2026-10-03
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理

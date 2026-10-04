@@ -100,10 +100,10 @@ UPTIMEROBOT_API_KEY=your_uptimerobot_api_key_here
 
 | 變數 | 預設 | 說明 |
 |------|------|------|
-| `CODEX_MAX_PROMPT_LENGTH` | `0` | Codex prompt 上限；`0` 表示不設 server-side 字元 guard |
-| `GEMINI_MAX_PROMPT_LENGTH` | `0` | Gemini prompt 上限；`0` 表示不設 server-side 字元 guard |
+| `CODEX_MAX_PROMPT_LENGTH` | `60000` | Codex prompt 上限；部署 workflow 固定傳入 60000 |
+| `GEMINI_MAX_PROMPT_LENGTH` | `60000` | Gemini prompt 上限；部署 workflow 固定傳入 60000 |
 
-設定正數時，超限請求會回傳 HTTP `413`，不會啟動 CLI。即使設為 `0`，Codex CLI、gateway 或模型本身仍可能有 context window 限制。
+超過 60000 字元時，請求會回傳 HTTP `413`，不會啟動 CLI；Codex CLI、gateway 或模型本身仍可能有更小的 context window 限制。
 
 ## 🚀 部署流程
 

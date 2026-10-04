@@ -22,15 +22,15 @@ ROUTING_FILE = os.getenv("ROUTING_FILE", "/app/data/routing.json")
 
 
 def _prompt_limit(name: str) -> int:
-    raw = os.getenv(name, "0").strip()
+    raw = os.getenv(name, "60000").strip()
     try:
         return max(int(raw), 0)
     except ValueError:
-        logger.warning("忽略無效的 %s=%r；使用 0（不設 server-side guard）", name, raw)
+        logger.warning("忽略無效的 %s=%r；使用 60000", name, raw)
         return 0
 
 
-# 0 表示不設 server-side 字元 guard；CLI、gateway 與模型本身仍可能有 context limit。
+# 60000 為 server-side 預設字元上限；CLI、gateway 與模型本身仍可能有 context limit。
 CODEX_MAX_PROMPT_LENGTH = _prompt_limit("CODEX_MAX_PROMPT_LENGTH")
 GEMINI_MAX_PROMPT_LENGTH = _prompt_limit("GEMINI_MAX_PROMPT_LENGTH")
 
@@ -49,7 +49,7 @@ def _check_prompt_length(cli_name: str, prompt: str) -> None:
         raise PromptTooLong(cli_name, len(prompt), limit)
 
 
-def _run_agy(prompt: str, model: str = "", json_mode: bool = False, timeout: int = GEMINI_TIMEOUT) -> str:
+def _run_agy(prompt: str, model: str = "", json_mode: bool = False, timeout: int = GEMINI_TIMEOUT, effort: str = "") -> str:
     """呼叫 agy（Antigravity CLI，取代已停用的 gemini-cli）的非互動模式。
 
     subprocess.run 的 timeout 同時是對 issue #318（`agy -p` 在非 TTY 環境下可能
@@ -57,6 +57,10 @@ def _run_agy(prompt: str, model: str = "", json_mode: bool = False, timeout: int
     """
     cmd = ["agy", "-p", prompt, "--dangerously-skip-permissions"]
     if model:
+        if effort and "(" not in model:
+            eff_title = effort.strip().title()
+            if eff_title in ("Low", "Medium", "High"):
+                model = f"{model} ({eff_title})"
         cmd.extend(["--model", model])
     # json_mode 目前透過 prompt 指示達成，agy 尚無對應的強制 JSON 輸出旗標
     result = subprocess.run(
@@ -135,6 +139,10 @@ def _classify_cli_error(exc: Exception) -> str:
         return "cli_not_found"
 
     message = str(exc).lower()
+    quota_markers = ("429", "rate limit", "quota", "usage limit", "too many requests", "resource exhausted")
+    if any(marker in message for marker in quota_markers):
+        return "quota_exceeded"
+
     auth_markers = ("401", "unauthorized", "unauthenticated", "auth", "credential", "token", "login")
     if any(marker in message for marker in auth_markers):
         return "auth_failure"
@@ -143,7 +151,7 @@ def _classify_cli_error(exc: Exception) -> str:
     return "unknown_error"
 
 
-def _run_cli(cli_name: str, prompt: str, model: str = "", json_mode: bool = False) -> str:
+def _run_cli(cli_name: str, prompt: str, model: str = "", json_mode: bool = False, effort: str = "") -> str:
     """共通 CLI 執行邏輯。"""
     _check_prompt_length(cli_name, prompt)
     if cli_name == "gemini":
@@ -151,10 +159,13 @@ def _run_cli(cli_name: str, prompt: str, model: str = "", json_mode: bool = Fals
         # 改用 agy（Antigravity CLI，OAuth 登入已於本機完成，見
         # skills/skill-llm-api-server/scripts/renew-agy-auth.sh）。
         start = time.monotonic()
-        logger.info("CLI start: cli=agy prompt_chars=%s model=%s json_mode=%s",
-                    len(prompt), model or GEMINI_DEFAULT_MODEL, json_mode)
+        logger.info("CLI start: cli=agy prompt_chars=%s model=%s effort=%s json_mode=%s",
+                    len(prompt), model or GEMINI_DEFAULT_MODEL, effort or "-", json_mode)
         try:
-            output = _run_agy(prompt, model=model, json_mode=json_mode, timeout=GEMINI_TIMEOUT)
+            agy_kwargs = {"model": model, "json_mode": json_mode, "timeout": GEMINI_TIMEOUT}
+            if effort:
+                agy_kwargs["effort"] = effort
+            output = _run_agy(prompt, **agy_kwargs)
         except Exception:
             logger.warning("CLI failed: cli=agy elapsed=%.1fs", time.monotonic() - start)
             raise
@@ -235,6 +246,37 @@ def codex_status():
         return jsonify({"codex_cli": "timeout"}), 504
 
 
+@app.route("/tunnel/status")
+def tunnel_status():
+    tunnel_id = os.getenv("OPENAI_TUNNEL_ID", "")
+    pid_file = Path("/tmp/openai_tunnel.pid")
+    health_url_file = Path("/app/data/openai-tunnel/tunnel-health.url")
+    is_running = False
+    pid = None
+    if pid_file.exists():
+        try:
+            pid = int(pid_file.read_text().strip())
+            os.kill(pid, 0)
+            is_running = True
+        except (ValueError, OSError):
+            is_running = False
+
+    health_url = None
+    if health_url_file.exists():
+        try:
+            health_url = health_url_file.read_text().strip()
+        except OSError:
+            pass
+
+    return jsonify({
+        "tunnel_id": tunnel_id or None,
+        "configured": bool(tunnel_id and os.getenv("OPENAI_TUNNEL_RUNTIME_KEY")),
+        "running": is_running,
+        "pid": pid,
+        "health_url": health_url,
+    })
+
+
 # ── Codex exec 端點（相容 llm CodexProvider：POST /exec）────────────────────
 
 @app.route("/exec", methods=["POST"])
@@ -256,8 +298,9 @@ def exec_codex():
     except PromptTooLong as e:
         return jsonify({"error": str(e), "limit": e.limit, "prompt_chars": e.actual}), 413
     except Exception as e:
-        logger.exception("exec_codex 發生錯誤")
-        return jsonify({"error": str(e)}), 500
+        err_type = _classify_cli_error(e)
+        logger.exception("exec_codex 發生錯誤 (%s)", err_type)
+        return jsonify({"error": str(e), "error_type": err_type}), 500
 
 
 @app.route("/codex/help")
@@ -297,20 +340,47 @@ def exec_gemini():
     body = request.get_json(silent=True) or {}
     prompt = body.get("prompt", "").strip()
     model = body.get("model", "").strip()
+    effort = body.get("effort", "").strip()
     json_mode = body.get("json_mode", False)
     if not prompt:
         return jsonify({"error": "prompt is required"}), 400
 
     try:
-        output = _run_cli("gemini", prompt, model=model, json_mode=json_mode)
+        output = _run_cli("gemini", prompt, model=model, json_mode=json_mode, effort=effort)
         return jsonify({"output": output})
     except subprocess.TimeoutExpired:
         return jsonify({"error": f"gemini timed out after {GEMINI_TIMEOUT}s"}), 504
     except PromptTooLong as e:
         return jsonify({"error": str(e), "limit": e.limit, "prompt_chars": e.actual}), 413
     except Exception as e:
-        logger.exception("exec_gemini 發生錯誤")
-        return jsonify({"error": str(e)}), 500
+        err_type = _classify_cli_error(e)
+        logger.exception("exec_gemini 發生錯誤 (%s)", err_type)
+        return jsonify({"error": str(e), "error_type": err_type}), 500
+
+
+@app.route("/gemini/models")
+def gemini_models():
+    """回傳 agy 支援的模型與可選的 reasoning effort 等級。"""
+    return jsonify({
+        "current_default": "Gemini 3.8 Flash (Medium)",
+        "available_models": [
+            "Gemini 3.8 Flash (High)",
+            "Gemini 3.8 Flash (Medium)",
+            "Gemini 3.8 Flash (Low)",
+            "Gemini 3.7 Flash (High)",
+            "Gemini 3.7 Flash (Medium)",
+            "Gemini 3.7 Flash (Low)",
+            "Gemini 3.6 Flash (High)",
+            "Gemini 3.6 Flash (Medium)",
+            "Gemini 3.6 Flash (Low)",
+            "Gemini 3.1 Pro (High)",
+            "Gemini 3.1 Pro (Low)",
+            "Claude Sonnet 4.6 (Thinking)",
+            "Claude Opus 4.6 (Thinking)",
+            "GPT-OSS 120B (Medium)",
+        ],
+        "available_efforts": ["low", "medium", "high"],
+    })
 
 
 @app.route("/gemini/help")
