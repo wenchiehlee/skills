@@ -1,3 +1,5 @@
+- 1.18.0 (2026-10-04)：批次更新支援 `--priority-symbols-file`；每日 workflow 優先處理 `AI_伺服器` 主題中仍缺少目前 skill 版本或已超過更新期限的圖表，之後才輪到一般佇列。
+
 # skill-stock-dynamic-valuation-box
 
 台股個股 no-look-ahead 動態 TTM 本益比估值盒（2~5 年時價圖）技能。詳細指令與輸出契約見 [SKILL.md](SKILL.md)。

@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -64,6 +65,19 @@ def _symbols(json_dir: Path) -> tuple[list[str], dict[str, str]]:
             symbols.add(symbol)
             names[symbol] = str(record.get("company_name", "")).strip()
     return sorted(symbols), names
+
+
+def _priority_symbols(path: str | None) -> set[str]:
+    """Read numeric tickers from a Markdown theme file or plain symbol list."""
+    if not path:
+        return set()
+    try:
+        text = Path(path).read_text(encoding="utf-8")
+    except OSError:
+        return set()
+    symbols = {match.zfill(4) for match in re.findall(r"company/([^_)/]+)", text) if match.isdigit()}
+    symbols.update(match.zfill(4) for match in re.findall(r"(?m)^\s*(\d{1,6})\s*$", text))
+    return symbols
 
 
 SKILL_METADATA_PATH = Path(__file__).resolve().parents[1] / "metadata.json"
@@ -206,6 +220,10 @@ def main() -> int:
     parser.add_argument("--end-date")
     parser.add_argument("--force", action="store_true", help="Re-render symbols whose three artifacts already exist")
     parser.add_argument("--max-age-days", type=float, default=3.0, help="Re-render complete chart sets older than this many days")
+    parser.add_argument(
+        "--priority-symbols-file",
+        help="Markdown/plain symbol list whose pending charts must be processed before the normal queue",
+    )
     # Kept for CLI compatibility; quota exhaustion is now fail-fast.
     parser.add_argument("--wait-for-quota", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--quota-wait-hours", type=float, default=0.0, help=argparse.SUPPRESS)
@@ -217,6 +235,9 @@ def main() -> int:
     renderer = Path(args.renderer) if args.renderer else Path(__file__).with_name("render_dynamic_valuation_box.py")
     symbols, company_names = _symbols(json_dir)
     pending = [symbol for symbol in symbols if args.force or not _complete(output_dir, symbol, args.max_age_days)]
+    priority_symbols = _priority_symbols(args.priority_symbols_file)
+    priority_pending = [symbol for symbol in pending if symbol in priority_symbols]
+    other_pending = [symbol for symbol in pending if symbol not in priority_symbols]
 
     state_path = Path(args.queue_state)
     state = {}
@@ -225,9 +246,13 @@ def main() -> int:
     except (OSError, ValueError):
         pass
     next_symbol = str(state.get("next_symbol", "")).strip()
-    if pending and next_symbol in pending:
-        pivot = pending.index(next_symbol)
-        pending = pending[pivot:] + pending[:pivot]
+    if next_symbol in priority_pending:
+        pivot = priority_pending.index(next_symbol)
+        priority_pending = priority_pending[pivot:] + priority_pending[:pivot]
+    elif next_symbol in other_pending:
+        pivot = other_pending.index(next_symbol)
+        other_pending = other_pending[pivot:] + other_pending[:pivot]
+    pending = priority_pending + other_pending
     token_names = [f"{args.token_env_prefix}{index}" for index in range(1, 21)]
     token_names += [
         "FINMIND_TOKEN", "FINMIND_API_TOKEN",
@@ -252,7 +277,10 @@ def main() -> int:
         tokens = [""]
 
     workers = max(1, min(args.workers, len(tokens), len(pending) or 1))
-    print(f"symbols={len(symbols)} complete={len(symbols) - len(pending)} pending={len(pending)} workers={workers}")
+    print(
+        f"symbols={len(symbols)} complete={len(symbols) - len(pending)} "
+        f"pending={len(pending)} priority_pending={len(priority_pending)} workers={workers}"
+    )
 
     failures: dict[str, str] = {}
     deferred: list[tuple[str, str]] = []
