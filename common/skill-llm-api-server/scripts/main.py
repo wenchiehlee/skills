@@ -21,6 +21,34 @@ GEMINI_DEFAULT_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 ROUTING_FILE = os.getenv("ROUTING_FILE", "/app/data/routing.json")
 
 
+def _prompt_limit(name: str) -> int:
+    raw = os.getenv(name, "0").strip()
+    try:
+        return max(int(raw), 0)
+    except ValueError:
+        logger.warning("忽略無效的 %s=%r；使用 0（不設 server-side guard）", name, raw)
+        return 0
+
+
+# 0 表示不設 server-side 字元 guard；CLI、gateway 與模型本身仍可能有 context limit。
+CODEX_MAX_PROMPT_LENGTH = _prompt_limit("CODEX_MAX_PROMPT_LENGTH")
+GEMINI_MAX_PROMPT_LENGTH = _prompt_limit("GEMINI_MAX_PROMPT_LENGTH")
+
+
+class PromptTooLong(ValueError):
+    def __init__(self, cli_name: str, actual: int, limit: int):
+        self.cli_name = cli_name
+        self.actual = actual
+        self.limit = limit
+        super().__init__(f"{cli_name} prompt exceeds server limit ({actual} > {limit})")
+
+
+def _check_prompt_length(cli_name: str, prompt: str) -> None:
+    limit = CODEX_MAX_PROMPT_LENGTH if cli_name == "codex" else GEMINI_MAX_PROMPT_LENGTH
+    if limit and len(prompt) > limit:
+        raise PromptTooLong(cli_name, len(prompt), limit)
+
+
 def _run_agy(prompt: str, model: str = "", json_mode: bool = False, timeout: int = GEMINI_TIMEOUT) -> str:
     """呼叫 agy（Antigravity CLI，取代已停用的 gemini-cli）的非互動模式。
 
@@ -117,6 +145,7 @@ def _classify_cli_error(exc: Exception) -> str:
 
 def _run_cli(cli_name: str, prompt: str, model: str = "", json_mode: bool = False) -> str:
     """共通 CLI 執行邏輯。"""
+    _check_prompt_length(cli_name, prompt)
     if cli_name == "gemini":
         # gemini-cli 的 OAuth 登入已於 2026-06-18 隨消費者方案停用（invalid_grant），
         # 改用 agy（Antigravity CLI，OAuth 登入已於本機完成，見
@@ -224,6 +253,8 @@ def exec_codex():
         return jsonify({"output": output})
     except subprocess.TimeoutExpired:
         return jsonify({"error": f"codex timed out after {CODEX_TIMEOUT}s"}), 504
+    except PromptTooLong as e:
+        return jsonify({"error": str(e), "limit": e.limit, "prompt_chars": e.actual}), 413
     except Exception as e:
         logger.exception("exec_codex 發生錯誤")
         return jsonify({"error": str(e)}), 500
@@ -275,6 +306,8 @@ def exec_gemini():
         return jsonify({"output": output})
     except subprocess.TimeoutExpired:
         return jsonify({"error": f"gemini timed out after {GEMINI_TIMEOUT}s"}), 504
+    except PromptTooLong as e:
+        return jsonify({"error": str(e), "limit": e.limit, "prompt_chars": e.actual}), 413
     except Exception as e:
         logger.exception("exec_gemini 發生錯誤")
         return jsonify({"error": str(e)}), 500
@@ -351,6 +384,8 @@ def exec_smart():
             routing_manager.record(task_name, False, draft_cli)
             return jsonify({"output": judge_output, "smart_status": "judging_fail", "provider": judge_cli})
 
+    except PromptTooLong as e:
+        return jsonify({"error": str(e), "limit": e.limit, "prompt_chars": e.actual}), 413
     except Exception as e:
         logger.exception("exec_smart 發生錯誤")
         return jsonify({

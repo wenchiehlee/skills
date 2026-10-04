@@ -94,6 +94,17 @@ GEMINI_TIMEOUT=120
 UPTIMEROBOT_API_KEY=your_uptimerobot_api_key_here
 ```
 
+## 📏 Prompt 長度設定
+
+`/exec`、`/gemini/exec` 與 `/smart/exec` 支援可配置的 server-side prompt 字元 guard：
+
+| 變數 | 預設 | 說明 |
+|------|------|------|
+| `CODEX_MAX_PROMPT_LENGTH` | `0` | Codex prompt 上限；`0` 表示不設 server-side 字元 guard |
+| `GEMINI_MAX_PROMPT_LENGTH` | `0` | Gemini prompt 上限；`0` 表示不設 server-side 字元 guard |
+
+設定正數時，超限請求會回傳 HTTP `413`，不會啟動 CLI。即使設為 `0`，Codex CLI、gateway 或模型本身仍可能有 context window 限制。
+
 ## 🚀 部署流程
 
 推送到 `main` 分支會自動觸發 `.github/workflows/deploy-synology-nas.yml`，在 self-hosted runner 上建置並啟動容器（Docker 混合環境：Python 3.11-slim + Node.js 20 + `@openai/codex` + `@google/gemini-cli` + `bubblewrap`）。

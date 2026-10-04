@@ -260,7 +260,11 @@ def test_run_cli_excludes_codex_api_key_from_env(client):
 
     with patch.dict(os.environ, {"CODEX_API_KEY": "server-access-key"}):
         with patch("main.subprocess.run", side_effect=fake_run):
-            client.post("/exec", json={"prompt": "hello"})
+            client.post(
+                "/exec",
+                json={"prompt": "hello"},
+                headers={"X-API-Key": "server-access-key"},
+            )
 
     m_module.CODEX_API_KEY = original
     assert "CODEX_API_KEY" not in captured_env
