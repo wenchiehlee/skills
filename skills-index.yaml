@@ -447,7 +447,7 @@ skills:
 - name: skill-stock-dynamic-valuation-box
   group: common
   path: common/skill-stock-dynamic-valuation-box
-  version: 1.9.0
+  version: 1.10.0
   description: Render no-look-ahead Taiwan-stock time-price diagrams (2–5 year windows)
     with dynamic TTM P/E valuation boxes (μ±1σ/±2σ), an optional forward-EPS/forward-PE
     overlay sourced from Yahoo Finance and/or FactSet consensus feeds, optional matched
@@ -460,7 +460,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
   repo_count: 2
-  updated_at: '2026-09-28'
+  updated_at: '2026-10-03'
   revised_at: '2026-09-28'
 - name: skill-stock-earnings-calendar-monitor
   group: common

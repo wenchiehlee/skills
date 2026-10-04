@@ -11,17 +11,32 @@ import argparse
 import os
 import json
 import sys
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from typing import Iterable
-from urllib.error import HTTPError
-from urllib.parse import urlencode
-from urllib.request import Request, urlopen
-
+from zoneinfo import ZoneInfo
+import requests
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
 import pandas as pd
+
+
+SKILL_METADATA_PATH = Path(__file__).resolve().parents[1] / "metadata.json"
+try:
+    _skill_metadata = json.loads(SKILL_METADATA_PATH.read_text(encoding="utf-8"))
+    CHART_SKILL_VERSION = str(_skill_metadata["version"])
+    CHART_VERSION = f"{_skill_metadata['name']}@{CHART_SKILL_VERSION}"
+except (OSError, ValueError, KeyError):
+    CHART_SKILL_VERSION = "unknown"
+    CHART_VERSION = "skill-stock-dynamic-valuation-box@unknown"
+CHART_FONT_VERSION = "noto-sans-cjk-tc-v1"
+CHART_METADATA = f"chart-version: {CHART_VERSION}; font: {CHART_FONT_VERSION}"
+
+
+def _updated_label() -> str:
+    updated = datetime.now(ZoneInfo("Asia/Taipei"))
+    return updated.strftime("Updated: %Y-%m-%d %H:%M CST") + f" ({CHART_SKILL_VERSION})"
 
 try:
     # Optional: matches skill-finmind-fetch's convention of reading tokens from
@@ -33,6 +48,26 @@ try:
 except ImportError:
     pass
 
+def _load_local_dotenv() -> None:
+    env_path = Path(".env")
+    if not env_path.is_file():
+        return
+    try:
+        lines = env_path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip("\"'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+_load_local_dotenv()
+
 # Sibling registry skill: the μ/σ/±1σ/±2σ PE-band math is shared with
 # skill-stock-ma-rsi-bband-macd-peband's calc_pe_band_series() instead of being
 # reimplemented here. That function takes no position on adjusted-vs-unadjusted
@@ -40,15 +75,16 @@ except ImportError:
 # close this skill deliberately uses (see "Required valuation rules" below).
 PEBAND_SCRIPTS_DIR = (Path(__file__).resolve().parent / "../../skill-stock-ma-rsi-bband-macd-peband/scripts").resolve()
 sys.path.insert(0, str(PEBAND_SCRIPTS_DIR))
-from indicators import calc_pe_band_series  # noqa: E402
+from indicators import calc_bbands, calc_ma, calc_pe_band_series  # noqa: E402
 
 FINMIND_URL = "https://api.finmindtrade.com/api/v4/data"
+FINMIND_QUOTA_URL = "https://api.web.finmindtrade.com/v2/user_info"
 STATUTORY_DEADLINES = {3: (5, 15), 6: (8, 14), 9: (11, 14), 12: (3, 31)}
 
 # Historical drift across this codebase's various FinMind-consuming scripts left
 # three different env-var naming schemes for a pool of rotatable tokens (a single
 # free FinMind account's daily quota is tiny) — this skill's own original
-# FINMIND_TOKEN/FINMIND_API_TOKEN, the numbered FINMIND_TOKEN1..6 convention that
+# FINMIND_TOKEN/FINMIND_API_TOKEN, the numbered FINMIND_TOKEN1..20 convention that
 # is actually current (see Python-Actions.FinMind's .env.example and its
 # daily-finmind-status.yml secrets), and skill-finmind-fetch's
 # FINDMIND_GMAIL_TOKEN[1-6] (note the transposed "FINDMIND" spelling there,
@@ -60,11 +96,36 @@ STATUTORY_DEADLINES = {3: (5, 15), 6: (8, 14), 9: (11, 14), 12: (3, 31)}
 # just to read token names.
 TOKEN_ENV_NAMES = (
     "FINMIND_TOKEN", "FINMIND_API_TOKEN",
-    *(f"FINMIND_TOKEN{i}" for i in range(1, 7)),
-    "FINDMIND_GMAIL_TOKEN", *(f"FINDMIND_GMAIL_TOKEN{i}" for i in range(1, 7)),
+    *(f"FINMIND_TOKEN{i}" for i in range(1, 21)),
+    "FINDMIND_GMAIL_TOKEN", *(f"FINDMIND_GMAIL_TOKEN{i}" for i in range(1, 21)),
 )
 
 _live_tokens: list[str] | None = None
+_token_remaining: dict[str, int] = {}
+
+
+def _finmind_quota_remaining(token: str) -> int:
+    """Return the current hourly quota remaining for a token.
+
+    FinMind's data API now requires Bearer authentication; this separate
+    user-info check is a guard against retrying known-exhausted tokens.
+    Cache the result per process and decrement after each successful data
+    request so a render batch does not need a quota call for every request.
+    """
+    if token in _token_remaining:
+        return _token_remaining[token]
+    try:
+        response = requests.get(
+            FINMIND_QUOTA_URL, headers={"Authorization": f"Bearer {token}"}, timeout=20,
+        )
+        body = response.json()
+        limit = int(body.get("api_request_limit", 0) or 0)
+        used = int(body.get("user_count", 0) or 0)
+        remaining = max(limit - used, 0) if limit > 0 else 0
+    except (requests.RequestException, OSError, ValueError, TypeError):
+        remaining = 0
+    _token_remaining[token] = remaining
+    return remaining
 
 
 def _finmind_tokens() -> list[str]:
@@ -79,7 +140,9 @@ def _finmind_tokens() -> list[str]:
             value = os.environ.get(name)
             if value and value.strip() and value.strip() not in seen:
                 seen.append(value.strip())
-        _live_tokens = seen
+        # Double-check every token against FinMind's quota API before the
+        # first data request; exhausted tokens are never selected.
+        _live_tokens = [token for token in seen if _finmind_quota_remaining(token) > 0]
     return _live_tokens
 
 
@@ -98,19 +161,20 @@ def _fetch(dataset: str, symbol: str, start: str, end: str) -> list[dict]:
     last_error: Exception | None = None
     for token in attempt_tokens:
         params = {"dataset": dataset, "data_id": symbol, "start_date": start, "end_date": end}
+        headers = {"User-Agent": "dynamic-valuation-box/1.0"}
         if token:
-            params["token"] = token
-        query = urlencode(params)
-        request = Request(f"{FINMIND_URL}?{query}", headers={"User-Agent": "dynamic-valuation-box/1.0"})
+            headers["Authorization"] = f"Bearer {token}"
         try:
-            with urlopen(request, timeout=60) as response:
-                body = json.load(response)
-        except HTTPError as exc:
+            response = requests.get(FINMIND_URL, params=params, headers=headers, timeout=60)
+            body = response.json()
+        except (requests.RequestException, ValueError) as exc:
             last_error = exc
-            if exc.code == 402 and token:
-                _retire_token(token)
-                continue
             raise RuntimeError(f"{symbol} {dataset}: FinMind request failed ({exc})") from exc
+        if response.status_code == 402 and token:
+            _retire_token(token)
+            continue
+        if token and token in _token_remaining:
+            _token_remaining[token] = max(_token_remaining[token] - 1, 0)
         if body.get("status") != 200:
             msg = str(body.get("msg", "")).strip()
             if token and ("reach the upper limit" in msg.lower() or "token is illegal" in msg.lower()):
@@ -204,6 +268,13 @@ def _adjust_for_stock_dividends(
     return prices, eps
 
 
+def _normalize_symbol_series(values: pd.Series) -> pd.Series:
+    """Normalize Taiwan numeric codes while preserving international tickers."""
+    text = values.astype(str).str.strip()
+    numeric = text.str.extract(r"^(\d+)(?:\.0)?$", expand=False)
+    return numeric.where(numeric.notna(), text.str.upper()).where(numeric.isna(), numeric.str.zfill(4))
+
+
 def _read_forward_eps(path: str | None, symbols: Iterable[str]) -> pd.DataFrame:
     """Manual consensus/forward EPS estimates, one row per re-estimate, in this
     skill's own normalized shape: symbol, as_of_date, forward_eps. Use this when
@@ -225,7 +296,7 @@ def _read_forward_eps(path: str | None, symbols: Iterable[str]) -> pd.DataFrame:
     if missing:
         raise ValueError(f"forward-eps CSV missing columns: {', '.join(missing)}")
     forward = forward.loc[:, columns].copy()
-    forward["symbol"] = forward["symbol"].astype(str).str.extract(r"(\d+)", expand=False).str.zfill(4)
+    forward["symbol"] = _normalize_symbol_series(forward["symbol"])
     forward["as_of_date"] = pd.to_datetime(forward["as_of_date"])
     forward["forward_eps"] = pd.to_numeric(forward["forward_eps"], errors="coerce")
     forward = forward.dropna(subset=["symbol", "as_of_date", "forward_eps"]).sort_values("as_of_date")
@@ -250,7 +321,7 @@ def _read_yahoo_consensus_eps(path: str | None, symbols: Iterable[str]) -> pd.Da
     forward = raw.rename(columns={
         "stock_code": "symbol", "forecast_asof_date": "as_of_date", "earnings_1y_avg": "forward_eps",
     })[columns].copy()
-    forward["symbol"] = forward["symbol"].astype(str).str.extract(r"(\d+)", expand=False).str.zfill(4)
+    forward["symbol"] = _normalize_symbol_series(forward["symbol"])
     forward["as_of_date"] = pd.to_datetime(forward["as_of_date"], errors="coerce")
     forward["forward_eps"] = pd.to_numeric(forward["forward_eps"], errors="coerce")
     forward = forward.dropna(subset=["symbol", "as_of_date", "forward_eps"]).sort_values("as_of_date")
@@ -277,7 +348,7 @@ def _read_factset_eps(path: str | None, symbols: Iterable[str]) -> pd.DataFrame:
     if missing:
         raise ValueError(f"factset-report CSV missing columns: {', '.join(missing)}")
     raw = raw.copy()
-    raw["symbol"] = raw[symbol_col].astype(str).str.extract(r"(\d+)", expand=False).str.zfill(4)
+    raw["symbol"] = _normalize_symbol_series(raw[symbol_col])
     raw["as_of_date"] = pd.to_datetime(raw["MD日期"], errors="coerce")
     raw = raw.dropna(subset=["symbol", "as_of_date"])
     next_fy_col = raw["as_of_date"].dt.year.add(1).astype(str) + "EPS平均值"
@@ -306,7 +377,7 @@ def _yahoo_forward_curve(path: str | None, symbols: Iterable[str]) -> pd.DataFra
     if missing:
         raise ValueError(f"yahoo-consensus CSV missing columns: {', '.join(missing)}")
     raw = raw.copy()
-    raw["symbol"] = raw["stock_code"].astype(str).str.extract(r"(\d+)", expand=False).str.zfill(4)
+    raw["symbol"] = _normalize_symbol_series(raw["stock_code"])
     raw["source_asof_date"] = pd.to_datetime(raw["forecast_asof_date"], errors="coerce")
     raw = raw.dropna(subset=["symbol", "source_asof_date"])
     rows = []
@@ -335,7 +406,7 @@ def _factset_forward_curve(path: str | None, symbols: Iterable[str]) -> pd.DataF
     if missing:
         raise ValueError(f"factset-report CSV missing columns: {', '.join(missing)}")
     raw = raw.copy()
-    raw["symbol"] = raw[symbol_col].astype(str).str.extract(r"(\d+)", expand=False).str.zfill(4)
+    raw["symbol"] = _normalize_symbol_series(raw[symbol_col])
     raw["source_asof_date"] = pd.to_datetime(raw["MD日期"], errors="coerce")
     raw = raw.dropna(subset=["symbol", "source_asof_date"])
     year_columns = [c for c in raw.columns if c.endswith("EPS平均值")]
@@ -356,8 +427,9 @@ def _latest_curve_snapshot(curve: pd.DataFrame, cutoff: pd.Timestamp) -> pd.Data
     known as of `cutoff` — never a later report, and never rows mixed in from
     an earlier report once a newer one exists (that would silently blend two
     different vintages' assumptions into one "curve")."""
-    known = curve[curve["source_asof_date"] <= cutoff]
+    known = curve[curve["source_asof_date"] <= cutoff].sort_values("source_asof_date").copy()
     if known.empty:
+        known = known.loc[known.groupby("target_year")["forward_eps"].shift().ne(known["forward_eps"])]
         return known
     latest_date = known["source_asof_date"].max()
     return known[known["source_asof_date"] == latest_date].sort_values("target_year")
@@ -399,61 +471,106 @@ def _read_analyzer_revenue(path: str, symbol: str) -> pd.DataFrame:
     return revenue[columns].reset_index(drop=True)
 
 
-def _read_price_csv(path: str, symbol: str) -> pd.DataFrame:
-    """Historical daily-close baseline from a pre-fetched FinMind TaiwanStockPrice
-    snapshot (Python-Actions.FinMind's stage1_raw/raw_daily_k_chart_flow.csv,
-    itself sourced from FinMind), when available. This is purely an
-    optimization to skip re-fetching days it already covers — _fetch_prices
-    below still tops up whatever's newer from live FinMind, so a stale or
-    missing snapshot only costs extra API calls, never wrong data. Returns an
-    empty frame (not an error) for any missing file, unreadable file, or a
-    symbol with no rows in it."""
-    if not path or not Path(path).is_file():
-        return pd.DataFrame(columns=["date", "close"])
+def _read_finmind_revenue_csv(path: str, symbol: str) -> pd.DataFrame:
+    """Read the synchronized local FinMind monthly-revenue export."""
+    columns = ["date", "finmind_revenue_m_twd", "finmind_yoy_pct"]
+    if not path:
+        return pd.DataFrame(columns=columns)
     try:
-        raw = pd.read_csv(path, usecols=["stock_code", "交易_日期", "收盤價_元"], dtype={"stock_code": str})
+        revenue = pd.read_csv(path, encoding="utf-8-sig")
+    except (FileNotFoundError, OSError, UnicodeDecodeError):
+        return pd.DataFrame(columns=columns)
+    required = {"stock_code", "月別", "合併營業收入_營收_億"}
+    if not required.issubset(revenue.columns):
+        return pd.DataFrame(columns=columns)
+    revenue["stock_code"] = revenue["stock_code"].astype(str).str.extract(r"(\d+)")[0].str.zfill(4)
+    revenue = revenue[revenue["stock_code"] == symbol].copy()
+    if revenue.empty:
+        return pd.DataFrame(columns=columns)
+    revenue["date"] = pd.to_datetime(revenue["月別"].astype(str).str.replace("/", "-", regex=False) + "-01", errors="coerce")
+    revenue["finmind_revenue_m_twd"] = pd.to_numeric(revenue["合併營業收入_營收_億"], errors="coerce") * 100
+    revenue = revenue.dropna(subset=["date", "finmind_revenue_m_twd"]).sort_values("date").drop_duplicates("date", keep="last")
+    revenue["finmind_yoy_pct"] = revenue["finmind_revenue_m_twd"].replace(0, float("nan")).pct_change(12) * 100
+    return revenue[columns].reset_index(drop=True)
+
+
+def _read_local_eps_ratio_csv(path: str, symbol: str) -> pd.DataFrame:
+    """Read quarterly EPS from the synchronized FinMind ratio export.
+
+    FinMind's live financial-statement endpoint can expose only a recent
+    history for some symbols. This local export is used only to warm up the
+    EPS series, so the visible chart can calculate the earliest YoY bars
+    without making additional API calls.
+    """
+    columns = ["period_end", "available_date", "eps"]
+    if not path:
+        return pd.DataFrame(columns=columns)
+    try:
+        header = pd.read_csv(path, nrows=0).columns
+        eps_column = next((name for name in header if str(name).startswith("每股稅後盈餘 (元)")), None)
+        if eps_column is None:
+            return pd.DataFrame(columns=columns)
+        raw = pd.read_csv(path, usecols=["stock_code", "季度", eps_column])
     except (OSError, ValueError, pd.errors.ParserError):
-        return pd.DataFrame(columns=["date", "close"])
-    rows = raw[raw["stock_code"].str.zfill(4) == symbol].copy()
-    rows["date"] = pd.to_datetime(rows["交易_日期"], errors="coerce")
-    rows["close"] = pd.to_numeric(rows["收盤價_元"], errors="coerce")
-    rows = rows.dropna(subset=["date", "close"])[["date", "close"]]
-    return rows.drop_duplicates("date", keep="last").sort_values("date")
+        return pd.DataFrame(columns=columns)
+    stock = raw["stock_code"].astype(str).str.extract(r"(\d+)")[0].str.zfill(4)
+    raw = raw[stock == symbol].copy()
+    if raw.empty:
+        return pd.DataFrame(columns=columns)
+    quarter = raw["季度"].astype(str).str.extract(r"(\d{4})Q([1-4])")
+    raw["year"] = pd.to_numeric(quarter[0], errors="coerce")
+    raw["quarter"] = pd.to_numeric(quarter[1], errors="coerce")
+    raw["eps"] = pd.to_numeric(raw[eps_column], errors="coerce")
+    raw = raw.dropna(subset=["year", "quarter", "eps"])
+    month_day = {1: (3, 31), 2: (6, 30), 3: (9, 30), 4: (12, 31)}
+    raw["period_end"] = [pd.Timestamp(int(year), *month_day[int(q)]) for year, q in zip(raw["year"], raw["quarter"])]
+    raw["available_date"] = raw["period_end"].map(_availability_date)
+    return raw[columns].drop_duplicates("period_end", keep="last").sort_values("period_end").reset_index(drop=True)
 
 
-def _fetch_prices(symbol: str, data_start: str, end_text: str, price_csv: str) -> pd.DataFrame:
-    """TaiwanStockPrice for [data_start, end_text], preferring the pre-fetched
-    CSV snapshot for whatever it already covers and only calling FinMind live
-    for the gap after its last date. A snapshot that already reaches end_text
-    skips the live call entirely; one that covers nothing (missing file, wrong
-    symbol, or a snapshot older than data_start) falls back to today's
-    unmodified full-range live fetch."""
-    start_ts, end_ts = pd.Timestamp(data_start), pd.Timestamp(end_text)
-    cached = _read_price_csv(price_csv, symbol)
-    cached = cached[(cached["date"] >= start_ts) & (cached["date"] <= end_ts)]
-    cached_last = cached["date"].max() if not cached.empty else None
-    if cached_last is not None and cached_last >= end_ts:
-        return cached
-    fetch_start = data_start if cached_last is None else (cached_last + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
-    live = pd.DataFrame(_fetch("TaiwanStockPrice", symbol, fetch_start, end_text))
-    if not live.empty:
-        live = live[["date", "close"]].copy()
-        live["date"] = pd.to_datetime(live["date"])
-    combined = pd.concat([cached, live], ignore_index=True) if not live.empty else cached
-    return combined.drop_duplicates("date", keep="last").sort_values("date")
+def _build_profit_metrics(financials: pd.DataFrame) -> pd.DataFrame:
+    """Build no-look-ahead quarterly net-profit and margin metrics."""
+    columns = [
+        "period_end", "available_date", "revenue", "net_profit",
+        "net_profit_yoy_pct", "net_margin_pct", "net_margin_yoy_pct",
+    ]
+    required = {"date", "type", "value"}
+    if not required.issubset(financials.columns):
+        return pd.DataFrame(columns=columns)
+    rows = financials[financials["type"].isin(["Revenue", "IncomeAfterTaxes", "IncomeAfterTax"])].copy()
+    if rows.empty:
+        return pd.DataFrame(columns=columns)
+    rows["period_end"] = pd.to_datetime(rows["date"], errors="coerce")
+    rows["value"] = pd.to_numeric(rows["value"], errors="coerce")
+    rows = rows.dropna(subset=["period_end", "value"]).drop_duplicates(["period_end", "type"], keep="last")
+    pivot = rows.pivot(index="period_end", columns="type", values="value").sort_index()
+    income_type = next((name for name in ("IncomeAfterTaxes", "IncomeAfterTax") if name in pivot.columns), None)
+    if "Revenue" not in pivot.columns or income_type is None:
+        return pd.DataFrame(columns=columns)
+    # FinMind financial-statement amounts are reported in thousand TWD, while
+    # the chart's revenue panel uses million TWD. Normalize both financial
+    # amounts to million TWD so net profit is directly comparable with revenue.
+    metrics = pd.DataFrame({"revenue": pivot["Revenue"] / 1_000, "net_profit": pivot[income_type] / 1_000})
+    metrics["available_date"] = metrics.index.to_series().map(_availability_date)
+    metrics["net_profit_yoy_pct"] = metrics["net_profit"].pct_change(4) * 100
+    metrics["net_margin_pct"] = metrics["net_profit"].div(metrics["revenue"].replace(0, float("nan"))) * 100
+    metrics["net_margin_yoy_pct"] = metrics["net_margin_pct"].diff(4)
+    metrics["period_end"] = metrics.index
+    return metrics.reset_index(drop=True)[columns]
 
 
 def _build_daily_box(
-    symbol: str, display_years: int, end_date: pd.Timestamp, window: int, forward_eps: pd.DataFrame, price_csv: str = ""
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+    symbol: str, display_years: int, end_date: pd.Timestamp, window: int, forward_eps: pd.DataFrame, local_eps_csv: str = ""
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     # Extra history warms up the PE rolling distribution before the display range.
     data_start = (end_date - pd.DateOffset(years=display_years + 3)).strftime("%Y-%m-%d")
     eps_start = (end_date - pd.DateOffset(years=display_years + 5)).strftime("%Y-%m-%d")
     end_text = end_date.strftime("%Y-%m-%d")
 
-    prices = _fetch_prices(symbol, data_start, end_text, price_csv)
+    prices = pd.DataFrame(_fetch("TaiwanStockPrice", symbol, data_start, end_text))
     if prices.empty:
         raise RuntimeError(f"{symbol}: no daily-price data")
+    prices["date"] = pd.to_datetime(prices["date"])
     prices = prices[["date", "close"]].sort_values("date").set_index("date")
 
     financials = pd.DataFrame(_fetch("TaiwanStockFinancialStatements", symbol, eps_start, end_text))
@@ -465,8 +582,14 @@ def _build_daily_box(
     eps["period_end"] = pd.to_datetime(eps["date"])
     eps = eps[["period_end", "value"]].drop_duplicates("period_end", keep="last").sort_values("period_end")
     eps["available_date"] = eps["period_end"].map(_availability_date)
-    eps["ttm_eps"] = eps["value"].rolling(4).sum()
-    eps = eps.dropna(subset=["ttm_eps"])[["available_date", "period_end", "ttm_eps"]]
+    eps["eps"] = eps["value"]
+    local_eps = _read_local_eps_ratio_csv(local_eps_csv, symbol)
+    if not local_eps.empty:
+        eps = pd.concat([eps[["period_end", "available_date", "eps"]], local_eps], ignore_index=True)
+        eps = eps.drop_duplicates("period_end", keep="last").sort_values("period_end")
+    eps["ttm_eps"] = eps["eps"].rolling(4).sum()
+    eps = eps.dropna(subset=["ttm_eps"])[["available_date", "period_end", "eps", "ttm_eps"]]
+    profit_metrics = _build_profit_metrics(financials)
 
     split_factors = _stock_dividend_factors(symbol, data_start, end_text)
     prices, eps = _adjust_for_stock_dividends(prices, eps, split_factors)
@@ -510,7 +633,7 @@ def _build_daily_box(
         daily["forward_pe_std"] = forward_band["pe_std"]
         for name in ("m2", "m1", "mean", "p1", "p2"):
             daily[f"forward_price_{name}"] = forward_band[f"price_{name}"]
-    return daily, eps
+    return daily, eps, profit_metrics
 
 
 def _read_trade_events(path: str | None, symbols: Iterable[str]) -> pd.DataFrame:
@@ -541,9 +664,23 @@ def _read_trade_events(path: str | None, symbols: Iterable[str]) -> pd.DataFrame
 
 def _plot(
     symbol: str, name: str, years: int, daily: pd.DataFrame, eps: pd.DataFrame,
-    forward_eps: pd.DataFrame, trades: pd.DataFrame, monthly_revenue: pd.DataFrame, output_dir: Path,
+    forward_eps: pd.DataFrame, trades: pd.DataFrame, monthly_revenue: pd.DataFrame,
+    profit_metrics: pd.DataFrame, output_dir: Path,
     yahoo_curve: pd.DataFrame = None, factset_curve: pd.DataFrame = None,
+    revenue_label: str = "Monthly revenue", revenue_axis_label: str = "Revenue (M TWD)",
+    growth_label: str = "Revenue YoY growth", profit_axis_label: str = "Net profit (NT$ million)",
 ) -> tuple[Path, Path, Path]:
+    daily = daily.copy()
+    daily["sma20"] = calc_ma(daily["close"], 20)
+    daily["sma60"] = calc_ma(daily["close"], 60)
+    daily["sma120"] = calc_ma(daily["close"], 120)
+    daily["sma240"] = calc_ma(daily["close"], 240)
+    bands = calc_bbands(daily["close"], period=20, k=2.0)
+    daily["bband_mid"] = bands["mid"]
+    daily["bband_upper2"] = bands["upper"]
+    daily["bband_lower2"] = bands["lower"]
+    daily["bband_upper1"] = daily["bband_mid"] + bands["std"]
+    daily["bband_lower1"] = daily["bband_mid"] - bands["std"]
     display_start = daily.index.max() - pd.DateOffset(years=years)
     view = daily.loc[daily.index >= display_start].copy()
     if view.empty:
@@ -556,12 +693,16 @@ def _plot(
     if cjk_font_path and Path(cjk_font_path).is_file():
         font_manager.fontManager.addfont(cjk_font_path)
         cjk_family = font_manager.FontProperties(fname=cjk_font_path).get_name()
+    has_cjk_name = any("\u3400" <= char <= "\u9fff" for char in str(name))
+    if has_cjk_name and not cjk_family:
+        raise RuntimeError(f"{symbol}: Traditional Chinese company name requires a valid TW_CJK_FONT; refusing missing-glyph fallback")
     preferred_fonts = [cjk_family] if cjk_family else []
     plt.rcParams["font.sans-serif"] = preferred_fonts + [
         "Microsoft JhengHei", "Microsoft YaHei", "PingFang TC", "Noto Sans CJK TC",
         "Noto Sans TC", "SimHei", "DejaVu Sans",
     ]
     plt.rcParams["axes.unicode_minus"] = False
+    plt.rcParams["svg.fonttype"] = "path"
 
     # Precomputed once, up front, so both panels can use the same per-source
     # forward-EPS facts: the top panel projects a future trend ray from today
@@ -576,14 +717,14 @@ def _plot(
     )):
         if curve is None or curve.empty:
             continue
-        known = curve[curve["source_asof_date"] <= cutoff]
+        known = curve[curve["source_asof_date"] <= cutoff].sort_values("source_asof_date").copy()
         if known.empty:
             continue
-        x_jitter = pd.Timedelta(days=-30 + source_index * 60)
+        known = known.loc[known.groupby("target_year")["forward_eps"].shift().ne(known["forward_eps"])]
         year_latest = []  # (x, target_year, forward_eps) — one per year
         for target_year, revisions in known.groupby("target_year"):
             revisions = revisions.sort_values("source_asof_date")
-            x = pd.Timestamp(year=int(target_year), month=7, day=1) + x_jitter
+            x = pd.Timestamp(year=int(target_year), month=12, day=31)
             year_latest.append((x, int(target_year), revisions["forward_eps"].iloc[-1]))
         year_latest.sort(key=lambda item: item[0])
         source_forward[source_label] = {
@@ -597,9 +738,12 @@ def _plot(
     # own panel. When a forward curve's target year runs past the price
     # history (e.g. FactSet's FY2028E), both panels' x-range is explicitly
     # extended together below, rather than left to independent autoscale.
-    figure, (axis, pe_axis, eps_axis, revenue_axis, growth_axis) = plt.subplots(5, 1, figsize=(16, 16.5), sharex=True, gridspec_kw={"height_ratios": [3, 1.0, 1.6, 1.5, 0.9], "hspace": 0.1})
+    figure, (axis, technical_axis, pe_axis, eps_axis, reported_eps_axis, eps_yoy_axis, revenue_axis, growth_axis, net_profit_axis, net_profit_yoy_axis, net_margin_axis, net_margin_yoy_axis) = plt.subplots(
+        12, 1, figsize=(16, 34.0), sharex=True,
+        gridspec_kw={"height_ratios": [3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "hspace": 0.1},
+    )
     label = f"{symbol} {name}" if name else symbol
-    figure.suptitle(f"{label} | {years}-year price, P/E valuation box, EPS & revenue trend", x=0.125, ha="left", y=0.975, fontsize=16, fontweight="bold")
+    figure.suptitle(f"{label} | {years}-year price, valuation box, EPS, revenue & profit trend", x=0.125, ha="left", y=0.975, fontsize=16, fontweight="bold")
 
     axis.fill_between(view.index, view["price_m2"], view["price_p2"], color="#f4c7c3", alpha=0.38, label="Outer valuation range: PE mean ±2σ")
     axis.fill_between(view.index, view["price_m1"], view["price_p1"], color="#b7e1cd", alpha=0.72, label="Core valuation box: PE mean ±1σ")
@@ -667,6 +811,20 @@ def _plot(
     axis.grid(which="minor", axis="x", color="#c9c9c9", lw=0.5)
     axis.legend(loc="upper left", ncol=3, fontsize=9, frameon=False)
 
+    technical_axis.plot(view.index, view["close"], color="#17365d", lw=1.4, label="Close (same as panel 1)")
+    for field, color, label_text in (("sma20", "#d62728", "SMA20"), ("sma60", "#ff7f0e", "SMA60"), ("sma120", "#2ca02c", "SMA120"), ("sma240", "#9467bd", "SMA240")):
+        technical_axis.plot(view.index, view[field], color=color, lw=1.5 if field == "sma20" else 0.9, label=label_text, zorder=5 if field == "sma20" else 4)
+    technical_axis.fill_between(view.index, view["bband_lower2"], view["bband_upper2"], color="#d9d9d9", alpha=0.25, label="Bollinger ±2σ")
+    technical_axis.fill_between(view.index, view["bband_lower1"], view["bband_upper1"], color="#9ecae1", alpha=0.28, label="Bollinger ±1σ")
+    technical_axis.plot(view.index, view["bband_mid"], color="#3182bd", lw=1.0, ls="--", label="Bollinger middle (SMA20)")
+    technical_axis.plot(view.index, view["bband_upper1"], color="#3182bd", lw=0.7, ls=":")
+    technical_axis.plot(view.index, view["bband_lower1"], color="#3182bd", lw=0.7, ls=":")
+    technical_axis.plot(view.index, view["bband_upper2"], color="#756bb1", lw=0.7, ls=":")
+    technical_axis.plot(view.index, view["bband_lower2"], color="#756bb1", lw=0.7, ls=":")
+    technical_axis.set_ylabel("Price")
+    technical_axis.grid(axis="y", color="#d9e2f3", lw=0.7)
+    technical_axis.legend(loc="upper left", ncol=4, fontsize=7, frameon=False)
+
     pe_axis.plot(view.index, view["pe"], color="#6a329f", lw=0.8, alpha=0.65, label="Trailing P/E")
     pe_axis.plot(view.index, view["pe_mean"], color="#666666", lw=1.2, ls="--", label="P/E mean")
     if has_forward:
@@ -678,6 +836,8 @@ def _plot(
     pe_axis.xaxis.set_major_locator(mdates.MonthLocator(interval=max(3, years * 2)))
     pe_axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
     pe_axis.xaxis.remove_overlapping_locs = False
+    pe_axis.xaxis.set_minor_locator(mdates.MonthLocator())
+    pe_axis.grid(which="minor", axis="x", color="#c9c9c9", lw=0.5)
 
     eps_view = eps[eps["available_date"] >= display_start]
     # step() only draws between given x-values, so without this the line just
@@ -745,15 +905,69 @@ def _plot(
         y_span = max(all_y.max() - all_y.min(), 1e-9)
         for x, y, source_label, target_year, color, source_index in forward_points:
             text_y = y + (0.07 + 0.09 * source_index) * y_span
-            eps_axis.annotate(f"{source_label} FY{target_year}E {y:.1f}", xy=(x, y), xytext=(x, text_y), textcoords="data", fontsize=7.5, color=color, ha="center", va="bottom")
+            eps_axis.annotate(f"{source_label} FY{target_year}E {y:.1f} (as of {source_forward[source_label]['known']['source_asof_date'].max().date()})", xy=(x, y), xytext=(x, text_y), textcoords="data", fontsize=7.5, color=color, ha="center", va="bottom")
         eps_axis.legend(loc="upper left", fontsize=8, frameon=False)
-    eps_axis.set_ylabel("EPS")
+    eps_axis.set_ylabel("Trailing EPS")
     eps_axis.grid(axis="y", color="#e6e6e6", lw=0.7)
     eps_axis.xaxis.set_major_locator(mdates.MonthLocator(interval=max(3, years * 2)))
     eps_axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
     eps_axis.xaxis.remove_overlapping_locs = False
     eps_axis.xaxis.set_minor_locator(mdates.MonthLocator())
     eps_axis.grid(which="minor", axis="x", color="#c9c9c9", lw=0.5)
+    # Calculate YoY against the complete available EPS history before
+    # restricting the chart to its visible window. Calculating pct_change(4)
+    # after this filter incorrectly leaves the first four visible quarters
+    # blank even when their year-earlier EPS observations were fetched during
+    # the warm-up period (e.g. 2356's 2023-2024 bars in a 3-year chart).
+    eps_reported_all = pd.to_numeric(
+        eps.get("eps", eps.get("value", pd.Series(index=eps.index, dtype=float))),
+        errors="coerce",
+    )
+    eps_with_yoy = eps.copy()
+    eps_with_yoy["eps_yoy_pct"] = eps_reported_all.pct_change(4) * 100
+    eps_reported_view = eps_with_yoy[eps_with_yoy["available_date"] >= display_start].copy()
+    eps_reported = pd.to_numeric(
+        eps_reported_view.get("eps", eps_reported_view.get("value", pd.Series(index=eps_reported_view.index, dtype=float))),
+        errors="coerce",
+    )
+    eps_reported_yoy = pd.to_numeric(eps_reported_view["eps_yoy_pct"], errors="coerce")
+    valid_eps = eps_reported.notna()
+    if valid_eps.any():
+        reported_eps_axis.bar(eps_reported_view.loc[valid_eps, "available_date"], eps_reported.loc[valid_eps], width=45, color="#8064a2", alpha=0.82, label="Reported quarterly EPS")
+        reported_eps_axis.legend(loc="upper left", frameon=False, fontsize=8)
+    else:
+        reported_eps_axis.text(0.5, 0.5, "Reported EPS data unavailable", transform=reported_eps_axis.transAxes, ha="center", va="center")
+    reported_eps_axis.set_ylabel("EPS")
+    reported_eps_axis.grid(axis="y", color="#e6e6e6", lw=0.7)
+
+    valid_eps_yoy = eps_reported_yoy.notna()
+    if valid_eps_yoy.any():
+        eps_yoy_axis.bar(
+            eps_reported_view.loc[valid_eps_yoy, "available_date"], eps_reported_yoy.loc[valid_eps_yoy], width=45,
+            color=["#c00000" if value > 0 else "#70ad47" for value in eps_reported_yoy.loc[valid_eps_yoy]],
+            alpha=0.82, label="EPS YoY growth",
+        )
+        eps_yoy_axis.legend(loc="upper left", frameon=False, fontsize=8)
+    else:
+        eps_yoy_axis.text(0.5, 0.5, "EPS YoY data unavailable", transform=eps_yoy_axis.transAxes, ha="center", va="center")
+    eps_yoy_axis.axhline(0, color="#999999", lw=0.7)
+    eps_yoy_axis.set_ylabel("YoY (%)")
+    eps_yoy_axis.grid(axis="y", color="#e6e6e6", lw=0.7)
+
+    # Keep every panel aligned to the same monthly vertical grid, including
+    # the two reported-EPS bar panels whose x-axis labels are hidden by the
+    # shared axis. This makes a quarter's bars line up with the revenue,
+    # profit, and valuation panels instead of leaving panels 4-5 gridless.
+    all_panels = (
+        axis, technical_axis, pe_axis, eps_axis, reported_eps_axis, eps_yoy_axis,
+        revenue_axis, growth_axis, net_profit_axis, net_profit_yoy_axis,
+        net_margin_axis, net_margin_yoy_axis,
+    )
+    for panel_axis in all_panels:
+        panel_axis.xaxis.remove_overlapping_locs = False
+        panel_axis.xaxis.set_minor_locator(mdates.MonthLocator())
+        panel_axis.grid(which="minor", axis="x", color="#c9c9c9", lw=0.5)
+
     revenue_view = monthly_revenue[monthly_revenue["date"] >= display_start].copy()
     revenue_series = revenue_view.get("revenue_m_twd", pd.Series(index=revenue_view.index, dtype=float))
     yoy_series = revenue_view.get("revenue_yoy_pct", pd.Series(index=revenue_view.index, dtype=float))
@@ -763,8 +977,8 @@ def _plot(
     # 5 years of months, so scale it down proportionally.
     bar_width = 18 * 2 / years
     if revenue_series.notna().any():
-        revenue_axis.bar(revenue_view["date"], revenue_series, width=bar_width, color="#5b9bd5", alpha=0.78, label="Monthly revenue")
-        revenue_axis.set_ylabel("Revenue (M TWD)")
+        revenue_axis.bar(revenue_view["date"], revenue_series, width=bar_width, color="#5b9bd5", alpha=0.78, label=revenue_label)
+        revenue_axis.set_ylabel(revenue_axis_label)
         revenue_axis.legend(loc="upper left", frameon=False, fontsize=8)
     else:
         revenue_axis.text(0.5, 0.5, "Monthly revenue data unavailable", transform=revenue_axis.transAxes, ha="center", va="center")
@@ -772,8 +986,10 @@ def _plot(
     revenue_axis.xaxis.set_major_locator(mdates.MonthLocator(interval=max(3, years * 2)))
     revenue_axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
     revenue_axis.xaxis.remove_overlapping_locs = False
+    revenue_axis.xaxis.set_minor_locator(mdates.MonthLocator())
+    revenue_axis.grid(which="minor", axis="x", color="#c9c9c9", lw=0.5)
     if yoy_series.notna().any():
-        growth_axis.bar(revenue_view["date"], yoy_series, width=bar_width, color="#ed7d31", alpha=0.78, label="Revenue YoY growth")
+        growth_axis.bar(revenue_view["date"], yoy_series, width=bar_width, color=["#c00000" if value > 0 else "#70ad47" for value in yoy_series], alpha=0.82, label=growth_label)
         growth_axis.axhline(0, color="#999999", lw=0.7)
         growth_axis.legend(loc="upper left", frameon=False, fontsize=8)
     else:
@@ -784,6 +1000,42 @@ def _plot(
     growth_axis.xaxis.set_major_locator(mdates.MonthLocator(interval=max(3, years * 2)))
     growth_axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
     growth_axis.xaxis.remove_overlapping_locs = False
+    growth_axis.xaxis.set_minor_locator(mdates.MonthLocator())
+    growth_axis.grid(which="minor", axis="x", color="#c9c9c9", lw=0.5)
+
+    profit_view = profit_metrics[profit_metrics["available_date"] >= display_start].copy()
+    metric_specs = (
+        (net_profit_axis, "net_profit", "Net profit", profit_axis_label, "#4472c4", "bar"),
+        (net_profit_yoy_axis, "net_profit_yoy_pct", "Net profit YoY", "YoY (%)", "#70ad47", "bar"),
+        (net_margin_axis, "net_margin_pct", "Net profit margin", "Margin (%)", "#7030a0", "bar"),
+        (net_margin_yoy_axis, "net_margin_yoy_pct", "Margin YoY change", "Δ margin (pp)", "#ed7d31", "bar"),
+    )
+    for metric_axis, field, label_text, ylabel, color, kind in metric_specs:
+        series = profit_view.get(field, pd.Series(index=profit_view.index, dtype=float))
+        valid = series.notna()
+        if valid.any():
+            if kind == "bar":
+                colors = (
+                    ["#c00000" if value > 0 else "#70ad47" for value in series.loc[valid]]
+                    if "yoy" in field
+                    else color
+                )
+                metric_axis.bar(
+                    profit_view.loc[valid, "available_date"], series.loc[valid], width=45,
+                    color=colors, alpha=0.82, label=label_text,
+                )
+            else:
+                metric_axis.plot(profit_view.loc[valid, "available_date"], series.loc[valid], color=color, lw=1.4, marker="o", ms=3, label=label_text)
+            metric_axis.legend(loc="upper left", frameon=False, fontsize=7)
+        else:
+            metric_axis.text(0.5, 0.5, f"{label_text} data unavailable", transform=metric_axis.transAxes, ha="center", va="center")
+        metric_axis.set_ylabel(ylabel)
+        metric_axis.grid(axis="y", color="#e6e6e6", lw=0.7)
+        metric_axis.xaxis.set_major_locator(mdates.MonthLocator(interval=max(3, years * 2)))
+        metric_axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+        metric_axis.xaxis.remove_overlapping_locs = False
+        metric_axis.xaxis.set_minor_locator(mdates.MonthLocator())
+        metric_axis.grid(which="minor", axis="x", color="#c9c9c9", lw=0.5)
 
     # The shared x-axis (line ~625) is deliberately stretched past the price
     # history to fit the furthest forward-EPS target year (e.g. FactSet
@@ -803,33 +1055,68 @@ def _plot(
             xycoords=("data", "axes fraction"), ha="center", va="top", fontsize=7.5, color="#888888",
         )
 
-    figure.subplots_adjust(top=0.93)
+    updated_label = _updated_label()
+    figure.text(
+        0.5, 0.004, updated_label, ha="center", va="bottom",
+        fontsize=8, color="#666666", transform=figure.transFigure,
+    )
+    figure.subplots_adjust(top=0.93, bottom=0.02)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     png_path = output_dir / f"{symbol}_dynamic_valuation_box_{years}y.png"
     csv_path = output_dir / f"{symbol}_dynamic_valuation_box_{years}y.csv"
     svg_path = output_dir / f"{symbol}_dynamic_valuation_box_{years}y.svg"
-    figure.savefig(png_path, dpi=180, bbox_inches="tight")
+    figure.savefig(
+        png_path, dpi=180, bbox_inches="tight",
+        metadata={"ChartVersion": CHART_VERSION, "ChartMetadata": CHART_METADATA, "Updated": updated_label},
+    )
     figure.savefig(svg_path, format="svg", bbox_inches="tight")
-    view.reset_index().to_csv(csv_path, index=False, float_format="%.6f")
+    # Version the embedded Traditional Chinese font so old SVGs can be
+    # identified and regenerated incrementally without forcing every ticker.
+    svg_text = svg_path.read_text(encoding="utf-8")
+    svg_comment = CHART_METADATA + "; " + updated_label
+    if CHART_METADATA not in svg_text:
+        svg_text = svg_text.replace("?>\n", "?>\n<!-- " + svg_comment + " -->\n", 1)
+        svg_path.write_text(svg_text, encoding="utf-8")
+    csv_data = view.reset_index().to_csv(index=False, float_format="%.6f")
+    csv_path.write_text("# " + CHART_METADATA + "; " + updated_label + "\n" + csv_data, encoding="utf-8")
     plt.close(figure)
     return png_path, svg_path, csv_path
+
+
+def _discover_forward_feed(filename: str) -> str | None:
+    """Find the standard sibling-repo forward-EPS feed when no path is given."""
+    candidates = [
+        Path.cwd().parent / "Yahoo.Finance" / "data" / "reports" / filename,
+        Path("/app/projects/Yahoo.Finance/data/reports") / filename,
+    ]
+    for candidate in candidates:
+        if candidate.is_file():
+            return str(candidate)
+    return None
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--symbols", nargs="+", required=True, help="Taiwan stock codes, e.g. 3045 2412")
-    parser.add_argument("--years", type=int, choices=(2, 3, 4, 5), default=2, help="Visible price-history years")
+    parser.add_argument("--company-name", default="", help="Company name for the SVG title; avoids an extra FinMind info request")
+    parser.add_argument("--years", type=int, choices=(2, 3, 4, 5), default=3, help="Visible price-history years")
     parser.add_argument("--end-date", default=date.today().isoformat(), help="Analysis cutoff date, YYYY-MM-DD")
     parser.add_argument("--window", type=int, default=120, help="Rolling PE observations (default: 120, minimum: 120)")
     parser.add_argument("--trades-csv", help="Optional CSV: symbol,date,side,price,lots; supports stock_id/qty aliases and 買進/賣出")
     parser.add_argument("--forward-eps-csv", help="Optional CSV, this skill's own shape: symbol,as_of_date,forward_eps (as_of_date = when the estimate was published, not the target fiscal period)")
     parser.add_argument("--yahoo-consensus-csv", help="Optional CSV in Yahoo Finance's native shape (stock_code, forecast_asof_date, earnings_1y_avg, ...), e.g. a sibling Yahoo.Finance repo's data/reports/raw_yahoo_finance_consensus_daily.csv")
     parser.add_argument("--factset-report-csv", help="Optional CSV in FactSet's native shape (代號/股票代號, MD日期, <year>EPS平均值 columns), e.g. a sibling repo's data/reports/raw_factset_detailed_report.csv")
+    parser.add_argument("--finmind-revenue-csv", help="Optional synchronized FinMind monthly-revenue CSV used when live FinMind data is unavailable or incomplete")
+    parser.add_argument("--finmind-financial-ratio-csv", help="Optional synchronized FinMind quarterly-ratio CSV used to warm up EPS history")
     parser.add_argument("--analyzer-revenue-csv", default="../Python-Actions.GoodInfo.Analyzer/data/stage1_raw/raw_revenue.csv", help="Optional GoodInfo Analyzer monthly revenue CSV")
-    parser.add_argument("--price-csv", default="../Python-Actions.FinMind/data/stage1_raw/raw_daily_k_chart_flow.csv", help="Optional pre-fetched FinMind TaiwanStockPrice snapshot (stock_code, 交易_日期, 收盤價_元 columns); only the gap after its last covered date per symbol is fetched live")
     parser.add_argument("--output-dir", default="output/dynamic_valuation_box")
+    parser.add_argument("--require-forward-eps", action="store_true", help="Fail if no forward-EPS rows are available for a requested symbol")
     args = parser.parse_args()
+    if args.yahoo_consensus_csv is None:
+        args.yahoo_consensus_csv = _discover_forward_feed("raw_yahoo_finance_consensus_daily.csv")
+    if args.factset_report_csv is None:
+        args.factset_report_csv = _discover_forward_feed("raw_factset_detailed_report.csv")
     if args.window < 120:
         parser.error("--window must be at least 120 observations")
 
@@ -864,6 +1151,12 @@ def main() -> None:
         forward_eps_all = pd.concat(forward_eps_sources, ignore_index=True).sort_values("as_of_date")
     else:
         forward_eps_all = pd.DataFrame(columns=["symbol", "as_of_date", "forward_eps"])
+    missing_forward = [symbol for symbol in symbols if forward_eps_all[forward_eps_all["symbol"] == symbol].empty]
+    if missing_forward:
+        message = "No forward EPS rows found for: " + ", ".join(missing_forward)
+        if args.require_forward_eps:
+            raise RuntimeError(message + ". Supply --forward-eps-csv, --yahoo-consensus-csv, or --factset-report-csv.")
+        print(f"[render_dynamic_valuation_box] Warning: {message}; trailing-only valuation will be rendered for those symbols.", file=sys.stderr)
     # For the bottom-panel display, Yahoo and FactSet are kept unmerged (see
     # _plot): each source's own target-fiscal-year curve, not pooled into the
     # single per-day series above.
@@ -871,18 +1164,34 @@ def main() -> None:
     factset_curve_all = _factset_forward_curve(args.factset_report_csv, symbols)
     output_dir = Path(args.output_dir)
     for symbol in symbols:
-        name = _stock_name(symbol)
+        # Bulk runs already have the company name in the surrounding page data;
+        # avoid an extra FinMind TaiwanStockInfo call per symbol here.
+        name = args.company_name.strip()
         forward_eps = forward_eps_all[forward_eps_all["symbol"] == symbol]
-        daily, eps = _build_daily_box(symbol, args.years, end_date, args.window, forward_eps, args.price_csv)
+        daily, eps, profit_metrics = _build_daily_box(symbol, args.years, end_date, args.window, forward_eps, args.finmind_financial_ratio_csv)
         revenue_start = (end_date - pd.DateOffset(years=args.years + 1)).strftime("%Y-%m-%d")
-        monthly_revenue = _build_monthly_revenue(symbol, revenue_start, end_date.strftime("%Y-%m-%d"))
+        local_finmind_revenue = _read_finmind_revenue_csv(args.finmind_revenue_csv, symbol)
+        if not local_finmind_revenue.empty:
+            # Prefer the synchronized local feed so bulk rendering does not
+            # spend a live request on data already present on disk.
+            monthly_revenue = local_finmind_revenue
+        else:
+            try:
+                monthly_revenue = _build_monthly_revenue(symbol, revenue_start, end_date.strftime("%Y-%m-%d"))
+            except RuntimeError:
+                if not args.finmind_revenue_csv:
+                    raise
+                monthly_revenue = pd.DataFrame(columns=["date", "finmind_revenue_m_twd", "finmind_yoy_pct"])
         analyzer_revenue = _read_analyzer_revenue(args.analyzer_revenue_csv, symbol)
         monthly_revenue = monthly_revenue.merge(analyzer_revenue, on="date", how="outer").sort_values("date")
         monthly_revenue["revenue_m_twd"] = monthly_revenue["analyzer_revenue_m_twd"].combine_first(monthly_revenue["finmind_revenue_m_twd"])
         monthly_revenue["revenue_yoy_pct"] = monthly_revenue["revenue_m_twd"].replace(0, float("nan")).pct_change(12) * 100
         yahoo_curve = yahoo_curve_all[yahoo_curve_all["symbol"] == symbol]
         factset_curve = factset_curve_all[factset_curve_all["symbol"] == symbol]
-        png_path, svg_path, csv_path = _plot(symbol, name, args.years, daily, eps, forward_eps, trades, monthly_revenue, output_dir, yahoo_curve, factset_curve)
+        png_path, svg_path, csv_path = _plot(
+            symbol, name, args.years, daily, eps, forward_eps, trades, monthly_revenue,
+            profit_metrics, output_dir, yahoo_curve, factset_curve,
+        )
         print(f"{symbol}: {svg_path}")
         print(f"{symbol}: {png_path}")
         print(f"{symbol}: {csv_path}")

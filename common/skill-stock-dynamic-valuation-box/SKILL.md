@@ -11,7 +11,7 @@ For each requested stock, the renderer writes a PNG, an SVG using the same figur
 For environments without an installed CJK font, set `TW_CJK_FONT` to a Traditional Chinese
 font file (for example, Noto Sans CJK TC) before rendering. The same selected font is used
 for PNG and SVG output.
-The third panel shows one reconciled monthly-revenue series: GoodInfo Analyzer
+Panel 1 remains the valuation-price panel. Panel 2 is a technical price panel using the same close series as panel 1, with SMA20, SMA60, SMA120, SMA240, and 20-day Bollinger bands: middle SMA20, ±1σ, and ±2σ. The P/E panel and existing EPS, revenue, and profit panels follow after it, so the chart now has 12 panels.
 `raw_revenue.csv` is preferred, with FinMind `TaiwanStockMonthRevenue` filling missing months.
 The fourth, short panel shows YoY revenue growth for that reconciled series.
 Pass `--analyzer-revenue-csv` to override the Analyzer CSV path.
@@ -23,6 +23,7 @@ Use this skill when a Taiwan stock needs a time-price diagram that separates val
 For each requested stock, render a PNG and an auditable daily CSV containing:
 
 - unadjusted daily close;
+- SMA20, SMA60, SMA120, SMA240, and Bollinger middle/upper1/lower1/upper2/lower2 columns used by panel 2;
 - TTM EPS that was available on that date;
 - rolling PE mean, standard deviation, and price bands at `μ±1σ` and `μ±2σ`, computed over a trailing window of `--window` trading-day PE observations (default and minimum 120, i.e. roughly the last 6 months — pass a larger value for a longer-lookback, more stable band that reacts less to the current regime);
 - when `--forward-eps-csv` is supplied, the matching forward-PE line (`forward_pe_mean` ± bands) computed the same way but on forward EPS instead of trailing TTM EPS;
