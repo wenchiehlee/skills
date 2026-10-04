@@ -20,8 +20,8 @@ _PROBE_READ_TIMEOUT = 2.0     # 健康檢查讀取上限（秒）
 
 # 已知的雙端點候選位址（Tailscale 內網直連 + 外網反向代理）
 DEFAULT_CODEX_URLS = [
-    "http://llm-cli-api.tail28f10.ts.net:5001",
     "https://api.wenchiehlee.synology.me:8443",
+    "http://llm-cli-api.tail28f10.ts.net:5001",
 ]
 
 # /gemini/exec 在伺服器端實際執行的是 agy（Antigravity CLI，取代已停用的
@@ -81,14 +81,12 @@ class CodexProvider(BaseProvider):
     name = "llm-cli"
 
     def __init__(self, url: str | None = None, api_key: str | None = None, model: str | None = None):
-        raw_url = url or os.getenv("CODEX_API_URL", "")
+        raw_url = url or ""
         self.candidate_urls = _parse_candidate_urls(raw_url)
         self.api_key = api_key or os.getenv("CODEX_API_KEY", "")
         self.model = model or "chatgpt-pro"
         self._active_url: str | None = None
 
-        if not self.candidate_urls:
-            raise RuntimeError("Missing env var: CODEX_API_URL")
         if not self.api_key:
             raise RuntimeError("Missing env var: CODEX_API_KEY")
 

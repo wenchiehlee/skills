@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SOP 工具：驗證 CODEX_API_URL 伺服器存活狀態與各端點回應時間 (Latency / Response Time)。
+"""SOP 工具：驗證 Codex 伺服器存活狀態與各端點回應時間 (Latency / Response Time)。
 
 用法：
     python skills/skill-llm-api-client/scripts/check_endpoints.py
@@ -21,8 +21,8 @@ except ImportError:
 import httpx
 
 DEFAULT_CANDIDATES = [
-    "http://llm-cli-api.tail28f10.ts.net:5001",
     "https://api.wenchiehlee.synology.me:8443",
+    "http://llm-cli-api.tail28f10.ts.net:5001",
 ]
 
 
@@ -92,31 +92,17 @@ def test_endpoint(url: str, api_key: str, check_exec: bool = True) -> dict:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="驗證 CODEX_API_URL 伺服器存活狀態與回應時間")
+    parser = argparse.ArgumentParser(description="驗證 Codex 伺服器存活狀態與回應時間")
     parser.add_argument("--url", help="指定單一 URL 進行測試（預設自動檢查所有候選端點）")
     parser.add_argument("--skip-exec", action="store_true", help="跳過 /exec 推論測試，只測試 status 端點")
     args = parser.parse_args()
 
     api_key = os.getenv("CODEX_API_KEY", "")
-    env_url = os.getenv("CODEX_API_URL", "")
 
-    candidates = []
-    if args.url:
-        candidates = [args.url]
-    else:
-        if env_url:
-            for u in env_url.replace(";", ",").split(","):
-                u = u.strip()
-                if u and u not in candidates:
-                    candidates.append(u)
-        for d in DEFAULT_CANDIDATES:
-            if d not in candidates:
-                candidates.append(d)
+    candidates = [args.url] if args.url else list(DEFAULT_CANDIDATES)
 
+    print("📡 Codex 伺服器健康度與回應時間驗證 (SOP)")
     print("=" * 80)
-    print("📡 CODEX_API_URL 伺服器健康度與回應時間驗證 (SOP)")
-    print("=" * 80)
-    print(f"目前 .env 設定值 : CODEX_API_URL={env_url or '(未設定)'}")
     print(f"API 金鑰狀態     : {'已設定 (' + str(len(api_key)) + ' chars)' if api_key else '未設定'}")
     print(f"預計檢查端點數   : {len(candidates)}")
     print("-" * 80)

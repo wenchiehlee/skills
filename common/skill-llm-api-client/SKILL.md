@@ -1,13 +1,13 @@
 ---
 name: skill-llm-api-client
-description: 統一的 LLM 客戶端函式庫（llm package），封裝 Gemini API 金鑰輪轉、skill-llm-api-server 的 codex-cli/gemini-cli 遠端橋接、以及本地 MLX 推論，內建 codex → gemini → mlx 自動備援鏈與 Draft/Judge 智慧路由。
+description: 統一的 LLM 客戶端函式庫（llm package），封裝 Gemini API 金鑰輪轉、skill-llm-api-server 的 codex-cli/gemini-cli 遠端橋接、以及本地 MLX 推論，內建 gemini → codex → mlx 自動備援鏈與 Draft/Judge 智慧路由。
 ---
 
 # LLM API Client 技能 (skill-llm-api-client)
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.0.1（詳見 `metadata.json`） |
+| 版本 | 1.0.5（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/llm |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-llm-api-client`） |
 | 維護者 | wenchiehlee |
@@ -19,7 +19,7 @@ description: 統一的 LLM 客戶端函式庫（llm package），封裝 Gemini A
 - **`gemini`**：直接呼叫 Google Gemini API，支援最多 20 把金鑰（`GEMINI_API_KEY` + `_1`~`_19`）的每日配額偵測與 round-robin 輪轉
 - **`mlx`**：呼叫本地 Apple Silicon 上的 MLX 推論伺服器（見 `common/skill-mlx-api-server`）
 
-預設備援鏈：`codex → gemini → mlx`。
+預設備援鏈：`gemini → codex → mlx`。
 
 ## 📦 技能結構說明
 
@@ -39,6 +39,8 @@ skill-llm-api-client/
     └── analytics/
         ├── __init__.py
         └── amplitude.py         # LLMCallTracker：Amplitude 埋點（provider/model/耗時/成功率）
+    ├── check_env_consistency.py # 比對 .env 與 GitHub Actions secrets.* 名稱（不讀取值）
+    └── check_endpoints.py      # 以 .env 驗證 Codex server status 與推論
 ```
 
 > 部署時 `scripts/` 底下的內容對應到消費專案（如 `llm` repo）的 `llm/` package 根目錄，即 `scripts/client.py` → `llm/client.py`，`scripts/providers/*` → `llm/providers/*`，以此類推。
@@ -55,24 +57,55 @@ skill-llm-api-client/
 
 ## ⚙️ 前置環境配置
 
-### 1. 安裝
+### 1. 安裝與 uv 整合
 
-本地路徑（開發環境，`pyproject.toml`）：
+`llm` 的唯一可安裝來源是 `llm` repository；本 skill 目錄是 registry snapshot，
+不應直接作為 `uv` dependency。消費專案應在 `pyproject.toml` 宣告 `llm`，再由 uv
+解析與執行。
+
+本地開發（使用相鄰的 `../llm` 原始碼，editable）：
+
+```bash
+uv add --editable "../llm"
+uv sync
+uv run python your_script.py
+```
+
+其等價設定通常是：
+
 ```toml
 [project]
-dependencies = [
-    "llm @ file:///${PROJECT_ROOT}/../llm",
-]
-```
-或 `uv add --editable "../llm"`。
+dependencies = ["llm"]
 
-GitHub 倉庫（CI/CD 或正式環境）：
+[tool.uv.sources]
+llm = { path = "../llm", editable = true }
+```
+
+CI/CD 或正式環境應使用 Git source，避免依賴 runner 上的相鄰目錄：
+
 ```toml
 [project]
-dependencies = [
-    "llm @ git+https://github.com/wenchiehlee/llm.git",
-]
+dependencies = ["llm"]
+
+[tool.uv.sources]
+llm = { git = "https://github.com/wenchiehlee/llm.git" }
 ```
+
+GitHub Actions 建議使用與 GoogleAlertManager 相同的流程：
+
+```yaml
+- uses: astral-sh/setup-uv@v5
+  with:
+    enable-cache: true
+    cache-dependency-glob: "uv.lock"
+
+- run: uv sync
+- run: uv run python your_script.py
+```
+
+提交 `pyproject.toml` 與 `uv.lock`，讓本機與 CI 使用一致的 dependency resolution。
+若專案只是 script repository、沒有可建置的 Python package，可在 `pyproject.toml`
+加入 `[tool.uv] package = false`。
 
 ### 2. 環境變數（`.env`）
 
@@ -84,7 +117,6 @@ GEMINI_API_KEY_1=
 # GEMINI_SKIP_KEYS=GEMINI_API_KEY_7   # 預先跳過配額耗盡的 key
 
 # skill-llm-api-server（NAS 上的 codex-cli/gemini-cli 橋接）
-CODEX_API_URL=https://api.wenchiehlee.synology.me:8443
 CODEX_API_KEY=
 
 # skill-mlx-api-server（本地 MLX 推論）
@@ -99,13 +131,49 @@ LLM_APP_NAME=my-app
 
 > API Key 中若包含 `#` 字元可能導致 `.env` 解析錯誤，請確保 Key 的正確性。
 
+### 4. LLM endpoint 健康檢查
+
+使用 skill 內建的兩個 Codex server endpoint 與 `.env` 中的 `CODEX_API_KEY` 檢查 `/codex/status`、
+`/gemini/status`，並以最小 prompt 驗證 `/exec` 推論：
+
+```bash
+python skills/skill-llm-api-client/scripts/check_endpoints.py
+```
+
+快速只做網路探測：
+
+```bash
+python skills/skill-llm-api-client/scripts/check_endpoints.py --skip-exec
+```
+
+命令會自動依序檢查兩個內建 endpoint，並在至少一個 endpoint 健康時成功。
+
+檢查器會用字面方式解析 `.env`，不會 shell-evaluate 或輸出 API key。
+
+### 3. 本機 `.env` 與 GitHub Actions secrets 一致性
+
+在含有 `.github/workflows/Actions.yaml` 的 consumer repo 中，執行：
+
+```bash
+python skills/skill-llm-api-client/scripts/check_env_consistency.py
+```
+
+此檢查只比對變數名稱與是否存在，不會讀取或輸出任何 secret 值。它會確認必要的
+`CODEX_API_KEY`、`GEMINI_API_KEY` 在本機 `.env` 存在，且 workflow
+中所有 `secrets.NAME` 都能在 `.env` 找到。`MLX_API_URL`、`MLX_SERVER_API_KEY` 是
+本機 MLX provider 設定，若 workflow 未注入會列為提示而非錯誤。
+
+GitHub Actions secret 本身是否已建立，需在有 repository secret 讀取權限的環境執行
+`gh secret list`；GitHub 不允許讀回 secret 值，本技能也不會嘗試讀取。
+
+
 ## 🚀 使用方式
 
 ### 基礎調用
 ```python
 from llm import LLMClient
 
-# 初始化（自動偵測可用 provider：codex → gemini → mlx）
+# 初始化（自動偵測可用 provider：gemini → codex → mlx）
 client = LLMClient(app_name="NewsAnalyzer")
 
 text = client.generate("請簡述台積電在 2024 年的營收表現。")
