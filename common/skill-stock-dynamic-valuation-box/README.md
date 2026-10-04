@@ -25,6 +25,7 @@ skill-stock-dynamic-valuation-box/
 
 ## 版本
 
+- 1.13.0 (2026-10-04)：同一 FY 的 Yahoo/FactSet terminal label 改為左右錯開（Yahoo 向左、FactSet 向右），避免 EPS 值接近時文字重疊。
 - 1.12.0 (2026-10-04)：Panel 4 將每個 consensus release node 的年份平移到其 target FY，保留原始月／日與 EPS 值（例如 2026-09-04 → FY2027E 的 2027-09-04），讓不同年度曲線不再重疊於同一年。
 - 1.11.0 (2026-10-04)：Panel 4 的 Yahoo/FactSet consensus 改為依實際 release date 畫 revision curve；每個 FY 年底追加最後已知值的 `▲` terminal node，所有 release node 使用 `●`，年度以線型區分、來源以顏色區分。forward feed 自動 discovery 僅使用 `biztrends.TW` 的 canonical synchronized artifacts。
 - 1.9.0 (2026-09-28)：新增`--price-csv`（預設指向`../Python-Actions.FinMind/
