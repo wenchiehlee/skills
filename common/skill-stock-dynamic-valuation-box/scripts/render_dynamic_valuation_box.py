@@ -931,17 +931,16 @@ def _plot(
         all_y = pd.concat([eps_view["ttm_eps"], pd.Series([p[1] for p in range_points])])
         y_span = max(all_y.max() - all_y.min(), 1e-9)
         for x, y, source_label, target_year, color, source_index in terminal_points:
-            text_y = y + (0.07 + 0.09 * source_index) * y_span
-            # Same-FY Yahoo/FactSet terminal values can be very close. Put
-            # their labels on opposite sides of the terminal node so a small
-            # EPS spread (e.g. 3.6 vs 3.5) remains legible.
-            label_offset_days = -28 if source_label == "Yahoo" else 28
-            label_x = x + pd.Timedelta(days=label_offset_days)
-            label_ha = "right" if label_offset_days < 0 else "left"
+            # Same-FY Yahoo/FactSet terminal values can be very close. Keep
+            # both labels exactly on the terminal FY date and separate them
+            # vertically with a leader line; horizontal offsets falsely imply
+            # that one source belongs to the next fiscal year.
+            text_y = y + (0.08 + 0.11 * source_index) * y_span
             eps_axis.annotate(
                 f"{source_label} FY{target_year}E {y:.1f}", xy=(x, y),
-                xytext=(label_x, text_y), textcoords="data", fontsize=7.5,
-                color=color, ha=label_ha, va="bottom",
+                xytext=(x, text_y), textcoords="data", fontsize=7.5,
+                color=color, ha="center", va="bottom",
+                arrowprops={"arrowstyle": "-", "color": color, "lw": 0.6},
             )
         eps_axis.legend(loc="upper left", fontsize=8, frameon=False)
     eps_axis.axvline(cutoff, color="#555555", lw=0.8, ls="--", alpha=0.7, zorder=1)
