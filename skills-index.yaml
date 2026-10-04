@@ -264,7 +264,7 @@ skills:
   source: https://pypi.org/project/google-analytics-cli/
   repo_count: 1
   updated_at: '2026-10-03'
-  revised_at: '2026-08-07'
+  revised_at: '2026-10-04'
 - name: skill-googlesearch-factsets-fetch
   group: common
   path: common/skill-googlesearch-factsets-fetch
