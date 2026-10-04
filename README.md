@@ -19,7 +19,7 @@
 <!-- SKILLS-TABLE:START -->
 | 技能 | 群組 | 分類 | 版本 | repo 數 | 說明 | 修訂日期 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| [skill-llm-api-client](common/skill-llm-api-client) | common | library | 1.0.5 | 8 | 統一的 LLM 客戶端函式庫（llm），封裝 Gemini API 金鑰輪轉、skill-llm-api-server 的 codex-cli/gemini-cli 橋接、以及本地 MLX 推論，內建 codex → gemini → mlx 自動備援鏈與智慧路由（Smart Routing）。 | 2026-10-04 |
+| [skill-llm-api-client](common/skill-llm-api-client) | common | library | 1.0.6 | 8 | 統一的 LLM 客戶端函式庫（llm），封裝 Gemini API 金鑰輪轉、skill-llm-api-server 的 codex-cli/gemini-cli 橋接、以及本地 MLX 推論，內建 codex → gemini → mlx 自動備援鏈與智慧路由（Smart Routing）。 | 2026-10-04 |
 | [skill-mlx-api-client-ocr](common/skill-mlx-api-client-ocr) | common | document | 1.7.2 | 5 | 呼叫 Mac-mini MLX API Server 的 OCR 客戶端（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-10-04 |
 | [skill-stock-investorevent-fetch](common/skill-stock-investorevent-fetch) | common | financial-data | 1.2.1 | 3 | Regenerate raw_event_upcoming_earnings.csv from TW/US watchlists (MOPS + yfinance), classifying every event as 財報, 法說會, or 受邀法說, with consistent date/fiscal-quarter mapping shared across InvestorConference and InvestorEvents. | 2026-09-25 |
 | [skill-goodinfo-fetch](common/skill-goodinfo-fetch) | common | financial-data | 1.1.0 | 3 | Unified dispatcher across the GoodInfo.tw data pipeline: download raw XLS (Python-Actions.GoodInfo), convert to CSV via stage1 extraction (Python-Actions.GoodInfo.Analyzer), and enrich company-level metadata (Python-Actions.GoodInfo.CompanyInfo). | 2026-08-17 |
