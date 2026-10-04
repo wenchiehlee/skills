@@ -74,14 +74,14 @@ skills:
 - name: skill-company-enrichment-render
   group: common
   path: common/skill-company-enrichment-render
-  version: 1.0.2
+  version: 1.1.0
   description: Render My-TW-Coverage canonical enrichment JSON into organized Markdown
     without using Pilot_Reports as an active source.
   category: financial-data
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
   repo_count: 1
-  updated_at: '2026-09-30'
+  updated_at: '2026-10-03'
   revised_at: '2026-09-30'
 - name: skill-company-investorconference-digest
   group: common

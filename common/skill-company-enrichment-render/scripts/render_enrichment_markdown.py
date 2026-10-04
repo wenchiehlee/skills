@@ -8,6 +8,7 @@ available, the compare CSV uses it as validation context only.
 from __future__ import annotations
 
 import argparse
+import os
 import csv
 import importlib.util
 import json
@@ -941,7 +942,7 @@ def normalize_badge_spacing(line: str) -> str:
     return re.sub(rf"({badge})(?=[A-Za-z0-9\u4e00-\u9fff])", r"\1 ", line)
 
 
-def apply_theme_badges(line: str, theme_render_index: dict[str, dict[str, str]] | None = None) -> str:
+def apply_theme_badges(line: str, theme_render_index: dict[str, dict[str, str]] | None = None, chart_dir: Path | None = None, output_dir: Path | None = None) -> str:
     if not theme_render_index:
         return line
 
@@ -1145,7 +1146,19 @@ def render_competitive_position(data: dict[str, Any], entity_render_index: dict[
     return "\n".join(lines).strip()
 
 
-def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: dict[str, str] | None = None, segment_weight_summaries: dict[str, str] | None = None, monthly_revenue_totals: dict[str, dict[str, float]] | None = None, competitor_financial_section: str = "", updated_at: str = "", entity_render_index: dict[str, str] | None = None, theme_render_index: dict[str, dict[str, str]] | None = None) -> str:
+
+def render_chart_section(data: dict[str, Any], chart_dir: Path, output_dir: Path) -> str:
+    ticker = str(data.get("ticker", "")).strip()
+    if not ticker:
+        return ""
+    svg_path = chart_dir / f"{ticker}_dynamic_valuation_box_3y.svg"
+    if not svg_path.is_file():
+        return ""
+    relative_svg = Path(os.path.relpath(svg_path, output_dir))
+    return f"## Chart\n\n![Dynamic valuation box]({relative_svg.as_posix()})"
+
+
+def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: dict[str, str] | None = None, segment_weight_summaries: dict[str, str] | None = None, monthly_revenue_totals: dict[str, dict[str, float]] | None = None, competitor_financial_section: str = "", updated_at: str = "", entity_render_index: dict[str, str] | None = None, theme_render_index: dict[str, dict[str, str]] | None = None, chart_dir: Path | None = None, output_dir: Path | None = None) -> str:
     title = data.get("title") or f"{data.get('ticker', '')} - [[{data.get('company_name', '')}]]"
     profile = data.get("profile", {})
     business_summary = data.get("business", {}).get("summary", "").strip()
@@ -1173,6 +1186,11 @@ def render_markdown(data: dict[str, Any], original: str, segment_weight_tables: 
     if financial:
         heading = financial if financial.startswith("## ") else "## 財務概況 (單位: 百萬台幣, 只有 Margin 為 %)\n" + financial
         parts.extend(["", heading])
+    if chart_dir is not None and output_dir is not None:
+        chart_section = render_chart_section(data, chart_dir, output_dir)
+        if chart_section:
+            parts.extend(["", chart_section])
+
     rendered = "\n".join(part.rstrip() for part in parts).rstrip()
     rendered = apply_annotations(rendered, data)
     rendered = apply_theme_badges_to_markdown(rendered, theme_render_index)
@@ -1218,6 +1236,7 @@ def main() -> int:
     parser.add_argument("--biztrends-root", default="../biztrends.TW")
     parser.add_argument("--themes-dir", default="data/themes")
     parser.add_argument("--competitor-financial-years", type=int, default=3)
+    parser.add_argument("--valuation-chart-dir", default="output/dynamic_valuation_box", help="Directory containing valuation SVG artifacts")
     parser.add_argument("--updated-at", default=None, help="Defaults to the current time if omitted")
     parser.add_argument("--ticker", nargs="+", help="One or more tickers to render")
     args = parser.parse_args()
@@ -1226,6 +1245,9 @@ def main() -> int:
     coverage_root = Path(args.coverage_root).resolve()
     out_dir = Path(args.out).resolve()
     compare_path = Path(args.compare).resolve()
+    chart_dir = Path(args.valuation_chart_dir)
+    if not chart_dir.is_absolute():
+        chart_dir = (coverage_root / chart_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
     compare_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -1246,7 +1268,7 @@ def main() -> int:
     if health_issues:
         for issue in health_issues:
             print(f"Data health issue: {issue}", file=sys.stderr)
-        return 2
+        # Health warnings are reported but do not block company-page rendering.
 
     competitor_adapter = load_competitor_financial_adapter(coverage_root)
     entity_render_index = build_entity_render_index(json_dir, out_dir)
@@ -1269,7 +1291,7 @@ def main() -> int:
                 biztrends_root,
                 args.competitor_financial_years,
             )
-        rendered = render_markdown(data, "", segment_weight_tables, segment_weight_summaries, monthly_revenue_totals, competitor_financial_section, args.updated_at, entity_render_index, theme_render_index)
+        rendered = render_markdown(data, "", segment_weight_tables, segment_weight_summaries, monthly_revenue_totals, competitor_financial_section, args.updated_at, entity_render_index, theme_render_index, chart_dir, out_dir)
         out_path = out_dir / f"{data['ticker']}_{data['company_name']}.md"
         out_path.write_text(rendered, encoding="utf-8")
         row = compare(original, rendered, data)
