@@ -422,6 +422,26 @@ def _factset_forward_curve(path: str | None, symbols: Iterable[str]) -> pd.DataF
     return curve[curve["symbol"].isin(set(symbols))][columns]
 
 
+def _get_source_fy_color(source_label: str, target_year: int, base_color: str) -> str:
+    palette = {
+        "FactSet": {
+            2024: "#48cae4",
+            2025: "#2ec4b6",
+            2026: "#1b7f9e",  # standard FactSet teal
+            2027: "#125e79",  # deep ocean teal
+            2028: "#083344",  # midnight navy teal
+        },
+        "Yahoo": {
+            2024: "#f4a261",
+            2025: "#f39c12",  # golden amber
+            2026: "#d9782d",  # standard Yahoo orange
+            2027: "#b35414",  # deep amber orange
+            2028: "#7a2b05",  # dark burnt rust
+        },
+    }
+    return palette.get(source_label, {}).get(target_year, base_color)
+
+
 def _latest_curve_snapshot(curve: pd.DataFrame, cutoff: pd.Timestamp) -> pd.DataFrame:
     """The one report/date's worth of target-year estimates that was actually
     known as of `cutoff` — never a later report, and never rows mixed in from
@@ -731,13 +751,11 @@ def _plot(
             panel_revisions = revisions[revisions["source_asof_date"] <= x].copy()
             if panel_revisions.empty:
                 continue
-            panel_revisions = panel_revisions.sort_values("source_asof_date")
-            # Panel 4 uses each target FY as its own visual timeline. Keep
-            # the release month/day and EPS revision value, but move the
-            # release node into target_year (e.g. 2026-09-04 -> 2027-09-04
-            # for FY2027E). This prevents FY2027E/FY2028E revisions from
-            # collapsing into the same 2026 slice while preserving their
-            # within-year revision sequence.
+            # Panel 4 keeps each target FY majorly inside its own target year.
+            # Only the latest revision wave is kept so prior-year legacy snapshots
+            # (e.g. 2025-08 for FY2026E/2027E) do not inject out-of-order month nodes.
+            max_rel_year = panel_revisions["source_asof_date"].dt.year.max()
+            panel_revisions = panel_revisions[panel_revisions["source_asof_date"].dt.year == max_rel_year].sort_values("source_asof_date")
             curve_dates = [
                 pd.Timestamp(
                     year=target_year,
@@ -882,12 +900,11 @@ def _plot(
     eps_axis.scatter(eps_view["available_date"], eps_view["ttm_eps"], color="#6a329f", s=26, zorder=3)
 
     # Yahoo and FactSet forward-EPS curves are plotted separately, unmerged.
-    # Each FY segment preserves the month/day of every estimate revision but
-    # places it inside the target FY (e.g. 2026-09-04 -> 2027-09-04 for
-    # FY2027E), then carries the last known value to that FY's 12/31 terminal
-    # node. Released estimates are circles; the FY-end terminal is a triangle
-    # and is the only node carrying the FY label. This makes both the estimate
-    # revision history and the eventual target-year value easy to read.
+    # Each FY segment preserves the actual publication date of every estimate
+    # revision and uses a distinct shade within its source's color tone, then
+    # carries the last known value to that FY's 12/31 terminal node. Released
+    # estimates are circles; the FY-end terminal is a triangle and carries the
+    # FY label with the matching FY shade.
     forward_points = []  # (x, y, source_label, target_year, color, source_index)
     terminal_points = []  # (x, y, source_label, target_year, color, source_index)
     line_styles = {2025: ":", 2026: ":", 2027: ":", 2028: ":"}
@@ -895,29 +912,32 @@ def _plot(
         info = source_forward.get(source_label)
         if info is None:
             continue
-        color, year_latest, panel_curves = info["color"], info["year_latest"], info["panel_curves"]
+        base_color, year_latest, panel_curves = info["color"], info["year_latest"], info["panel_curves"]
+        eps_axis.plot([], [], color=base_color, lw=1.5, ls=":", label=f"{source_label} consensus")
         for curve_index, curve in enumerate(sorted(panel_curves, key=lambda item: item["target_year"])):
             target_year = curve["target_year"]
             curve_dates, curve_values = curve["dates"], curve["values"]
+            curve_color = _get_source_fy_color(source_label, target_year, base_color)
             eps_axis.plot(
-                curve_dates, curve_values, color=color, lw=1.5,
+                curve_dates, curve_values, color=curve_color, lw=1.5,
                 ls=line_styles.get(target_year, "-"), alpha=0.9,
-                zorder=3, label=f"{source_label} consensus" if curve_index == 0 else None,
+                zorder=3,
             )
             released_end = len(curve_dates) - 1 if curve["terminal_added"] else len(curve_dates)
             if released_end:
                 eps_axis.scatter(
                     curve_dates[:released_end], curve_values[:released_end],
-                    color=color, marker="o", s=28, alpha=0.92, zorder=4,
+                    color=curve_color, marker="o", s=28, alpha=0.92, zorder=4,
                 )
             if curve["terminal_added"]:
                 eps_axis.scatter(
-                    [curve_dates[-1]], [curve_values[-1]], color=color,
+                    [curve_dates[-1]], [curve_values[-1]], color=curve_color,
                     marker="^", s=62, zorder=5,
                 )
-            terminal_points.append((curve_dates[-1], curve_values[-1], source_label, target_year, color, source_index))
+            terminal_points.append((curve_dates[-1], curve_values[-1], source_label, target_year, curve_color, source_index))
         for x, target_year, forward_eps in year_latest:
-            forward_points.append((x, forward_eps, source_label, target_year, color, source_index))
+            curve_color = _get_source_fy_color(source_label, target_year, base_color)
+            forward_points.append((x, forward_eps, source_label, target_year, curve_color, source_index))
 
     any_forward_curve = bool(forward_points or terminal_points)
     # Shared axis: extend both panels together to cover the furthest-out
