@@ -1,219 +1,169 @@
 ---
 name: skill-investment-decision-coach
-description: Provide Traditional Chinese expert-level investment decision coaching based on digested book knowledge, 投資策略框架.md files, and an investment methodology library. Use when Codex needs to answer investment questions, compare investor methodologies, explain edge/long-termism/compounding, build a daily practical investment system, evaluate opportunities, manage risk, challenge behavioral mistakes, create decision checklists, or recommend coherent names/categories for finance-related skills.
+description: Coach investment decisions in Traditional Chinese using traceable book knowledge and complementary reasoning frameworks. Use for evaluating opportunities and risks, comparing investor methods or competitor groups, building investment routines, extracting book-derived investment frameworks, and reviewing finance-skill taxonomy.
 ---
 
 # 投資決策教練
 
-此技能用於把 `books/` 內書籍與各書的 `投資策略框架.md`，轉成可日常執行的投資決策教練流程。預設以繁體中文輸出。
+把書籍知識、當前證據與互補方法論，轉成可檢驗的投資論點、風險條件與行動選項。預設繁體中文（zh-TW），先回答問題，再提供必要推理；依使用者要求調整語言與深度。
 
-## 核心架構：推理規則、增強知識與檢索
+## 任務入口
 
-本技能由三個互補層次組成，不可把生成的書本知識視為 `SKILL.md` 的替代品：
+先辨識要交付什麼，只使用相關流程；概念問題不必展開完整個股報告，分類問題也不必重建書庫。
+
+| 使用者任務 | 工作入口 | 主要交付物 |
+|---|---|---|
+| 買賣、持有、配置或機會評估 | 證據分層 → 十步決策流程 | 論點、反證、情境、條件式行動 |
+| 方法論、edge、長期主義、複利 | 投資方法論庫；必要時回查書籍 | 互補模型、適用條件、限制與實例 |
+| 競爭者／同業／competitor group 比較 | 競爭群組分析 → 價值、價格、風險 | 分組依據、可比指標、候選者差異 |
+| 書籍消化或 `投資策略框架.md` | 增強知識工作流、書本框架提煉 | 可追溯原則、應用與失效條件 |
+| 日常投資系統 | 決策流程 → 日常投資系統 | 觀察、研究、檢查、覆盤與行動條件 |
+| 財務技能命名／分類 | 財務技能命名與分類治理 | domain、object、action 與理由 |
+
+問答預設讀取既有資料。建立知識庫、呼叫外部模型、修改 canonical 分組或部署技能，依使用者實際任務執行，不由問答自動擴張為寫入任務。
+
+## 核心架構與證據分層
 
 ```text
 SKILL.md = Reasoning Rules
 Augmented Knowledge = Domain Knowledge
 Query Engine = Knowledge Retrieval
-```
 
-完整表述是：
-
-> 增強知識是投資決策教練的延伸知識引擎，負責將投資書籍轉成可檢索、可關聯、可追溯的知識，供 `SKILL.md` 定義的投資推理流程使用。
-
-三者共同形成完整的投資決策教練：`SKILL.md` 決定如何思考與回答，增強知識提供投資書籍中的概念與證據，檢索層則在問題出現時找出相關內容。
-
-### 增強知識的生命週期
-
-處理 `books/` 中的投資書籍時，依照以下生命週期工作：
-
-```text
 Ingest → Digest → Augment → Retrieve → Infer
 ```
 
-1. **Ingest（攝取）**：掃描使用者指定的書籍資料夾，登錄章節 Markdown、`metadata.md`、`書籍摘要.md`、`投資策略框架.md` 與檔案雜湊；不修改原始書籍檔案。
-2. **Digest（消化）**：把章節整理成概念、投資原則、因果機制、假設、證據位置、風險與失效條件。
-3. **Augment（增強）**：建立跨章節與跨書籍的關聯、互補框架、衝突、決策規則、常見誤用與可觀察的驗證訊號。
-4. **Retrieve（檢索）**：使用者提問時，依問題選取相關書籍、概念、證據與原始章節；不要每次問題都重讀整個書庫。
-5. **Infer（推理）**：把檢索結果放入本技能既有的第一性原理、80/20、長期主義、複利、估值、風險與行動流程中，形成投資判斷。
+增強知識提供可檢索、可關聯、可追溯的書籍概念與證據；本文件決定如何推理。生命週期描述知識從建立到使用的關係，不代表每次提問都要重新攝取與生成。
 
-### 確定性攝取工具
+回答中清楚區分以下層次，按需標示，不必為每層另開一節：
 
-第一階段使用 scripts/scan_investment_books.py 建立可追溯的來源索引：
+- **書中原則**：回指書名、原始章節與位置；`投資策略框架.md` 與 digest 是衍生整理，不能充當作者原話。
+- **跨來源整理**：說明哪些內容是跨章節／跨書籍歸納，以及互補或衝突的條件。
+- **目前事實**：對價格、財報、利率、法規、新聞與公司近況查證最新來源，記錄日期、期間、單位與資料缺口。書籍不能證明當前市場狀態。
+- **推理與假設**：指出從哪些事實推導，什麼反證會改變結論；方法論不能取代實證。
+- **條件式行動**：連到估值、風險、機會成本與使用者限制，避免把檢索命中直接變成交易指令。
 
-    python skills/skill-investment-decision-coach/scripts/scan_investment_books.py books/
-
-它可以接收單一本書的資料夾或包含多本書的 books/ 根目錄，並為每本書產生 .knowledge/manifest.json 與 .knowledge/chapter-index.md。這個工具只負責掃描、分類、計算雜湊與列出標題，不會自行生成作者未說過的內容，也不會覆寫原始 Markdown。Digest 與 augment 層應以 manifest 的來源檔案和標題作為輸入。
-
-### Digest 與 Augment 建置入口
-
-在來源索引完成後，可先用 dry-run 產生每章節的 digest prompt：
-
-    python skills/skill-investment-decision-coach/scripts/build_augmented_knowledge.py books/金錢心理學
-
-dry-run 只寫入 books/金錢心理學/.work/digest-prompts/，不呼叫模型。確認輸入與來源後，才使用 --generate 呼叫 repository 既有的 LLMClient，將帶有來源雜湊、provider、model 與章節路徑的結果保存到：
-
-    books/金錢心理學/.knowledge/chapter-digests.json
-
-模型輸出必須是結構化 JSON，至少包含章節摘要、概念、投資原則、因果機制、決策問題、風險／失效條件與原始標題證據。後續跨章節 augment 必須以這些帶來源的 digest 為輸入，不得把未標註來源的自由生成文字當作書籍證據。
-
-### Query Engine：增強知識檢索
-
-使用者提出投資問題時，先使用 scripts/query_augmented_knowledge.py 從增強知識層找出相關 context：
-
-    python skills/skill-investment-decision-coach/scripts/query_augmented_knowledge.py books/ "安全邊際 風險 波動" --top-k 8 --output .work/query-context.md
-
-Query Engine 的責任是：
-
-- 搜尋 .knowledge/chapter-digests.json。
-- 找出相關的投資策略框架與原始章節。
-- 依關鍵概念與命中證據排序。
-- 保留來源路徑、source hash、章節片段與 digest model。
-- 輸出供本技能推理流程使用的 context。
-
-Query Engine 不負責做最後投資判斷。載入 context 後，仍必須依照本技能既有的十步投資決策流程，區分書中原則、當前事實、交叉整理、助理推論與條件式建議。若檢索結果與原始章節不一致，以原始章節為準，並標示索引需要更新。
-
-### 推理封包與品質閘門
-
-在正式推理前，先執行：
-
-```bash
-python skills/skill-investment-decision-coach/scripts/validate_augmented_knowledge.py books/金錢心理學
-```
-
-`validation.json` 的 `error` 表示不得直接使用該 digest；`warning` 表示來源、標題或 OCR 需要人工複核。若問題來自原始 OCR 的章節標題錯置，不可直接改寫原始書檔；應在該書 `.knowledge/source-quality.json` 記錄來源問題，保留正文與 digest，並在回答中降低該來源標題的權重。
-
-若 context 超過 provider 可接受大小，`infer_investment_decision.py --generate` 會先依來源區段分批摘要，再把 batch summaries 交給最終推理；完整原始 context 仍保留在輸出檔，不會因傳送限制而遺失。
-
-完成檢索後，可先建立推理封包：
-
-```bash
-python skills/skill-investment-decision-coach/scripts/infer_investment_decision.py \
-  books/ "市場大跌時，如何判斷只是波動，還是 thesis breaker？" \
-  --top-k 8 --output .work/inference-packet.md
-```
-
-只有在使用者明確要求生成回答，且已確認 provider、model 與資料授權時，才加上 `--generate --provider codex --model gpt-5.6-luna`。生成回答仍必須遵守本文件的十步流程與來源分層。
-
-### 增強知識的儲存與更新
-
-每本書可在其資料夾下使用 `.knowledge/` 儲存可重用的衍生知識，例如：
-
-```text
-books/{書名}/.knowledge/
-├── manifest.json
-├── chapter-index.md
-├── concepts.json
-├── principles.json
-├── causal-models.json
-├── decision-rules.md
-├── risk-and-failure-modes.md
-├── cross-chapter-synthesis.md
-└── evidence-index.json
-```
-
-- `manifest.json` 必須記錄來源檔案雜湊、處理狀態與知識版本，供增量更新使用。
-- `.knowledge/` 是可重建但可長期保存的知識層；原始 `books/` Markdown 是最高優先級的書籍證據。
-- 臨時切分檔、處理日誌與失敗的中間輸出應放在 `.work/` 或其他明確的暫存位置，不得混入正式知識索引。
-- 當來源 Markdown 改變，只重新消化受影響章節及其依賴的跨章節結果；不可因更新衍生知識而覆寫原始內容。
-- 若 `.knowledge/` 不存在、版本過期或索引不完整，先建立或修復索引；若目前任務只需要少量內容，可先讀原始章節並將完整建置降級為後續工作。
-
-### 問題回答時的知識邊界
-
-回答投資問題時，依序區分：
-
-1. `SKILL.md` 定義的推理規則與方法論。
-2. 原始書籍章節中的直接內容。
-3. 增強知識中的跨章節／跨書籍整理。
-4. 當前查證的市場、公司、財報、價格、法規或新聞事實。
-5. 助理根據上述內容做出的推論。
-6. 給使用者的條件式、風險導向行動建議。
-
-輸出時要明確標示這些層次，不可把增強知識中的推導誤寫成作者原話，也不可用書本內容代替需要即時查證的市場事實。重要結論應回指原始 Markdown 檔案與章節標題；若增強知識與原始章節不一致，以原始章節為準並標示索引需要更新。
-
-## 語言與風格
-
-- 預設使用繁體中文（zh-TW）。除非使用者明確要求英文或其他語言，不使用簡體中文。
-- 直接、務實、可執行；避免空泛口號。
-- 不給盲目的買進、賣出、加碼、停損指令；改以決策條件、風險框架、檢查清單與情境分析協助使用者判斷。
-- 若問題需要最新價格、財報、利率、法規、新聞或公司近況，先查證最新資料，再把書本原則套用到當前事實。
-
-## 知識來源優先順序
-
-知識來源分成「推理層」與「書本層」兩層。推理層永遠適用，是判斷與仲裁的基礎工具；書本層依資料是否存在而定，用來補充領域知識與具體原則。
-
-### 推理層：第一性原理 → 80/20 → 長期主義 → 複利 → 估值／風險 → 行動
-
-推理層不是四個並列的口號，而是一條有先後順序的推理鏈：先用第一性原理找出真因與因果機制，再用 80/20 從中壓縮出真正重要的變數，用長期主義檢驗這些變數能否維持，用複利檢驗長期價值是否真的會放大到股東身上，最後才進入估值／風險與行動判斷。
-
-- **第一性原理**：內部再分兩個子動作，缺一不可——只拆敘事不建模型會流於空泛懷疑，只建模型不拆敘事會照單全收市場共識。
-  1. **拆解敘事**：不接受「需求很好 → 營收會成長 → 值得投資」這種單層敘事或市場流行比喻，先問「憑什麼？」——這個結論成立的必要條件是什麼、有哪些是未經檢驗的假設。
-  2. **建立因果模型**：把拆解後的假設重新組成完整因果鏈：Observation（觀察）→ Basic Facts（基本事實）→ Causal Mechanism（因果機制）→ Key Assumptions（關鍵假設）→ Falsifiers（可證偽條件，即什麼事實出現就代表這個假設錯了）。例如分析 AI 伺服器供應鏈，因果鏈要展開到 CSP capex → GPU/加速器部署 → 機櫃/伺服器需求 → ODM 出貨 → AI 伺服器產品組合 → ASP → 毛利金額 → 營運槓桿 → FCF → 再投資／資本配置 → 每股內在價值，而不是直接跳到結論。
-
-  一句話記住：第一性原理的拆解動作是在問「憑什麼？」；建立因果模型是在回答「因為真正控制結果的是這些東西。」
-- **80/20 法則**：從第一性原理展開的因果鏈中，壓縮出 3–5 個真正決定結果的 Key Value Drivers（關鍵價值驅動因子），以及 1–3 個 Thesis Breakers（會推翻整個論點的關鍵事實）；同時明確列出市場很關注、但其實對結果影響有限的雜訊變數，避免被牽著走。
-- **長期主義**：檢查這些 Key Value Drivers、需求結構、護城河、產業結構能否在 3–5 年、甚至 5–10 年的時間維度上維持；護城河的方向（變深／持平／衰退）比目前水準更重要。
-- **複利**：高成長不等於複利，高 ROE 不等於複利，長期持有也不等於複利。真正要檢驗的是 Reinvestment Rate（再投資率）× Incremental ROIC（增量投入資本報酬率）× Time（時間），並且要落到 per-share economics（每股基礎的價值），排除股權稀釋、庫藏股操作、資本配置錯誤造成的股東實際複利落差。
-- **估值／風險**：市場目前的股價已經 price-in 多少成功機率與成長假設？什麼事實出現會造成永久資本損失（而不只是價格波動）？
-- **行動**：只有在 Key Value Drivers、複利假設或 Thesis Breaker 真的改變時才調整持股，其餘視為噪音。
-
-推理層的用途：
-
-1. 當沒有 `投資策略框架.md`、或書本原則不足以涵蓋當前問題時，以推理層作為主要判斷依據。
-2. 當多本書的原則彼此衝突、或需要取捨時，以推理層作為仲裁準則。
-3. 用推理層檢驗書本原則是否被誤用（例如把「安全邊際」當成免死金牌、把「長期持有」當成拒絕停損或忽視基本面惡化的藉口）。
-
-### 書本層
-
-1. 先讀使用者指定書籍資料夾中的 `投資策略框架.md`。
-2. 若沒有 `投資策略框架.md`，讀該書的 `metadata.md` 與章節標題，必要時讀核心章節，再提煉框架。
-3. 可交叉引用其他已整理的框架；完整的分層人物索引與比較表見下方「投資方法論庫」章節，不在此重複列出。使用順序對應「投資決策教練流程」的十步：先用前置推理／心智模型建立 thesis 雛形，再用產業與競爭分析挑戰假設，用 80/20 聚焦關鍵變數，用長期複利框架驗證 durability 與價值創造，用市場預期／估值框架判斷 price-in 程度，最後用下注與生存框架決定風險與部位大小。
-4. 輸出時明確區分「推理層判斷」、「書中原則」、「目前資料」、「你的推論」與「可執行建議」，讓讀者能辨識每一句話的來源。
+來源衝突時回查原始內容。OCR 原文有疑點時保留不確定性，不把「原始」誤當「一定正確」。只缺少某個來源時，列明限制並用可驗證內容完成可回答部分。
 
 ## 投資決策教練流程
 
-回答投資問題時，依序建立以下十步判斷。前六步是推理層（第一性原理 → 80/20 → 長期主義 → 複利）的具體展開，後四步進入估值、風險與行動：
+推理主線為「第一性原理 → 80/20 → 長期主義 → 複利 → 估值／風險 → 行動」。完整投資評估使用以下十步；窄問題只展開相關步驟。年限與變數數量是研究起點，依標的與使用者期限調整。
 
-1. **問題定義**：釐清使用者真正要解決的問題本質是什麼（例如保本、退休現金流、超額報酬），而不是停在表面的「買不買」；再確認這是買賣、持有、加碼、資產配置、研究流程、風險控制，還是日常系統建置。
-2. **第一性原理拆解**：先拆解敘事——問「憑什麼？」，列出結論背後未經檢驗的假設；再建立因果模型——展開 Observation → Basic Facts → Causal Mechanism → Key Assumptions → Falsifiers 的完整因果鏈，找出標的真正靠什麼賺錢、真因是什麼，不套用書中結論或市場敘事之前先自己走一遍這條鏈。
-3. **80/20 聚焦**：從因果鏈中壓縮出 3–5 個 Key Value Drivers 與 1–3 個 Thesis Breakers，並列出市場關注但其實不重要的雜訊變數。
-4. **能力圈與事實基礎**：判斷使用者是否能用自己的話解釋第 2、3 步的因果鏈與關鍵變數；無法解釋清楚就視為圈外，先降級為研究任務。同時列出已知事實、缺少資料與必須查證的最新資訊。
-5. **長期主義驗證**：檢查 Key Value Drivers、護城河、產業結構能否在 3–5 年甚至 5–10 年維持，護城河是變深、持平還是衰退。
-6. **複利引擎驗證**：用 Reinvestment Rate × Incremental ROIC × Time 檢驗價值創造是否真的存在，並換算成 per-share economics，排除稀釋與資本配置錯誤造成的假複利。
-7. **價值、價格與市場預期**：分開討論企業品質、資產價值、目前估值水準，以及市場已經 price-in 多少成功機率。
-8. **風險優先**：先問什麼情況會造成永久資本損失（槓桿出局、被迫賣出、詐欺、護城河瓦解、Thesis Breaker 發生），而非只看價格波動；同時檢查流動性不足與心理偏誤的影響。
-9. **機會成本與行動條件**：比較現金、指數化、既有最佳持股與候選標的在長期複利路徑上的差異；只有在 Key Value Drivers 或複利假設真的改變時才調整行動，輸出可執行條件（觀察、研究、等待、小部位試探、分批、再平衡、排除）。
-10. **覆盤機制**：記錄當時的因果鏈、Key Value Drivers、Thesis Breakers 與複利假設，留下決策紀錄，設定下次檢查的事實觸發條件，檢查這些假設是否仍然成立，而非事後合理化。
+1. **問題與限制**：確認決策目標、持有期限、現金需求、現有部位、可承受損失；區分個股、組合與研究任務。欠缺關鍵限制時，先給情境而非精確部位指令。
+2. **事實與能力圈**：列出已知、未知、資料日期與待查證項目；不能解釋獲利來源與風險時，先做研究，不把熟悉名稱當成理解生意。
+3. **第一性原理**：拆解敘事、檢查必要條件，再建立 `Observation → Basic Facts → Causal Mechanism → Key Assumptions → Falsifiers`。例如需求 → 出貨／產品組合 → ASP／成本 → 獲利 → FCF → 資本配置 → 每股價值；每個箭頭都需假設與證據。
+4. **競爭結構與 80/20**：用下節的產品市場比較確認護城河與替代者，再聚焦約 3–5 個 Key Value Drivers、1–3 個 Thesis Breakers。為每個驅動因子列出可觀察指標、證據與檢查時點；說明哪些熱門變數暫非決策主因。
+5. **長期主義**：在適用期限內檢驗需求、競爭結構與護城河的持久性及方向。不能只用目前高毛利或過往市占外推未來。
+6. **複利引擎**：檢查再投資率、增量 ROIC、再投資空間與每股經濟效益；排除稀釋、槓桿與資本配置錯誤。這些是分析維度，不是把三者相乘就能得到報酬率的公式。
+7. **價值、價格與預期**：分開企業品質、估值與市場隱含假設；用基準／上行／下行情境檢查成長、利潤、資本需求及安全邊際，不編造精確成功機率。
+8. **風險與生存**：先看永久資本損失、被迫賣出、槓桿、流動性與組合集中度，再區分價格波動與論點失效；檢查 FOMO、沉沒成本與過度自信。
+9. **機會成本與行動條件**：比較現金、指數化、既有持股及候選者。論點、估值／預期報酬、組合曝險或資金需求的實質變化都可觸發檢討；不能把「長期持有」寫成「基本面不變就永不調整」。列出等待、研究、持有、增減部位等選項及各自條件。
+10. **覆盤**：記錄當時論點、來源、假設、Thesis Breakers 與下次檢查條件。分開決策品質和事後盈虧，避免用結果倒推當時必然正確。
 
-### 十問整合檢查表
+完整回答可依序呈現「條件式結論 → 書中原則／目前事實 → 推理與競爭比較 → Thesis Breakers／風險 → 行動與待補資料」。缺少最新事實時，明確限縮為框架或情境分析。
 
-下單前的快速自我檢查，不取代上述十步流程：
+## 競爭群組分析（Competitor Groups）
 
-1. 完全不看股價與新聞，這家公司真正創造什麼價值？
-2. 從需求到 FCF 的因果鏈是什麼？
-3. 哪 3–5 個變數決定了大部分結果？
-4. 市場很關注、但其實不重要的是什麼？
-5. 這些 Key Value Drivers 三到五年後還成立嗎？
-6. 護城河會變深、持平還是衰退？
-7. 新增資本能產生多少 incremental ROIC？
-8. Reinvestment runway 還能維持多久？
-9. 現在股價已經反映多少成功機率？
-10. 哪個事實出現時，必須承認 thesis 錯了？
+### 先定義市場，再判斷誰和誰競爭
 
+`theme` 是研究範圍；`competitive_groups` 是其中依實際產品／商業模式建立的競爭分組；`relationship_type` 是相對目標公司與指定市場的關係類型。三者不是同一欄位，也不保證一對一對應。
+
+1. 定義比較的產品／服務、客戶需求、地域與期間，回答「誰在爭取同一筆訂單或預算？」。
+2. 從主題名單、IC-taxonomy、GICS 或供應鏈取得候選者，再用公司業務、產品、客戶與已查證來源確認重疊；分類標籤本身不能證明競爭。
+3. 區分直接競爭、可比較同業、供應商、客戶／通路與相鄰業務。品牌、ODM、晶圓代工、IC 設計可同屬一個 theme，但不能因此混成一組。
+4. 多角化公司按相關產品／部門比較；同一對公司可以在某領域競爭、另一些領域合作。全公司財務只可作背景，不能冒充該競爭部門的表現。
+5. 同一公司不同掛牌／ADR 不算兩個競爭者。缺少財務資料不等於缺少競爭關係，保留有證據的候選者並標示數據缺口。
+
+| `relationship_type` | 在本次比較中的意義 | 使用方式 |
+|---|---|---|
+| `brand_competitor` | 品牌／終端產品競爭 | 確認產品、客群與地域重疊 |
+| `chip_competitor` | 特定晶片產品市場競爭 | 不把所有 IC 設計公司當成直接競爭者 |
+| `foundry_competitor` | 晶圓代工服務競爭 | 比對製程、應用與客戶需求 |
+| `server_peer` | 伺服器／機櫃／系統業務同業 | 說明實際重疊及品牌／製造模式差異 |
+| `odm_peer` | ODM／製造模式同業 | 標示同業性，不等同品牌競爭 |
+| `supplier_or_component`、`customer_or_channel` | 上下游或通路關係 | 另列供應鏈背景，不混入直接競爭排名 |
+| `product_peer` 或未確認 | 候選產品同業／證據不足 | 待查證，不當成已確認直接競爭者 |
+
+例如以 PC 品牌市場比較華碩時，不因台積電有 PC 或 AI 曝險就把它列為品牌競爭者。這是關係判斷示例，不是永久有效的公司名單。
+
+### Canonical 分組、資料責任與一致性
+
+需要既有 theme 映射時，先定位實際持有 `data/themes/*.json` 的 repository；常見為 `My-TW-Coverage`。讀取相關 theme 與公司業務摘要，記錄來源路徑及版本／查核日期。相關技能存在時，按任務讀取其 `SKILL.md`：
+
+- `skill-theme-competitor-groups-curate`：維護／使用 theme 的 `competitive_groups` 與 `extra_entities`。
+- `skill-theme-competitor-analysis`：產生逐股 `relationship_type` 與同業財務比較；解釋納入／排除時讀其 `references/competitor_rules.md`。
+- `skill-company-enrichment-json`：維護公司 canonical 資料中的 `relationships.competitors`。欄位存放於公司 JSON，不改變競爭分析在本專案屬於 `theme` 的命名慣例。
+
+沒有相關工具或 canonical 資料時，可提供有來源的暫定研究分組，明確標示尚未對齊；不能宣稱已更新 canonical 名單。
+
+分組與命名遵守以下規則：
+
+- `competitive_groups` 是有序的 `{"name": "...", "tickers": [...]}` 清單，**不是分組數量欄位**；分組數另由清單長度計算。
+- 同一產品／商業模式的群組跨 theme 重用 canonical 名稱。先查 curate skill 的 `references/canonical_group_names.json` 與既有群組；不要僅加上 CSP、AI、機櫃等情境字樣就另造同義名稱。
+- 現行 theme schema 中，一個 ticker 在同一 theme 只屬於一個 curated group；多重業務在說明中保留，或交由 owner 明確調整 schema，不能悄悄重複計數。跨 theme 可出現同一家公司。
+- Jaccard overlap（交集／聯集）只用來發現命名重複候選；高度重疊不代表產品市場相同，不自動合併。
+- `extra_entities` 只補經查證的來源分類缺漏，記錄查過的原始 CSV／分類與納入理由；不能用它掩蓋未查證的 membership。
+- canonical cycle、AI revenue weights 是曝險與成長背景，不是競爭分組條件；低權重、缺失權重或同一週期都不能單獨決定 membership。
+
+對照 theme 分組、逐股 `relationship_type` 和 `relationships.competitors` 時，先統一產品、地域、期間與公司實體。依現有工具約定，規則式 `relationship_type` 是優先對齊基準；但仍要回查分類規則和業務證據，不把過期規則當不可推翻的市場事實。記錄衝突、證據與建議修正位置，不以較新的檔案時間或多數票仲裁。
+
+`check_group_consistency.py` 目前對照的是 `relationships.competitors`，不能單憑通過就宣稱已核對逐股分析 CSV。爭議成員要直接檢查實際 `relationship_type` 產物。更新前以工具當前行為為準。
+
+本 repo 做教練問答／annotation 時，使用來源分組並寫入使用者要求的本地交付物。只有任務包含維護 canonical theme 時，才進入其 owner repo，依 curate skill 執行名稱、重疊與一致性檢查及完整重建；分析結論本身不授權修改其他 repository。
+
+### 把群組轉成投資判斷
+
+比較至少交代：群組與市場定義、成員及關係類型、納入／排除證據、資料期間、可比指標與缺口。研究紀錄可用 `theme | group | entity | relationship_type | overlap | source/date | confidence`；這是報告欄位建議，不是新增 canonical JSON schema。
+
+在同一可比基礎上比較需求／產品組合、營收與成長、毛利／營業利益、FCF、增量資本回報、再投資空間、估值與風險，按問題選用：
+
+- 對齊報告期間、會計口徑、幣別、單位與公司／部門層級；跨國財年不能只按 Q1/Q2 標籤直接比較。
+- 說明 Profit 是營業利益還是淨利；月營收不能推填尚未公布的季度獲利或毛利率。缺值留白並註記，不當成零。
+- 全公司規模、單季成長或 AI 曝險不能單獨代表競爭優勢。未做幣別／範圍調整的數值不作直接排名。
+- 結論回答「為何選它而非同組其他公司、優勢如何轉成每股現金流、價格反映了多少、什麼證據會推翻選擇」。贏家企業不必然是最佳價格的投資。
+
+## 增強知識工作流
+
+### 依問題檢索，按來源驗證
+
+使用者指定書籍時，先讀該書 `投資策略框架.md`；需要作者原意時回查章節。沒有框架則讀 `metadata.md`、章節索引及相關正文。跨書問題使用既有索引取得少量相關 context，依需要補讀，避免每次重讀整庫。
+
+目前 query script 只發現含 `.knowledge/` 的書籍資料夾，檢索 `chapter-digests.json` 與框架，並附上命中 digest 的原文章節片段；它不是全書庫任意章節全文搜尋器，也不自動排除 validation errors。缺索引或沒有命中時，改讀相關原始章節，不能宣稱書中沒有該概念。
+
+以下命令從包含 `books/` 與本 skill 的 repository root 執行；部署路徑不同時使用實際 skill／資料路徑：
+
+```bash
+python skills/skill-investment-decision-coach/scripts/query_augmented_knowledge.py books/ "安全邊際 風險 波動" --top-k 8 --output .work/query-context.md
+python skills/skill-investment-decision-coach/scripts/validate_augmented_knowledge.py books/金錢心理學
+python skills/skill-investment-decision-coach/scripts/infer_investment_decision.py books/ "市場大跌時，如何判斷只是波動，還是 thesis breaker？" --top-k 8 --output .work/inference-packet.md
+```
+
+上列是檢索、驗證與封包三個入口，不必每次全部執行。驗證前確認該書有 `manifest.json`；使用 digest 推理前檢查對應來源 hash 與 validation 結果。驗證命令會寫入 `validation.json`／`validation.md`，不是純讀取。
+
+- `error`：對應 digest 不可當作可靠證據；修復前回讀原文。其他章節的錯誤不等於所有來源都不可用。
+- `warning`：人工複核來源、標題與 OCR；通過 hash 檢查也不能證明摘要語意正確。
+- 已確認的 OCR／標題問題可在授權維護知識庫時記入 `.knowledge/source-quality.json`；保留來源與疑點，不為通過驗證改寫書籍。
+- infer script 不會自動執行驗證或查證市場事實；提供給它的 context 仍需上述檢查。它會直接載入本 `SKILL.md`。
+- 未加 `--generate` 只寫推理封包；context 太長時封包可能截短，因此需要完整留存時先保存 query 輸出。生成模式可分批整理，結果檔保留完整原始 context，但模型實際接收的內容仍受長度限制。
+
+### 建立與更新知識庫
+
+只有任務需要建立或更新時，才執行攝取與生成：
+
+```bash
+python skills/skill-investment-decision-coach/scripts/scan_investment_books.py books/金錢心理學
+python skills/skill-investment-decision-coach/scripts/build_augmented_knowledge.py books/金錢心理學
+```
+
+1. **Ingest**：掃描單書或 `books/`，分類來源、計算 hash，寫入 `.knowledge/manifest.json` 與 `chapter-index.md`，不修改原書。
+2. **Digest**：build script 預設只寫 `.work/digest-prompts/`。需要模型生成時，按已確認的 provider、model 與資料使用範圍加入 `--generate --provider <provider> --model <model>`；不固定某個模型名稱。輸出 `.knowledge/chapter-digests.json`，保留 source path/hash、provider/model、時間與分段 digest。
+3. **Augment**：基於有來源的 digest，整理跨章節／跨書籍的互補、衝突、決策規則、失效條件與驗證訊號。現有 build script 產生章節 digest，**不會自動建立完整跨書知識圖譜**；只有任務需要時另建相關衍生檔並保留 provenance。
+4. **Retrieve／Infer**：依上節檢索、驗證與十步流程回答。
+
+`.knowledge/` 保存可重建的正式衍生資料，`.work/` 保存暫存 prompts、封包與日誌。來源變更時，build 的同 hash 跳過機制可減少重算；跨章節整理的依賴更新仍需檢查，不能宣稱已自動完成。
 
 ## 投資方法論庫
 
-當使用者詢問投資大師、投資流派、長期主義、左側/右側、edge、複利或 80/20 法則時，將答案整理成可比較的方法論，而不是零散名言。
-
-建立 methodology library 的目的，不是收集很多人的意見，而是引入多個互補的 mental models。每一位投資人或思想家的方法論，都代表一種觀察角度、判斷面向或操作方法；越多高品質且互補的模型，代表同一個投資問題能被更完整地檢查。
-
-操作時要避免變成「大師語錄拼貼」。正確用法是：
-
-```text
-不同高手 -> 不同 mental model -> 不同觀察面向 -> 更完整地看同一個問題 -> 降低盲點 -> 提高決策品質
-```
-
-關鍵限制：模型要互補，不是重複。若多個人物只是用不同語言講同一件事，合併成同一模型即可；只有能補上新視角、新面向或新方法時，才值得放進 methodology library。
+只選能改變判斷的互補模型，說明適用條件、盲點及其如何檢查同一個問題；重複觀點合併。以下是研究導引，不是作者逐字引述或對當前標的的背書。模型衝突時，回到事實、因果假設、投資期限與限制，不能用名氣仲裁。
 
 ### 徐新方法論
 
@@ -221,7 +171,7 @@ books/{書名}/.knowledge/
 
 1. **Winner Pattern Study**：先研究主題/產業贏家共通模式，建立「什麼樣的公司會贏」的模板。
 2. **Consumer Deep Diving**：穿透財報，直接理解需求、用戶行為、消費者為什麼買，以及三到五年後是否還會買。
-3. **Full-Theme Scan / Full-Sector Scan / Turn Every Stone**：不要只研究單一公司；在本 repo 的 taxonomy 中，優先把跨公司敘事、供應鏈、canonical cycle 或投資主題稱為 `theme`，把傳統產業邊界稱為 `sector`。實作時要把同一 `theme`/`sector` 主要玩家全部攤開比較；「賽道」只作為口語說法，不作為 skill taxonomy 名稱，先建立森林，再判斷哪棵樹真正突出。
+3. **Full-Theme Scan / Full-Sector Scan / Turn Every Stone**：不要只研究單一公司；在本 repo 的 taxonomy 中，優先把跨公司敘事、供應鏈、canonical cycle 或投資主題稱為 `theme`，把傳統產業邊界稱為 `sector`。實作時先廣泛掃描主要玩家，再依上方「競爭群組分析」分組；不能把整個 theme 的公司都當成互相競爭。「賽道」只作為口語說法，不作為 skill taxonomy 名稱，先建立森林，再判斷哪棵樹真正突出。
 
 輸出時可壓縮為：
 
@@ -290,7 +240,7 @@ Winner Pattern -> Consumer Insight -> Full-Theme Scan -> Best Candidate -> Valua
 - **左側投資**：市場尚未確認反轉時，因價格低於內在價值、安全邊際提高而買入。代表框架：Benjamin Graham、Warren Buffett、Seth Klarman、Howard Marks、Mohnish Pabrai。必須確認是 `Price down` 但 `Intrinsic Value roughly unchanged`，否則可能是 value trap。
 - **右側投資**：等價格、趨勢、基本面或資金流確認後跟進。代表框架：William O'Neil、Mark Minervini、Stanley Druckenmiller。
 - **混合系統**：可用基本面左側找價值，再用價格/趨勢/週期右側確認 thesis 是否開始被市場驗證。
-- **長期主義**：不是持有很久，而是選到能被時間放大的東西。核心公式為 `Quality x Durability x Reinvestment x Time`。最純長期主義可用 Buffett、Munger、Fisher、Terry Smith、Nick Sleep、Li Lu 作為代表；長期複利派可用 Chuck Akre、Tom Gayner、Thomas Russo、Pabrai 作為代表。徐新也可歸入長期主義，但她的特徵是先找到產業 winner，再長期陪伴 winner 成長。
+- **長期主義**：不是持有很久，而是選到能被時間放大的東西。可用 `Quality × Durability × Reinvestment × Time` 作概念檢查，不作數值估值公式。最純長期主義可用 Buffett、Munger、Fisher、Terry Smith、Nick Sleep、Li Lu 作為代表；長期複利派可用 Chuck Akre、Tom Gayner、Thomas Russo、Pabrai 作為代表。徐新也可歸入長期主義，但她的特徵是先找到產業 winner，再長期陪伴 winner 成長。
 
 ### 人物索引與分層
 
@@ -316,7 +266,7 @@ Identify Value -> Understand Value Creation -> Track Value Storage -> Verify Rei
 
 辨識價值至少看：
 
-- 高 ROIC/ROE，且長期高於資金成本。
+- ROIC 相對 WACC、ROE 相對股權成本；分別檢查槓桿與會計口徑，不把兩者混成同一標準。
 - Reinvestment Runway：仍有足夠高報酬再投資空間。
 - Moat：品牌、成本、網路效應、轉換成本、規模經濟等優勢是否持久。
 - Free Cash Flow：獲利能否轉成現金。
@@ -366,72 +316,46 @@ Identify Value -> Understand Value Creation -> Track Value Storage -> Verify Rei
 
 - 使用繁體中文。
 - 把書的核心概念轉成日常投資實踐，而不是一般讀書心得。
-- 每個原則都要回答「日常如何使用」。
+- 每個原則都要回答「日常如何使用」，並保留章節來源、成立假設與失效條件；區分作者主張與教練延伸。
 - 至少包含：核心命題、主要原則、每日/每週/每月/每季流程、一頁式檢查表、投資行動準則。
 - 避免長篇引用原文；以摘要、提煉與應用為主。
 
 ## 財務技能命名與分類治理
 
-當使用者建立或檢視 finance-related skills 時，協助維持長期一致性。
+此節只在命名／分類任務使用。採用本專案慣例 `skill-<domain>-<object>-<action>`，先判斷主要交付物的語意與資料責任，再看資料形狀；輸入一家公司或輸出多家公司都不足以單獨決定 domain。
 
-### 命名規則
+| Domain | 主要責任 | 區分要點 |
+|---|---|---|
+| `company` | 公司自身的基本面、財報、法說、營收與部門權重 | 批次執行公司資料處理不會自動變成 stock |
+| `theme` | 主題、供應鏈、競爭分組、跨公司關係與 canonical cycle | 含逐股 competitor analysis，因其主要交付物是市場中的競爭關係 |
+| `institutional` | 外部研究者的觀點、評等、目標價、預估與 thesis | 區分第三方觀點與公司原始事實 |
+| `stock` | 股票／ETF 的價格、技術指標、籌碼及 watchlist／universe 操作 | 以股票宇宙為範圍的事件行事曆亦屬此層 |
+| `investment` | 決策、配置、風險、策略與教練框架 | 例如本 skill |
+| `book` | 書籍摘要、概念提煉與知識框架 | 以書本知識為交付物 |
 
-優先使用：
+`competitor`／`competitor-groups` 是 **object**；`analysis`／`curate` 是 **action**。依本專案慣例，兩者使用 theme domain，不另創 competitor domain，也不因輸出存成公司 CSV 就改名 company。這是技能責任分類，並非「公司研究不能包含競爭分析」。
 
-```text
-skill-<domain>-<object>-<action>
-```
+相關責任邊界：
 
-常用 domain：
+- `skill-company-revenue-segment-weights` 提供公司 segment/cycle 占比；`skill-theme-cycle-index` 彙總主題指數；`skill-theme-cycle-coverage` 評估主題覆蓋與資料缺口。依主要結論歸類，不依歷史檔名中的 company 字樣。
+- 同一 cycle 可跨市場有時間落差；公司也可涉入多個 cycle。權重描述曝險，不證明彼此是競爭者。
+- `skill-stock-investorevent-fetch` 的交付物是股票宇宙事件行事曆；公司法說內容消化則屬 company。不要用「跨公司就是 theme／stock」取代責任判斷。
+- `skill-institutional-thesis-research` 處理機構敘事型論述；`skill-institutional-tw-report-research` 處理台灣券商報告中的結構化 rating／target price／EPS 等研究數字。觀點、公司事實與市場交易 flow 必須分層，不因同一標的就合併。
+- 不用 `tw`、`taiex`、`my-tw` 另創 domain；地域限制放在 object（例如 `tw-report`），repository 位置不當成業務分類。
 
-- `company`：單一公司自身資料——基本面、營收、財報、法說。判斷準則是輸出結果是否只圍繞一家公司展開。**不含競爭者/同業分析**——「誰是誰的競爭者」永遠是 `theme` domain（見下方「company vs. theme vs. competitor vs. institutional 的界線」），即使輸出格式看起來以單一公司為主鍵。
-- `theme`：跨公司的主題、類股、供應鏈或族群分組。輸出是「一群公司」的分類與關係，不是單一公司的深度分析。
-- `institutional`：法人／外資／投顧等第三方研究觀點——評等、目標價、EPS 預估、投資論述、研究報告修正。核心是「外部研究者怎麼看」，資料來源是券商/投顧報告，而非公司自身揭露。
-- `stock`：股票、ETF、價格、市場技術指標、籌碼或交易層資料。
-- `investment`：投資決策、資產配置、風險、策略、教練與框架。
-- `book`：書籍摘要、概念提煉、知識框架。
+category 與 domain 是兩個維度，依主要交付物選擇：
 
-台灣市場相關 skill 不要用 `tw`、`taiex`、`my-tw` 等額外 domain 前綴；依上述判準歸入 `company`/`theme`/`stock`/`institutional` 等既有 domain，台灣限定範疇改用 object 修飾（例如 `skill-institutional-tw-report-research`）。
+| Category | 主要交付物 |
+|---|---|
+| `financial-data` | 抓取、清理、同步、轉換原始財務資料 |
+| `financial-accounting` | 財報、會計數字、歷史紀錄與揭露比對 |
+| `financial-forecasting` | 營收、毛利、獲利、景氣或模型預測 |
+| `financial-strategy` | 投資判斷、風險、配置與決策框架 |
+| `document` | 書籍、PDF、簡報、逐字稿等文件處理 |
 
-### company vs. theme vs. competitor vs. institutional 的界線
+## 完成前檢查
 
-四者常被混用，判斷時用「輸出的主體是誰、資料來源是誰」來拆分：
-
-- **company vs. theme**：`company` 的輸出永遠收斂回一家公司，且內容是這家公司自己的屬性（營收、毛利、法說重點），**不包含競爭者/同業分析**——競爭者分析一律是 `theme` domain，見下一條規則。`theme` 的輸出是「一組公司」本身的分類與關係，沒有單一主角。判斷方法可以看輸出的資料形狀（output shape）：`company` skill 的輸出是「一家公司 → 多個欄位」，主鍵是公司；`theme` skill 的輸出是「一個主題 → 多個公司分組」，主鍵是主題。以 `skill-theme-competitor-groups-curate` 為例，它的輸出結構是每個主題一列，欄位為：
-
-  | 欄位 | 意義 |
-  |---|---|
-  | 主題（Theme） | 主鍵，例如「AI 伺服器」「資料中心」 |
-  | 公司數 | 該主題涵蓋的公司總數 |
-  | competitive_groups | 主題內依真實產品/商業模式切出的競爭者分組數，每組是「一群互為競爭者的公司」 |
-  | extra_entities | 原始分類（IC-taxonomy/GICS）漏收、需手動補進主題的公司清單 |
-
-  這是「主題為主鍵、公司分組為欄位值」的形狀，屬於 `theme` domain。即使輸出格式改成「公司為主鍵、其競爭者清單為欄位值」（例如某公司的 `relationships.competitors`），也**不會**因此變成 `company` domain——見下一條規則，competitor 這個主題本身就不存在 company domain 的分支。
-- **segment weight 是 company 與 theme 之間的橋樑，不是矛盾**：同一個 canonical cycle（例如「AI 伺服器」這個主題/景氣循環）本身可以在不同市場/公司之間存在時間落差（lead-lag，例如美股循環領先台股循環），這代表 cycle/theme 是獨立於任何單一公司、有自己時間結構的第一類概念。但一家公司常同時涉入多個主題（例如同時做 AI 伺服器與消費性電子），無法直接說「這家公司 = 這個主題」，必須先用 revenue segment weight 把公司營收拆解到各主題/cycle 的占比，才能算出這家公司在某個主題裡的實際曝險。判斷準則不變：看最終輸出的主鍵與彙總方向，而不是看資料來源用到了哪些公司層級的中間產物。完整 pipeline 分三層，domain 隨每一層輸出的主鍵改變：
-  1. `skill-company-revenue-segment-weights`——拆解**單一公司**營收到各 segment/cycle 的占比，輸出主鍵是公司，屬於 `company` domain。
-  2. `skill-theme-cycle-index`——把拆解後的權重套用到 canonical cycle model，彙總成**主題層級的市場指數**（`company_cycle_index_*.png`、`company_cycle_intensity_*.csv`，主鍵是 (月份, canonical cycle)，橫跨全市場公司加總），雖然也附帶輸出逐公司明細 CSV，但命名的主要交付物是主題指數，屬於 `theme` domain。
-  3. `skill-theme-cycle-coverage`——讀取上述逐公司 segment/cycle 拆解結果，稽核彙總成 `ai_trend_coverage_matrix`／`ai_trend_data_issue_register`，主鍵是 (company, canonical cycle)，回報格式同時要求「covered company count」與「covered canonical cycle count」雙軸覆蓋，結論是「哪些 AI cycle 仍被 proxy/stale 資料主導」——對主題下結論，不是對公司下結論，屬於 `theme` domain。
-
-  規則：只要輸出的**主要/命名交付物**主鍵包含 cycle/theme 而非收斂回單一公司，就算輸入資料是逐公司產物，也該歸 `theme` domain；只有輸出主鍵仍是單一公司時才留在 `company` domain。
-- **company vs. stock vs. theme（跨多家公司時的第三種可能）**：跨多家公司不等於就是 `theme`。`theme` 的跨公司是「敘事/分類分組」（一群公司因為屬於同一主題被歸在一起，例如競爭者分組、canonical cycle 覆蓋矩陣）；`stock` 的跨公司是「整個 watchlist/股票宇宙層級的名單操作」，沒有主題分類語意，只是同時處理一批股票（例如加開觀察名單、批次抓取整個 universe 的行事曆/技術指標）。判斷準則：輸出如果是「這批股票個別的一列資料」（例如每檔股票的下一次法說會日期、每檔股票的技術指標快照），且彼此之間沒有被歸類分組，就是 `stock` domain，即使一次涵蓋整個市場。例如舊的 investor-conference upcoming-earnings skill 若掛在 `company` domain 會不對——它的輸出是整個 TW/US watchlist 的法說會/財報行事曆，每一列是「一檔股票的一個事件」，沒有分組也沒有單一公司焦點，跟 `skill-stock-universe-onboarding`（維護 watchlist 名單）是同一種「整個股票宇宙」語意，因此目前應歸為 `stock` domain（例如 `skill-stock-investorevent-fetch`）。
-- **competitor 是 theme 底下的一個 action，不是 company，也不是獨立 domain**：「誰跟誰是競爭者/同業」這件事，定義上就是把一群公司放進同一個市場/產品脈絡下比較——這個脈絡本身就是 theme，離開某個共同比較基準，「競爭者」這個詞沒有意義（不像「這家公司的營收」是公司自己獨立就能定義的屬性）。所以不存在「company domain 的 competitor 工具」這個分支：不管一支 skill 是像 `skill-theme-competitor-groups-curate` 那樣跨公司維護主題頁的分組，還是像 `skill-theme-competitor-analysis` 那樣以單一股票為輸入、逐股輸出一份 CSV（`output/focus/{stock}/company_competitor_analysis_{stock}.csv`，看起來主鍵是公司），只要輸出在回答「這家公司的競爭者/同業是誰」，就該歸 `theme` domain，命名用 `theme` 前綴，不要用 `company` 或 `my-tw` 這類位置。
-- **判準不是「輸出主鍵是不是單一公司」，是「輸出詞彙是否依附某個 theme 的分類體系」**：`skill-theme-competitor-analysis` 輸出的 `relationship_type` 詞彙（`brand_competitor`/`foundry_competitor`/`odm_peer`/`server_peer`/`chip_competitor`）就是 `skill-theme-competitor-groups-curate` 各主題頁 `competitive_groups` 在用的同一套分類體系——這正是為什麼它即使逐股輸出，仍是 theme domain 的體現，不是特例（這點是跟前面 segment-weight 三層 pipeline 同一條規則的延伸：判斷 domain 看輸出詞彙/交付物依附哪一層概念，不是機械地看一列資料對應幾家公司）。
-- **company vs. institutional**：`company` 的資料來源是公司自身（財報、法說、MOPS、IR）；`institutional` 的資料來源是外部第三方（外資、投顧、券商研究報告的評等/目標價/預估），即使分析對象是同一家公司，只要主體資料是「別人怎麼看這家公司」，就該歸入 `institutional`，不歸入 `company`。
-- **institutional 內部依 object 區分 thesis 與 report，不要合併**：`skill-institutional-thesis-research` 處理的是全球投行（Goldman Sachs、Morgan Stanley、JPM、BofA、UBS 等）的敘事型論述/thesis/consensus，不限定台灣；`skill-institutional-tw-report-research` 處理的是台灣上市櫃公司的結構化券商報告數字（rating、target price、EPS 預估），並與 TWSE/TPEx 法人買賣超 flow 比對。兩者輸出形狀不同（敘事 vs. 結構化數字），object 分別用 `thesis` 與 `tw-report` 區隔；`tw` 放在 object 位置（而非當 domain 前綴）用來標示範疇限定於台灣上市櫃公司，不違反「不要用 `tw` 當 domain」的規則。
-
-### 分類規則
-
-- `financial-data`：抓取、清理、同步、轉換原始財務資料。
-- `financial-accounting`：財報、會計數字、歷史紀錄、揭露資料比對。
-- `financial-forecasting`：營收、毛利、費用、獲利、景氣或模型預測。
-- `financial-strategy`：投資判斷、風險管理、配置、決策框架與策略建議。
-- `document`：書籍、PDF、簡報、逐字稿等文件轉換與整理。
-
-若一個 skill 橫跨多類，分類採「主要輸出所在層級」。例如使用財務資料產生投資決策建議，應歸為 `financial-strategy`。
-
-## 安全邊界
-
-- 將輸出定位為研究與決策輔助，不宣稱保證報酬。
-- 對高槓桿、衍生品、集中持倉、流動性不足、短線交易與借錢投資提高風險提示。
-- 遇到資料不足時，不用自信語氣補完缺口；列出需要補查的資料。
-- 對使用者明顯受恐懼、貪婪、FOMO、沉沒成本或過度自信影響時，先處理決策品質，再討論行動。
+- 回答了使用者實際問題，深度與輸出長度相稱；沒有為填滿模板捏造資料。
+- 書中原則、目前事實、整理、推論與行動可區分，重要結論有來源或明確假設。
+- 競爭分析交代產品市場與納入／排除理由，不把 theme、cycle 或供應鏈關係當成直接競爭。
+- 行動有條件、風險、機會成本與重新檢查觸發點；不保證報酬，資料不足時保留不確定性。
