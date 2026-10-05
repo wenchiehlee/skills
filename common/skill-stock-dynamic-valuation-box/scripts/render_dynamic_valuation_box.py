@@ -193,6 +193,19 @@ def _stock_name(symbol: str) -> str:
     """Best-effort Chinese/English name lookup so charts read "2412 中華電"
     instead of a bare code; falls back to the code alone if FinMind has
     nothing (e.g. a delisted or newly listed ticker)."""
+    candidates = [
+        Path.cwd() / "data" / "enrichment_all" / f"{symbol}.json",
+        Path.cwd() / "data" / "stock_info" / f"{symbol}.json",
+    ]
+    for c in candidates:
+        if c.is_file():
+            try:
+                data = json.loads(c.read_text(encoding="utf-8"))
+                for k in ("company_name", "stock_name", "名稱", "公司名稱"):
+                    if data.get(k):
+                        return str(data[k]).strip()
+            except Exception:
+                pass
     try:
         rows = _fetch("TaiwanStockInfo", symbol, "", "")
         return rows[0]["stock_name"] if rows else ""
@@ -709,6 +722,15 @@ def _plot(
     # Prefer a supplied/installed CJK font so Traditional Chinese labels render
     # correctly in both PNG and SVG; DejaVu Sans remains the final fallback.
     cjk_font_path = os.environ.get("TW_CJK_FONT", "")
+    if not cjk_font_path or not Path(cjk_font_path).is_file():
+        win_dir = os.environ.get("WINDIR", "C:/Windows")
+        for win_candidate in (
+            Path(win_dir) / "Fonts" / "msjh.ttc",
+            Path(win_dir) / "Fonts" / "msjhbd.ttc",
+        ):
+            if win_candidate.is_file():
+                cjk_font_path = str(win_candidate)
+                break
     cjk_family = ""
     if cjk_font_path and Path(cjk_font_path).is_file():
         font_manager.fontManager.addfont(cjk_font_path)
@@ -1235,8 +1257,8 @@ def main() -> None:
     output_dir = Path(args.output_dir)
     for symbol in symbols:
         # Bulk runs already have the company name in the surrounding page data;
-        # avoid an extra FinMind TaiwanStockInfo call per symbol here.
-        name = args.company_name.strip()
+        # if not supplied, fall back to best-effort local/FinMind lookup.
+        name = args.company_name.strip() or _stock_name(symbol)
         forward_eps = forward_eps_all[forward_eps_all["symbol"] == symbol]
         daily, eps, profit_metrics = _build_daily_box(symbol, args.years, end_date, args.window, forward_eps, args.finmind_financial_ratio_csv)
         revenue_start = (end_date - pd.DateOffset(years=args.years + 1)).strftime("%Y-%m-%d")
