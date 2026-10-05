@@ -1,8 +1,8 @@
 {
   "name": "skill-investment-decision-coach",
-  "description": "Coach investment decisions in Traditional Chinese using traceable book knowledge and complementary reasoning frameworks. Use for evaluating opportunities and risks, comparing investor methods or competitor groups, building investment routines, extracting book-derived investment frameworks, and reviewing finance-skill taxonomy.",
+  "description": "Coach investment decisions in Traditional Chinese using traceable book knowledge and complementary reasoning frameworks. Use for evaluating opportunities and risks, comparing investor methods or competitor-groups, building investment routines, extracting book-derived investment frameworks, and reviewing finance-skill taxonomy.",
   "category": "financial-strategy",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "maintainer": "wenchiehlee-money",
   "source": "https://github.com/wenchiehlee-money/Miz.Fetch",
   "updated_at": "2026-10-05",
