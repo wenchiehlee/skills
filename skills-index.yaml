@@ -218,14 +218,14 @@ skills:
 - name: skill-finmind-fetch
   group: common
   path: common/skill-finmind-fetch
-  version: 1.8.0
+  version: 1.9.0
   description: Fetch FinMind Taiwan stock margin/price data and quarterly financial-ratio
     data, exporting GoodInfo Analyzer-compatible CSVs.
   category: financial-data
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/Python-Actions.FinMind
   repo_count: 2
-  updated_at: '2026-09-22'
+  updated_at: '2026-10-05'
   revised_at: '2026-10-05'
 - name: skill-goodinfo-fetch
   group: common
@@ -446,7 +446,7 @@ skills:
 - name: skill-stock-dynamic-valuation-box
   group: common
   path: common/skill-stock-dynamic-valuation-box
-  version: 1.18.0
+  version: 1.19.0
   description: Render no-look-ahead Taiwan-stock time-price diagrams (2–5 year windows)
     with dynamic TTM P/E valuation boxes (μ±1σ/±2σ), an optional forward-EPS/forward-PE
     overlay sourced from Yahoo Finance and/or FactSet consensus feeds, optional matched
@@ -459,7 +459,7 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
   repo_count: 2
-  updated_at: '2026-10-04'
+  updated_at: '2026-10-05'
   revised_at: '2026-10-05'
 - name: skill-stock-earnings-calendar-monitor
   group: common
