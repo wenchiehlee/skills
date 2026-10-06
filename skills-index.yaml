@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-10-05'
+generated_at: '2026-10-06'
 skills:
 - name: skill-android-adb-gadget
   group: common
@@ -308,17 +308,17 @@ skills:
 - name: skill-investment-decision-coach
   group: common
   path: common/skill-investment-decision-coach
-  version: 1.3.0
-  description: Coach investment decisions in Traditional Chinese using traceable book
-    knowledge and complementary reasoning frameworks. Use for evaluating opportunities
-    and risks, comparing investor methods or competitor-groups, building investment
-    routines, extracting book-derived investment frameworks, and reviewing finance-skill
-    taxonomy.
+  version: 1.4.0
+  description: Coach investment decisions in Traditional Chinese with traceable evidence,
+    calibrated confidence, falsifiable theses, comparative advantage, and complementary
+    reasoning frameworks. Use for evaluating opportunities and risks, comparing investor
+    methods or competitor-groups, building investment routines, extracting book-derived
+    investment frameworks, and reviewing finance-skill taxonomy.
   category: financial-strategy
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/Miz.Fetch
   repo_count: 1
-  updated_at: '2026-10-05'
+  updated_at: '2026-10-06'
   revised_at: '2026-10-05'
 - name: skill-llm-api-client
   group: common
