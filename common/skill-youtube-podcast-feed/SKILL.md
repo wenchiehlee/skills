@@ -1,6 +1,6 @@
 ---
 name: skill-youtube-podcast-feed
-description: Build, validate, and maintain manifest-driven podcast RSS feeds for YouTube audio archives, including correct audio enclosure headers, Podcasting 2.0 WebVTT transcripts, real-time player lyrics, per-channel and combined feeds, and GitHub Pages artifacts.
+description: Build, validate, and maintain manifest-driven podcast RSS feeds for YouTube audio archives, including correct audio enclosure headers, Podcasting 2.0 WebVTT transcripts, timestamped HTML timelines, real-time player lyrics, per-channel and combined feeds, and GitHub Pages artifacts.
 ---
 
 # YouTube Podcast Feed
@@ -74,6 +74,7 @@ python skills/skill-youtube-podcast-feed/scripts/validate_podcast_feed.py docs/f
 - 每個 enclosure URL 可由 Worker 路徑解析出 stem；
 - transcript URL 的 `.vtt` 檔案存在，且以 `WEBVTT` 開頭；
 - 播放器為每集提供 `.vtt` track 與 live lyrics region，並在 `cuechange` 時更新文字；
+- RSS 的 `<content:encoded>` 同步提供精簡時間軸與 episode/time deep links；這是 app 可見的備援內容，但不能保證每個 Podcast app 都把外部連結當成原生 seek 控制。
 - cue timestamp 單調遞增、end 大於 start；
 - feed 中沒有重複 guid；
 - feed item 數量與輸入 manifest 中該 channel 的 audio-backed episode 數量一致（合併 feed 則是所有 channel 總和）。

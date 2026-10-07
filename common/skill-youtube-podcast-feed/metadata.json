@@ -1,8 +1,8 @@
 {
   "name": "skill-youtube-podcast-feed",
-  "description": "Build and validate manifest-driven podcast RSS feeds for YouTube audio archives with correct audio enclosures, Podcasting 2.0 WebVTT transcripts, real-time player lyrics, per-channel and combined feeds, and GitHub Pages artifacts.",
+  "description": "Build and validate manifest-driven podcast RSS feeds for YouTube audio archives with correct audio enclosures, Podcasting 2.0 WebVTT transcripts, timestamped HTML timelines, real-time player lyrics, per-channel and combined feeds, and GitHub Pages artifacts.",
   "category": "media-publishing",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "maintainer": "ZhongZheng782",
   "source": "https://github.com/ZhongZheng782/YoutubeAudio.Fetch",
   "updated_at": "2026-10-07",

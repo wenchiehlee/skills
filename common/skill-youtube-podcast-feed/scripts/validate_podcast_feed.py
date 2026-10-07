@@ -83,6 +83,9 @@ def main() -> int:
             transcript_count += 1
             parsed = urlparse(transcript.get("url", ""))
             local_path = feed.parent / "transcripts" / Path(parsed.path).name
+            if not local_path.exists() and feed.parent.name == "docs":
+                channel = Path(parsed.path).parent.parent.name
+                local_path = feed.parent / channel / "transcripts" / Path(parsed.path).name
             if not local_path.exists():
                 errors.append(f"{feed}: missing transcript {local_path}")
             else:
