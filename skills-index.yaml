@@ -752,3 +752,16 @@ skills:
   repo_count: 1
   updated_at: '2026-09-02'
   revised_at: '2026-10-05'
+- name: skill-youtube-podcast-feed
+  group: common
+  path: common/skill-youtube-podcast-feed
+  version: 1.2.0
+  description: Build and validate manifest-driven podcast RSS feeds for YouTube audio
+    archives with correct audio enclosures, Podcasting 2.0 WebVTT transcripts, real-time
+    player lyrics, per-channel and combined feeds, and GitHub Pages artifacts.
+  category: media-publishing
+  maintainer: ZhongZheng782
+  source: https://github.com/ZhongZheng782/YoutubeAudio.Fetch
+  repo_count: 1
+  updated_at: '2026-10-07'
+  revised_at: '2026-10-07'
