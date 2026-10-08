@@ -2,7 +2,7 @@
   "name": "skill-stock-investorevent-fetch",
   "description": "維護財報／法說會、AI、股利、歷史崩盤、NVIDIA 與股市事件六份 raw_event CSV 的組合技能；依事件來源選擇既有產生器，財報季度使用共享解析器，並對齊投資人素材矩陣。",
   "category": "financial-data",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee-money/InvestorConference",
@@ -28,7 +28,13 @@
     "metadata.json",
     "self_update.py",
     "scripts/fetch_upcoming_earnings.py",
-    "references/event-datasets.md"
+    "references/event-datasets.md",
+    "scripts/fetch_ai_events.py",
+    "scripts/fetch_dividends_announce.py",
+    "scripts/fetch_historical_crashes.py",
+    "scripts/fetch_nvidia_events.py",
+    "scripts/fetch_stock_events.py",
+    "scripts/fetch_all_events.py"
   ],
   "deployments": [
     {

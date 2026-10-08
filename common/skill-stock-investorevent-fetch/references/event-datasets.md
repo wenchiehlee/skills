@@ -2,25 +2,25 @@
 
 ## 選擇產生器
 
-以下指令一律從 InvestorEvents 儲存庫根目錄執行。
+以下指令一律從使用此技能的儲存庫根目錄執行。
 先核對該專案的相依套件與非機密設定；AI、歷史崩盤、NVIDIA、股市事件使用
 `skill-llm-api-client` 所提供的 `llm.LLMClient`。股利使用 requests、yfinance 與 python-dotenv。
 財報季度解析相依僅在財報／法說會流程需要，不應強迫其他事件解析為 FY 標籤。
 
 | 指定資料集 | 執行指令 | 主要來源與現有行為 |
 |---|---|---|
-| AI | `python fetch_ai_events.py` | LLM 產生 AI 商業／市場事件 CSV，依事件名稱與開始日期合併既有資料。 |
-| 股利 | `python fetch_dividends_announce.py` | 台股 MOPS 董事會決議；美股 yfinance 股利資訊。重建輸出，不是歷史追加。 |
-| 歷史崩盤 | `python fetch_historical_crashes.py` | LLM 分段產生歷史事件並去重；目前查詢期間為 1995–2010、2010–2026。 |
-| NVIDIA | `python fetch_nvidia_events.py` | LLM 產生自 2012 年起的硬體／商業事件，依事件名稱與開始日期合併。 |
-| 股市 | `python fetch_stock_events.py` | LLM 產生自 1990 年起的重大市場事件，依事件名稱與開始日期合併。 |
+| AI | `python skills/skill-stock-investorevent-fetch/scripts/fetch_ai_events.py` | LLM 產生 AI 商業／市場事件 CSV，依事件名稱與開始日期合併既有資料。 |
+| 股利 | `python skills/skill-stock-investorevent-fetch/scripts/fetch_dividends_announce.py` | 台股 MOPS 董事會決議；美股 yfinance 股利資訊。重建輸出，不是歷史追加。 |
+| 歷史崩盤 | `python skills/skill-stock-investorevent-fetch/scripts/fetch_historical_crashes.py` | LLM 分段產生歷史事件並去重；目前查詢期間為 1995–2010、2010–2026。 |
+| NVIDIA | `python skills/skill-stock-investorevent-fetch/scripts/fetch_nvidia_events.py` | LLM 產生自 2012 年起的硬體／商業事件，依事件名稱與開始日期合併。 |
+| 股市 | `python skills/skill-stock-investorevent-fetch/scripts/fetch_stock_events.py` | LLM 產生自 1990 年起的重大市場事件，依事件名稱與開始日期合併。 |
 
-現有 `fetch_all_events.py` 支援 `crashes stock ai nvidia earnings`，尚未支援 `dividends`。
-要求更新全部六份時，在前置條件齊備後執行以下兩個指令，不以第一個指令宣稱股利也已更新：
+技能統一入口支援 `crashes stock ai nvidia earnings dividends`。未指定項目時更新全部六份；
+指定項目時僅載入對應產生器。InvestorEvents 根目錄入口只為既有呼叫提供相容委派。
 
 ```bash
-python fetch_all_events.py crashes stock ai nvidia earnings
-python fetch_dividends_announce.py
+python skills/skill-stock-investorevent-fetch/scripts/fetch_all_events.py
+python skills/skill-stock-investorevent-fetch/scripts/fetch_all_events.py ai dividends
 ```
 
 各產生器的時間範圍不同；財報的 `--start` / `--end` 不套用至其餘五類事件。

@@ -19,15 +19,16 @@ description: >-
 | 資料檔 | 範圍 | 產生器所在位置 |
 |---|---|---|
 | `raw_event_upcoming_earnings.csv` | 財報、法說會、受邀法說 | 本技能 `scripts/fetch_upcoming_earnings.py` |
-| `raw_event_ai_events.csv` | AI 技術、產品、資本與政策事件 | InvestorEvents 根目錄 `fetch_ai_events.py` |
-| `raw_event_dividends_announce.csv` | 台股董事會股利決議與美股股利資訊 | InvestorEvents 根目錄 `fetch_dividends_announce.py` |
-| `raw_event_historical_crashes.csv` | 歷史崩盤、修正與危機事件 | InvestorEvents 根目錄 `fetch_historical_crashes.py` |
-| `raw_event_nvidia_events.csv` | NVIDIA 硬體、生態、財務與政策事件 | InvestorEvents 根目錄 `fetch_nvidia_events.py` |
-| `raw_event_stock_events.csv` | 市場結構、公司行動與重大股市事件 | InvestorEvents 根目錄 `fetch_stock_events.py` |
+| `raw_event_ai_events.csv` | AI 技術、產品、資本與政策事件 | 本技能 `scripts/fetch_ai_events.py` |
+| `raw_event_dividends_announce.csv` | 台股董事會股利決議與美股股利資訊 | 本技能 `scripts/fetch_dividends_announce.py` |
+| `raw_event_historical_crashes.csv` | 歷史崩盤、修正與危機事件 | 本技能 `scripts/fetch_historical_crashes.py` |
+| `raw_event_nvidia_events.csv` | NVIDIA 硬體、生態、財務與政策事件 | 本技能 `scripts/fetch_nvidia_events.py` |
+| `raw_event_stock_events.csv` | 市場結構、公司行動與重大股市事件 | 本技能 `scripts/fetch_stock_events.py` |
 
-五個新增產生器仍由 InvestorEvents 維護，不是本技能內的部署副本。
-在其他使用端執行時，先定位同層 `../InvestorEvents`，從其根目錄執行對應產生器；
-若來源專案或產生器缺少，回報該資料集未執行，不將既有 CSV 當成已更新。
+六個產生器與統一入口均在本技能 `scripts/`，由集中管理庫維護並一起部署。
+從使用端儲存庫根目錄執行 `python skills/skill-stock-investorevent-fetch/scripts/fetch_all_events.py`；
+可加上 `crashes stock ai nvidia earnings dividends` 中的指定項目，不加參數則更新全部六類。
+入口依所選項目才匯入產生器，僅更新 AI 時不要求載入財季解析或 yfinance。
 biztrends.TW 使用的 `data/InvestorEvents/` 是下游同步資料，依專案既有同步流程更新，
 不以修改下游 CSV 代替來源產生流程。
 
@@ -208,13 +209,11 @@ InvestorEvents 的 `weekly-earnings.yml` 與 `fetch_all_events.py` 會從儲存�
 
 ## InvestorEvents 整合
 
-`InvestorEvents` 除了可獨立執行此腳本，也會將它匯入為模組：
-`fetch_all_events.py` 使用 `from fetch_upcoming_earnings import generate_upcoming_earnings`，
-預期能從儲存庫根目錄匯入此模組。由於正式副本目前位於
-`skills/skill-stock-investorevent-fetch/scripts/fetch_upcoming_earnings.py`，InvestorEvents 的
-`fetch_all_events.py` 與 `.github/workflows/weekly-earnings.yml` 會在匯入前，將該 scripts/ 目錄加入
-`sys.path`（或設定 `PYTHONPATH` 後執行）；具體機制請參閱各檔案開頭。
-不要在 InvestorEvents 根目錄重新加入 `fetch_upcoming_earnings.py` 副本，這正是最初造成版本分歧的原因。
+`InvestorEvents` 根目錄的 `fetch_all_events.py` 僅是相容入口，委派至本技能
+`scripts/fetch_all_events.py`，不保留產生器邏輯。六類事件可由技能入口直接選擇執行。
+`.github/workflows/weekly-earnings.yml`、`weekly-dividends.yml` 與
+`monthly-historical-crashes.yml` 直接呼叫技能 `scripts/` 的對應產生器。
+不要將任何產生器複製回根目錄；修改集中管理庫後升版並部署全部副本。
 
 ## 取代方式
 
