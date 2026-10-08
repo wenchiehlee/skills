@@ -8,7 +8,8 @@ description: >-
   InvestorEvents，讓兩個儲存庫以相同方式計算事件日期與會計季度標籤。
   適用於即將發布的財報／法說會行事曆過時、觀察名單變更，或
   skill-company-investorconference-ingest 的 --auto-todo /
-  --update-readme 需要最新行事曆資料之前。
+  --update-readme 需要最新行事曆資料之前。與投資人素材矩陣整合時，保留來源識別與
+  來源財季，依矩陣規則區分到期、適用性、暫停與素材缺漏。
 ---
 
 # 投資人事件擷取技能
@@ -48,6 +49,71 @@ InvestorConference 的 `skill-company-investorconference-ingest` `--auto-todo` �
 - 同日的 `法說會` 與 `財報` 應保留為兩筆獨立紀錄 (`1 + 1`)。不可依日期將它們去重；應透過相同的公司／會計季度識別資訊配對。
 - 未來的行事曆資料列若尚無素材，狀態應為 `planned/not_due`，而非 `Broken`。在到期日之前，或在明確要求收集素材之前，下游健康監控必須將未來／尚未到期的資料列排除於 Healthy/Warning/Broken 的分母之外。
 - 配對的 `財報` 資料列，即使日期與 `法說會` 相同，仍然是財報紀錄。`pdf_only` 僅適用於沒有法說會／音訊／逐字稿訊號的獨立財報事件。
+
+## 與投資人素材矩陣對齊
+
+在 biztrends.TW 使用此技能時，先閱讀 [素材矩陣](../../docs/investor_material_matrix.md)
+的範圍定義與圖例，再核對 `data/InvestorConference/investor_material_matrix.csv`。
+矩陣的涵蓋範圍、日曆季度顯示與素材狀態依該文件處理；本技能提供事件日期、
+來源財季與類別，不以行事曆資料列推定素材已取得。
+
+### 來源與季度識別
+
+- 完整涵蓋範圍由 `StockID_TWSE_TPEX.csv` 的台股來源列，以及
+  `data/ConceptStocks/raw_conceptstock_company_metadata.csv` 的公司來源列分別建立。
+  `StockID_TWSE_TPEX_focus.csv` 僅限制逐檔 MOPS 擷取範圍，不縮減矩陣的台股母體。
+- 保留 Source、Source ID 與原始公司識別。不可合併 `2330` 與 `TSM`。
+  ConceptStocks 以公司識別（CIK/Ticker）去重；MU 保留一筆公司列，並保留有效的概念成員關係。
+- 依矩陣指定的年份範圍展開每年 Q1–Q4，再將已觀察素材左連接至完整範圍。
+  公司數、來源列數與涵蓋年份應從當次來源及矩陣設定取得，不將文件中的統計數字寫死。
+  行事曆查詢的預設日期範圍不代表歷史涵蓋範圍；沒有事件或素材的季度仍須保留。
+- 事件與素材的來源會計年度／季度保留作為追溯鍵；Markdown 顯示時才正規化為日曆年度／季度。
+  台股兩者一致；非台股沿用矩陣產生器的轉換方式，不以法說會舉行日期的季度直接取代財報所屬期間，
+  不改寫原始 FY 標籤或素材檔名來配合顯示。
+- 同日財報與法說會在行事曆仍是兩筆事件，但配對到同一來源／公司／季度的素材欄位。
+  腳本衍生的美股同日法說會列與 50 天分類判斷均不能單獨證明法說會已確認或音訊已發布。
+  `受邀法說` 的素材也不可直接套用例行季度法說會素材。
+
+### 素材欄位與狀態
+
+每季保留 `A/S/G/I/M/F/X/D` 八個欄位。每個非空儲存格須連結至已驗證素材，
+或支持該狀態的行事曆／官方來源；僅有事件列、網址或檔名不等於素材已驗證。
+
+| 標記 | 矩陣語意與判定界線 |
+|---|---|
+| `A` / `S` / `G` | 音訊／FIN.srt／GT.srt；各自核對實際素材，不以一般逐字稿代替 FIN 或 GT。 |
+| `I` / `M` | IR 簡報 PDF／IR 簡報 Markdown；依矩陣的素材判定規則驗證。 |
+| `F` / `X` | 官方財報來源（PDF 或官方 HTML）／財報 Markdown；`F` 不限於 PDF。 |
+| `☐` | 事件或季度已到期，待匯入；不可因檔案不存在就直接判定到期。 |
+| `?` | 事件或素材適用性尚未驗證；行事曆無事件不代表素材未發布。 |
+| `🚫` | 政策明確暫停；自動補抓應遵循暫停政策，不將其當成一般待補項目。 |
+| `-` | 已查核官方來源，確認未發布符合條件的文件；擷取失敗或尚未查核不足以使用此標記。 |
+| 空白 | 尚未到期／尚未規劃，或素材明確不適用；不可用空白掩蓋未驗證的適用性。 |
+| `D` / `D-` | 已有 digest，且 `A/S/I/M/F/X` 全部齊備／其中一項以上缺漏；digest 在 GT 之前產生，缺少 `G` 不降級為 `D-`。 |
+
+到期與適用性依矩陣的事件／季度規則判定；即使行事曆缺少事件，已到期的財報季度仍可能是待補項目。
+未來／尚未到期的事件沿用 `planned/not_due` 邊界；素材標記不直接等同 Healthy/Warning/Broken。
+
+### 隱藏、暫停與產生方式
+
+- 完整 CSV 保留 `visibility`、`hide_reason` 與所有來源／公司／年度／季度格位。
+  Markdown 不顯示隱藏欄位，並略過 `hide_reason = all_materials_unavailable` 的資料列。
+- `all_materials_unavailable` 僅在該年 32 個季度素材儲存格全空，且每季到期日均已超過
+  三個日曆月時適用；門檻前的空列保留。這是可見性規則，不是查核官方來源後的 `-`。
+- `paused_stock_policy` 僅套用於 2020 年至當年度，不自動暫停未來年度。
+  隱藏、暫停或低優先級不代表從完整涵蓋母體永久排除。
+- biztrends.TW 的 `scripts/generate_investor_material_matrix.py` 是同步入口：
+  複製 InvestorConference 的正式 CSV 與 Markdown。需要更新矩陣時，先在 InvestorConference
+  執行其產生器，再執行本專案同步腳本；不可手動改寫產生的矩陣或讓事件擷取腳本代替素材驗證流程。
+
+### biztrends.TW 執行前檢查
+
+本專案的 ConceptStocks 輸入位於 `data/ConceptStocks/`，而目前事件腳本只搜尋儲存庫根目錄
+與 `../ConceptStocks/` 的同名檔案，並要求相鄰部署的
+`skill-stock-fiscal-quarter-resolve/scripts/fiscal_quarter.py`。
+執行前核對實際輸入路徑與此相依技能；任一缺少時，不以空美股名單或自行推算季度繼續。
+可在前置條件齊備的 InvestorConference／InvestorEvents 執行事件擷取，或先在集中管理庫
+修正路徑支援並部署。此對齊說明不表示目前腳本已支援 biztrends.TW 的資料布局。
 
 ## 標準流程
 
@@ -126,3 +192,8 @@ with open('raw_event_upcoming_earnings.csv', encoding='utf-8-sig') as f:
 ```
 
 預期鍵值只會有 `財報`、`法說會`、`受邀法說`；任何其他值都代表分類出錯。
+
+若本次作業涉及素材矩陣，再核對：`2330` 與 `TSM` 保持分開、非台股來源 FY 鍵保留而
+顯示季度依矩陣轉換、同日事件保留兩筆但不重複計算素材、未到期／未驗證／官方未發布
+與政策暫停的狀態區分正確，以及缺少 GT 不會單獨將 `D` 降為 `D-`。
+核對完整 CSV 的空格位與隱藏理由，不能只從 Markdown 可見列判定完整涵蓋程度。

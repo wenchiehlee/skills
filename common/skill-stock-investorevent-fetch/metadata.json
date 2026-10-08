@@ -2,7 +2,7 @@
   "name": "skill-stock-investorevent-fetch",
   "description": "Regenerate raw_event_upcoming_earnings.csv from TW/US watchlists (MOPS + yfinance), classifying every event as 財報, 法說會, or 受邀法說, with consistent date/fiscal-quarter mapping shared across InvestorConference and InvestorEvents.",
   "category": "financial-data",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee-money/InvestorConference",
@@ -48,6 +48,11 @@
       "repo": "wenchiehlee-money/TW-institutional-research",
       "role": "consumer",
       "local_path": "github.com/TW-institutional-research/skills/skill-stock-investorevent-fetch"
+    },
+    {
+      "repo": "wenchiehlee-money/biztrends.TW",
+      "role": "consumer",
+      "local_path": "github.com/biztrends.TW/skills/skill-stock-investorevent-fetch"
     }
   ]
 }
