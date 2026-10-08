@@ -7,7 +7,7 @@ description: 從 YouTube 財經頻道下載最新影片，優先嘗試官方逐�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.4.0（詳見 `metadata.json`） |
+| 版本 | 1.5.0（詳見 `metadata.json`） |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-youtube-channel-fetch`） |
 | 維護者 | wenchiehlee |
 | 對應下游 | `skill-mlx-api-client-whisper`（消費本技能寫入的 `audio_manifest.json`，及本技能 `refine` 直接呼叫的 `open_fin_request`） |
@@ -118,10 +118,18 @@ python scripts/channel_fetch.py fetch https://www.youtube.com/@yutinghaofinance 
 是每個 tab 掃描的安全上限）。給了日期區間時 `--limit` 預設關閉（回傳區間內全部影片），
 除非另外明確指定。
 
-### 方式 F：每日自動排程
-`.github/workflows/daily-channel-fetch.yml` 每天對 repo 根目錄 `channels.json` 列出的每個
-頻道跑 `fetch --limit 5 --sync`；要追蹤新頻道，編輯 `channels.json` 加一行 URL 即可。細節
-與所需的 GitHub Actions Secrets 見本 repo 根目錄 README.md 的「自動化（每日排程）」一節。
+### 方式 F：公開 Playlist 與每日自動排程
+公開 YouTube Playlist 可放在 repo 根目錄的 `playlists.json`，每個項目指定 `url`、穩定的
+`channel_dir` 與選用的 `fetch_limit`。對 Playlist 執行：
+```bash
+python scripts/channel_fetch.py fetch \
+    'https://www.youtube.com/playlist?list=PLSo-zkDeyJdw' \
+    --source-slug themarketmemo --limit 100 --sync
+```
+`.github/workflows/daily-channel-fetch.yml` 每天除了掃描 `channels.json` 的 Daily 頻道，
+也會掃描 `playlists.json` 的每個公開 Playlist；新增到 Playlist 的影片會沿用同一套官方
+字幕、音訊 Release、manifest 與 whisper sync 流程。細節與所需的 GitHub Actions Secrets
+見本 repo 根目錄 README.md 的「自動化（每日排程）」一節。
 
 ### 方式 G：作為模組整合進自己的排程腳本
 ```python

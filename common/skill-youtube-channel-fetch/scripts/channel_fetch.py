@@ -9,16 +9,13 @@ Before touching audio/whisper at all, each video is checked for an official
 YouTube transcript via `youtube-transcript-api`, in a preferred language:
   - YouTube's own auto-generated captions -> written straight to FIN.srt
     (no better than whisper's own output, so not worth refining).
-  - Creator-uploaded (manual) captions -> written to GT.srt only. A stem
+  - Creator-uploaded (manual) captions -> written to GT.srt and published with audio for podcast feeds. A stem
     with a GT.srt and no FIN.srt is a complete, valid end state on its own
     (downstream steps treat GT.srt as the source SRT when FIN.srt is
     absent) — FIN.srt is written only once something has actually produced
     a pipeline-scored transcript. `channel_fetch.py refine` can later spend
     audio+Mac-mini time on task_type="refine_fin_srt" to have the pipeline
     generate a real FIN.srt from that GT, if you want a CER-scored version.
-Either way the video skips the audio/manifest/whisper path entirely at fetch
-time — whisper's ~1-1.5h/video multi-experiment transcription is reserved for
-videos YouTube has no transcript for at all.
 
 Requires the `yt-dlp` CLI on PATH (audio extraction / metadata listing) and
 `requests`/`youtube-transcript-api` (already dependencies of
@@ -205,6 +202,28 @@ class ChannelFetcher:
                 entries.append({"video_id": vid, "title": e.get("title", vid)})
         return entries, channel_name
 
+    def _list_playlist(self, playlist_url: str, limit: int | None) -> list[dict]:
+        """Return videos from a public YouTube playlist in playlist order."""
+        args = ["yt-dlp", *YT_DLP_JS_RUNTIME_ARGS, *yt_dlp_cookie_args(), "--flat-playlist", "-J"]
+        if limit is not None:
+            args.extend(["--playlist-end", str(limit)])
+        proc = subprocess.run(
+            [*args, playlist_url], capture_output=True, text=True, encoding="utf-8", errors="replace"
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(f"yt-dlp playlist listing failed: {proc.stderr[:500]}")
+        data = json.loads(proc.stdout)
+        videos = []
+        for entry in data.get("entries", []):
+            video_id = entry.get("id", "")
+            if VIDEO_ID_RE.match(video_id):
+                videos.append({
+                    "video_id": video_id,
+                    "title": entry.get("title", video_id),
+                    "channel": entry.get("channel") or entry.get("uploader") or "playlist",
+                })
+        return videos
+
     def _video_upload_timestamp(self, video_id: str) -> int:
         """Epoch upload timestamp for ordering/filtering candidates pulled from multiple
         tabs (flat-playlist entries don't carry a usable date). 0 if the lookup fails —
@@ -267,6 +286,9 @@ class ChannelFetcher:
         don't carry a usable date, so ordering (and, in date-range mode, filtering)
         relies on a real per-video upload timestamp lookup.
         """
+        if "list=" in channel_url or "/playlist" in channel_url:
+            return self._list_playlist(channel_url, limit)
+
         date_after = _normalize_date(date_after)
         date_before = _normalize_date(date_before)
         ranged = bool(date_after or date_before)
@@ -409,6 +431,7 @@ class ChannelFetcher:
         transcript_languages: list[str] | None = None,
         date_after: str | None = None,
         date_before: str | None = None,
+        source_slug: str | None = None,
     ) -> dict[str, int]:
         manifest_path = Path(manifest_path)
         manifest: dict[str, str] = {}
@@ -420,13 +443,28 @@ class ChannelFetcher:
         with tempfile.TemporaryDirectory(prefix="channel_fetch_") as tmp:
             tmp_dir = Path(tmp)
             for video in videos:
-                channel_slug = slugify_channel(video["channel"])
+                channel_slug = source_slug or slugify_channel(video["channel"])
                 stem = f"{channel_slug}_{video['video_id']}"
                 data_dir = self.repo_root / "data" / channel_slug
                 fin_path = data_dir / f"{stem}_FIN.srt"
                 gt_path = data_dir / f"{stem}_GT.srt"
-                if fin_path.exists() or gt_path.exists():
+                if fin_path.exists():
                     print(f"[channel_fetch] skip {stem} (already sourced)")
+                    skipped += 1
+                    continue
+
+                if gt_path.exists():
+                    # Manual captions are sufficient for the transcript and should not
+                    # enter the whisper queue, but podcast episodes still need audio.
+                    # This also backfills GT-only stems created by older versions.
+                    if stem not in manifest:
+                        print(f"[channel_fetch] downloading audio for manual-transcript episode {stem}")
+                        audio_path = self.download_audio(video["video_id"], tmp_dir)
+                        renamed = audio_path.with_name(f"{stem}{audio_path.suffix}")
+                        audio_path.rename(renamed)
+                        print(f"[channel_fetch] publishing release asset for {stem}")
+                        manifest[stem] = self.publish_audio_asset(stem, renamed)
+                    print(f"[channel_fetch] skip {stem} (manual transcript already sourced)")
                     skipped += 1
                     continue
 
@@ -467,7 +505,12 @@ class ChannelFetcher:
                                     transcript_to_pseudo_srt(raw, stem, transcript.language_code, "_youtube-transcript-manual"),
                                     encoding="utf-8",
                                 )
-                                print(f"[channel_fetch] {stem}: manual YouTube transcript ({transcript.language_code}), wrote {gt_path} — run `refine` to have whisper pipeline generate a scored FIN.srt from this GT")
+                                audio_path = self.download_audio(video["video_id"], tmp_dir)
+                                renamed = audio_path.with_name(f"{stem}{audio_path.suffix}")
+                                audio_path.rename(renamed)
+                                print(f"[channel_fetch] publishing release asset for {stem}")
+                                manifest[stem] = self.publish_audio_asset(stem, renamed)
+                                print(f"[channel_fetch] {stem}: manual YouTube transcript ({transcript.language_code}), wrote {gt_path} and published audio — run `refine` to have whisper pipeline generate a scored FIN.srt from this GT")
                                 transcribed_manual += 1
                             if pending_whisper:
                                 del manifest[stem]
@@ -594,6 +637,7 @@ if __name__ == "__main__":
     fetch_p.add_argument("--date-after", default=None, help="Only videos uploaded on/after this date (YYYY-MM-DD)")
     fetch_p.add_argument("--date-before", default=None, help="Only videos uploaded on/before this date (YYYY-MM-DD)")
     fetch_p.add_argument("--manifest", default="audio_manifest.json", help="Path to the manifest JSON")
+    fetch_p.add_argument("--source-slug", default=None, help="Stable data/ and manifest slug for playlist sources")
     fetch_p.add_argument("--sync", action="store_true", help="Run whisper_issue_client.sync_manifest afterwards")
     fetch_p.add_argument(
         "--no-transcript", action="store_true",
@@ -628,6 +672,7 @@ if __name__ == "__main__":
             transcript_languages=args.transcript_languages.split(",") if args.transcript_languages else None,
             date_after=args.date_after,
             date_before=args.date_before,
+            source_slug=args.source_slug,
         )
         if args.sync:
             sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "skill-mlx-api-client-whisper" / "scripts"))
