@@ -151,12 +151,16 @@ class ChannelFetcher:
         # the WENCHIEHLEE var since that one is deliberately scoped narrower, Contents-only
         # on this repo, vs. the ZHONGZHENG782 one's Issues-only scope on the Mac-mini repo —
         # only try it here if it happens to also carry Contents access on this repo).
+        # GITHUB_TOKEN is intentionally first: GitHub Actions provides a repository-scoped
+        # token with Contents: write for Release creation. REPO_FILE_SYNC_* tokens are
+        # sync credentials and may be valid for file sync while being forbidden from the
+        # Releases API; using one of them first causes a misleading 403 in Actions.
         # YOUTUBE_FETCH_TOKEN/GH_TOKEN are generic fallbacks for ad-hoc local use.
         self.token = (
             token
+            or os.environ.get("GITHUB_TOKEN")
             or os.environ.get("REPO_FILE_SYNC_WENCHIEHLEE_MONEY")
             or os.environ.get("REPO_FILE_SYNC_ZHONGZHENG782_MONEY")
-            or os.environ.get("GITHUB_TOKEN")
             or os.environ.get("YOUTUBE_FETCH_TOKEN")
             or os.environ.get("GH_TOKEN")
         )
