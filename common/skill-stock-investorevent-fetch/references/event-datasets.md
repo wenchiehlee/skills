@@ -49,6 +49,39 @@ python skills/skill-stock-investorevent-fetch/scripts/fetch_all_events.py ai div
 
 ## 輸出驗證與回報
 
+### 與 skill-stock-topcrash 對齊
+
+`raw_event_historical_crashes.csv` 提供事件名稱與開始／結束日期的背景標籤；
+價格資料是否符合崩盤門檻及其排名，由 `skill-stock-topcrash` 判定。
+在需要崩盤 Top N 分析時使用該技能，不以 LLM 事件清單當成已驗證的價格排名。
+
+- topcrash 比較 1/3/5/7/9/11 個交易日報酬，取最小值排序；預設最壞跌幅須低於 -3%。
+  直接呼叫其 `run_topcrash.py`，不在本技能複製偵測、VIX 分級或恢復算法。
+- `--named-events-json` 優先，其次依 CSV 日期窗口包含最壞日期來配對；
+  多筆 CSV 同日命中取最短窗口，未命中為「其他」。事件配對表示時間重疊，不能單獨證明因果。
+- CSV 的 `事件名稱,開始日期,結束日期` 必須完整且為有效日期，結束日不得早於開始日。
+  同日起始的不同事件、同名但不同窗口均保留；僅合併同名且相同起訖的重複資料。
+  跨次產生的名稱／窗口差異須查證，不能靠任意擴大窗口吸收更多跌幅。
+- topcrash 的排名去重另有規則：具名事件只取最壞一筆；「其他」依日期間隔
+  （預設 10 個日曆天）去重。這不代表來源事件 CSV 也應只留同日一筆。
+- 最壞日期不是事件開始日，事件結束日也不是恢復日。恢復參考是崩盤前預設
+  120 個日曆天內最高收盤價；恢復天數 ≤45 為 V，否則為 U，資料範圍內未恢復另列。
+  VIX/CNN 需另供對應 CSV，未提供時不產生該組欄位。
+- 事件 CSV 保持原有十欄；排名 CSV 另存，不能覆寫來源事件 CSV，
+  也不以排名日期取代來源事件期間。市場／symbol、查詢期間、門檻與資料限制須在分析回報中保留。
+
+從已部署 topcrash 的使用端根目錄執行，例如：
+
+```bash
+python skills/skill-stock-topcrash/scripts/run_topcrash.py \
+  --symbol '^TWII' --years 10 --top-n 50 --min-drop -3.0 \
+  --events-csv raw_event_historical_crashes.csv \
+  --output output/crash_top50.csv
+```
+
+biztrends.TW 的同步來源路徑則為 `data/InvestorEvents/raw_event_historical_crashes.csv`。
+topcrash 是獨立的可選分析相依，未部署時仍可擷取事件，但不能聲稱已完成跌幅偵測／排名。
+
 共同核心欄位為 `類別,子類別,事件名稱,開始日期,結束日期,備註,Link1,Link2`。
 AI、歷史崩盤、NVIDIA 與股市檔案另有 `download_timestamp,process_timestamp`；
 現有股利產生器只有八個核心欄位，不宣稱它已具備時間戳。

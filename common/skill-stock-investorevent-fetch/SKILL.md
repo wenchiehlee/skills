@@ -34,6 +34,11 @@ biztrends.TW 使用的 `data/InvestorEvents/` 是下游同步資料，依專案�
 
 以下財報／法說會流程僅適用於 `raw_event_upcoming_earnings.csv`。
 
+歷史崩盤 CSV 是 `skill-stock-topcrash` 的 `--events-csv` 事件窗口輸入。
+價格跌幅排名、最壞交易日、VIX/CNN 與恢復指標由 topcrash 計算；
+本技能保留具名事件與已查核日期窗口，依
+[崩盤流程對齊規則](references/event-datasets.md#與-skill-stock-topcrash-對齊) 執行。
+
 你負責讓執行此技能的儲存庫內的 `raw_event_upcoming_earnings.csv` 保持正確且自足。
 `InvestorConference` 與 `InvestorEvents` 都在 `skills/skill-stock-investorevent-fetch/` 下部署相同副本。
 InvestorConference 的 `skill-company-investorconference-ingest` `--auto-todo` 掃描與 README 產生流程，

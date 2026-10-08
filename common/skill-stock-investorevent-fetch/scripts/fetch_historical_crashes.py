@@ -1,7 +1,6 @@
 import os
 import csv
 import io
-import re
 from datetime import datetime
 from dotenv import load_dotenv
 from llm import LLMClient
@@ -46,6 +45,9 @@ Requirements:
 - "Link1": MANDATORY. Provide a reliable source URL.
 - Quantity: Find about 20 high-quality events SPECIFICALLY within the period {start_year} to {end_year}.
 - Do not include markdown code block markers.
+- This CSV supplies event-label windows to skill-stock-topcrash; it is not a price-derived crash ranking.
+- Use verified event start/end dates, with end >= start. Do not invent recovery dates or extend a window to cover an unrelated decline.
+- Keep distinct named events even if they start on the same date. Do not invent returns, VIX/CNN values, rankings, or V/U recovery metrics.
 """
 
 
@@ -78,17 +80,12 @@ def _row_score(row: list) -> int:
 
 
 def _global_dedup(rows: list) -> list:
-    """Global dedup: group by 開始日期 only, keep the most complete row per start date.
-
-    Using start date as the sole key because:
-    - A crash event's start date is an objective historical fact (LLM rarely varies it).
-    - End dates vary across LLM runs, so (start, end) pairs leak near-duplicates.
-    """
+    """Keep distinct event names and windows for topcrash's interval labeler."""
     from collections import defaultdict
     groups: dict = defaultdict(list)
     for row in rows:
-        start = row[3].strip() if len(row) > 3 else ""
-        groups[start].append(row)
+        key = tuple(row[i].strip() for i in (2, 3, 4))
+        groups[key].append(row)
 
     result = []
     removed = 0
@@ -102,11 +99,22 @@ def _global_dedup(rows: list) -> list:
     return result
 
 
+def _valid_event(row: list) -> bool:
+    if len(row) < 8 or not row[2].strip():
+        return False
+    try:
+        start = datetime.strptime(row[3].strip(), "%Y-%m-%d")
+        end = datetime.strptime(row[4].strip(), "%Y-%m-%d")
+    except ValueError:
+        return False
+    return (start.strftime("%Y-%m-%d") == row[3].strip()
+            and end.strftime("%Y-%m-%d") == row[4].strip() and end >= start)
+
+
 def save_csv(csv_content: str, output_file: str) -> None:
     process_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S CST")
     new_rows = []
     header = None
-    date_pattern = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
     try:
         reader = csv.reader(io.StringIO(csv_content))
@@ -127,18 +135,20 @@ def save_csv(csv_content: str, output_file: str) -> None:
                 for i, row in enumerate(reader):
                     if i == 0:
                         continue
-                    if len(row) >= 4 and date_pattern.match(row[3].strip()):
+                    if _valid_event(row):
                         while len(row) < len(CSV_HEADERS):
                             row.append(process_timestamp)
                         if not row[-2]: row[-2] = process_timestamp
                         if not row[-1]: row[-1] = process_timestamp
                         existing_rows.append(row)
+                    elif any(cell.strip() for cell in row):
+                        raise ValueError("Existing crash CSV contains an invalid event window")
         except Exception as e:
-            print(f"Warning: Could not read existing file: {e}")
+            raise ValueError(f"Could not safely read existing crash CSV: {e}") from e
 
     valid_new_rows = []
     for row in new_rows:
-        if len(row) >= 6 and date_pattern.match(row[3].strip()):
+        if _valid_event(row):
             while len(row) < len(CSV_HEADERS):
                 row.append(process_timestamp)
             row[-2] = process_timestamp
@@ -148,7 +158,7 @@ def save_csv(csv_content: str, output_file: str) -> None:
             if any(cell.strip() for cell in row):
                 print(f"Skipping malformed row: {row}")
 
-    before_count = len(set(r[3] for r in existing_rows if len(r) > 3))
+    before_count = len({tuple(r[i].strip() for i in (2, 3, 4)) for r in existing_rows})
     all_rows = _global_dedup(existing_rows + valid_new_rows)
     
     # Refresh timestamps for ALL rows to current process_timestamp
