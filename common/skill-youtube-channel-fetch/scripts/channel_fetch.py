@@ -156,6 +156,7 @@ class ChannelFetcher:
             token
             or os.environ.get("REPO_FILE_SYNC_WENCHIEHLEE_MONEY")
             or os.environ.get("REPO_FILE_SYNC_ZHONGZHENG782_MONEY")
+            or os.environ.get("GITHUB_TOKEN")
             or os.environ.get("YOUTUBE_FETCH_TOKEN")
             or os.environ.get("GH_TOKEN")
         )

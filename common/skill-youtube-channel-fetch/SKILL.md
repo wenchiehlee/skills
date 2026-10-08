@@ -7,7 +7,7 @@ description: 從 YouTube 財經頻道下載最新影片，優先嘗試官方逐�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.5.0（詳見 `metadata.json`） |
+| 版本 | 1.6.0（詳見 `metadata.json`） |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-youtube-channel-fetch`） |
 | 維護者 | wenchiehlee |
 | 對應下游 | `skill-mlx-api-client-whisper`（消費本技能寫入的 `audio_manifest.json`，及本技能 `refine` 直接呼叫的 `open_fin_request`） |
@@ -67,6 +67,7 @@ pip install requests python-dotenv youtube-transcript-api
 ```env
 WHISPER_SOURCE_REPO=ZhongZheng782/YoutubeAudio.Fetch   # 本 repo（音訊/GT 的家）
 REPO_FILE_SYNC_WENCHIEHLEE_MONEY=<PAT，對 WHISPER_SOURCE_REPO 需要 Contents: Read and write>
+# GitHub Actions 會自動 fallback 使用具 contents: write 權限的 GITHUB_TOKEN。
 # 若上面那把 token 對 WHISPER_SOURCE_REPO 失效（例如 repo 換了 org），會 fallback 到：
 # REPO_FILE_SYNC_ZHONGZHENG782_MONEY=<PAT，同樣需要 Contents: Read and write>
 ```
