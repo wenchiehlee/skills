@@ -1,20 +1,37 @@
 ---
 name: skill-stock-investorevent-fetch
 description: >-
-  在本機依據儲存庫自己的台股觀察名單
-  (StockID_TWSE_TPEX.csv / StockID_TWSE_TPEX_focus.csv) 與美股觀察名單
-  (raw_conceptstock_company_metadata.csv)，重新產生該儲存庫的 raw_event_upcoming_earnings.csv。
-  將每筆事件分類為財報、法說會或受邀法說。以相同版本部署至 InvestorConference 與
-  InvestorEvents，讓兩個儲存庫以相同方式計算事件日期與會計季度標籤。
-  適用於即將發布的財報／法說會行事曆過時、觀察名單變更，或
-  skill-company-investorconference-ingest 的 --auto-todo /
-  --update-readme 需要最新行事曆資料之前。與投資人素材矩陣整合時，保留來源識別與
-  來源財季，依矩陣規則區分到期、適用性、暫停與素材缺漏。
+  維護投資人事件資料的組合技能，涵蓋財報／法說會、AI、股利、歷史崩盤、NVIDIA
+  與股市事件六份 raw_event CSV。依事件類型選擇既有產生器與來源，不跨檔套用分類。
+  財報季度使用 skill-stock-fiscal-quarter-resolve，並與投資人素材矩陣的來源識別、
+  日曆期間及素材狀態規則對齊。適用於事件資料過時、觀察名單變更、指定事件更新，
+  或下游匯入／README 需要最新行事曆資料之前。
 ---
 
 # 投資人事件擷取技能
 
 ## 角色
+
+此技能統籌以下六份資料。使用者只指定其中一份時，僅更新該份；要求全部事件時，
+逐項執行並分別回報結果。新增五類事件的來源、指令與驗證方式見
+[事件資料流程](references/event-datasets.md)。
+
+| 資料檔 | 範圍 | 產生器所在位置 |
+|---|---|---|
+| `raw_event_upcoming_earnings.csv` | 財報、法說會、受邀法說 | 本技能 `scripts/fetch_upcoming_earnings.py` |
+| `raw_event_ai_events.csv` | AI 技術、產品、資本與政策事件 | InvestorEvents 根目錄 `fetch_ai_events.py` |
+| `raw_event_dividends_announce.csv` | 台股董事會股利決議與美股股利資訊 | InvestorEvents 根目錄 `fetch_dividends_announce.py` |
+| `raw_event_historical_crashes.csv` | 歷史崩盤、修正與危機事件 | InvestorEvents 根目錄 `fetch_historical_crashes.py` |
+| `raw_event_nvidia_events.csv` | NVIDIA 硬體、生態、財務與政策事件 | InvestorEvents 根目錄 `fetch_nvidia_events.py` |
+| `raw_event_stock_events.csv` | 市場結構、公司行動與重大股市事件 | InvestorEvents 根目錄 `fetch_stock_events.py` |
+
+五個新增產生器仍由 InvestorEvents 維護，不是本技能內的部署副本。
+在其他使用端執行時，先定位同層 `../InvestorEvents`，從其根目錄執行對應產生器；
+若來源專案或產生器缺少，回報該資料集未執行，不將既有 CSV 當成已更新。
+biztrends.TW 使用的 `data/InvestorEvents/` 是下游同步資料，依專案既有同步流程更新，
+不以修改下游 CSV 代替來源產生流程。
+
+以下財報／法說會流程僅適用於 `raw_event_upcoming_earnings.csv`。
 
 你負責讓執行此技能的儲存庫內的 `raw_event_upcoming_earnings.csv` 保持正確且自足。
 `InvestorConference` 與 `InvestorEvents` 都在 `skills/skill-stock-investorevent-fetch/` 下部署相同副本。
@@ -167,9 +184,9 @@ InvestorEvents 的 `weekly-earnings.yml` 與 `fetch_all_events.py` 會從儲存�
 5. 若先前取得的 MOPS 法說會日期較可靠，將台股財報日期同步至該日期（yfinance 的台股日期常是過時的估計值）。
 6. 合併至 `raw_event_upcoming_earnings.csv`：依事件名稱比對既有資料列，更新日期與類別，新增資料列；為每筆尚未配對法說會的美股財報資料列衍生一筆同日法說會資料列（包含先前執行時已儲存的資料列，不限於本次新擷取的資料。yfinance 沒有獨立的法說會時間來源，因此美股的財報與法說會無法據此區分）；移除近似重複的財報資料列，並依日期由新到舊排序。
 
-## 類別分類規則
+## 財報／法說會類別分類規則
 
-每筆資料列的類別必須且只能是以下其中之一：
+`raw_event_upcoming_earnings.csv` 每筆資料列的類別必須且只能是以下其中之一：
 
 | 類別 | 意義 | 指派方式 |
 |------|---------|--------------------|
@@ -207,7 +224,7 @@ InvestorEvents 的 `weekly-earnings.yml` 與 `fetch_all_events.py` 會從儲存�
 
 ## 驗證
 
-執行後，檢查標準輸出中的合併摘要（`新增 N 筆` / `更新日期 N 筆` /
+財報／法說會流程執行後，檢查標準輸出中的合併摘要（`新增 N 筆` / `更新日期 N 筆` /
 `無變更`），再抽查分類：
 
 ```bash
