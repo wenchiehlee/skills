@@ -739,7 +739,7 @@ skills:
   source: https://github.com/ZhongZheng782/YoutubeAudio.Fetch
   repo_count: 1
   updated_at: '2026-09-17'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-08'
 - name: skill-youtube-channel-srt-keyframe-extract
   group: common
   path: common/skill-youtube-channel-srt-keyframe-extract
@@ -765,4 +765,4 @@ skills:
   source: https://github.com/ZhongZheng782/YoutubeAudio.Fetch
   repo_count: 1
   updated_at: '2026-10-07'
-  revised_at: '2026-10-07'
+  revised_at: '2026-10-08'
