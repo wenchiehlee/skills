@@ -199,7 +199,7 @@ skills:
   category: server
   maintainer: wenchiehlee
   source: https://github.com/ZhongZheng782/wenchiehlee.quickconnect.to-Container.Manager
-  repo_count: 2
+  repo_count: 5
   updated_at: '2026-10-10'
   revised_at: '2026-10-10'
 - name: skill-document-diagram-design

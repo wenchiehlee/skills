@@ -191,6 +191,25 @@ Raspberry Pi 5:    /home/pi/docker/<service>/compose.yaml
 
 ---
 
+## 關聯兄弟專案與應用程式原始碼儲存庫 (Sibling Application Repositories)
+
+本技能調度的容器主要衍生自以下核心應用程式儲存庫，形成「原始碼開發 ➔ 映像檔建置 ➔ Compose 協調部署」之完整鏈路：
+
+| 儲存庫名稱 | 本地相對路徑 | 對應 Docker 服務與映像檔 | 職責與架構特點 |
+| :--- | :--- | :--- | :--- |
+| **`HomeAssistant`** | `../HomeAssistant` | • `homeassistant` (Core)<br>• `snapshot-google-tv`<br>• `timetree-exporter` | 家庭自動化核心系統，採 Host 網路模式（Port 8123），整合 Google TV 截圖與 TimeTree 行事曆匯出輔助容器。 |
+| **`Llm-Cli-APIServer`**<br>(`llm-cli-api-server`) | `../Llm-Cli-APIServer` | • `llm-cli-api-server`<br>(`llm-cli-api-server-llm-cli-api`) | 本地大型語言模型 CLI 與 API 服務端點。容器內部獨立運行 `tailscaled`，直通 Tailscale SSH (Port 22) 與 API (Port 5001/5055)。 |
+| **`TravelAPP`** | `../TravelAPP` | • `travel-app`<br>(`travel-app-travel-app`) | 旅遊網頁應用程式前端/後端。對外映射 Host Port 3333，由 NAS 反向代理與 DDNS (`travel.wenchiehlee.synology.me`) 對外提供服務。 |
+| **`wenchiehlee.quickconnect.to-Container.Manager`** | `../wenchiehlee.quickconnect.to-Container.Manager` | 全域容器 Compose 編排主控庫 | 集中存放各服務之 `compose/<service>/compose.yaml` 與 `Running/` 快照，為 GitOps 自動化部署與狀態監控之中樞。 |
+
+### 應用程式原始碼與容器管理庫之協同運作流程
+1. **應用層變更 (Code Commit)**：在各應用庫（如 `TravelAPP`、`Llm-Cli-APIServer`）進行功能開發或 Dockerfile 更新。
+2. **映像檔建置 (Image Build)**：於該專案 CI 或 NAS Runner 本機執行 `docker build` 產生最新映像檔標籤。
+3. **編排層更新 (Compose Update)**：若涉及環境變數、掛載磁區或 Port 變更，在 `Container.Manager` 的 `compose/<service>/compose.yaml` 進行更新並 push。
+4. **GitOps 自動部署**：觸發 `deploy-on-change.yml` 完成拉取、重新建立容器並更新 `Running/` 狀態。
+
+---
+
 ## 排錯指引 (Troubleshooting)
 
 1. **GitHub Runner 啟動失敗 (404/403 Token 錯誤)**：
