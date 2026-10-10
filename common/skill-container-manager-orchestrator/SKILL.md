@@ -17,7 +17,9 @@ description: 跨平台容器管理與遠端協調技能。以 Synology NAS Conta
 | **容器配置雙向同步 (GitOps)** | 配置同步工作流 (`sync-folder.py`) | 比對 NAS 本地 `/docker/` 與 Repo 的 `compose.yaml`，提交變更並更新 badge |
 | **新服務部署或滾動更新** | 部署工作流 (`deploy.yml` / Watchtower) | 建立服務目錄、編寫 `compose.yaml`、派發 Actions runner 或 P2P 直連重啟 |
 | **遠端通道與網路協調** | 網路通道矩陣 → P2P / Runner 判定 | 選擇合適通道（Tailscale 網狀 P2P 或 GitHub Self-Hosted Runner）執行指令 |
-| **反向代理與 Port 衝突解決** | 網路與安全埠配置規範 | 避開系統保留埠、設定 MiWiFi 雙層 NAT 轉發、維護 `http.ddns-ssl.conf` |
+| **反向代理與 DDNS 對應管理** | DDNS / 反代維護 (`syno_ddns.py`) | 查詢/設定 DDNS 狀態、QuickConnect 與 Reverse Proxy 子域名對應埠位，檢查關聯容器運行狀態 |
+| **公網連通性與外部埠位驗證** | 公網存取診斷 (`check_public_access.py`) | 整合 `portchecker.co` 探測外部路由器 WAN 轉發埠 (8080/8443)，驗證 DDNS、Tailscale Funnel 與 QuickConnect 實體連通性 |
+| **全鏈路連通性雙軌驗證與總表同步** | 總表驗證與自動回寫 (`verify_master_table.py`) | 結合 Self-Hosted Runner 內網視角 (Tailscale VPN) 與外部 WAN/Funnel 探針，自動檢測全服務並同步更新 `README.md` 總表 |
 | **容器異常診斷與重啟** | 排錯指引與修復 SOP | 檢查容器 Log、確認 PAT Token 授權、解決 Port 佔用或記憶體超載問題 |
 
 ---
@@ -207,6 +209,90 @@ Raspberry Pi 5:    /home/pi/docker/<service>/compose.yaml
 2. **映像檔建置 (Image Build)**：於該專案 CI 或 NAS Runner 本機執行 `docker build` 產生最新映像檔標籤。
 3. **編排層更新 (Compose Update)**：若涉及環境變數、掛載磁區或 Port 變更，在 `Container.Manager` 的 `compose/<service>/compose.yaml` 進行更新並 push。
 4. **GitOps 自動部署**：觸發 `deploy-on-change.yml` 完成拉取、重新建立容器並更新 `Running/` 狀態。
+
+---
+
+## Direct Mode: DDNS 與反向代理對應工具 (`syno_ddns.py`)
+
+本技能提供專用的 Direct Mode 管理指令碼 `syno_ddns.py`，支援透過 LAN SSH（`192.168.31.101`）或 Tailscale P2P 直連呼叫 Synology DSM 內建 WebAPI，實現自動化取得與檢測 DDNS 與反向代理埠位對應：
+
+```bash
+# 查看格式化對應表（含即時 Docker 容器狀態關聯）
+python skills/skill-container-manager-orchestrator/syno_ddns.py
+
+# 輸出標準 JSON 供 CI/CD 或自動化腳本調用
+python skills/skill-container-manager-orchestrator/syno_ddns.py --json
+
+# 指定 Tailscale 主機或自訂金鑰
+python skills/skill-container-manager-orchestrator/syno_ddns.py --host newton.tail28f10.ts.net --key ~/.ssh/id_ed25519_wenchiehlee
+```
+
+### 支援之核心功能
+1. **DDNS 狀態獲取**：
+   - 呼叫 `SYNO.Core.DDNS.Record` (method: `list`) 取得主機名稱 (`wenchiehlee.synology.me`)、目前外網 IP、心跳檢查狀態與前次更新時間。
+2. **QuickConnect 狀態獲取**：
+   - 呼叫 `SYNO.Core.QuickConnect` (method: `get`) 取得 QuickConnect ID (`wenchiehlee.quickconnect.to`) 與開關狀態。
+3. **子域名埠位對應 (Reverse Proxy Routing)**：
+   - 呼叫 `SYNO.Core.AppPortal.ReverseProxy` (method: `list`) 剖析所有反向代理規則（如 `travel.wenchiehlee.synology.me -> localhost:3333`、`api.wenchiehlee.synology.me -> localhost:5055`）。
+   - 自動交叉比對 `docker ps -a` 即時容器狀態，標記對應的容器是否處於 `🟢 Up` 或 `⚪ Parked` 狀態。
+
+---
+
+## Direct Mode: 公網連通性與外部埠位驗證工具 (`check_public_access.py`)
+
+本技能提供專用的公網連通性檢測工具 `check_public_access.py`，結合第三方開放埠位檢查服務 [portchecker.co](https://portchecker.co) 與 HTTP/HTTPS 探針，由外部視角驗證服務的實體可訪問性：
+
+```bash
+# 執行全域公網連線性診斷（自動檢測 WAN 8080/8443 與所有公網服務）
+python skills/skill-container-manager-orchestrator/check_public_access.py
+
+# 透過 portchecker.co 檢測特定外部連接埠是否開放
+python skills/skill-container-manager-orchestrator/check_public_access.py --port 8443
+
+# 檢測特定網址之 HTTP 狀態碼與延遲
+python skills/skill-container-manager-orchestrator/check_public_access.py --url https://wenchiehlee.synology.me:8443
+
+# 輸出 JSON 格式供 CI/CD 整合
+python skills/skill-container-manager-orchestrator/check_public_access.py --json
+```
+
+### 檢測機制說明
+1. **外部 WAN 埠位探測 (`portchecker.co`)**：
+   - 模擬純外部網際網路流量，對使用者的外部公網 IP（WAN）進行 TCP 連接埠探測。
+   - 快速辨識家用路由器（如 MiWiFi）的 Port Forwarding 是否確實生效（例如區分 `🟢 OPEN` 與 `🔴 CLOSED`）。
+2. **公網端點實測 (HTTP Probe)**：
+   - 測試各對外連結（Tailscale Funnel、QuickConnect、DDNS 各子域名）。
+   - 交叉比對「區域網路 DNS 覆寫」與「外部實體連線」，避免因內網 NAT Loopback 造成的誤判。
+
+---
+
+## Direct Mode: 總覽表雙軌全鏈路驗證工具 (`verify_master_table.py`)
+
+本技能提供全自動化之總覽表驗證工具 `verify_master_table.py`，專為 Self-Hosted Runner 內網環境設計。它結合內網視角（Tailscale P2P VPN）與公網外部視角（`portchecker.co` 外部埠位與 HTTP 探針），對 `README.md` 的 Master Table 進行 100% 雙軌實測並直接回寫更新：
+
+```bash
+# 執行全鏈路雙軌連通性驗證並顯示終端格式化表格
+python skills/skill-container-manager-orchestrator/verify_master_table.py
+
+# 輸出標準 JSON 報告供 CI/CD 流程或 Webhook 讀取
+python skills/skill-container-manager-orchestrator/verify_master_table.py --json
+
+# 執行驗證並自動回寫/更新專案 README.md 的 Master Table
+python skills/skill-container-manager-orchestrator/verify_master_table.py --update-readme README.md
+```
+
+### 驗證雙軌架構
+1. **軌道 1：Tailscale VPN 內部連線實測 (Self-Hosted Runner 同網域視角)**
+   - **協定智慧探測**：依據服務屬性自動判別 HTTPS / HTTP / TCP Port 直測。
+   - **節點涵蓋**：
+     - `newton.tail28f10.ts.net`：DSM 管理後台 (HTTPS 7778)、MkDocs Blog (443)、Home Assistant (8443)、Chromium VNC (HTTPS 13021)、Travel App (3333)。
+     - `llm-cli-api.tail28f10.ts.net`：LLM Web API (HTTP 5001)、容器直通 SSH (Port 22)。
+     - `mac-mini.tail28f10.ts.net`：Mac mini 直連 SSH (Port 22)、螢幕共享 VNC (Port 5900)。
+2. **軌道 2：公網與外部連線驗證 (WAN Port Check & Public HTTP Probes)**
+   - **路由器 WAN Port Forwarding**：調用 `portchecker.co` 檢驗路由器實體 WAN Port（8080 綠燈 / 8443 紅燈）。
+   - **Tailscale Funnel 實測**：免 VPN 之公網 HTTPS 連線（MkDocs、Home Assistant）。
+   - **Synology QuickConnect 實測**：官方公網中繼通道（`https://wenchiehlee.quickconnect.to`）。
+   - **DDNS 外部子域名實測**：`wenchiehlee.synology.me` 各反向代理子域名之外部可及性判定。
 
 ---
 

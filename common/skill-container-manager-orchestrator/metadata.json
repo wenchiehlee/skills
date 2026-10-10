@@ -26,7 +26,10 @@
   "files": [
     "SKILL.md",
     "metadata.json",
-    "self_update.py"
+    "self_update.py",
+    "syno_ddns.py",
+    "check_public_access.py",
+    "verify_master_table.py"
   ],
   "deployments": [
     {
