@@ -7,7 +7,7 @@ description: 使用自建在 Mac-mini 上的 OCR API 服務，將 PDF 或圖片�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.7.2（詳見 `metadata.json`） |
+| 版本 | 1.8.0（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/FamilyHealthyCheck |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-client-ocr`） |
 | 維護者 | wenchiehlee |
@@ -25,6 +25,8 @@ skill-mlx-api-client-ocr/
 ├── self_update.py         # 從 skills 登錄庫檢查並更新此技能的工具
 └── scripts/
     ├── ocr_client.py      # 連線與 API 傳送客戶端腳本 (支援引擎選擇與回傳計時資訊)
+    ├── ocr_resilient_runner.py # 佇列感知（Queue-aware）斷點續傳長篇 PDF 轉錄執行器
+    ├── ocr_resilient_runner_safe.py # 嚴格安全模式（要求 Worker 完全閒置才發送）
     ├── benchmark_ocr_engines.py # 同頁面串行比較 Baidu / Paddle 的速度
     ├── pdf_fallback.py    # Mac-mini 離線時的本地非 OCR PDF→Markdown 退援轉換
     ├── refine_todo_ocr.py # 補轉錄 Markdown 中標記 TODO:OCR 的頁面
@@ -172,6 +174,26 @@ for heic_path in sorted(Path("Images").glob("*.HEIC")):
 ```
 
 若原始影像與其他轉寫內容有差異，一律以 HEIC 原始影像的 OCR 結果為準。
+
+### 🚦 方式 G：長篇 PDF 佇列感知與斷點續傳 (Resilient Queue Runner)
+
+處理數十至數百頁的掃描版書籍或長篇報告時，若直接批次發送容易造成 Mac-mini 伺服器超載（503 錯誤）。使用 `ocr_resilient_runner.py` 可依據伺服器即時負載守門發送，並以頁面 SHA256 雜湊快取：
+
+```bash
+# 標準模式：伺服器佇列小於限制時自動送出，並快取每頁結果至 .ocr-cache/
+python scripts/ocr_resilient_runner.py path/to/document.pdf "1,2,3,4,5" --dpi 200
+
+# 嚴格安全模式（Strict / Safe）：必須等待 Worker 完全閒置且佇列為空才送下一頁
+python scripts/ocr_resilient_runner_safe.py path/to/document.pdf "1,2,3,4,5" --dpi 200
+# 或使用 --strict 旗標
+python scripts/ocr_resilient_runner.py path/to/document.pdf "1,2,3,4,5" --strict
+```
+
+**核心機制：**
+- **QueueGuard**：透過 `/health` 監控 `active` 與 `queued` 狀態，避免壓垮伺服器。
+- **Circuit Breaker**：連續 3 次失敗自動熔斷暫停，指數退避冷卻。
+- **斷點續傳**：每頁結果快取於 `.ocr-cache/`，重複執行瞬間載入已辨識頁面。
+- **品質檢查**：檢測到空字串或無效佔位符時自動重試。
 
 ## 🛡️ 穩健性設計與異常處理 (Robust Design)
 *   **超時控制**：由於 PDF 的轉錄需要較長時間，請求的讀取超時（timeout）設為 `900` 秒，防止大型檔案傳輸中斷。
