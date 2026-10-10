@@ -203,22 +203,6 @@ skills:
   repo_count: 0
   updated_at: '2026-09-05'
   revised_at: '2026-10-05'
-- name: skill-document-ppt-design
-  group: common
-  path: common/skill-document-ppt-design
-  version: 1.0.0
-  description: 'Design and generate editorial-quality PPT/PPTX slide decks as SVG
-    or PPTX, following the design systems from software-ai-life/Awesome-PPT-Design-Skills.
-    Supports 7 house styles: Futuristic Tech Editorial, Japanese Lifestyle Editorial,
-    Washi Paper Soft Glow, Soft 3D Clay, Minimalist Luxury Branding, Modern Illustration
-    Editorial, Japanese Hand-Drawn Editorial. Use for ppt-master workflows, slide
-    deck design, SVG page generation, PPTX export, and PDF-to-PPT transformation.'
-  category: document
-  maintainer: wenchiehlee
-  source: https://github.com/software-ai-life/Awesome-PPT-Design-Skills
-  repo_count: 0
-  updated_at: '2026-10-07'
-  revised_at: '2026-10-07'
 - name: skill-facebook-fetch
   group: common
   path: common/skill-facebook-fetch
@@ -255,7 +239,7 @@ skills:
   source: https://github.com/wenchiehlee-investment/Python-Actions.GoodInfo
   repo_count: 3
   updated_at: '2026-10-09'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-10'
 - name: skill-google-alert-fetch
   group: common
   path: common/skill-google-alert-fetch
@@ -385,7 +369,7 @@ skills:
   source: https://github.com/wenchiehlee/FamilyHealthyCheck
   repo_count: 6
   updated_at: '2026-10-10'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-10'
 - name: skill-mlx-api-client-whisper
   group: common
   path: common/skill-mlx-api-client-whisper
