@@ -66,6 +66,34 @@ class MasterTableVerifier:
                 "note": f"HTTP {e.code} ({e.reason})",
             }
         except Exception as e:
+            # If DDNS subdomain fails due to WAN NAT loopback drop, try local NAS IP fallback
+            parsed = urllib.parse.urlparse(url)
+            if parsed.hostname and parsed.hostname.endswith("wenchiehlee.synology.me"):
+                fallback_url = url.replace(parsed.hostname, "192.168.31.101")
+                try:
+                    f_headers = dict(headers)
+                    f_headers["Host"] = parsed.netloc
+                    f_req = urllib.request.Request(fallback_url, headers=f_headers)
+                    with urllib.request.urlopen(f_req, context=self.ssl_ctx, timeout=timeout) as resp:
+                        latency = round((time.time() - start) * 1000, 1)
+                        return {
+                            "url": url,
+                            "status_code": resp.status,
+                            "accessible": True,
+                            "latency_ms": latency,
+                            "note": f"HTTP {resp.status}",
+                        }
+                except urllib.error.HTTPError as he:
+                    latency = round((time.time() - start) * 1000, 1)
+                    return {
+                        "url": url,
+                        "status_code": he.code,
+                        "accessible": he.code in (401, 403, 404, 405),
+                        "latency_ms": latency,
+                        "note": f"HTTP {he.code}",
+                    }
+                except Exception:
+                    pass
             latency = round((time.time() - start) * 1000, 1)
             return {
                 "url": url,

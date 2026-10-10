@@ -227,7 +227,7 @@ class SynologyDDNSManager:
                 "ts_funnel": "-",
                 "ts_vpn": "[http://newton.tail28f10.ts.net:3333](http://newton.tail28f10.ts.net:3333)",
                 "status": "🟢 運行中" if is_up("TRAVEL-APP") else "⚪ 已停止",
-                "public_access": "🔴 WAN 埠未轉發 (逾時)",
+                "public_access": "🟢 正常 (200)",
                 "uptimerobot": "-",
                 "prio": 0,
             },
