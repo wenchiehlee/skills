@@ -181,7 +181,7 @@ class MasterTableVerifier:
             {
                 "name": "Home Assistant",
                 "channel": "Tailscale VPN",
-                "url": "https://newton.tail28f10.ts.net:8443",
+                "url": "http://newton.tail28f10.ts.net:8123",
                 "kind": "http",
             },
             {
@@ -250,11 +250,6 @@ class MasterTableVerifier:
                 "name": "MkDocs (Funnel)",
                 "type": "Tailscale Funnel",
                 "url": "https://newton.tail28f10.ts.net",
-            },
-            {
-                "name": "Home Assistant (Funnel)",
-                "type": "Tailscale Funnel",
-                "url": "https://newton.tail28f10.ts.net:8443",
             },
             {
                 "name": "DSM (QuickConnect)",
