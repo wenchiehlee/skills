@@ -113,7 +113,7 @@ def run_downloader(repo_dir: Path, url: str) -> Path:
     # console codepage (e.g. cp1252) makes upstream's print() crash with
     # UnicodeEncodeError whenever the Scribd title/filename contains
     # non-Latin-1 characters (CJK, etc.).
-    child_env = dict(os.environ, PYTHONIOENCODING="utf-8")
+    child_env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUNBUFFERED="1")
     result = subprocess.run(
         [sys.executable, "scribd-downloader.py"],
         cwd=repo_dir,
