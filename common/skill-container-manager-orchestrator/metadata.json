@@ -1,0 +1,49 @@
+{
+  "name": "skill-container-manager-orchestrator",
+  "description": "跨平台容器管理與遠端協調技能。以 Synology NAS Container Manager 為首要平台，結合 wenchiehlee.quickconnect.to-Container.Manager 配置與 GitOps 自動化，擴展至 Mac mini、樹莓派等跨平台設備的容器遠端監控、同步、部署與維護。",
+  "category": "server",
+  "version": "1.0.0",
+  "author": "wenchiehlee",
+  "maintainer": "wenchiehlee",
+  "source": "https://github.com/ZhongZheng782/wenchiehlee.quickconnect.to-Container.Manager",
+  "updated_at": "2026-10-10",
+  "license": "MIT",
+  "tags": [
+    "docker",
+    "container-manager",
+    "synology",
+    "nas",
+    "multiplatform",
+    "tailscale",
+    "devops",
+    "orchestrator",
+    "github-runner"
+  ],
+  "compatibility": {
+    "platform": "cross-platform (Linux / DSM / macOS / Raspberry Pi)",
+    "python": ">=3.9"
+  },
+  "files": [
+    "SKILL.md",
+    "metadata.json",
+    "self_update.py"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "local_path": "github.com/skills/common/skill-container-manager-orchestrator",
+      "role": "registry"
+    },
+    {
+      "repo": "ZhongZheng782/wenchiehlee.quickconnect.to",
+      "local_path": "github.com/wenchiehlee.quickconnect.to/skills/skill-container-manager-orchestrator",
+      "role": "consumer"
+    },
+    {
+      "repo": "ZhongZheng782/wenchiehlee.quickconnect.to-Container.Manager",
+      "local_path": "github.com/wenchiehlee.quickconnect.to-Container.Manager/skills/skill-container-manager-orchestrator",
+      "role": "consumer"
+    }
+  ],
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-container-manager-orchestrator"
+}

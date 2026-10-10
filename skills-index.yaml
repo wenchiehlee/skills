@@ -190,6 +190,18 @@ skills:
   repo_count: 1
   updated_at: '2026-07-07'
   revised_at: '2026-10-05'
+- name: skill-container-manager-orchestrator
+  group: common
+  path: common/skill-container-manager-orchestrator
+  version: 1.0.0
+  description: 跨平台容器管理與遠端協調技能。以 Synology NAS Container Manager 為首要平台，結合 wenchiehlee.quickconnect.to-Container.Manager
+    配置與 GitOps 自動化，擴展至 Mac mini、樹莓派等跨平台設備的容器遠端監控、同步、部署與維護。
+  category: server
+  maintainer: wenchiehlee
+  source: https://github.com/ZhongZheng782/wenchiehlee.quickconnect.to-Container.Manager
+  repo_count: 2
+  updated_at: '2026-10-10'
+  revised_at: '2026-10-10'
 - name: skill-document-diagram-design
   group: common
   path: common/skill-document-diagram-design
@@ -203,6 +215,22 @@ skills:
   repo_count: 0
   updated_at: '2026-09-05'
   revised_at: '2026-10-05'
+- name: skill-document-ppt-design
+  group: common
+  path: common/skill-document-ppt-design
+  version: 1.0.0
+  description: 'Design and generate editorial-quality PPT/PPTX slide decks as SVG
+    or PPTX, following the design systems from software-ai-life/Awesome-PPT-Design-Skills.
+    Supports 7 house styles: Futuristic Tech Editorial, Japanese Lifestyle Editorial,
+    Washi Paper Soft Glow, Soft 3D Clay, Minimalist Luxury Branding, Modern Illustration
+    Editorial, Japanese Hand-Drawn Editorial. Use for ppt-master workflows, slide
+    deck design, SVG page generation, PPTX export, and PDF-to-PPT transformation.'
+  category: document
+  maintainer: wenchiehlee
+  source: https://github.com/software-ai-life/Awesome-PPT-Design-Skills
+  repo_count: 0
+  updated_at: '2026-10-07'
+  revised_at: '2026-10-07'
 - name: skill-facebook-fetch
   group: common
   path: common/skill-facebook-fetch
@@ -442,7 +470,7 @@ skills:
   source: ''
   repo_count: 2
   updated_at: '2026-09-02'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-10'
 - name: skill-stock-dynamic-valuation-box
   group: common
   path: common/skill-stock-dynamic-valuation-box
