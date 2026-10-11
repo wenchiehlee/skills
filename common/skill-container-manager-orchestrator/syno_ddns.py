@@ -214,7 +214,7 @@ class SynologyDDNSManager:
                 "ts_vpn": "[http://newton.tail28f10.ts.net:8123](http://newton.tail28f10.ts.net:8123)",
                 "status": "🟢 運行中" if is_up("HOMEASSISTANT") else "⚪ 已停止",
                 "public_access": "🟢 正常 (200)",
-                "uptimerobot": "-",
+                "uptimerobot": "[https://ha.wenchiehlee.synology.me:8443](https://ha.wenchiehlee.synology.me:8443) (❌ Down)",
                 "prio": 0,
             },
             {
@@ -225,7 +225,7 @@ class SynologyDDNSManager:
                 "ts_vpn": "[http://newton.tail28f10.ts.net:3333](http://newton.tail28f10.ts.net:3333)",
                 "status": "🟢 運行中" if is_up("TRAVEL-APP") else "⚪ 已停止",
                 "public_access": "🟢 正常 (200)",
-                "uptimerobot": "-",
+                "uptimerobot": "[https://travel.wenchiehlee.synology.me:8443](https://travel.wenchiehlee.synology.me:8443) (❌ Down)",
                 "prio": 0,
             },
             {
@@ -236,7 +236,7 @@ class SynologyDDNSManager:
                 "ts_vpn": "[http://llm-cli-api.tail28f10.ts.net:5001](http://llm-cli-api.tail28f10.ts.net:5001) (API) <br> `llm-cli-api.tail28f10.ts.net:22` (SSH)",
                 "status": "🟢 運行中" if is_up("LLM-CLI-API-SERVER") else "⚪ 已停止",
                 "public_access": "🟢 正常 (200)",
-                "uptimerobot": "-",
+                "uptimerobot": "[https://api.wenchiehlee.synology.me:8443](https://api.wenchiehlee.synology.me:8443) (❌ Down)",
                 "prio": 0,
             },
             {
