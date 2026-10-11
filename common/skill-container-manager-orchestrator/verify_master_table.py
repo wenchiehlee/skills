@@ -237,17 +237,43 @@ class MasterTableVerifier:
                 vpn_results.append({**t, **res, "verdict": verdict})
 
         # 2. Public DDNS & Tailscale Funnel Verification (Port Checks via portchecker.co)
-        print("• [2/2] 探測 DDNS 外部存取與 Tailscale Funnel (含 portchecker.co)...")
+        print("• [2/2] 探測外部公網存取 (DDNS / Funnel / QC) 與 UptimeRobot 監控狀態...")
         # WAN port checks
         wan_port_checks = {}
         for p in [8443, 8080]:
             wan_port_checks[p] = self.check_portchecker(self.public_ip, p)
             time.sleep(1.0)
 
+        # UptimeRobot checks
+        ur_monitors = {}
+        ur_key = os.getenv("UPTIMEROBOT_API_KEY", "")
+        if not ur_key and os.path.exists(".env"):
+            try:
+                for line in open(".env", encoding="utf-8"):
+                    if line.startswith("UPTIMEROBOT_API_KEY="):
+                        ur_key = line.strip().split("=", 1)[1].strip("'\"")
+                        break
+            except Exception:
+                pass
+        if ur_key:
+            try:
+                ur_req = urllib.request.Request(
+                    "https://api.uptimerobot.com/v2/getMonitors",
+                    data=f"api_key={ur_key}&format=json".encode("utf-8"),
+                    headers={"content-type": "application/x-www-form-urlencoded"},
+                )
+                with urllib.request.urlopen(ur_req, timeout=6.0) as ur_resp:
+                    ur_data = json.loads(ur_resp.read().decode("utf-8"))
+                    for m in ur_data.get("monitors", []):
+                        m_url = m.get("url", "").rstrip("/")
+                        ur_monitors[m_url] = m
+            except Exception as e:
+                print(f"Warning: Failed to fetch UptimeRobot monitors: {e}")
+
         # Public HTTP Endpoints
         public_endpoints = [
             {
-                "name": "MkDocs (Funnel)",
+                "name": "MkDocs Blog (Funnel)",
                 "type": "Tailscale Funnel",
                 "url": "https://newton.tail28f10.ts.net",
             },
@@ -257,7 +283,7 @@ class MasterTableVerifier:
                 "url": "https://wenchiehlee.quickconnect.to",
             },
             {
-                "name": "MkDocs (DDNS 8443)",
+                "name": "MkDocs Blog (DDNS 8443)",
                 "type": "DDNS (8443 HTTPS)",
                 "url": "https://wenchiehlee.synology.me:8443",
                 "port": 8443,
@@ -298,7 +324,22 @@ class MasterTableVerifier:
                 verdict = "🔴 WAN 8443 未轉發"
             else:
                 verdict = "🔴 連線失敗"
-            public_results.append({**ep, **res, "verdict": verdict})
+
+            # Match UptimeRobot
+            m = ur_monitors.get(ep["url"].rstrip("/"))
+            ur_status = "未配置"
+            if m:
+                st = m.get("status")
+                if st == 2:
+                    ur_status = "✅ Up"
+                elif st in (8, 9):
+                    ur_status = "❌ Down"
+                elif st == 0:
+                    ur_status = "⏸️ Paused"
+                else:
+                    ur_status = f"Status {st}"
+
+            public_results.append({**ep, **res, "verdict": verdict, "uptimerobot_status": ur_status})
 
         return {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S CST", time.localtime()),
@@ -332,15 +373,15 @@ class MasterTableVerifier:
             print(f"{r['name']:<20} | {target:<46} | {stat:<16} | {r['verdict']}")
 
         print("\n" + "-" * 90)
-        print("🌐 [2] 公網存取驗證 (DDNS 8443 HTTPS & Tailscale Funnel):")
+        print("🌐 [2] 外部公網存取驗證 (Port Checker & UptimeRobot 雙重驗證):")
         print("-" * 90)
-        header2 = f"{'服務項目':<28} | {'存取類型':<18} | {'HTTP 狀態':<12} | {'延遲':<10} | {'實測結果'}"
+        header2 = f"{'服務項目':<28} | {'存取類型':<18} | {'HTTP 狀態':<12} | {'UptimeRobot':<14} | {'實測結果'}"
         print(header2)
         print("-" * 90)
         for r in report.get("public_results", []):
             code = str(r.get("status_code")) if r.get("status_code") else "ERR"
-            latency = f"{r.get('latency_ms')}ms"
-            print(f"{r['name']:<28} | {r['type']:<18} | {code:<12} | {latency:<10} | {r['verdict']}")
+            ur = r.get("uptimerobot_status", "-")
+            print(f"{r['name']:<28} | {r['type']:<18} | {code:<12} | {ur:<14} | {r['verdict']}")
         print("=" * 90)
 
 
