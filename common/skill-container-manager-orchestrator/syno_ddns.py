@@ -9,6 +9,9 @@ import json
 import os
 import subprocess
 import sys
+import time
+import urllib.error
+import urllib.request
 from typing import Any, Dict, List, Optional
 
 if sys.stdout and hasattr(sys.stdout, "reconfigure"):
@@ -176,12 +179,51 @@ class SynologyDDNSManager:
             "mappings": mappings,
         }
 
+    def fetch_uptimerobot_status(self) -> Dict[str, str]:
+        """Fetches latest monitor status mapping from UptimeRobot API."""
+        api_key = os.getenv("UPTIMEROBOT_API_KEY")
+        if not api_key and os.path.exists(".env"):
+            try:
+                for line in open(".env", encoding="utf-8"):
+                    if line.startswith("UPTIMEROBOT_API_KEY="):
+                        api_key = line.strip().split("=", 1)[1].strip("'\"")
+                        break
+            except Exception:
+                pass
+        if not api_key:
+            return {}
+
+        status_map = {
+            0: "⏸️ Paused",
+            1: "⏳ 未檢查",
+            2: "✅ Up",
+            8: "⚠️ Seems Down",
+            9: "❌ Down"
+        }
+        try:
+            req = urllib.request.Request(
+                "https://api.uptimerobot.com/v2/getMonitors",
+                data=f"api_key={api_key}&format=json".encode("utf-8"),
+                headers={"content-type": "application/x-www-form-urlencoded", "cache-control": "no-cache"}
+            )
+            with urllib.request.urlopen(req, timeout=8.0) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                res = {}
+                for m in data.get("monitors", []):
+                    u = m.get("url", "").rstrip("/")
+                    st = m.get("status", -1)
+                    res[u] = status_map.get(st, f"狀態 {st}")
+                return res
+        except Exception as e:
+            print(f"Warning: fetch_uptimerobot_status failed: {e}")
+            return {}
+
     def generate_master_table_markdown(
         self,
         update_time: Optional[str] = None,
         uptimerobot_block: Optional[str] = None,
     ) -> str:
-        """Generates a single unified Master Table Markdown block for README.md, completely excluding parked services."""
+        """Generates a single unified Master Table Markdown block for README.md with merged UptimeRobot status."""
         data = self.get_full_mapping_overview()
         containers = self.get_running_containers()
 
@@ -193,6 +235,15 @@ class SynologyDDNSManager:
                     return True
             return False
 
+        ur_statuses = self.fetch_uptimerobot_status()
+
+        def fmt_ur(url: str, label: str = "") -> str:
+            u_clean = url.rstrip("/")
+            if u_clean in ur_statuses:
+                st = ur_statuses[u_clean]
+                return f"[{label or url}]({url}) ({st})"
+            return "-"
+
         # Unified service entries (Consistent full URL formatting across all columns)
         services = [
             {
@@ -203,7 +254,7 @@ class SynologyDDNSManager:
                 "ts_vpn": "[https://newton.tail28f10.ts.net](https://newton.tail28f10.ts.net)",
                 "status": "🟢 運行中",
                 "public_access": "🟢 正常 (Funnel 200)",
-                "uptimerobot": "[https://newton.tail28f10.ts.net](https://newton.tail28f10.ts.net) (✅ Up)",
+                "uptimerobot": f"{fmt_ur('https://newton.tail28f10.ts.net', 'Funnel')}<br>{fmt_ur('https://wenchiehlee.synology.me:8443', 'DDNS')}",
                 "prio": 0,
             },
             {
@@ -214,7 +265,7 @@ class SynologyDDNSManager:
                 "ts_vpn": "[http://newton.tail28f10.ts.net:8123](http://newton.tail28f10.ts.net:8123)",
                 "status": "🟢 運行中" if is_up("HOMEASSISTANT") else "⚪ 已停止",
                 "public_access": "🟢 正常 (200)",
-                "uptimerobot": "[https://ha.wenchiehlee.synology.me:8443](https://ha.wenchiehlee.synology.me:8443) (❌ Down)",
+                "uptimerobot": fmt_ur('https://ha.wenchiehlee.synology.me:8443', 'DDNS'),
                 "prio": 0,
             },
             {
@@ -225,7 +276,7 @@ class SynologyDDNSManager:
                 "ts_vpn": "[http://newton.tail28f10.ts.net:3333](http://newton.tail28f10.ts.net:3333)",
                 "status": "🟢 運行中" if is_up("TRAVEL-APP") else "⚪ 已停止",
                 "public_access": "🟢 正常 (200)",
-                "uptimerobot": "[https://travel.wenchiehlee.synology.me:8443](https://travel.wenchiehlee.synology.me:8443) (❌ Down)",
+                "uptimerobot": fmt_ur('https://travel.wenchiehlee.synology.me:8443', 'DDNS'),
                 "prio": 0,
             },
             {
@@ -236,7 +287,7 @@ class SynologyDDNSManager:
                 "ts_vpn": "[http://llm-cli-api.tail28f10.ts.net:5001](http://llm-cli-api.tail28f10.ts.net:5001) (API) <br> `llm-cli-api.tail28f10.ts.net:22` (SSH)",
                 "status": "🟢 運行中" if is_up("LLM-CLI-API-SERVER") else "⚪ 已停止",
                 "public_access": "🟢 正常 (200)",
-                "uptimerobot": "[https://api.wenchiehlee.synology.me:8443](https://api.wenchiehlee.synology.me:8443) (❌ Down)",
+                "uptimerobot": fmt_ur('https://api.wenchiehlee.synology.me:8443', 'DDNS'),
                 "prio": 0,
             },
             {
@@ -258,7 +309,7 @@ class SynologyDDNSManager:
                 "ts_vpn": "[https://newton.tail28f10.ts.net:7778](https://newton.tail28f10.ts.net:7778)",
                 "status": "🟢 運行中",
                 "public_access": "🟢 正常 (QuickConnect 200)",
-                "uptimerobot": "[https://wenchiehlee.quickconnect.to](https://wenchiehlee.quickconnect.to) (✅ Up)",
+                "uptimerobot": f"{fmt_ur('https://wenchiehlee.quickconnect.to', 'QC')}<br>{fmt_ur('https://wenchiehlee.synology.me:8443', 'DDNS')}",
                 "prio": 0,
             },
             {
@@ -290,9 +341,10 @@ class SynologyDDNSManager:
         ts = update_time or time.strftime("%Y-%m-%d %H:%M:%S CST", time.localtime())
 
         lines = [
+            "<!-- UPTIMEROBOT_STATUS_START -->",
             "## Web Services & Reverse Proxy Configuration (Master Table)",
             "",
-            f"- Update time: {ts}",
+            f"- Update time: {ts} (UptimeRobot Live Sync)",
             "- 外部公網探測（portchecker.co & HTTP）：WAN IP `61.228.35.108` ｜ Port 8443 (🔴 CLOSED/未轉發) ｜ Port 8080 (🟢 OPEN)",
             "",
             "> **ISP 限制**：CHT 住宅封鎖 port 80/443 入站。DDNS 外部存取統一使用 **8443 (HTTPS)**。",
@@ -307,23 +359,7 @@ class SynologyDDNSManager:
                 f"| **{s['name']}** | `{s['container']}` | {s['local_port']} | {s['external_access']} | {s['ts_vpn']} | {s['status']} | {s['public_access']} | {s['uptimerobot']} |"
             )
 
-        # Append UptimeRobot subsection directly into Master Table section
-        default_uptimerobot = (
-            "<!-- UPTIMEROBOT_STATUS_START -->\n"
-            "- 更新時間：`2026-10-10 19:56:28 UTC+08`\n\n"
-            "| 監控項目 | 網址 | 目前狀態 | 最後檢查時間 |\n"
-            "| :--- |\n"
-            "| TS-DSM | [https://wenchiehlee.quickconnect.to](https://wenchiehlee.quickconnect.to) | ✅ 正常 (Up) | 2026-10-10 19:56:28 UTC+08 |\n"
-            "<!-- UPTIMEROBOT_STATUS_END -->"
-        )
-        ublock = (uptimerobot_block or default_uptimerobot).strip()
-        lines.extend([
-            "",
-            "### 系統監控 (UptimeRobot)",
-            "",
-            ublock,
-        ])
-
+        lines.append("<!-- UPTIMEROBOT_STATUS_END -->")
         return "\n".join(lines)
 
     def update_readme(self, readme_path: str, update_time: Optional[str] = None) -> bool:
@@ -335,39 +371,44 @@ class SynologyDDNSManager:
             content = f.read()
 
         start_marker = "## Web Services & Reverse Proxy Configuration (Master Table)"
-        if start_marker not in content:
-            raise ValueError(f"Marker '{start_marker}' not found in {readme_path}")
+        legacy_marker = "## 系統監控 (UptimeRobot)"
+        s_marker = "<!-- UPTIMEROBOT_STATUS_START -->"
 
-        # Extract existing UptimeRobot block if present
-        uptimerobot_block = None
-        if "<!-- UPTIMEROBOT_STATUS_START -->" in content and "<!-- UPTIMEROBOT_STATUS_END -->" in content:
-            u_start = content.find("<!-- UPTIMEROBOT_STATUS_START -->")
-            u_end = content.find("<!-- UPTIMEROBOT_STATUS_END -->") + len("<!-- UPTIMEROBOT_STATUS_END -->")
-            uptimerobot_block = content[u_start:u_end].strip()
+        target_start = None
+        if start_marker in content:
+            target_start = start_marker
+        elif legacy_marker in content:
+            target_start = legacy_marker
+        elif s_marker in content:
+            target_start = s_marker
+        else:
+            raise ValueError(f"Neither '{start_marker}', '{legacy_marker}' nor '{s_marker}' found in {readme_path}")
 
-        # Find section boundaries
-        parts = content.split(start_marker)
-        before_section = parts[0]
-        remainder = parts[1]
+        h_idx = content.find(target_start)
+        s_idx = content.find(s_marker)
+        if s_idx != -1 and s_idx < h_idx:
+            before_section = content[:s_idx]
+            remainder = content[s_idx:]
+        else:
+            before_section = content[:h_idx]
+            remainder = content[h_idx:]
 
-        # The section (now containing Master Table + UptimeRobot) ends right before the Conflict Resolution Tip or Troubleshooting
+        # Find section boundaries (ends before Conflict Resolution Tip or next divider)
         end_marker = "\n--------------------------\n\n> **Conflict Resolution Tip**:"
         if end_marker in remainder:
             end_idx = remainder.find(end_marker)
             after_section = remainder[end_idx:]
         else:
-            u_end_pos = remainder.find("<!-- UPTIMEROBOT_STATUS_END -->")
-            if u_end_pos != -1:
-                next_sep = remainder.find("\n--------------------------\n", u_end_pos)
-                if next_sep != -1:
-                    after_section = remainder[next_sep:]
-                else:
-                    after_section = "\n--------------------------\n"
+            e_marker = "<!-- UPTIMEROBOT_STATUS_END -->"
+            e_idx = remainder.find(e_marker)
+            if e_idx != -1:
+                next_sep = remainder.find("\n--------------------------\n", e_idx)
+                after_section = remainder[next_sep:] if next_sep != -1 else "\n--------------------------\n"
             else:
                 next_sep = remainder.find("\n--------------------------\n")
                 after_section = remainder[next_sep:] if next_sep != -1 else ""
 
-        new_table_block = self.generate_master_table_markdown(update_time=update_time, uptimerobot_block=uptimerobot_block)
+        new_table_block = self.generate_master_table_markdown(update_time=update_time)
         updated_content = before_section + new_table_block + after_section
 
         with open(readme_path, "w", encoding="utf-8") as f:
