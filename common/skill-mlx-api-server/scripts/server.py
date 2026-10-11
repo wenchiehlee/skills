@@ -148,8 +148,12 @@ def execute():
     """
     Request:  {"prompt": "...", "model": "o3"}   (model is optional)
     Response: {"output": "..."}
-    Errors:   {"error": "..."}  +  HTTP 400 / 401 / 503 / 504 / 502
+    Errors:   {"error": "..."}  +  HTTP 400 / 401 / 500 / 503 / 504 / 502
     """
+    if not config.AMPLITUDE_API_KEY:
+        logger.error("AMPLITUDE_API_KEY is not configured on server")
+        return jsonify({"error": "AMPLITUDE_API_KEY is not configured on server"}), 500
+
     data = request.get_json(silent=True)
     if not data or not data.get("prompt"):
         return jsonify({"error": "No prompt provided"}), 400
@@ -198,6 +202,10 @@ def ocr():
              - "engine" (optional): "baidu" (default) or "glm"
     Response: {"markdown": "...", "engine": "...", "timings": {...}}
     """
+    if not config.AMPLITUDE_API_KEY:
+        logger.error("AMPLITUDE_API_KEY is not configured on server")
+        return jsonify({"error": "AMPLITUDE_API_KEY is not configured on server"}), 500
+
     if 'file' not in request.files:
         return jsonify({"error": "No file part in the request"}), 400
 

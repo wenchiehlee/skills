@@ -7,7 +7,7 @@ description: Mac-mini 上以 self-hosted GitHub Actions runner 執行的語音�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 2.0.1（詳見 `metadata.json`） |
+| 版本 | 2.0.2（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server-whisper/scripts |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-server-whisper`） |
 | 維護者 | wenchiehlee |
