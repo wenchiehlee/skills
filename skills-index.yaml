@@ -201,7 +201,7 @@ skills:
   source: https://github.com/ZhongZheng782/wenchiehlee.quickconnect.to-Container.Manager
   repo_count: 5
   updated_at: '2026-10-10'
-  revised_at: '2026-10-10'
+  revised_at: '2026-10-11'
 - name: skill-document-diagram-design
   group: common
   path: common/skill-document-diagram-design
