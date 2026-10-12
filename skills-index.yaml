@@ -360,16 +360,16 @@ skills:
 - name: skill-miz-fetch
   group: common
   path: common/skill-miz-fetch
-  version: 1.0.0
-  description: Fetch book content from the self-hosted Calibre-Web epub reader at
-    books.miz.com.tw via browser automation (epub.js book.spine/book.load), and export
-    as Markdown into Miz.Fetch's books/ folder convention.
+  version: 1.3.0
+  description: Fetch or process authorized EPUB/PDF book sources into Miz.Fetch's
+    chapter Markdown, metadata, JPG assets, and requested book summaries or investment
+    frameworks.
   category: document
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/Miz.Fetch
   repo_count: 1
-  updated_at: '2026-08-12'
-  revised_at: '2026-10-05'
+  updated_at: '2026-10-13'
+  revised_at: '2026-10-13'
 - name: skill-mlx-api-client-ocr
   group: common
   path: common/skill-mlx-api-client-ocr
