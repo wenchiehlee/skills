@@ -242,7 +242,7 @@ skills:
 - name: skill-goodinfo-fetch
   group: common
   path: common/skill-goodinfo-fetch
-  version: 1.2.0
+  version: 1.3.0
   description: 'Unified dispatcher across the GoodInfo.tw data pipeline: download
     raw XLS (Python-Actions.GoodInfo), convert to CSV via stage1 extraction (Python-Actions.GoodInfo.Analyzer),
     and enrich company-level metadata (Python-Actions.GoodInfo.CompanyInfo).'
@@ -250,8 +250,8 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-investment/Python-Actions.GoodInfo
   repo_count: 3
-  updated_at: '2026-10-09'
-  revised_at: '2026-10-10'
+  updated_at: '2026-10-12'
+  revised_at: '2026-10-12'
 - name: skill-google-alert-fetch
   group: common
   path: common/skill-google-alert-fetch
