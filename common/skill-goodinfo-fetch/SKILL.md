@@ -72,29 +72,32 @@ python scripts/goodinfo_pipeline.py status
 
 依段落不同，需要目前所在 repo 既有的 `requirements.txt`（`pandas`、`requests`、`beautifulsoup4`、`selenium` / `undetected-chromedriver`、`webdriver-manager`、`playwright`，③ 另需 `google-genai`、`python-dotenv`）。本 wrapper 本身除 Python 標準函式庫外無額外依賴。
 
-## 混合式 CDP 管線架構 (Hybrid In-Memory CDP Pipeline — v1.3.0)
+## 混合式 CDP 管線架構 (Hybrid In-Memory CDP Pipeline — v1.4.0)
 
-為解決 **「住宅 IP 防禦 (抗 Cloudflare 封鎖)」** 與 **「NAS 實體儲存空間有限 (免硬碟磨損與 I/O 負載)」** 的矛盾需求，GoodInfo 管線支援官方認證之**兩階段混合工作流程（Hybrid Two-Stage Pipeline）**：
+為解決 **「住宅 IP 防禦 (抗 Cloudflare 封鎖)」** 與 **「NAS 實體儲存空間有限 (免硬碟磨損與 I/O 負載)」** 的矛盾需求，GoodInfo 管線支援官方認證之**兩階段混合工作流程（Hybrid Two-Stage Pipeline）**，並於 v1.4.0 達成 100% 零中介 XLS 依賴與冪等內容更新：
 
 ```
 [階段 1: Synology NAS (Self-Hosted Runner)]
   ├── 住宅 IP 連線 CHROMIUM CDP (Port 9222)
   ├── 智能分頁重用 (Smart Tab Reuse) 與源站重試 (Retry 522/523)
-  ├── 純記憶體抽取 (Zero Disk I/O，不寫入 NAS 硬碟)
+  ├── 純記憶體抽取與 RAM Disk (/dev/shm) 打包（0 Byte NAS 實體磁碟 I/O）
+  ├── 擷取當下純記憶體注入 CST download_timestamp
   └── 透過 actions/upload-artifact@v4 傳遞 Payload 至 GitHub 雲端
         │
         ▼
 [階段 2: GitHub 雲端 (GitHub-Hosted Runner / ubuntu-latest)]
   ├── 透過 actions/download-artifact@v4 接收 Payload
-  ├── 承擔所有磁碟 I/O：生成 DividendDetail/*.xls、轉換 *.csv
-  ├── 執行 Pandas 數據結構驗證 (read_html / io.StringIO)
-  └── 發布永久工作流程產物 (Artifacts) 或同步至資料庫
+  ├── 零中介 XLS 檔案：直接由記憶體 Payload 解開並進行 Stage 1 抽取
+  ├── 冪等內容變更感知（Idempotent Content Diff）：若數據未變更則保留原時間戳記並跳過寫入
+  ├── Git 乾淨提交防護：無變更時自動略過 Commit，杜絕髒提交
+  └── 自動整合生成報表（營收、股利、ROA/ROE）並發布產物
 ```
 
 ### 關鍵優勢：
-1. **NAS 零磁碟負擔 (0 Disk I/O)**：NAS 僅負責短暫的 Playwright 記憶體抽取，不消耗 NAS SSD/HDD 壽命與儲存空間。
-2. **充分利用 GitHub 免費雲端資源**：所有的 XLS 寫入、CSV 大量轉換、Pandas 清洗計算皆在 GitHub 雲端執行（速度極快、儲存空間無上限）。
-3. **高韌性端點自動探索**：自動輪詢 Docker Bridge Gateway (`172.21.0.1:9222`)、LAN IP (`192.168.31.101:9222`) 與 Tailscale IP (`100.110.72.104:9222`)。
+1. **NAS 零磁碟負擔 (100% 0 Disk I/O)**：NAS Runner 全程在 `/dev/shm` 記憶體中執行與打包，不消耗 NAS SSD/HDD 壽命。
+2. **徹底移除中介 XLS 檔案**：完全擺脫 2,000+ 個 `.xls` 實體檔案與目錄負擔，直接由 HTML Table 轉出標準 CSV。
+3. **冪等更新與 Git 乾淨狀態**：自動比較舊版 CSV 內容（保持股票代碼前導零 string 格式），僅在有實質更新時產生 commit。
+4. **高韌性端點自動探索**：自動輪詢 Docker Bridge Gateway (`172.21.0.1:9222`)、LAN IP (`192.168.31.101:9222`) 與 Tailscale IP (`100.110.72.104:9222`)。
 
 ## 注意事項
 
