@@ -2,7 +2,7 @@
   "name": "skill-sharepoint-sync",
   "description": "Access a single SharePoint file through an approved Microsoft Graph delegated app or policy-compliant Microsoft Edge with CDP remote debugging enabled.",
   "category": "basic",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "maintainer": "wenchiehlee-money",
   "source": "https://learn.microsoft.com/en-us/graph/auth-v2-user",
   "updated_at": "2026-10-14",

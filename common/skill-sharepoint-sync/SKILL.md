@@ -213,9 +213,7 @@ python scripts/sharepoint_sync.py edge --url "https://barcozone.sharepoint.com/:
 
 ## 未來可擴充方向（視需求而定）
 
-v1.1.0 支援單一檔案的 Graph 讀寫，以及在 Graph app/SSO 政策阻擋時由使用者
-透過合規瀏覽器下載。若後續出現以下需求，再依當時
-情境決定是否升版：
+v1.3.0 支援單一檔案的 Graph 讀寫，以及在企業 SSO / 裝置合規政策下，透過組織核准的 Microsoft Edge 啟用 CDP（遠端偵錯埠 9222）進行自動化導覽與檔案下載。若後續出現以下需求，再依當時情境決定是否升版：
 
 - 批次處理多個分享連結或整個資料夾
 - SharePoint List（清單）資料的讀寫，而非檔案
