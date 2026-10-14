@@ -381,12 +381,25 @@ def cmd_edge(args: argparse.Namespace) -> None:
     cmd.append(share_url)
 
     print(f"啟動 Microsoft Edge 並啟用 CDP（埠號 {port}）…")
-    flags = (
-        subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
-        if platform.system() == "Windows"
-        else 0
-    )
-    subprocess.Popen(cmd, creationflags=flags)
+    launched = False
+    if platform.system() == "Windows":
+        try:
+            # 透過 WMI 啟動以脫離目前終端機/Job Object 生命週期，視窗在背景持續運作
+            escaped_args = " ".join(f'`"{arg}`"' for arg in cmd)
+            ps_cmd = f"Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{{ CommandLine = '{escaped_args}' }}"
+            wmi_res = subprocess.run(["powershell", "-NoProfile", "-Command", ps_cmd], capture_output=True, text=True)
+            if wmi_res.returncode == 0 and "ReturnValue : 0" in wmi_res.stdout or "0" in wmi_res.stdout:
+                launched = True
+        except Exception:
+            pass
+
+    if not launched:
+        flags = (
+            subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
+            if platform.system() == "Windows"
+            else 0
+        )
+        subprocess.Popen(cmd, creationflags=flags)
 
     # 等待 CDP 埠號就緒
     connected = False
