@@ -1,9 +1,9 @@
 ---
 name: skill-sharepoint-sync
-description: Resolve SharePoint SSO 401 blocking automated access by authenticating via Microsoft Graph API (MSAL device-code login, cached token), then read/write a single SharePoint file. Use when asked to "download SharePoint file", "SharePoint 401 SSO", "sync draft to SharePoint", or when a background fetch of a *.sharepoint.com link returns 401 Unauthorized.
+description: Access a single SharePoint file through an approved Microsoft Graph delegated app or the user's policy-compliant signed-in browser. Use when asked to download or sync a SharePoint file, when a *.sharepoint.com background fetch returns 401, or when enterprise SSO or device-compliance policy blocks automated access.
 ---
 
-# SharePoint Sync Skill（繞過企業 SSO 401 的單檔讀寫）
+# SharePoint Sync Skill（符合企業政策的單檔讀寫與下載）
 
 ## 問題背景
 
@@ -15,10 +15,10 @@ description: Resolve SharePoint SSO 401 blocking automated access by authenticat
 由於 SharePoint 需要企業 SSO 驗證（回傳 401），因此自動存取被封鎖。
 ```
 
-這不是連結失效或權限不足，而是**background fetch 天生就無法通過互動式
-SSO**。解法不是繞過驗證，而是用正式的 OAuth device-code 流程走一次互動
-登入，把可長期使用的 refresh token 快取在本機，之後背景腳本就能靜默
-（silent）換發 access token，不需要每次都開瀏覽器登入。
+這不一定代表連結失效；背景請求沒有使用者的登入 session。優先使用租戶
+核准的 Microsoft Graph delegated app。若租戶限制該應用程式或要求受管理
+裝置，必須遵守該政策，改用核准的登入方式或由使用者透過合規瀏覽器下載；
+不得嘗試繞過 SSO、應用程式指派或裝置合規要求。
 
 ## 適用場景
 
@@ -33,29 +33,65 @@ SSO**。解法不是繞過驗證，而是用正式的 OAuth device-code 流程�
 操作 SharePoint List/清單資料（這些需要更廣的 Graph 權限與不同的 API，
 超出本技能範圍）。
 
-## 認證方式：MSAL device-code + 本地 token 快取
+## Graph 認證：核准的 delegated app
 
 走 Microsoft Graph API 的 **delegated（代表使用者）** 認證，用個人企業
-帳號登入一次即可，**不需要向 IT 申請 Azure AD App Registration**：
+帳號登入。能否使用特定 app、權限與登入流程由租戶政策決定：
 
-- `client_id` 預設使用 Microsoft 官方公開用戶端 ID
-  `14d82eec-204b-4c2f-b7e8-296a70dab67e`（Microsoft Graph PowerShell），
-  絕大多數企業租戶已預先存在這個 App 且同意過基本 Graph 權限，可直接
-  拿來做 device-code 登入。若公司政策擋掉這個 client id，再改用自己
-  申請的 App Registration（設 `SHAREPOINT_CLIENT_ID` 覆寫即可）。
-- 第一次執行 `login` 子指令會印出一個網址 + 一次性代碼，到瀏覽器完成
-  SSO 登入後，MSAL 會把 refresh token 序列化存到
+- `client_id` 未設定 `SHAREPOINT_CLIENT_ID` 時使用 Microsoft Graph PowerShell
+  的公開用戶端 ID
+  `14d82eec-204b-4c2f-b7e8-296a70dab67e`。租戶可能封鎖此 app，或要求
+  管理員指派使用者、核准 delegated permissions；不能假設可直接登入，也
+  不能藉由換用未核准的 client ID 解決。
+- 只有在 IT 核准或指派 app 後，才使用其 client ID。第一次執行 `login`
+  會啟動 device-code 登入；由使用者在 Microsoft 登入頁完成 SSO/MFA。
+  MSAL 會把 token cache 存到
   `~/.cache/skill-sharepoint-sync/token_cache.json`。
 - 之後每次執行 `read` / `write` / `info`，腳本會先嘗試
   `acquire_token_silent`，用快取的 refresh token 換發新的 access
   token，不會再跳出登入畫面（除非 refresh token 過期或被撤銷）。
+- **不要要求、接收或儲存使用者密碼或 MFA 驗證碼。** 不使用密碼式
+  OAuth（ROPC），也不從瀏覽器擷取 cookie、access token 或 refresh token。
+
+## 瀏覽器下載備援：遵守 SSO 與裝置政策
+
+遇到 `AADSTS50105`、Conditional Access 拒絕，或瀏覽器提示裝置/用戶端不
+符合組織政策時，停止重試目前的 Graph app 或切換登入流程。錯誤表示 app
+指派或裝置政策不符合，不是密碼輸入問題。
+
+若使用者可透過瀏覽器存取該檔案：
+
+1. 在組織核准且符合裝置合規要求的瀏覽器開啟原始 SharePoint 連結。若
+   Chrome 被要求安裝組織擴充功能，只有在使用者/IT 核准時才安裝；可改用
+   組織核准的 Microsoft Edge。
+   Windows 上若 Edge 已安裝，可將原始連結交給 Edge 開啟：
+
+   ```powershell
+   $url = "<SharePoint share URL>"
+   Start-Process "microsoft-edge:$url"
+   ```
+
+2. 由使用者直接在瀏覽器完成登入與 MFA。不得請使用者把密碼、MFA 驗證碼
+   或瀏覽器 token 貼到對話中。
+3. 使用 SharePoint 頁面提供的 **Download** 功能。若目前工具無法控制該
+   合規瀏覽器，請使用者自行下載並提供本機檔案；不要宣稱已下載，除非
+   已確認檔案實際存在。
+
+瀏覽器 fallback 只使用瀏覽器正常提供的已登入頁面與下載操作；它不會為
+Graph 腳本建立 token cache，也不會讀取或匯出瀏覽器憑證。若 Graph API
+仍是必要路徑，請 IT 指派目前 app，或提供核准的 public-client app 與所需
+delegated permissions。
+
+Chrome DevTools/CDP 只能連到已符合組織政策的使用者瀏覽器，並用於正常的
+頁面導覽與下載操作；不得建立未受管理的替代 session、讀取瀏覽器儲存區，
+或檢查/複製網路請求中的 cookie 與 token。
 
 ## 環境變數
 
 | 變數 | 說明 |
 | --- | --- |
 | `SHAREPOINT_TENANT_ID` | Azure AD 租戶 ID 或網域（例如 `barco.onmicrosoft.com`）；不確定可先填 `common` |
-| `SHAREPOINT_CLIENT_ID` | 選填，覆寫預設的公開用戶端 ID |
+| `SHAREPOINT_CLIENT_ID` | 選填；只有使用 IT 核准或指派的 public-client app 時才覆寫 |
 | `SHAREPOINT_SHARE_URL` | 目標檔案的分享連結（就是背景存取會 401 的那個網址） |
 
 放進 `.env`（不要提交進 git）：
@@ -86,8 +122,8 @@ To sign in, use a web browser to open the page https://microsoft.com/devicelogin
 and enter the code XXXXXXXXX to authenticate.
 ```
 
-到瀏覽器完成公司帳號 SSO 登入即可，之後不用再重複這步，除非 token 過期
-或切換到別的分享連結需要存取新資源（視租戶的 conditional access 政策）。
+在 Microsoft 登入頁完成公司帳號 SSO/MFA。若登入回報 app 未指派或租戶
+政策拒絕，停止重試並依「瀏覽器下載備援」處理，或請 IT 核准 app。
 
 ### 查詢檔案 metadata（info）
 
@@ -123,21 +159,25 @@ python scripts/sharepoint_sync.py write draft.docx --dry-run
 
 | 情況 | 處理 |
 | --- | --- |
-| 背景直接打連結收到 401 | 這就是本技能要解決的問題——改用 `login` 走一次 device-code 登入，之後用 `read`/`write` |
-| `login` 後 `read`/`write` 還是 401 | 重新執行一次 `login`（`--force` 行為已內建在 login 子指令）；也可能是這個帳號對該檔案本身沒有存取權限，需先在瀏覽器確認能不能打開 |
-| 公司政策擋掉預設 client id（AADSTS70011 之類錯誤） | 向 IT 申請一個 public client App Registration，設定 `SHAREPOINT_CLIENT_ID` 環境變數覆寫 |
+| 背景直接打連結收到 401 | 使用已核准的 Graph delegated app；若無法使用，透過合規瀏覽器由使用者下載 |
+| `AADSTS50105` / app 要求使用者指派 | 停止重試及切換 client ID；請 IT 指派使用者或提供核准的 app registration |
+| Chrome 因裝置或用戶端政策被阻擋 | 不要繞過政策；改用組織核准、符合裝置合規要求的 Edge，或按 IT 指示安裝核准的擴充功能 |
+| Graph API 回傳 401 | 確認 token、核准的 app 權限及檔案存取權；只有 token 過期或撤銷時才重新登入。若登入回報 `AADSTS50105`，停止重試並聯絡 IT |
+| Graph scope 未獲核准或 consent 被拒絕 | 請 IT 核准所需 delegated permissions；不要改用未核准的 client ID |
 | `SHAREPOINT_TENANT_ID` 不知道填什麼 | 先填 `common`，MSAL 登入時會依帳號自動導到正確租戶 |
 | token 快取檔案損毀或想重新登入 | 刪除 `~/.cache/skill-sharepoint-sync/token_cache.json` 後重跑 `login` |
 
 ## 完成前檢查
 
-- [ ] `login` 後已用 `info` 確認能正確解析分享連結，再進行 `read`/`write`
+- [ ] Graph 路徑使用核准的 app，且 `login` 後已用 `info` 確認能正確解析分享連結，再進行 `read`/`write`
 - [ ] `write` 前先用 `info` 或 `read` 確認目前版本，避免覆蓋別人未同步的變更
 - [ ] token 快取檔案（含 refresh token）只存在本機 `~/.cache/`，沒有提交進 git 或分享給他人
+- [ ] 瀏覽器 fallback 僅使用組織核准的合規瀏覽器與頁面下載功能；未複製或匯出瀏覽器憑證
 
 ## 未來可擴充方向（視需求而定）
 
-v1.0.0 只處理單一檔案的讀寫與登入快取。若後續出現以下需求，再依當時
+v1.1.0 支援單一檔案的 Graph 讀寫，以及在 Graph app/SSO 政策阻擋時由使用者
+透過合規瀏覽器下載。若後續出現以下需求，再依當時
 情境決定是否升版：
 
 - 批次處理多個分享連結或整個資料夾

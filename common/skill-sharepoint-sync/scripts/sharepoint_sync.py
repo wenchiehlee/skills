@@ -1,28 +1,27 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-sharepoint_sync.py — 用 Microsoft Graph API 讀寫一個 SharePoint 檔案，
-繞過企業 SSO 背景自動存取被擋（401 Unauthorized）的問題。
+sharepoint_sync.py — 透過租戶核准的 OAuth delegated 認證讀寫一個
+SharePoint 檔案。
 
 背景：像 barcozone.sharepoint.com 這類企業 SharePoint 站點要求 Azure AD
 SSO 登入，單純用 requests/urllib 背景連線下載分享連結會收到 401。本腳本
-改用 MSAL device-code flow 走一次互動式 Azure AD 登入，之後把 refresh
-token 快取在本地檔案，後續執行可以靜默（silent）換發 access token，不
-需要每次都重新登入，也不需要 IT 另外申請 App Registration（預設使用
-Microsoft 官方公開用戶端 ID）。
+改用 MSAL delegated device-code flow 取得 access token，並在本地快取 token。
+登入仍受租戶的 app assignment、permission consent 與 Conditional Access
+政策限制；預設 client ID 不保證可供每個租戶或使用者使用。
 
 環境變數：
     SHAREPOINT_TENANT_ID   Azure AD 租戶 ID 或網域（例如 barco.onmicrosoft.com），
                            不確定可先填 "common"，登入時用公司帳號即可
-    SHAREPOINT_CLIENT_ID   選填，Azure AD App（public client）的 client ID。
-                           未設定時預設用 Microsoft Graph PowerShell 的
-                           公開用戶端 ID（多數租戶已預先同意基本讀寫權限）
+    SHAREPOINT_CLIENT_ID   選填，IT 核准或指派的 public-client app ID。
+                           未設定時使用 Microsoft Graph PowerShell 公開
+                           用戶端 ID；租戶可能要求指派或拒絕此 app。
     SHAREPOINT_SHARE_URL   目標檔案的 SharePoint 分享連結或檔案網址
                            （就是瀏覽器點開會要求 SSO 登入、背景存取會
                            401 的那個連結）
 
 用法：
-    # 第一次使用：跑一次 device code 登入，把 token 快取到本地
+    # 第一次使用：以租戶核准的 app 跑 device-code 登入並快取 token
     python scripts/sharepoint_sync.py login
 
     # 讀取檔案內容，存成本地檔案
@@ -62,11 +61,10 @@ except ImportError:
 
 
 # Microsoft Graph PowerShell 的公開（public client）App ID。
-# 多數 Azure AD 租戶已經預先存在這個 App 並同意過基本 Graph 權限，
-# 用它走 device-code flow 通常不需要再向 IT 申請自己的 App Registration。
+# 租戶仍可能要求 app assignment、permission consent 或 Conditional Access。
 DEFAULT_CLIENT_ID = "14d82eec-204b-4c2f-b7e8-296a70dab67e"
 
-SCOPES = ["Files.ReadWrite.All", "Sites.ReadWrite.All", "offline_access"]
+SCOPES = ["Files.ReadWrite.All", "Sites.ReadWrite.All"]
 
 GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 
@@ -156,8 +154,8 @@ def resolve_drive_item(token: str, share_url: str) -> dict:
     resp = requests.get(url, headers=headers)
     if resp.status_code == 401:
         print(
-            "ERROR: Graph API 回傳 401 — token 可能已過期或帳號沒有這個檔案的存取權限。"
-            " 試著重新執行 'login' 子指令。",
+            "ERROR: Graph API 回傳 401 — 請確認 token、核准的 app 權限，"
+            "以及帳號對此檔案的存取權。若登入回報 AADSTS50105，請停止重試並聯絡 IT。",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -232,7 +230,11 @@ def cmd_write(args: argparse.Namespace) -> None:
     }
     resp = requests.put(content_url, headers=headers, data=data)
     if resp.status_code == 401:
-        print("ERROR: 認證失敗（401），試著重新執行 'login'", file=sys.stderr)
+        print(
+            "ERROR: Graph API 認證失敗（401）— 請確認 token、核准的 app 權限，"
+            "以及帳號對此檔案的存取權。",
+            file=sys.stderr,
+        )
         sys.exit(1)
     resp.raise_for_status()
     result = resp.json()
@@ -243,7 +245,7 @@ def cmd_write(args: argparse.Namespace) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="用 Microsoft Graph API 讀寫一個 SharePoint 檔案，繞過背景存取 401"
+        description="用租戶核准的 Microsoft Graph delegated app 讀寫一個 SharePoint 檔案"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
