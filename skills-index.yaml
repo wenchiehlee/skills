@@ -190,6 +190,19 @@ skills:
   repo_count: 1
   updated_at: '2026-07-07'
   revised_at: '2026-10-05'
+- name: skill-confluence-sync
+  group: common
+  path: common/skill-confluence-sync
+  version: 1.0.0
+  description: Read and overwrite a single Confluence Wiki page via REST API using
+    CONFLUENCE_EMAIL / CONFLUENCE_API_TOKEN / CONFLUENCE_BASE_URL / CONFLUENCE_PAGE_ID,
+    based on SpillwaveSolutions/confluence-skill.
+  category: basic
+  maintainer: wenchiehlee-money
+  source: https://github.com/SpillwaveSolutions/confluence-skill
+  repo_count: 0
+  updated_at: '2026-10-14'
+  revised_at: '2026-10-14'
 - name: skill-container-manager-orchestrator
   group: common
   path: common/skill-container-manager-orchestrator

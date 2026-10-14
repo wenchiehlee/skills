@@ -81,6 +81,7 @@
 | [skill-company-reputation-research](common/skill-company-reputation-research) | common | basic | 0.1.1 | 1 | Collect Taiwan and global public jobseeker intelligence for a specified company, including employer reviews, interview/salary transparency, workplace reputation, labor/legal signals, layoffs, and recurring red flags. | 2026-10-05 |
 | [skill-document-diagram-design](common/skill-document-diagram-design) | common | document | 1.4.0 | — | 以 cathrynlavery/diagram-design 的編輯級圖表方法論，產生可嵌入 Docsify、Material for MkDocs、PowerPoint 的圖表，或以 open-slide／mkslides 輸出具互動的簡報；支援從既有 PlantUML/Mermaid 原始碼或圖片匯入語意後，改畫成統一風格的原生 SVG。 | 2026-10-05 |
 | [skill-pptx-to-md](common/skill-pptx-to-md) | common | document | 1.0.1 | — | 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。 | 2026-10-05 |
+| [skill-confluence-sync](common/skill-confluence-sync) | common | basic | 1.0.0 | — | Read and overwrite a single Confluence Wiki page via REST API using CONFLUENCE_EMAIL / CONFLUENCE_API_TOKEN / CONFLUENCE_BASE_URL / CONFLUENCE_PAGE_ID, based on SpillwaveSolutions/confluence-skill. | 2026-10-14 |
 
 最後產生日期：2026-10-14
 <!-- SKILLS-TABLE:END -->
