@@ -32,15 +32,31 @@ SSO 登入，單純用 requests/urllib 背景連線下載分享連結會收到 4
 
     # 用本地檔案覆寫 SharePoint 上的檔案內容
     python scripts/sharepoint_sync.py write draft.docx
+
+    # 以 Microsoft Edge 開啟 SharePoint 檔案並啟用 CDP 遠端偵錯（預設埠 9222）
+    python scripts/sharepoint_sync.py edge
 """
 from __future__ import annotations
 
 import argparse
 import base64
 import os
+import platform
+import shutil
+import subprocess
 import sys
+import time
+import urllib.parse
 from pathlib import Path
 from typing import Optional
+
+# Fix Windows console encoding for Chinese characters
+if platform.system() == "Windows":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 import requests
 
@@ -243,6 +259,151 @@ def cmd_write(args: argparse.Namespace) -> None:
     print(result.get("webUrl"))
 
 
+def find_edge_path() -> Optional[Path]:
+    """尋找 Microsoft Edge 執行檔路徑。"""
+    p = shutil.which("msedge")
+    if p:
+        return Path(p)
+    candidates = [
+        Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"))
+        / "Microsoft"
+        / "Edge"
+        / "Application"
+        / "msedge.exe",
+        Path(os.environ.get("ProgramFiles", r"C:\Program Files"))
+        / "Microsoft"
+        / "Edge"
+        / "Application"
+        / "msedge.exe",
+        Path(os.environ.get("LOCALAPPDATA", ""))
+        / "Microsoft"
+        / "Edge"
+        / "Application"
+        / "msedge.exe",
+    ]
+    for c in candidates:
+        if c.exists():
+            return c
+    return None
+
+
+def check_cdp_status(port: int = 9222) -> Optional[dict]:
+    """檢查 CDP 埠號是否可正常通訊，回傳 /json/version 資料。"""
+    try:
+        resp = requests.get(f"http://127.0.0.1:{port}/json/version", timeout=1.5)
+        if resp.status_code == 200:
+            return resp.json()
+    except Exception:
+        pass
+    return None
+
+
+def get_cdp_targets(port: int = 9222) -> list[dict]:
+    """取得目前 Edge 瀏覽器中所有 targets / tabs。"""
+    try:
+        resp = requests.get(f"http://127.0.0.1:{port}/json/list", timeout=2)
+        if resp.status_code == 200:
+            return resp.json()
+    except Exception:
+        pass
+    return []
+
+
+def open_cdp_tab(url: str, port: int = 9222) -> Optional[dict]:
+    """透過 CDP HTTP endpoint 在既有瀏覽器實例中建立新分頁並導向 URL。"""
+    try:
+        quoted = urllib.parse.quote(url, safe=":/?#[]@!$&'()*+,;=")
+        resp = requests.put(f"http://127.0.0.1:{port}/json/new?{quoted}", timeout=3)
+        if resp.status_code == 200:
+            return resp.json()
+    except Exception:
+        pass
+    return None
+
+
+def cmd_edge(args: argparse.Namespace) -> None:
+    port = args.port
+    share_url = args.url or os.getenv("SHAREPOINT_SHARE_URL")
+
+    if args.check_only:
+        ver = check_cdp_status(port)
+        if ver:
+            print(f"✓ CDP 遠端偵錯埠 (127.0.0.1:{port}) 連線正常")
+            print(f"  瀏覽器版本 : {ver.get('Browser')}")
+            print(f"  通訊協定   : {ver.get('Protocol-Version')}")
+            print(f"  WebSocket  : {ver.get('webSocketDebuggerUrl')}")
+            targets = get_cdp_targets(port)
+            print(f"  目前分頁數 : {len(targets)}")
+            for t in targets[:5]:
+                print(f"    - [{t.get('type')}] {t.get('title', '')[:40]} ({t.get('url', '')[:60]})")
+        else:
+            print(f"✗ 無法連線至 CDP 埠號 127.0.0.1:{port}。請確認 Edge 是否已帶 --remote-debugging-port 啟動。")
+            sys.exit(1)
+        return
+
+    if not share_url:
+        print("ERROR: 缺少目標檔案連結，請使用 --url 指定或在 .env 設定 SHAREPOINT_SHARE_URL", file=sys.stderr)
+        sys.exit(1)
+
+    # 檢查 CDP 是否已經在監聽
+    ver = check_cdp_status(port)
+    if ver:
+        print(f"✓ 偵測到既有 Edge 已啟用 CDP（127.0.0.1:{port}，{ver.get('Browser')}）")
+        tab = open_cdp_tab(share_url, port)
+        if tab:
+            print(f"✓ 已透過 CDP 開啟分頁: {share_url}")
+            print(f"  分頁 ID    : {tab.get('id')}")
+            print(f"  WebSocket  : {tab.get('webSocketDebuggerUrl')}")
+        else:
+            print(f"⚠️  CDP 埠號在線上，但建立分頁失敗，請手動確認瀏覽器視窗。")
+        return
+
+    # 未監聽，需啟動 Edge
+    edge_bin = find_edge_path()
+    if not edge_bin:
+        print("ERROR: 找不到 Microsoft Edge 執行檔 (msedge.exe)", file=sys.stderr)
+        sys.exit(1)
+
+    cmd = [str(edge_bin), f"--remote-debugging-port={port}"]
+
+    if args.kill_existing:
+        print("正在關閉既有 msedge 行程以套用預設 Profile 並啟用 CDP…")
+        subprocess.run(["taskkill", "/IM", "msedge.exe", "/F"], capture_output=True)
+        time.sleep(1)
+    else:
+        # 使用專用 User Data Dir，確保即使一般 Edge 正在執行也能成功啟動獨立 CDP 實例
+        user_data_dir = args.user_data_dir
+        if not user_data_dir:
+            base_appdata = os.environ.get("LOCALAPPDATA", str(Path.home()))
+            user_data_dir = str(Path(base_appdata) / "Microsoft" / "Edge" / "User Data - CDP")
+        cmd.append(f"--user-data-dir={user_data_dir}")
+
+    cmd.append(share_url)
+
+    print(f"啟動 Microsoft Edge 並啟用 CDP（埠號 {port}）…")
+    flags = (
+        subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
+        if platform.system() == "Windows"
+        else 0
+    )
+    subprocess.Popen(cmd, creationflags=flags)
+
+    # 等待 CDP 埠號就緒
+    connected = False
+    for _ in range(10):
+        time.sleep(0.5)
+        ver = check_cdp_status(port)
+        if ver:
+            connected = True
+            print(f"✓ Edge 已就緒且 CDP 監聽中（127.0.0.1:{port}）")
+            print(f"  瀏覽器版本 : {ver.get('Browser')}")
+            print(f"  WebSocket  : {ver.get('webSocketDebuggerUrl')}")
+            break
+
+    if not connected:
+        print(f"⚠️  Edge 已啟動，但在 5 秒內未能偵測到 CDP 埠號 {port}。若未開啟成功，請嘗試加上 --kill-existing。")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="用租戶核准的 Microsoft Graph delegated app 讀寫一個 SharePoint 檔案"
@@ -267,6 +428,29 @@ def main() -> None:
     write_parser.add_argument("--url", help="覆寫 SHAREPOINT_SHARE_URL")
     write_parser.add_argument("--dry-run", action="store_true", help="預覽但不送出")
     write_parser.set_defaults(func=cmd_write)
+
+    edge_parser = subparsers.add_parser(
+        "edge",
+        aliases=["open-edge"],
+        help="以 Microsoft Edge 開啟 SharePoint 檔案並啟用 CDP 遠端偵錯（預設埠 9222）",
+    )
+    edge_parser.add_argument("--url", help="覆寫 SHAREPOINT_SHARE_URL")
+    edge_parser.add_argument("--port", type=int, default=9222, help="CDP 遠端偵錯埠號（預設 9222）")
+    edge_parser.add_argument(
+        "--user-data-dir",
+        help="自訂 Profile 路徑（預設使用 %%LOCALAPPDATA%%\\Microsoft\\Edge\\User Data - CDP）",
+    )
+    edge_parser.add_argument(
+        "--kill-existing",
+        action="store_true",
+        help="強制關閉既有 Edge 行程，以預設 Profile 啟動 CDP",
+    )
+    edge_parser.add_argument(
+        "--check-only",
+        action="store_true",
+        help="僅檢查 CDP 埠號是否正常連線，不重新啟動瀏覽器",
+    )
+    edge_parser.set_defaults(func=cmd_edge)
 
     args = parser.parse_args()
     args.func(args)

@@ -1,6 +1,6 @@
 ---
 name: skill-sharepoint-sync
-description: Access a single SharePoint file through an approved Microsoft Graph delegated app or the user's policy-compliant signed-in browser. Use when asked to download or sync a SharePoint file, when a *.sharepoint.com background fetch returns 401, or when enterprise SSO or device-compliance policy blocks automated access.
+description: Access a single SharePoint file through an approved Microsoft Graph delegated app or policy-compliant Microsoft Edge with CDP remote debugging enabled. Use when asked to download or sync a SharePoint file, when a *.sharepoint.com background fetch returns 401, or when enterprise SSO or device-compliance policy requires browser-assisted access with CDP automation.
 ---
 
 # SharePoint Sync Skill（符合企業政策的單檔讀寫與下載）
@@ -64,25 +64,47 @@ description: Access a single SharePoint file through an approved Microsoft Graph
 1. 在組織核准且符合裝置合規要求的瀏覽器開啟原始 SharePoint 連結。若
    Chrome 被要求安裝組織擴充功能，只有在使用者/IT 核准時才安裝；可改用
    組織核准的 Microsoft Edge。
-   Windows 上若 Edge 已安裝，可將原始連結交給 Edge 開啟：
+   Windows 上若 Edge 已安裝，建議使用腳本開啟並同步啟用 **CDP（Chrome DevTools Protocol）遠端偵錯**，以便自動化工具或 Agent 協助導覽與下載：
+
+   **方式 A：透過內建指令啟動 Edge 與 CDP（推薦）**
+
+   ```bash
+   python scripts/sharepoint_sync.py edge
+   ```
+
+   - 腳本會自動尋找 Edge 執行檔並帶 `--remote-debugging-port=9222` 啟動。
+   - 預設使用專用 CDP Profile（`%LOCALAPPDATA%\Microsoft\Edge\User Data - CDP`），即使一般 Edge 正在使用也能獨立執行。
+   - 若已有啟用 CDP 的 Edge 在執行中，腳本會直接在該瀏覽器中開啟新分頁，避免重複啟動。
+   - 若要強制重啟並使用系統預設登入 Profile，可加上 `--kill-existing`。
+
+   **方式 B：透過 PowerShell 指令直接啟動**
 
    ```powershell
+   $edge = "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
    $url = "<SharePoint share URL>"
-   Start-Process "microsoft-edge:$url"
+   $cdpDataDir = "$env:LOCALAPPDATA\Microsoft\Edge\User Data - CDP"
+   Start-Process $edge -ArgumentList "--remote-debugging-port=9222", "--user-data-dir=$cdpDataDir", "$url"
+   ```
+
+   **驗證 CDP 連線狀態**：
+   ```bash
+   python scripts/sharepoint_sync.py edge --check-only
+   ```
+   或以 PowerShell 檢查：
+   ```powershell
+   Invoke-RestMethod http://127.0.0.1:9222/json/version
    ```
 
 2. 由使用者直接在瀏覽器完成登入與 MFA。不得請使用者把密碼、MFA 驗證碼
    或瀏覽器 token 貼到對話中。
-3. 使用 SharePoint 頁面提供的 **Download** 功能。若目前工具無法控制該
-   合規瀏覽器，請使用者自行下載並提供本機檔案；不要宣稱已下載，除非
-   已確認檔案實際存在。
+3. 使用 SharePoint 頁面提供的 **Download** 功能。若已啟用 CDP，自動化工具可連線至 `http://127.0.0.1:9222` 進行合規的頁面導覽與下載觸發；若未啟用或無法連線，請使用者自行下載並提供本機檔案；不要宣稱已下載，除非已確認檔案實際存在。
 
 瀏覽器 fallback 只使用瀏覽器正常提供的已登入頁面與下載操作；它不會為
 Graph 腳本建立 token cache，也不會讀取或匯出瀏覽器憑證。若 Graph API
 仍是必要路徑，請 IT 指派目前 app，或提供核准的 public-client app 與所需
 delegated permissions。
 
-Chrome DevTools/CDP 只能連到已符合組織政策的使用者瀏覽器，並用於正常的
+Chrome DevTools / CDP 只能連到已符合組織政策的使用者瀏覽器，並用於正常的
 頁面導覽與下載操作；不得建立未受管理的替代 session、讀取瀏覽器儲存區，
 或檢查/複製網路請求中的 cookie 與 token。
 
@@ -150,10 +172,22 @@ python scripts/sharepoint_sync.py write draft.docx --dry-run
 
 `write` 是整份檔案覆寫（PUT content），不是差異合併。
 
+### 以 Edge 開啟並啟用 CDP 遠端偵錯（edge）
+
+```bash
+# 使用預設埠號 9222 與專用 Profile 開啟 SharePoint 檔案
+python scripts/sharepoint_sync.py edge
+
+# 僅檢查 CDP 連線狀態與當前分頁清單
+python scripts/sharepoint_sync.py edge --check-only
+
+# 指定其他 SharePoint 檔案網址
+python scripts/sharepoint_sync.py edge --url "https://barcozone.sharepoint.com/:p:/r/..."
+```
+
 ### 用 `--url` 覆寫目標檔案
 
-四個子指令都支援 `--url`，可臨時指定另一個分享連結，蓋過
-`SHAREPOINT_SHARE_URL`。
+五個子指令（`login` / `info` / `read` / `write` / `edge`）都支援 `--url`，可臨時指定另一個分享連結，蓋過 `SHAREPOINT_SHARE_URL`。
 
 ## 常見錯誤
 
