@@ -54,6 +54,7 @@
 | [skill-google-alert-fetch](common/skill-google-alert-fetch) | common | financial-data | 1.2.0 | 1 | 維運 GoogleAlertManager 的 Google Alerts 抓取管線，並提供內建 scripts/google_alert_fetch.py 以更新股票觀察/專注清單 CSV、檢查 README/focus CSV 一致性、依 focus CSV 重建 README、同步/匯出 RSS、抓取文章、LLM 分析評分、人工標註與 sync-stale issue 自動化。 | 2026-10-05 |
 | [skill-institutional-thesis-research](common/skill-institutional-thesis-research) | common | financial-strategy | 1.2.0 | 1 | Maintain auditable five-institution investment thesis research and interpret articles/news through selected institutional lenses for TW-institutional-investment-theses. | 2026-10-05 |
 | [skill-company-enrichment-render](common/skill-company-enrichment-render) | common | financial-data | 1.1.1 | 1 | Render My-TW-Coverage canonical enrichment JSON into organized Markdown without using Pilot_Reports as an active source. | 2026-10-05 |
+| [skill-sharepoint-sync](common/skill-sharepoint-sync) | common | basic | 1.1.0 | 1 | Access a single SharePoint file through an approved Microsoft Graph delegated app or the user's policy-compliant signed-in browser. | 2026-10-14 |
 | [skill-stock-pipeline-health-monitor](common/skill-stock-pipeline-health-monitor) | common | financial-data | 1.1.0 | 1 | 複合技能：委派給所有 skill-*-fetch 抓取技能，維護 Data Health Dashboard 新鮮度、資料系統架構 Repo 角色對照表，並稽核跨 repo CSV 同步 YAML 與 GoodInfo/FinMind 智慧選源。 | 2026-10-05 |
 | [skill-tw-legal-search-console](common/skill-tw-legal-search-console) | common | basic | 1.1.0 | 1 | 台灣人物法律查核搜尋主控台——支援兩種輸入模式：(1) 一篇提及人物的新聞連結 (2) 人名（建議附地區/公司/職稱等輔助資訊）。整合 tw-legal-rag（22,534,636 筆裁判書語義檢索，含引用防護）、司法院裁判書系統即時備援查詢與新聞搜尋佐證，依身分比對信心與風險分級規則產出查核報告。當使用者提供新聞連結或人名，要求「查有無官司」「法律查核」「背景調查」時使用。 | 2026-10-05 |
 | [skill-yahoo-finance-fetch](common/skill-yahoo-finance-fetch) | common | financial-data | 1.1.0 | 1 | Fetch Yahoo Finance analyst estimates, daily/60-minute price history, and Wayback Machine historical consensus for Taiwan and US stocks into long-format raw CSVs. | 2026-10-05 |
@@ -82,7 +83,6 @@
 | [skill-document-diagram-design](common/skill-document-diagram-design) | common | document | 1.4.0 | — | 以 cathrynlavery/diagram-design 的編輯級圖表方法論，產生可嵌入 Docsify、Material for MkDocs、PowerPoint 的圖表，或以 open-slide／mkslides 輸出具互動的簡報；支援從既有 PlantUML/Mermaid 原始碼或圖片匯入語意後，改畫成統一風格的原生 SVG。 | 2026-10-05 |
 | [skill-pptx-to-md](common/skill-pptx-to-md) | common | document | 1.0.1 | — | 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。 | 2026-10-05 |
 | [skill-confluence-sync](common/skill-confluence-sync) | common | basic | 1.0.0 | — | Read and overwrite a single Confluence Wiki page via REST API using CONFLUENCE_EMAIL / CONFLUENCE_API_TOKEN / CONFLUENCE_BASE_URL / CONFLUENCE_PAGE_ID, based on SpillwaveSolutions/confluence-skill. | 2026-10-14 |
-| [skill-sharepoint-sync](common/skill-sharepoint-sync) | common | basic | 1.0.0 | — | Resolve SharePoint SSO 401 blocking automated access by authenticating via Microsoft Graph API (MSAL device-code login, cached token), then read/write a single SharePoint file. | 2026-10-14 |
 
 最後產生日期：2026-10-14
 <!-- SKILLS-TABLE:END -->

@@ -471,14 +471,13 @@ skills:
 - name: skill-sharepoint-sync
   group: common
   path: common/skill-sharepoint-sync
-  version: 1.0.0
-  description: Resolve SharePoint SSO 401 blocking automated access by authenticating
-    via Microsoft Graph API (MSAL device-code login, cached token), then read/write
-    a single SharePoint file.
+  version: 1.1.0
+  description: Access a single SharePoint file through an approved Microsoft Graph
+    delegated app or the user's policy-compliant signed-in browser.
   category: basic
   maintainer: wenchiehlee-money
   source: https://learn.microsoft.com/en-us/graph/auth-v2-user
-  repo_count: 0
+  repo_count: 1
   updated_at: '2026-10-14'
   revised_at: '2026-10-14'
 - name: skill-stock-dynamic-valuation-box
