@@ -15,7 +15,7 @@ import re
 import subprocess
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -88,6 +88,20 @@ except (OSError, ValueError, KeyError):
     CHART_MARKER = "chart-version: skill-stock-dynamic-valuation-box@unknown"
 
 
+UPDATED_RE = re.compile(r"Updated: (\d{4}-\d{2}-\d{2} \d{2}:\d{2}) CST")
+CHART_TZ = timezone(timedelta(hours=8))
+
+
+def _updated_at(text: str) -> datetime | None:
+    match = UPDATED_RE.search(text)
+    if not match:
+        return None
+    try:
+        return datetime.strptime(match.group(1), "%Y-%m-%d %H:%M").replace(tzinfo=CHART_TZ)
+    except ValueError:
+        return None
+
+
 def _complete(output_dir: Path, symbol: str, max_age_days: float | None = None) -> bool:
     artifacts = [output_dir / f"{symbol}{suffix}" for suffix in ARTIFACT_SUFFIXES]
     if not all(path.is_file() for path in artifacts):
@@ -95,15 +109,20 @@ def _complete(output_dir: Path, symbol: str, max_age_days: float | None = None) 
     try:
         svg_text = artifacts[1].read_text(encoding="utf-8")
         csv_text = artifacts[2].read_text(encoding="utf-8")
-        svg_ok = CHART_MARKER in svg_text and "Updated: " in svg_text
-        csv_ok = CHART_MARKER in csv_text and "Updated: " in csv_text
+        svg_updated = _updated_at(svg_text)
+        csv_updated = _updated_at(csv_text)
+        svg_ok = CHART_MARKER in svg_text and svg_updated is not None
+        csv_ok = CHART_MARKER in csv_text and csv_updated is not None
         png_ok = False
+        png_updated = None
         try:
             from PIL import Image
             with Image.open(artifacts[0]) as image:
+                png_version = image.info.get("ChartVersion", "")
+                png_updated = _updated_at(image.info.get("Updated", ""))
                 png_ok = (
-                    image.info.get("ChartVersion", "") == CHART_MARKER.removeprefix("chart-version: ")
-                    and bool(image.info.get("Updated", ""))
+                    png_version == CHART_MARKER.removeprefix("chart-version: ")
+                    and png_updated is not None
                 )
         except (ImportError, OSError):
             pass
@@ -111,8 +130,8 @@ def _complete(output_dir: Path, symbol: str, max_age_days: float | None = None) 
             return False
         if max_age_days is None:
             return True
-        cutoff = time.time() - max_age_days * 86400
-        return all(path.stat().st_mtime >= cutoff for path in artifacts)
+        cutoff = datetime.now(timezone.utc) - timedelta(days=max_age_days)
+        return min(svg_updated, csv_updated, png_updated) >= cutoff
     except (OSError, UnicodeDecodeError):
         return False
 

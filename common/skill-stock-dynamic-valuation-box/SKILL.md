@@ -129,13 +129,24 @@ On the bottom EPS panel, Yahoo and FactSet are **not** pooled. Each source has o
 - If the trade CSV is used for a retrospective, derive it from the matched buy/sell records, including the source lot's actual buy date. Do not infer a buy date from price alone.
 - Compare the final close and band values against the CSV before calling a chart a decision record.
 
+## FinMind 限流與快取協作規則
+
+本 skill 依賴 `skill-finmind-fetch`，因此必須共同遵守相同的限流安全規則：
+
+- 優先使用 `skill-finmind-fetch` 產生的同步 CSV；快照已涵蓋 `--end-date` 時不得呼叫 FinMind。只對快照缺少的日期執行 gap-fill。
+- 402、`reach the upper limit` 或連續 4xx 可能代表 Token、帳戶、資料集或共享 runner IP 被限流；不可因 `user_info` 顯示尚有額度就立即高速重試。
+- Live fallback 必須採低並行度、有限次數的退避重試（預設 30/90/300 秒），並在仍遭拒絕時保留失敗記錄、停止該 symbol，而不是無限輪替 Token。
+- 批次 renderer 應可部分成功；單一 symbol 的 API 限流不得覆蓋其他 symbol 已產生的 PNG、SVG 與 CSV。
+- 不得把多 Token pool 當成繞過共享 IP 限流的方法；批次規模應依實際每小時請求預算與快取命中率安排。
+
+
 ## FinMind token resolution
 
 Reads a `.env` file (via `python-dotenv`, if installed) in addition to already-exported environment variables, then checks, in order: `FINMIND_TOKEN`, `FINMIND_API_TOKEN`, `FINMIND_TOKEN1`..`FINMIND_TOKEN7` (and up to `FINMIND_TOKEN20`), `FINDMIND_GMAIL_TOKEN`, `FINDMIND_GMAIL_TOKEN1`..`FINDMIND_GMAIL_TOKEN7` (the last group's "FINDMIND" spelling matches `skill-finmind-fetch`'s own convention, which this skill does not import — the name list is duplicated here instead of adding a hard dependency on that skill's heavier `requests`/`python-dotenv` fetch module). Every configured token is pooled: on an HTTP 402 or a `"reach the upper limit"`/`"token is illegal"` response the exhausted token is retired for the rest of the process and the next one is tried, so one run can outlast a single account's quota (FinMind's quota window resets hourly, not daily; with 7 tokens, the total hourly pool is 4,200 requests/hr). With none configured, requests fall back to anonymous FinMind access (a small but real quota) and a one-time warning is printed to stderr; a run that also finds every token or anonymous access already exhausted raises a `RuntimeError` naming the checked env vars, rather than surfacing a bare `HTTP Error 402` deep in a traceback.
 
 ## Batch rendering & Tiered Priority Queue
 
-`scripts/render_dynamic_valuation_batch.py` wraps the per-symbol renderer for bulk runs: it scans a directory of company JSON files (`--json-dir`, default `data/enrichment_all`) for numeric tickers, skips ones whose three artifacts (`.png`/`.svg`/`.csv`) already exist unless `--force` is passed or `--max-age-days` is exceeded, runs the renderer as a subprocess per symbol with a configurable worker pool (`--workers`), and writes any failures to a TSV (`--failure-log`) with tokens redacted from the captured stderr/stdout — so a partial batch run is retryable without re-rendering everything or leaking a credential into the log. It inherits the parent process's full environment into each subprocess, so the same `TOKEN_ENV_NAMES` pool above governs every worker; `--token-env-prefix` (default `FINMIND_TOKEN`) and `--workers` only affect this wrapper's own worker-count heuristic, not which token a given subprocess actually uses.
+`scripts/render_dynamic_valuation_batch.py` wraps the per-symbol renderer for bulk runs: it scans a directory of company JSON files (`--json-dir`, default `data/enrichment_all`) for numeric tickers, skips only artifact sets whose SVG/CSV footer and PNG metadata carry the current skill marker and whose `Updated: ... CST` timestamp is within `--max-age-days` (never filesystem mtime, which GitHub checkout resets), runs the renderer as a subprocess per symbol with a configurable worker pool (`--workers`), and writes any failures to a TSV (`--failure-log`) with tokens redacted from the captured stderr/stdout — so a partial batch run is retryable without re-rendering everything or leaking a credential into the log. It inherits the parent process's full environment into each subprocess, so the same `TOKEN_ENV_NAMES` pool above governs every worker; `--token-env-prefix` (default `FINMIND_TOKEN`) and `--workers` only affect this wrapper's own worker-count heuristic, not which token a given subprocess actually uses.
 
 ### Tiered Quota Formulation (4-Tier Architecture)
 

@@ -1,3 +1,5 @@
+- 1.22.0 (2026-10-14)：批次 renderer 與 health manifest 改用圖表 footer/PNG metadata 的 `Updated` timestamp 判斷新鮮度，不再使用 Git checkout 會重設的檔案 mtime。
+
 - 1.18.0 (2026-10-04)：批次更新支援 `--priority-symbols-file`；每日 workflow 優先處理 `AI_伺服器` 主題中仍缺少目前 skill 版本或已超過更新期限的圖表，之後才輪到一般佇列。
 
 # skill-stock-dynamic-valuation-box
