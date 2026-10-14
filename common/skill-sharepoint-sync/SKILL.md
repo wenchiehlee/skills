@@ -178,6 +178,9 @@ python scripts/sharepoint_sync.py write draft.docx --dry-run
 # 使用預設埠號 9222 與專用 Profile 開啟 SharePoint 檔案
 python scripts/sharepoint_sync.py edge
 
+# 開啟並透過 CDP 自動點擊下載檔案至指定目錄
+python scripts/sharepoint_sync.py edge --download --output-dir downloads
+
 # 僅檢查 CDP 連線狀態與當前分頁清單
 python scripts/sharepoint_sync.py edge --check-only
 
