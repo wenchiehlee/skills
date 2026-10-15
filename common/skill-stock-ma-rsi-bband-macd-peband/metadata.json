@@ -43,8 +43,8 @@
     {
       "repo": "wenchiehlee-money/TW-institutional-research",
       "role": "consumer",
-      "local_path": "github.com/TW-institutional-research/skills/skill-stock-ma-rsi-bband-macd-peband",
-      "note": "2026-10-15重新命名+同步到v1.10.0：舊路徑skill-stock-MA-RSI-BBand-MACD-PEBand在10/8一次改名操作中因Windows大小寫不敏感檔案系統+Synology Drive同步衝突半途而廢（scripts/被搬進一個_CaseConflict資料夾、從未commit，頂層檔案停在v1.8.0未更新），兩邊都已清掉，改成乾淨的新路徑。"
+      "local_path": "github.com/TW-institutional-research/skills/skill-stock-MA-RSI-BBand-MACD-PEBand",
+      "note": "2026-10-15內容同步到v1.10.0，但資料夾名稱仍維持舊大小寫，沒有真的改名。原因：這個repo所在的機器/filesystem是Windows大小寫不敏感（git config裡core.ignorecase=true），10/8有人嘗試把這個資料夾改名成小寫，結果filesystem把新舊大小寫路徑解析成同一個實體目錄、git也把兩者當同一個索引項目，改名操作半途而廢——scripts/底下6個檔案被搬進一個從未commit的_CaseConflict資料夾（內容是v1.9.0，比這裡殘留的v1.8.0頂層檔案還新），已經清掉；內容本身已經補到v1.10.0（直接寫回原本的大寫路徑，因為在這台機器上寫入小寫路徑實際上就是寫同一個目錄）。之後除非改用大小寫敏感的環境操作這個repo，否則不要再嘗試改名這個資料夾。"
     },
     {
       "repo": "wenchiehlee-money/My-TW-Coverage",
