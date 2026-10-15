@@ -1,3 +1,5 @@
+- 1.23.0 (2026-10-15)：跟隨 skill-stock-ma-rsi-bband-macd-peband v1.10.0——`calc_pe_band_series()` 在樣本窗口內 TTM EPS 波動超過 3 倍（獲利基期換代，不是正常成長）時，該段日期的估值盒會整段變成 NaN（圖上自然斷區），不再畫出混了兩個不同 EPS 基準、從未真實發生過的估值帶。
+
 - 1.22.0 (2026-10-14)：批次 renderer 與 health manifest 改用圖表 footer/PNG metadata 的 `Updated` timestamp 判斷新鮮度，不再使用 Git checkout 會重設的檔案 mtime。
 
 - 1.18.0 (2026-10-04)：批次更新支援 `--priority-symbols-file`；每日 workflow 優先處理 `AI_伺服器` 主題中仍缺少目前 skill 版本或已超過更新期限的圖表，之後才輪到一般佇列。
