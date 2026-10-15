@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-10-14'
+generated_at: '2026-10-15'
 skills:
 - name: skill-android-adb-gadget
   group: common
@@ -483,7 +483,7 @@ skills:
 - name: skill-stock-dynamic-valuation-box
   group: common
   path: common/skill-stock-dynamic-valuation-box
-  version: 1.22.0
+  version: 1.23.0
   description: Render no-look-ahead Taiwan-stock time-price diagrams (2–5 year windows)
     with dynamic TTM P/E valuation boxes (μ±1σ/±2σ), an optional forward-EPS/forward-PE
     overlay sourced from Yahoo Finance and/or FactSet consensus feeds, optional matched
@@ -491,13 +491,16 @@ skills:
     nominal EPS, with a pooled multi-token FinMind rotation so one run can outlast
     a single account's daily quota. The μ/σ/±1σ/±2σ PE-band math itself is shared
     with skill-stock-ma-rsi-bband-macd-peband's calc_pe_band_series() rather than
-    reimplemented here.
+    reimplemented here — as of peband v1.10.0, that shared function now gaps the valuation
+    box (NaN) for date ranges where the trailing TTM EPS swung past a 3x regime-change
+    threshold within the lookback window, instead of drawing a band that blends two
+    incompatible earnings bases and never corresponds to any real historical price.
   category: financial-strategy
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
   repo_count: 2
-  updated_at: '2026-10-14'
-  revised_at: '2026-10-14'
+  updated_at: '2026-10-15'
+  revised_at: '2026-10-15'
 - name: skill-stock-earnings-calendar-monitor
   group: common
   path: common/skill-stock-earnings-calendar-monitor
@@ -536,16 +539,16 @@ skills:
 - name: skill-stock-ma-rsi-bband-macd-peband
   group: common
   path: common/skill-stock-ma-rsi-bband-macd-peband
-  version: 1.9.0
+  version: 1.10.0
   description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MACD）與標準 common market PE band；PEBand
     用 dated EPS historical PE series，支援 trailing TTM EPS builder、forward EPS、forward
-    consensus EPS、離散PE band分類（classify_pe_band，0~5共6段）。
+    consensus EPS、離散PE band分類（classify_pe_band，0~5共6段）。calc_pe_band()/calc_pe_band_series()會在樣本窗口內EPS波動超過3倍（EPS_REGIME_CHANGE_RATIO，判定為獲利基期換代而非正常成長）時整組band回傳空值/NaN，不產生從未真實發生過的估值目標。
   category: financial-strategy
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
-  repo_count: 2
-  updated_at: '2026-09-23'
-  revised_at: '2026-10-05'
+  repo_count: 3
+  updated_at: '2026-10-15'
+  revised_at: '2026-10-15'
 - name: skill-stock-market-cost-distribution
   group: common
   path: common/skill-stock-market-cost-distribution
