@@ -43,8 +43,8 @@
     {
       "repo": "wenchiehlee-money/TW-institutional-research",
       "role": "consumer",
-      "local_path": "github.com/TW-institutional-research/skills/skill-stock-MA-RSI-BBand-MACD-PEBand",
-      "note": "still under the pre-rename folder name; not yet renamed/synced to v1.9.0"
+      "local_path": "github.com/TW-institutional-research/skills/skill-stock-ma-rsi-bband-macd-peband",
+      "note": "2026-10-15重新命名+同步到v1.10.0：舊路徑skill-stock-MA-RSI-BBand-MACD-PEBand在10/8一次改名操作中因Windows大小寫不敏感檔案系統+Synology Drive同步衝突半途而廢（scripts/被搬進一個_CaseConflict資料夾、從未commit，頂層檔案停在v1.8.0未更新），兩邊都已清掉，改成乾淨的新路徑。"
     },
     {
       "repo": "wenchiehlee-money/My-TW-Coverage",
