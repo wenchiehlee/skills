@@ -84,7 +84,7 @@
 | [skill-pptx-to-md](common/skill-pptx-to-md) | common | document | 1.0.1 | — | 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。 | 2026-10-05 |
 | [skill-confluence-sync](common/skill-confluence-sync) | common | basic | 1.0.0 | — | Read and overwrite a single Confluence Wiki page via REST API using CONFLUENCE_EMAIL / CONFLUENCE_API_TOKEN / CONFLUENCE_BASE_URL / CONFLUENCE_PAGE_ID, based on SpillwaveSolutions/confluence-skill. | 2026-10-14 |
 
-最後產生日期：2026-10-16
+最後產生日期：2026-10-17
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理
