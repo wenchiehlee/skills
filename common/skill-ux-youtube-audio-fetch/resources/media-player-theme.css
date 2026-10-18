@@ -1,0 +1,212 @@
+/* ==========================================================================
+   YoutubeAudio.Fetch: Atmospheric Media Dark Theme
+   ========================================================================== */
+
+:root {
+  --yt-bg:            #0f0f13;
+  --yt-surface:       #18181f;
+  --yt-surface-hover: #22222b;
+  --yt-border:        #2a2a36;
+  --yt-primary:       #8b5cf6;
+  --yt-primary-glow:  rgba(139, 92, 246, 0.4);
+  --yt-accent:        #06b6d4;
+  --yt-magenta:       #ec4899;
+  --yt-text:          #f4f4f5;
+  --yt-text-muted:    #a1a1aa;
+}
+
+body {
+  background-color: var(--yt-bg);
+  color: var(--yt-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+  margin: 0;
+  padding-bottom: 90px; /* Space for fixed bottom player */
+}
+
+/* Track Card Grid */
+.yt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.yt-card {
+  background: var(--yt-surface);
+  border: 1px solid var(--yt-border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.yt-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--yt-primary);
+  box-shadow: 0 8px 24px -4px var(--yt-primary-glow);
+}
+
+.yt-thumb-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  overflow: hidden;
+}
+
+.yt-thumb-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.yt-duration-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.yt-card-content {
+  padding: 1rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.yt-card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0 0 0.5rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.yt-card-meta {
+  font-size: 0.8rem;
+  color: var(--yt-text-muted);
+  margin-bottom: 0.75rem;
+}
+
+/* Download Progress Pill */
+.yt-progress-container {
+  height: 6px;
+  background: var(--yt-border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: auto;
+}
+
+.yt-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--yt-primary), var(--yt-accent));
+  width: 65%; /* Dynamic */
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+/* Floating Bottom Player Bar */
+.yt-player-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: rgba(24, 24, 31, 0.92);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--yt-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  z-index: 50;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.yt-player-track {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 250px;
+}
+
+.yt-player-track img {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.yt-player-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-grow: 1;
+  max-width: 600px;
+  gap: 0.35rem;
+}
+
+.yt-control-buttons {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.yt-btn-play {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--yt-primary);
+  border: none;
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 12px var(--yt-primary-glow);
+  transition: transform 0.15s ease;
+}
+
+.yt-btn-play:hover {
+  transform: scale(1.08);
+}
+
+.yt-scrubber-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.yt-scrubber-time {
+  font-size: 0.75rem;
+  color: var(--yt-text-muted);
+  font-family: monospace;
+}
+
+.yt-scrubber-track {
+  flex-grow: 1;
+  height: 4px;
+  background: var(--yt-border);
+  border-radius: 999px;
+  position: relative;
+  cursor: pointer;
+}
+
+.yt-scrubber-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--yt-primary), var(--yt-accent));
+  width: 42%;
+  border-radius: 999px;
+}

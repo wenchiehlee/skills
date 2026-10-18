@@ -1,0 +1,131 @@
+<svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg"
+     width="1280" height="720">
+
+  <!-- Background: ultra clean white -->
+  <rect width="1280" height="720" fill="#FFFFFF"/>
+
+  <!-- Grid overlay -->
+  <g stroke="#E6EAF2" stroke-width="0.5">
+    <line x1="72"   y1="0" x2="72"   y2="720"/>
+    <line x1="1208" y1="0" x2="1208" y2="720"/>
+    <line x1="0"    y1="72"  x2="1280" y2="72"/>
+    <line x1="0"    y1="648" x2="1280" y2="648"/>
+  </g>
+
+  <!-- Left accent pillar -->
+  <rect x="72" y="72" width="4" height="576" fill="#2F6BFF"/>
+
+  <!-- Top metadata rail -->
+  <text x="96" y="108"
+        font-family="Inter, Arial, 'Microsoft JhengHei', sans-serif"
+        font-size="11" font-weight="600" fill="#6B6B6B"
+        letter-spacing="0.18em">
+    SKILL · DOCUMENT · PPT · DESIGN
+  </text>
+
+  <!-- Category tag -->
+  <rect x="96" y="118" width="120" height="18" rx="1" fill="#F7F9FC"/>
+  <line x1="96" y1="118" x2="96" y2="136" stroke="#2F6BFF" stroke-width="2"/>
+  <text x="103" y="131"
+        font-family="Inter, Arial, sans-serif"
+        font-size="9" font-weight="700" fill="#2F6BFF"
+        letter-spacing="0.12em">FUTURISTIC TECH</text>
+
+  <!-- Main title -->
+  <text x="96" y="300"
+        font-family="Inter, Arial, 'Microsoft JhengHei', sans-serif"
+        font-size="72" font-weight="800" fill="#2B2B2B"
+        text-anchor="start">
+    投影片設計
+  </text>
+  <text x="96" y="374"
+        font-family="Inter, Arial, 'Microsoft JhengHei', sans-serif"
+        font-size="72" font-weight="800" fill="#2B2B2B"
+        text-anchor="start">
+    技能
+  </text>
+
+  <!-- Subtitle -->
+  <text x="96" y="428"
+        font-family="Inter, Arial, 'Microsoft JhengHei', sans-serif"
+        font-size="20" font-weight="400" fill="#6B6B6B"
+        text-anchor="start">
+    skill-document-ppt-design · v1.0.0
+  </text>
+
+  <!-- Right panel: style list -->
+  <rect x="760" y="144" width="448" height="432" rx="2" fill="#F7F9FC"/>
+  <line x1="760" y1="144" x2="760" y2="576" stroke="#E6EAF2" stroke-width="1"/>
+
+  <text x="784" y="180"
+        font-family="Inter, Arial, sans-serif"
+        font-size="10" font-weight="700" fill="#6B6B6B"
+        letter-spacing="0.15em">HOUSE STYLES</text>
+
+  <!-- Style items -->
+  <g font-family="Inter, Arial, 'Microsoft JhengHei', sans-serif" font-size="14" fill="#2B2B2B">
+    <!-- 1 -->
+    <circle cx="784" cy="214" r="4" fill="#2F6BFF"/>
+    <text x="798" y="218" font-weight="600">Futuristic Tech Editorial</text>
+    <!-- 2 -->
+    <circle cx="784" cy="248" r="4" fill="#C8581A"/>
+    <text x="798" y="252" font-weight="600">Japanese Lifestyle Editorial</text>
+    <!-- 3 -->
+    <circle cx="784" cy="282" r="4" fill="#5B7FA6"/>
+    <text x="798" y="286" font-weight="600">Washi Paper &amp; Soft Glow</text>
+    <!-- 4 -->
+    <circle cx="784" cy="316" r="4" fill="#B2AC88"/>
+    <text x="798" y="320" font-weight="600">Soft 3D Clay</text>
+    <!-- 5 -->
+    <circle cx="784" cy="350" r="4" fill="#A68A64"/>
+    <text x="798" y="354" font-weight="600">Minimalist Luxury Branding</text>
+    <!-- 6 -->
+    <circle cx="784" cy="384" r="4" fill="#A7C7E7"/>
+    <text x="798" y="388" font-weight="600">Modern Illustration Editorial</text>
+    <!-- 7 -->
+    <circle cx="784" cy="418" r="4" fill="#6C7A89"/>
+    <text x="798" y="422" font-weight="600">Japanese Hand-Drawn Editorial</text>
+  </g>
+
+  <!-- Divider line in right panel -->
+  <line x1="784" y1="448" x2="1192" y2="448" stroke="#E6EAF2" stroke-width="1"/>
+
+  <!-- Bottom tagline in right panel -->
+  <text x="784" y="476"
+        font-family="Inter, Arial, 'Microsoft JhengHei', sans-serif"
+        font-size="12" fill="#6B6B6B">
+    一頁只保留一個清楚訊息。
+  </text>
+  <text x="784" y="496"
+        font-family="Inter, Arial, 'Microsoft JhengHei', sans-serif"
+        font-size="12" fill="#6B6B6B">
+    先讀懂內容，再套風格。
+  </text>
+  <text x="784" y="516"
+        font-family="Inter, Arial, 'Microsoft JhengHei', sans-serif"
+        font-size="12" fill="#6B6B6B">
+    色彩是系統，不是裝飾。
+  </text>
+
+  <!-- Source attribution -->
+  <text x="784" y="556"
+        font-family="Inter, Arial, sans-serif"
+        font-size="10" fill="#6B6B6B" letter-spacing="0.05em">
+    Based on: software-ai-life/Awesome-PPT-Design-Skills
+  </text>
+
+  <!-- Bottom coordinate detail -->
+  <text x="1208" y="660"
+        font-family="Inter, monospace, Arial, sans-serif"
+        font-size="10" fill="#E6EAF2" text-anchor="end">
+    [1280 × 720]
+  </text>
+
+  <!-- Bottom left skill name -->
+  <text x="96" y="660"
+        font-family="Inter, Arial, sans-serif"
+        font-size="10" fill="#E6EAF2">
+    skill-document-ppt-design
+  </text>
+
+</svg>

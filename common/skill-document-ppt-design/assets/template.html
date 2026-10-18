@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>skill-document-ppt-design — Template</title>
+  <style>
+    body {
+      margin: 0;
+      background: #1a1a2e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: Inter, Arial, 'Microsoft JhengHei', sans-serif;
+    }
+    .slide-container {
+      width: 1280px;
+      height: 720px;
+      position: relative;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    }
+    .label {
+      color: #888;
+      font-size: 13px;
+      margin-bottom: 12px;
+      letter-spacing: 0.08em;
+    }
+  </style>
+</head>
+<body>
+  <div class="label">SKILL-DOCUMENT-PPT-DESIGN · Futuristic Tech Editorial · Template</div>
+
+  <!-- ============================================================
+    SVG Canvas: viewBox="0 0 1280 720"
+    Replace this SVG with your generated slide content.
+    Rules:
+      - All text inside safe margins (72px from edge)
+      - Use <text> elements (not rasterized text)
+      - No filter / blur / shadow / external href
+      - Accent #2F6BFF sparingly (< 10% of area)
+  ============================================================ -->
+  <svg class="slide-container"
+       viewBox="0 0 1280 720"
+       xmlns="http://www.w3.org/2000/svg">
+
+    <!-- Background -->
+    <rect width="1280" height="720" fill="#FFFFFF"/>
+
+    <!-- Subtle grid overlay (12 columns) -->
+    <g stroke="#E6EAF2" stroke-width="0.5" opacity="0.6">
+      <!-- Vertical guides @ 72, 160, 253, 347, 440, 533, 627, 720, 813, 907, 1000, 1093, 1208 -->
+      <line x1="72"   y1="0" x2="72"   y2="720"/>
+      <line x1="160"  y1="0" x2="160"  y2="720"/>
+      <line x1="253"  y1="0" x2="253"  y2="720"/>
+      <line x1="347"  y1="0" x2="347"  y2="720"/>
+      <line x1="440"  y1="0" x2="440"  y2="720"/>
+      <line x1="533"  y1="0" x2="533"  y2="720"/>
+      <line x1="627"  y1="0" x2="627"  y2="720"/>
+      <line x1="720"  y1="0" x2="720"  y2="720"/>
+      <line x1="813"  y1="0" x2="813"  y2="720"/>
+      <line x1="907"  y1="0" x2="907"  y2="720"/>
+      <line x1="1000" y1="0" x2="1000" y2="720"/>
+      <line x1="1093" y1="0" x2="1093" y2="720"/>
+      <line x1="1208" y1="0" x2="1208" y2="720"/>
+      <!-- Horizontal guides -->
+      <line x1="0" y1="72"  x2="1280" y2="72"/>
+      <line x1="0" y1="648" x2="1280" y2="648"/>
+    </g>
+
+    <!-- Safe margin indicator (remove in production) -->
+    <rect x="72" y="72" width="1136" height="576"
+          fill="none" stroke="#E6EAF2" stroke-width="0.5" stroke-dasharray="4 4" opacity="0.4"/>
+
+    <!-- ── SLIDE CONTENT STARTS HERE ── -->
+
+    <!-- Section label -->
+    <text x="72" y="108"
+          font-family="Inter, Arial, 'Microsoft JhengHei', sans-serif"
+          font-size="12" font-weight="600" fill="#6B6B6B"
+          letter-spacing="0.15em" text-anchor="start">
+      SKILL · DOCUMENT · PPT · DESIGN
+    </text>
+
+    <!-- Accent rule -->
+    <line x1="72" y1="122" x2="220" y2="122" stroke="#2F6BFF" stroke-width="2"/>
+
+    <!-- Main title -->
+    <text x="72" y="280"
+          font-family="Inter, Arial, 'Microsoft JhengHei', sans-serif"
+          font-size="68" font-weight="800" fill="#2B2B2B"
+          text-anchor="start">
+      Slide Title
+    </text>
+
+    <!-- Subtitle -->
+    <text x="72" y="336"
+          font-family="Inter, Arial, 'Microsoft JhengHei', sans-serif"
+          font-size="22" font-weight="400" fill="#6B6B6B"
+          text-anchor="start">
+      Sub-heading or supporting statement — keep it under 10 words
+    </text>
+
+    <!-- Right side data module (example) -->
+    <rect x="860" y="180" width="348" height="200" rx="2" fill="#F7F9FC"/>
+    <line x1="860" y1="180" x2="860" y2="380" stroke="#2F6BFF" stroke-width="2"/>
+    <text x="880" y="222"
+          font-family="Inter, Arial, sans-serif"
+          font-size="11" font-weight="700" fill="#6B6B6B"
+          letter-spacing="0.12em">DATA MODULE</text>
+    <text x="880" y="278"
+          font-family="Inter, Arial, sans-serif"
+          font-size="56" font-weight="800" fill="#2B2B2B">87%</text>
+    <text x="880" y="310"
+          font-family="Inter, Arial, sans-serif"
+          font-size="14" font-weight="400" fill="#6B6B6B">Key metric label</text>
+
+    <!-- Bottom coordinate detail -->
+    <text x="1208" y="660"
+          font-family="Inter, monospace, Arial, sans-serif"
+          font-size="10" fill="#E6EAF2" text-anchor="end">
+      [1280 × 720]
+    </text>
+
+    <!-- ── SLIDE CONTENT ENDS HERE ── -->
+
+  </svg>
+
+  <div class="label" style="margin-top:16px; font-size:11px;">
+    Replace the SVG content above · Follow style-system.md · Check qa-checklist.md before export
+  </div>
+</body>
+</html>

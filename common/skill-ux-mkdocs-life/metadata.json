@@ -1,0 +1,28 @@
+{
+  "name": "skill-ux-mkdocs-life",
+  "version": "1.1.0",
+  "description": "UX styling, design guidelines, and Material for MkDocs customizations for mkdocs-life. Standardized on LXGW WenKai TC + Quicksand editorial typography and warm paper palette.",
+  "category": "ux-design",
+  "maintainer": "wenchiehlee",
+  "updated_at": "2026-10-18",
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-ux-mkdocs-life",
+  "files": [
+    "metadata.json",
+    "self_update.py",
+    "SKILL.md",
+    "examples/mkdocs.yml",
+    "resources/mkdocs-life.css"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-ux-mkdocs-life"
+    },
+    {
+      "repo": "wenchiehlee-ux/UX-Deck",
+      "role": "deployment",
+      "local_path": "github.com/UX-Deck/.agents/skills/skill-ux-mkdocs-life"
+    }
+  ]
+}

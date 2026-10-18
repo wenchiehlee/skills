@@ -1,0 +1,39 @@
+site_name: Life Logs & Mindful Garden
+site_url: https://wenchiehlee-ux.github.io/mkdocs-life/
+theme:
+  name: material
+  language: zh-Hant
+  palette:
+    - scheme: default
+      primary: teal
+      accent: deep orange
+      toggle:
+        icon: material/weather-night
+        name: 切換至夜間模式
+    - scheme: slate
+      primary: teal
+      accent: deep orange
+      toggle:
+        icon: material/weather-sunny
+        name: 切換至暖白模式
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - content.action.view
+  font:
+    text: Noto Serif TC
+    code: JetBrains Mono
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - attr_list
+  - md_in_html

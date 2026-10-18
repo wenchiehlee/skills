@@ -1,0 +1,28 @@
+{
+  "name": "skill-ux-mkdocs-investment",
+  "version": "1.0.0",
+  "description": "Fintech design system, KPI metric widgets, financial table styling, and Material for MkDocs customizations for mkdocs-investment. Use for stock dashboards, research notes, and asset tracking UIs.",
+  "category": "ux-design",
+  "maintainer": "wenchiehlee",
+  "updated_at": "2026-10-17",
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-ux-mkdocs-investment",
+  "files": [
+    "metadata.json",
+    "self_update.py",
+    "SKILL.md",
+    "examples/kpi-widget.html",
+    "resources/mkdocs-investment.css"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-ux-mkdocs-investment"
+    },
+    {
+      "repo": "wenchiehlee-ux/UX-Deck",
+      "role": "deployment",
+      "local_path": "github.com/UX-Deck/.agents/skills/skill-ux-mkdocs-investment"
+    }
+  ]
+}

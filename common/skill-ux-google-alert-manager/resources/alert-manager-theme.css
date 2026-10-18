@@ -1,0 +1,207 @@
+/* ==========================================================================
+   GoogleAlertManager: SaaS Signal Intelligence Theme
+   ========================================================================== */
+
+:root {
+  --gam-primary:       #4f46e5;
+  --gam-primary-light: #e0e7ff;
+  --gam-primary-hover: #4338ca;
+  --gam-bg:            #f8fafc;
+  --gam-surface:       #ffffff;
+  --gam-border:        #e2e8f0;
+  --gam-text:          #0f172a;
+  --gam-text-muted:    #64748b;
+  --gam-accent:        #06b6d4;
+  --gam-urgent:        #ef4444;
+  --gam-star:          #f59e0b;
+}
+
+[data-theme="dark"] {
+  --gam-bg:            #0f172a;
+  --gam-surface:       #1e293b;
+  --gam-border:        #334155;
+  --gam-text:          #f8fafc;
+  --gam-text-muted:    #94a3b8;
+  --gam-primary-light: rgba(79, 70, 229, 0.25);
+}
+
+body {
+  background-color: var(--gam-bg);
+  color: var(--gam-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* App Header & Search Bar */
+.gam-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: var(--gam-surface);
+  border-bottom: 1px solid var(--gam-border);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.gam-search-box {
+  display: flex;
+  align-items: center;
+  background: var(--gam-bg);
+  border: 1px solid var(--gam-border);
+  border-radius: 8px;
+  padding: 0.5rem 0.85rem;
+  width: 100%;
+  max-width: 480px;
+}
+
+.gam-search-box input {
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--gam-text);
+  font-size: 0.95rem;
+  width: 100%;
+  margin-left: 0.5rem;
+}
+
+/* Filter Chips Bar */
+.gam-filter-bar {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--gam-bg);
+  overflow-x: auto;
+}
+
+.gam-chip {
+  background: var(--gam-surface);
+  border: 1px solid var(--gam-border);
+  color: var(--gam-text-muted);
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.gam-chip:hover {
+  border-color: var(--gam-primary);
+  color: var(--gam-primary);
+}
+
+.gam-chip.active {
+  background: var(--gam-primary);
+  color: #ffffff;
+  border-color: var(--gam-primary);
+}
+
+/* Alert Feed List & Card */
+.gam-feed-container {
+  max-width: 900px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.gam-card {
+  background: var(--gam-surface);
+  border: 1px solid var(--gam-border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  position: relative;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.gam-card:hover {
+  border-color: var(--gam-primary);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+}
+
+.gam-card.unread {
+  border-left: 4px solid var(--gam-primary);
+}
+
+.gam-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--gam-text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.gam-source-badge {
+  background: var(--gam-primary-light);
+  color: var(--gam-primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.gam-card-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 0.4rem 0;
+  color: var(--gam-text);
+  line-height: 1.4;
+}
+
+.gam-card-title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.gam-card-title a:hover {
+  color: var(--gam-primary);
+  text-decoration: underline;
+}
+
+.gam-card-snippet {
+  font-size: 0.9rem;
+  color: var(--gam-text-muted);
+  line-height: 1.5;
+  margin: 0 0 0.75rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.gam-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-top: 1px solid var(--gam-border);
+  padding-top: 0.5rem;
+}
+
+.gam-action-btn {
+  background: transparent;
+  border: none;
+  color: var(--gam-text-muted);
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gam-action-btn:hover {
+  background: var(--gam-bg);
+  color: var(--gam-text);
+}
+
+.gam-action-btn.starred {
+  color: var(--gam-star);
+}
