@@ -35,21 +35,12 @@ This skill provides design guidelines, CSS specifications, PiPup REST API payloa
      - RGB `0f172a` = Cyber Dark Slate.
    - CSS Equivalent: `rgba(15, 23, 42, 0.40)` with `backdrop-filter: blur(20px)`.
 
-4. **Corner Radius Handling (Native vs Web Mode)**:
-   - **Native PiPup Notifications**:
-     - PiPup draws backgrounds using Android native `view.setBackgroundColor()`, which binds to `ColorDrawable` (inherently 90° rectangular corners).
-   - **True Rounded Corners (`border-radius: 20px - 24px`) via Web Mode**:
-     - To achieve rounded corners on Android TV popups, deliver payload with transparent background (`backgroundColor: "#00000000"`) and web container:
-       ```json
-       "media": {
-         "web": {
-           "uri": "http://<ha-or-nas-host>:<port>/live_toast.html",
-           "width": 460,
-           "height": 130
-         }
-       }
-       ```
-     - The loaded HTML/CSS container handles rounded corners, soft borders, and CSS blur.
+4. **Architecture Standard: Native PiPup Notification (生產環境唯一標準)**:
+   - **實測技術結論**：
+     - PiPup 之 Web 模式（`media.web`）在 Android TV 底層會喚起 `android.webkit.WebView`。由於 Android 系統原生預設畫布為純白不透明實心底（`#FFFFFFFF`），未經底層代碼修改的 APK 會在網頁背後墊上突兀的白框，破壞客廳暗色透光沉浸感。
+     - **Native 原生模式** 採用 Android `PixelFormat.TRANSLUCENT`，背景色 `#660f172a`（60% 透光度）能 **100% 完美穿透後方正在播放的電視/電影內容**，零載入延遲，文字圖示邊緣乾淨銳利。
+   - **邊角形狀規範**：
+     - 原生模式受限於 Android `ColorDrawable` 繪圖限制為俐落的 90° 矩形；相較於帶有白框混色的網頁方案，原生直角透明 Scrim 為客廳電視觀影最佳實踐（Definitive Production Standard）。
 
 5. **D-pad Focus Navigation**:
    - Every interactive control must have an unmissable focus state: `3px solid #38bdf8` outline with a cyan glow (`box-shadow: 0 0 16px rgba(56, 189, 248, 0.6)`).
