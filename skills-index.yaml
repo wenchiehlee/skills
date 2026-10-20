@@ -805,7 +805,7 @@ skills:
   source: ''
   repo_count: 2
   updated_at: '2026-10-18'
-  revised_at: '2026-10-18'
+  revised_at: '2026-10-20'
 - name: skill-ux-mkdocs-investment
   group: common
   path: common/skill-ux-mkdocs-investment
@@ -883,7 +883,7 @@ skills:
   source: ''
   repo_count: 1
   updated_at: '2026-10-17'
-  revised_at: '2026-10-18'
+  revised_at: '2026-10-20'
 - name: skill-yahoo-finance-fetch
   group: common
   path: common/skill-yahoo-finance-fetch
