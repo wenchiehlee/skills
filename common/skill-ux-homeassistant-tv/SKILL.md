@@ -1,6 +1,6 @@
 ---
 name: skill-ux-homeassistant-tv
-version: 1.1.0
+version: 1.2.0
 description: >-
   10-foot UI design, glanceable frosted HUD overlays, and remote-control accessible popup notifications
   for HomeAssistant on Android TV. Use this skill when designing, building, or styling Home Assistant
@@ -9,7 +9,7 @@ description: >-
 
 # UX Skill: HomeAssistant (Android TV 10-foot Popup UI & PiPup HUD)
 
-> **Version**: `1.1.0` | **Updated**: `2026-10-18` | **Release Note**: 實體電視驗證升級：統一採用 60% 半透明 Cyber Dark Slate (`#660f172a`) 與右上角錨定 (`position: 0`)
+> **Version**: `1.2.0` | **Updated**: `2026-10-18` | **Release Note**: 實體電視驗證升級：確立「透明 PNG 圓角毛玻璃 HUD (Solution B)」為電視極致美感標準；完整整合客廳守護靈犬吉祥物 (`#icon-sentinel-tv` 🐕)、日雜圓體與零白框 60% 透光規格。
 
 This skill provides design guidelines, CSS specifications, PiPup REST API payloads, and HomeAssistant automation templates for **HomeAssistant on Android TV**, delivering high-visibility, elegant, non-intrusive living room popups.
 
@@ -18,6 +18,7 @@ This skill provides design guidelines, CSS specifications, PiPup REST API payloa
 1. **Viewing Distance Ergonomics (3–4 Meters)**:
    - Header font size: `20pt` (`titleSize: 20`, approx 26px–32px).
    - Body font size: `16pt` (`messageSize: 16`, approx 18px–22px).
+   - Typography Stack: `Zen Maru Gothic` (日雜圓體 700) + `Comfortaa` + `Noto Sans TC`.
    - High contrast ratio: Crisp white text (`#f1f5f9` / `#ffffff`) over 60% translucent dark slate (`#660f172a` / `rgba(15, 23, 42, 0.40)`).
 
 2. **Screen Docking Position (`position: 0` = TopRight)**:
@@ -35,42 +36,66 @@ This skill provides design guidelines, CSS specifications, PiPup REST API payloa
      - RGB `0f172a` = Cyber Dark Slate.
    - CSS Equivalent: `rgba(15, 23, 42, 0.40)` with `backdrop-filter: blur(20px)`.
 
-4. **Architecture Standard: Native PiPup Notification (生產環境唯一標準)**:
-   - **實測技術結論**：
-     - PiPup 之 Web 模式（`media.web`）在 Android TV 底層會喚起 `android.webkit.WebView`。由於 Android 系統原生預設畫布為純白不透明實心底（`#FFFFFFFF`），未經底層代碼修改的 APK 會在網頁背後墊上突兀的白框，破壞客廳暗色透光沉浸感。
-     - **Native 原生模式** 採用 Android `PixelFormat.TRANSLUCENT`，背景色 `#660f172a`（60% 透光度）能 **100% 完美穿透後方正在播放的電視/電影內容**，零載入延遲，文字圖示邊緣乾淨銳利。
-   - **邊角形狀規範**：
-     - 原生模式受限於 Android `ColorDrawable` 繪圖限制為俐落的 90° 矩形；相較於帶有白框混色的網頁方案，原生直角透明 Scrim 為客廳電視觀影最佳實踐（Definitive Production Standard）。
-
-5. **D-pad Focus Navigation**:
-   - Every interactive control must have an unmissable focus state: `3px solid #38bdf8` outline with a cyan glow (`box-shadow: 0 0 16px rgba(56, 189, 248, 0.6)`).
-
-6. **Animal Mascot (客廳守護靈犬 Living Room Sentinel 🐕)**:
+4. **Animal Mascot (客廳守護靈犬 Living Room Sentinel 🐕)**:
    - **Symbol**: `#icon-sentinel-tv` (from `animal-icons.svg`).
-   - **Brand Colors**: Amber Warm (`#f59e0b`) & Sky Cyan (`#38bdf8`).
+   - **Brand Colors**: Warm Caramel Amber (`#d97706` / `#f59e0b`) & Sky Cyan (`#38bdf8`).
+   - **Visual Cue**: Subtle amber drop-shadow (`filter: drop-shadow(0 0 10px rgba(217, 119, 6, 0.5))`).
    - **Purpose**: Symbolizes loyal household vigilance; engineered with bold outlines and pricked ears for instant recognition from 3–4 meters away.
 
 ---
 
-## Verified PiPup Notification Specification
+## 兩大實體部署方案比較與標準
 
-### Standard REST Payload (`POST http://<android-tv-ip>:7979/notify`)
+| 維度 | 方案 A：Native 直角模式 | 方案 B：動態/預渲染透明 PNG (Solution B 首選) | Web 模式 (`media.web`) ❌ |
+| :--- | :--- | :--- | :--- |
+| **邊角效果** | 90° 俐落直角 (Android ColorDrawable 限制) | **18px ~ 24px 平滑真圓角** (`border-radius: 18px`) | 雖然網頁有圓角，但底層墊白底 |
+| **背景透明度** | 60% 透光 (`#660f172a`)，完美穿透電視畫面 | **60% 透光暗黑毛玻璃** + 圓角外 100% 透明 | **失敗！Android WebView 預設白畫布導致大白框** |
+| **吉祥物圖示** | 支援外部圖片（需固定寬高比） | **完美內嵌向量守護犬 `#icon-sentinel-tv` 🐕 與光暈** | 載入有延遲，白底突兀破壞觀影 |
+| **字體渲染** | 系統預設字型（Roboto） | **Zen Maru Gothic (日雜圓體) + 3D 彩色 Emoji** | 系統 WebView 字型 |
+| **底層技術** | PiPup 原生 TextView + Glide | **PiPup Glide 渲染 32-bit RGBA PNG (`#00000000` 底)** | Android WebView |
+| **建議場景** | 極速輕量文字通知、零依賴環境 | **極致美感標準（UX-Deck Card 7 像素級 1:1 實體呈現）** | 嚴禁在未修改 APK 時使用 |
+
+---
+
+## Verified PiPup Notification Payloads
+
+### 方案 B：極致美感圓角 HUD Payload (Solution B)
 
 ```json
 {
-  "duration": 10,
+  "duration": 15,
   "position": 0,
-  "title": "洗衣提醒",
+  "backgroundColor": "#00000000",
+  "title": "",
+  "message": "",
+  "media": {
+    "image": {
+      "uri": "http://192.168.31.101:8123/local/huds/doorbell.png",
+      "width": 480
+    }
+  }
+}
+```
+
+> **提示**：Home Assistant 可將預渲染之透明 PNG 置於 `/config/www/huds/` 目錄，即可透過 `http://<ha-ip>:8123/local/huds/<scenario>.png` 本地極速提供給 Android TV，無須額外 Python 服務。
+
+### 方案 A：極簡原生直角 Scrim Payload (Mode A)
+
+```json
+{
+  "duration": 15,
+  "position": 0,
+  "title": "玄關訪客叮咚 🔔",
   "titleColor": "#38bdf8",
   "titleSize": 20,
-  "message": "智慧洗衣機已運轉完成，請及時晾曬衣物。",
+  "message": "大門有人按門鈴，門鎖維持安全上鎖中 🐾",
   "messageColor": "#f1f5f9",
   "messageSize": 16,
   "backgroundColor": "#660f172a",
   "media": {
     "image": {
       "uri": "https://raw.githubusercontent.com/ZhongZheng782/HomeAssistant/main/custom_components/sentinel_icon.png",
-      "width": 140
+      "width": 100
     }
   }
 }
