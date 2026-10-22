@@ -5,7 +5,7 @@
   "version": "1.4.0",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
-  "source": "https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts",
+  "source": "https://github.com/ZhongZheng782/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts",
   "updated_at": "2026-10-23",
   "license": "MIT",
   "tags": [
@@ -57,7 +57,7 @@
       "role": "registry"
     },
     {
-      "repo": "wenchiehlee/Mac-mini",
+      "repo": "ZhongZheng782/Mac-mini",
       "local_path": "github.com/Mac-mini/skills/skill-mlx-api-server",
       "role": "consumer"
     }

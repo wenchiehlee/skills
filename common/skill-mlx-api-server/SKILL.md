@@ -7,7 +7,7 @@ description: 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.3.0（詳見 `metadata.json`） |
+| 版本 | 1.3.1（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-server`） |
 | 維護者 | wenchiehlee |
@@ -122,7 +122,7 @@ skill-mlx-api-server/
 | `MLX_GLM_VLM_PYTHON` | 可選 | `~/mlx-api/glm-mlx-venv/bin/python` | GLM 專用 MLX-VLM 環境 Python |
 | `MLX_GLM_VLM_LOG` | 可選 | `~/mlx-api/glm-vlm.log` | GLM 模型 server 日誌 |
 | `MLX_MAX_PROMPT_LENGTH` | 可選 | `16000` | prompt 最大字元數 |
-| `AMPLITUDE_API_KEY` | 可選 | — | Amplitude 埋點 API Key（省略則不送事件） |
+| `AMPLITUDE_API_KEY` | ✅ | — | Amplitude 埋點 API Key（未設定則 API 請求回傳 500 錯誤） |
 
 `.env` 範例（`~/mlx-api/.env`，**務必 chmod 600**）：
 ```env
