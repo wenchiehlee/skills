@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-10-21'
+generated_at: '2026-10-22'
 skills:
 - name: skill-android-adb-gadget
   group: common
@@ -253,9 +253,9 @@ skills:
   category: document
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/skills
-  repo_count: 0
+  repo_count: 1
   updated_at: '2026-10-21'
-  revised_at: '2026-10-21'
+  revised_at: '2026-10-22'
 - name: skill-facebook-fetch
   group: common
   path: common/skill-facebook-fetch

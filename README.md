@@ -80,6 +80,7 @@
 | [skill-stock-earnings-calendar-monitor](common/skill-stock-earnings-calendar-monitor) | common | basic | 1.0.1 | 1 | 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板 | 2026-10-05 |
 | [skill-tw-land-geo-signal](common/skill-tw-land-geo-signal) | common | geo-data | 1.0.1 | 1 | 查詢桃園市 TY_UPGIS 圖層（甲乙工/容移/都市設計審議等案件位置）與內政部 easymap 地號官方地圖，彙整地號周邊指定半徑的城市信號 CSV 與疊圖 PNG，供土地資產分析使用。 | 2026-10-05 |
 | [skill-usb-uvc-4k-capture](common/skill-usb-uvc-4k-capture) | common | basic | 1.0.1 | 1 | Enable camera-agnostic 4K UVC capture on Android BaseUnit: setup_uvc.sh advertises 4K frame descriptor, uvc_camera_forward detects camera max MJPEG resolution at runtime and clamps negotiation — Jieli U20 stays at 1080p, Logitech MeetUp unlocks 3840×2160@30fps. | 2026-10-05 |
+| [skill-document-vids-prompt-generate](common/skill-document-vids-prompt-generate) | common | document | 1.0.0 | 1 | 將 Wikipedia 長文、PPT 投影片或長篇文件轉化為最適合 Google Vids (Gemini Omni 模型) 吸收的高畫質分鏡與影片生成提示詞；嚴格遵循防 AI 罐頭感原則，產出具備專業導演風範的畫面構圖與口播腳本。 | 2026-10-22 |
 | [skill-googlesearch-factsets-fetch](common/skill-googlesearch-factsets-fetch) | common | financial-data | 1.0.0 | 1 | 維運 GoogleSearch.Factset 兩階段管線：Stage 0 觀察名單更新（Get觀察名單.py）、Stage 1 Search Group（API key 輪替 + 4 層內容驗證產生 data/md/*.md）、Stage 2 Process Group（品質評分 + 報表 + Google Sheets 上傳），涵蓋 Actions-update-lists.yaml / Actions-search.yaml / Actions-quarantine-files.yaml / Actions-process.yaml 四個 workflow 的手動觸發與除錯，並負責處理與解決 GitHub Issues（每日自動產生的 Quarantine Alert 資料品質議題）。 | 2026-10-05 |
 | [skill-tw-legal-rag](common/skill-tw-legal-rag) | common | basic | 1.0.0 | 1 | Retrieve real Taiwan court judgments with verifiable citations before answering any question about Taiwan law or case law. Use when the user asks about 台灣/臺灣 judgments, 判決, 法院見解, legal precedents, or wants case support for a legal argument. Wraps the twlegalrag CLI (pack subcommand); answers must cite only citation_ids present in the returned bundle. | 2026-10-05 |
 | [skill-ux-mkdocs-investment](common/skill-ux-mkdocs-investment) | common | ux-design | 1.0.0 | 1 | Fintech design system, KPI metric widgets, financial table styling, and Material for MkDocs customizations for mkdocs-investment. Use for stock dashboards, research notes, and asset tracking UIs. | 2026-10-18 |
@@ -93,9 +94,8 @@
 | [skill-pptx-to-md](common/skill-pptx-to-md) | common | document | 1.0.1 | — | 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。 | 2026-10-05 |
 | [skill-confluence-sync](common/skill-confluence-sync) | common | basic | 1.0.0 | — | Read and overwrite a single Confluence Wiki page via REST API using CONFLUENCE_EMAIL / CONFLUENCE_API_TOKEN / CONFLUENCE_BASE_URL / CONFLUENCE_PAGE_ID, based on SpillwaveSolutions/confluence-skill. | 2026-10-14 |
 | [skill-document-ppt-design](common/skill-document-ppt-design) | common | document | 1.0.0 | — | Design and generate editorial-quality PPT/PPTX slide decks as SVG or PPTX, following the design systems from software-ai-life/Awesome-PPT-Design-Skills. Supports 7 house styles: Futuristic Tech Editorial, Japanese Lifestyle Editorial, Washi Paper Soft Glow, Soft 3D Clay, Minimalist Luxury Branding, Modern Illustration Editorial, Japanese Hand-Drawn Editorial. Use for ppt-master workflows, slide deck design, SVG page generation, PPTX export, and PDF-to-PPT transformation. | 2026-10-18 |
-| [skill-document-vids-prompt-generate](common/skill-document-vids-prompt-generate) | common | document | 1.0.0 | — | 將 Wikipedia 長文、PPT 投影片或長篇文件轉化為最適合 Google Vids (Gemini Omni 模型) 吸收的高畫質分鏡與影片生成提示詞；嚴格遵循防 AI 罐頭感原則，產出具備專業導演風範的畫面構圖與口播腳本。 | 2026-10-21 |
 
-最後產生日期：2026-10-21
+最後產生日期：2026-10-22
 <!-- SKILLS-TABLE:END -->
 
 ## 技能版本管理
