@@ -120,17 +120,24 @@ def _is_model_ready(repo_id: str) -> bool:
     return False
 
 
-def run(prompt: str, model: str | None = None) -> tuple[str, str]:
+def run(
+    prompt: str,
+    model: str | None = None,
+    *,
+    image_path: str | None = None,
+) -> tuple[str, str]:
     """
     Execute MLX inference non-interactively and return (output_text, actual_model_name).
 
     Raises:
         ExecutionError: on timeout, MLX failure, or server busy.
     """
+    target_model = MODEL_MAP.get(model, model or MODEL_MAP["mlx-qwen3"])
+    if image_path is not None and target_model not in _VLM_REPOS:
+        raise ExecutionError("Image input requires an enabled vision-language model.", status_code=400)
+
     if not _semaphore.acquire(blocking=False):
         raise ExecutionError("Server busy, try again later.", status_code=503)
-
-    target_model = MODEL_MAP.get(model, model or MODEL_MAP["mlx-qwen3"])
 
     # Fail fast if model is not fully downloaded yet
     if not _is_model_ready(target_model):
@@ -143,11 +150,12 @@ def run(prompt: str, model: str | None = None) -> tuple[str, str]:
     try:
         if target_model in _VLM_REPOS:
             cmd = [
-                sys.executable, "-m", "mlx_vlm", "generate",
+                sys.executable, "-m", "mlx_vlm.generate",
                 "--model", target_model,
+                *(["--image", image_path] if image_path is not None else []),
                 "--prompt", prompt,
                 "--max-tokens", "2048",
-                "--temperature", "0.7",
+                "--temperature", "0.0" if image_path is not None else "0.7",
             ]
         elif target_model in _NOTHINK_REPOS:
             # Qwen3: Python API with enable_thinking=False (verified 2.7s vs 200s+)

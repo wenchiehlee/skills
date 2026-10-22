@@ -1,22 +1,23 @@
 ---
 name: skill-mlx-api-server
-description: 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，提供 Baidu Unlimited-OCR 與 GLM-OCR 文件轉錄（共用單一 FIFO worker）及 MLX LLM 推理（/exec），以 Flask/Waitress 常駐服務形式運行。
+description: 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，提供 Baidu Unlimited-OCR 與 GLM-OCR 文件轉錄、單張照片 VLM 分析及 MLX LLM 推理，以 Flask/Waitress 常駐服務形式運行。
 ---
 
 # Mac-mini MLX API Server 技能 (mlx-api-server)
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.3.1（詳見 `metadata.json`） |
+| 版本 | 1.3.0（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-server`） |
 | 維護者 | wenchiehlee |
 | 執行位置 | **Mac-mini 本機**（Apple Silicon M4，24 GB Unified Memory） |
 | 對應 Caller Skill | `common/skill-mlx-api-client-ocr`（在外部機器呼叫此服務） |
 
-此技能封裝了運行於 Mac-mini 上的 AI 推理伺服器，提供兩大核心服務：
+此技能封裝了運行於 Mac-mini 上的 AI 推理伺服器，提供以下服務：
 1. **`POST /ocr`** — Baidu Unlimited-OCR 或 GLM-OCR 文件轉錄，將 PDF 或圖片轉為 Markdown
-2. **`POST /exec`** — MLX 本地 LLM 推理，支援 Qwen3.5-9B 與 Gemma-4 模型
+2. **`POST /photo-analyze`** — 將單張 JPEG、PNG、WebP 或 HEIC/HEIF 照片送給允許使用的 MLX 視覺語言模型分析
+3. **`POST /exec`** — MLX 本地文字 LLM 推理，支援 Qwen3.5-9B 與 Gemma-4 模型
 
 服務透過 Tailscale VPN 對外提供，由 `launchd` (`com.mlx.apiserver`) 常駐管理，GitHub Actions 每 6 小時自動健康檢查並於異常時自動恢復。
 
@@ -32,7 +33,7 @@ skill-mlx-api-server/
 ├── metadata.json          # 機器可讀 metadata（名稱、版本、來源），供版本檢查使用
 ├── self_update.py         # 從 skills 登錄庫檢查並更新此技能的工具
 └── scripts/
-    ├── server.py          # Flask/Waitress API 伺服器主程式（路由 /exec /ocr /health）
+    ├── server.py          # Flask/Waitress API 伺服器主程式（路由 /exec /photo-analyze /ocr /health）
     ├── auth.py            # X-API-Key 認證裝飾器（hmac.compare_digest 防時序攻擊）
     ├── config.py          # 設定載入（讀取 .env，含必填欄位驗證）
     ├── executor.py        # MLX 執行引擎（subprocess 管理、Semaphore 並發控制）
@@ -56,9 +57,8 @@ skill-mlx-api-server/
         ↓
 [Flask/Waitress server.py :5001]  ← com.mlx.apiserver (launchd 常駐)
         ↓  認證（auth.py）+ 設定（config.py）
-        ├── /exec → executor.run()
-        │           ├── mlx_lm generate（Qwen3.5，enable_thinking=False）
-        │           └── mlx_vlm generate（Gemma4，VLM）
+        ├── /exec → executor.run()（文字輸入）
+        ├── /photo-analyze → executor.run(image_path=...) → mlx_vlm generate（Gemma4）
         └── /ocr  → 共用 FIFO 單一 worker
                     ├── baidu → ocr_run.py（PyTorch + MPS）
                     └── glm → glm_ocr_run.py + 隔離的 glm-mlx-venv / MLX-VLM server
@@ -122,7 +122,7 @@ skill-mlx-api-server/
 | `MLX_GLM_VLM_PYTHON` | 可選 | `~/mlx-api/glm-mlx-venv/bin/python` | GLM 專用 MLX-VLM 環境 Python |
 | `MLX_GLM_VLM_LOG` | 可選 | `~/mlx-api/glm-vlm.log` | GLM 模型 server 日誌 |
 | `MLX_MAX_PROMPT_LENGTH` | 可選 | `16000` | prompt 最大字元數 |
-| `AMPLITUDE_API_KEY` | ✅ | — | Amplitude 埋點 API Key（未設定則 API 請求回傳 500 錯誤） |
+| `AMPLITUDE_API_KEY` | 可選 | — | Amplitude 埋點 API Key（省略則不送事件） |
 
 `.env` 範例（`~/mlx-api/.env`，**務必 chmod 600**）：
 ```env
@@ -239,7 +239,7 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.mlx.apiserver.plist
 ```
 Layer 1 (Transport)   — Tailscale VPN（WireGuard 加密，僅 VPN 內可訪問）
 Layer 2 (AuthN)       — X-API-Key header，hmac.compare_digest 防時序攻擊（auth.py）
-Layer 3 (Input)       — prompt ≤ 16,000 chars，model allowlist 驗證（config.py + server.py）
+Layer 3 (Input)       — prompt ≤ 16,000 chars、image request ≤ 32 MiB、model allowlist 與圖片簽章驗證（config.py + server.py）
 Layer 4 (Process)     — subprocess list form（防 shell injection），非 root 執行（executor.py）
 Layer 5 (Concurrency) — `/exec` 使用 `MLX_MAX_CONCURRENT`；`/ocr` 使用 FIFO 單一 worker，最多排隊 `MLX_OCR_QUEUE_MAX_SIZE` 個請求（executor.py）
 ```
@@ -332,6 +332,31 @@ OCR 呼叫透過 `_send_amplitude_event_async()` 非同步送出 `llm_call` 事�
 | `401` | API Key 錯誤或缺漏 |
 | `503` | `/exec` 併發額度已滿，或 OCR 佇列已滿／等待超時 |
 | `504` | 執行超時（超過 `MLX_TIMEOUT` 秒） |
+
+### `POST /photo-analyze` — 單張照片視覺分析
+
+此 endpoint 使用獨立的照片分析用途，不會改變 `/exec` 或 `/ocr` 的既有行為。請求需帶 `X-API-Key`，採用 `multipart/form-data`：
+
+| 欄位 | 必填 | 說明 |
+|------|------|------|
+| `file` | 是 | 單張 JPEG、PNG、WebP 或 HEIC/HEIF 圖片，檔案內容會檢查簽章 |
+| `prompt` | 是 | 此次視覺分析指示，長度上限沿用 `MLX_MAX_PROMPT_LENGTH` |
+| `model` | 否 | 模型別名，預設 `mlx-gemma4`；所選模型必須支援 VLM 圖片輸入並在 allowlist 中 |
+
+Photo Tagger 可在 NAS 端以 Photos API 取得原圖，再逐張呼叫此 endpoint；MLX server 不需要 NAS 帳密或 NAS 檔案掛載。請求大小上限為 32 MiB。HEIC/HEIF 會在 Mac-mini 使用 `sips` 轉成暫存 JPEG，原始上傳與轉換檔都位於請求專用的暫存目錄，推論完成或發生錯誤後一併刪除。圖片內容不寫入 stats 或 Amplitude；只記錄 prompt 摘要、輸出長度、模型與耗時。
+
+Response：
+
+```json
+{
+  "output": "模型輸出文字（呼叫端 prompt 應要求 JSON 結果）",
+  "model": "mlx-community/gemma-4-e4b-it-8bit",
+  "input_format": "HEIC/HEIF",
+  "converted": true,
+  "elapsed_s": 12.345,
+  "temporary_file_deleted": true
+}
+```
 
 ### `POST /ocr` — 文件 OCR
 
