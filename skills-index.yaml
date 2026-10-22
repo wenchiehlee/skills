@@ -244,6 +244,18 @@ skills:
   repo_count: 0
   updated_at: '2026-10-07'
   revised_at: '2026-10-18'
+- name: skill-document-vids-prompt-generate
+  group: common
+  path: common/skill-document-vids-prompt-generate
+  version: 1.0.0
+  description: 將 Wikipedia 長文、PPT 投影片或長篇文件轉化為最適合 Google Vids (Gemini Omni 模型) 吸收的高畫質分鏡與影片生成提示詞；嚴格遵循防
+    AI 罐頭感原則，產出具備專業導演風範的畫面構圖與口播腳本。
+  category: document
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee/skills
+  repo_count: 0
+  updated_at: '2026-10-21'
+  revised_at: '2026-10-21'
 - name: skill-facebook-fetch
   group: common
   path: common/skill-facebook-fetch
