@@ -1,6 +1,6 @@
 ---
 name: skill-ux-mkdocs-life
-version: 1.1.0
+version: 1.2.0
 description: >-
   UX styling, design guidelines, and Material for MkDocs customizations for the mkdocs-life repository.
   Use this skill when enhancing the user experience, typography, layout, blog cards, or visual design
@@ -9,7 +9,7 @@ description: >-
 
 # UX Skill: mkdocs-life (Warm Editorial & Mindful Journal)
 
-> **Version**: `1.1.0` | **Updated**: `2026-10-18` | **Release Note**: 字體系統升級為方案 A 溫潤隨筆文楷體（LXGW WenKai TC + Quicksand）與 Google Fonts v2 動態載入架構
+> **Version**: `1.2.0` | **Updated**: `2026-10-23` | **Release Note**: 字體系統升級為方案 A 溫潤隨筆文楷體（LXGW WenKai TC + Quicksand）與 Google Fonts v2 動態載入架構；新增繁中/英文瀏覽器語系偵測與偏好記憶規則
 
 This skill provides design patterns, CSS snippets, and layout rules for **mkdocs-life**, transforming standard MkDocs documentation into a graceful, warm, editorial-style personal journal and knowledge sanctuary.
 
@@ -101,3 +101,13 @@ Add `.life-timeline` wrapper for milestone records:
   </li>
 </ul>
 ```
+
+## Shared Language Behavior / 共用語言行為
+
+Apply this policy whenever this skill is used to design or implement user-facing interfaces:
+
+- Provide **English (`en`) and Traditional Chinese (`zh-TW`)** for interface labels, controls, navigation, and system messages.
+- On first visit, use a previously saved valid user choice if available. Otherwise inspect the browser's primary locale (`navigator.languages[0]`, falling back to `navigator.language`): any locale beginning with `zh` selects `zh-TW`; every other locale selects `en`.
+- Keep an accessible, visible language switch. When the user changes language, persist `zh-TW` or `en` in `localStorage` under `ux-language-preference`, restore that choice on later visits, and update the document's `lang` attribute. Never replace a saved user choice with browser detection.
+- Do not machine-translate skill descriptions, user-authored text, names, tickers, units, or technical values just because the interface language changes. Translate interface copy where approved translations exist; preserve source content otherwise. Use locale-aware date/number formatting only when it does not alter domain meaning.
+- For non-browser surfaces (such as Android TV notifications, generated images, and PDFs), use the host application's saved language preference. Do not assume browser APIs exist there; offer locale selection in the companion app or settings when that surface needs its own choice.

@@ -1,6 +1,6 @@
 ---
 name: skill-ux-homeassistant-tv
-version: 1.2.0
+version: 1.3.0
 description: >-
   10-foot UI design, glanceable frosted HUD overlays, and remote-control accessible popup notifications
   for HomeAssistant on Android TV. Use this skill when designing, building, or styling Home Assistant
@@ -9,7 +9,7 @@ description: >-
 
 # UX Skill: HomeAssistant (Android TV 10-foot Popup UI & PiPup HUD)
 
-> **Version**: `1.2.0` | **Updated**: `2026-10-18` | **Release Note**: 實體電視驗證升級：確立「透明 PNG 圓角毛玻璃 HUD (Solution B)」為電視極致美感標準；完整整合客廳守護靈犬吉祥物 (`#icon-sentinel-tv` 🐕)、日雜圓體與零白框 60% 透光規格。
+> **Version**: `1.3.0` | **Updated**: `2026-10-23` | **Release Note**: 實體電視驗證升級：確立「透明 PNG 圓角毛玻璃 HUD (Solution B)」為電視極致美感標準；完整整合客廳守護靈犬吉祥物 (`#icon-sentinel-tv` 🐕)、日雜圓體與零白框 60% 透光規格。；新增繁中/英文瀏覽器語系偵測與偏好記憶規則
 
 This skill provides design guidelines, CSS specifications, PiPup REST API payloads, and HomeAssistant automation templates for **HomeAssistant on Android TV**, delivering high-visibility, elegant, non-intrusive living room popups.
 
@@ -110,3 +110,13 @@ See [tv-popup.css](./resources/tv-popup.css) for full styling.
 
 ### 2. Home Assistant Lovelace / Automation Configuration
 See [tv-notification-card.yaml](./examples/tv-notification-card.yaml) for sample automation payloads (using `rest_command.pipup_tv_notify` or `browser_mod.popup`).
+
+## Shared Language Behavior / 共用語言行為
+
+Apply this policy whenever this skill is used to design or implement user-facing interfaces:
+
+- Provide **English (`en`) and Traditional Chinese (`zh-TW`)** for interface labels, controls, navigation, and system messages.
+- On first visit, use a previously saved valid user choice if available. Otherwise inspect the browser's primary locale (`navigator.languages[0]`, falling back to `navigator.language`): any locale beginning with `zh` selects `zh-TW`; every other locale selects `en`.
+- Keep an accessible, visible language switch. When the user changes language, persist `zh-TW` or `en` in `localStorage` under `ux-language-preference`, restore that choice on later visits, and update the document's `lang` attribute. Never replace a saved user choice with browser detection.
+- Do not machine-translate skill descriptions, user-authored text, names, tickers, units, or technical values just because the interface language changes. Translate interface copy where approved translations exist; preserve source content otherwise. Use locale-aware date/number formatting only when it does not alter domain meaning.
+- For non-browser surfaces (such as Android TV notifications, generated images, and PDFs), use the host application's saved language preference. Do not assume browser APIs exist there; offer locale selection in the companion app or settings when that surface needs its own choice.
