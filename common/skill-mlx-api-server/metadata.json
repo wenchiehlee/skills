@@ -1,7 +1,8 @@
 {
   "name": "skill-mlx-api-server",
   "description": "在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，提供 Baidu Unlimited-OCR 與 GLM-OCR 文件轉錄、單張照片 VLM 分析及 MLX LLM 推理，以 Flask/Waitress 常駐服務形式運行。",
-  "category": "server",
+  "category": "server-inference",
+  "platforms": ["macos"],
   "version": "1.4.0",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",

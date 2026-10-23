@@ -88,7 +88,8 @@ def collect_skills() -> list[dict]:
                 "path": f"{group_dir.name}/{skill_dir.name}",
                 "version": meta.get("version", "0.0.0"),
                 "description": meta.get("description", ""),
-                "category": meta.get("category", "basic"),
+                "category": meta.get("category", "utility-general"),
+                "platforms": meta.get("platforms", []),
                 "maintainer": meta.get("maintainer", ""),
                 "source": meta.get("source", ""),
                 "repo_count": repo_count,
@@ -125,15 +126,16 @@ def render_table(skills: list[dict]) -> str:
         reverse=True,
     )
     lines = [
-        "| 技能 | 群組 | 分類 | 版本 | repo 數 | 說明 | 修訂日期 |",
-        "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
+        "| 技能 | 群組 | 分類 | 平台 | 版本 | repo 數 | 說明 | 修訂日期 |",
+        "| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
     ]
     for s in ordered:
         desc = s["description"].replace("|", "\\|")
         repo_count = s.get("repo_count", 0)
         repo_display = str(repo_count) if repo_count else "—"
+        platform_display = ", ".join(s.get("platforms", [])) or "—"
         lines.append(
-            f"| [{s['name']}]({s['path']}) | {s['group']} | {s['category']} | {s['version']} | {repo_display} | {desc} | {s['revised_at']} |"
+            f"| [{s['name']}]({s['path']}) | {s['group']} | {s['category']} | {platform_display} | {s['version']} | {repo_display} | {desc} | {s['revised_at']} |"
         )
     return "\n".join(lines)
 

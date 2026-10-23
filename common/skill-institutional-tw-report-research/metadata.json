@@ -1,7 +1,7 @@
 {
   "name": "skill-institutional-tw-report-research",
   "description": "Maintain auditable Taiwan listed/OTC institutional research intelligence: broker/advisory reports, ratings, target prices, EPS revisions, investor-conference linkage, consensus, and TWSE/TPEx institutional-flow comparison.",
-  "category": "financial-strategy",
+  "category": "finance-strategy",
   "version": "0.1.2",
   "maintainer": "wenchiehlee-money",
   "source": "https://github.com/wenchiehlee-money/TW-institutional-research",

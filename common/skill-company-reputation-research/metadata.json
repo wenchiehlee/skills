@@ -1,7 +1,7 @@
 {
   "name": "skill-company-reputation-research",
   "description": "Collect Taiwan and global public jobseeker intelligence for a specified company, including employer reviews, interview/salary transparency, workplace reputation, labor/legal signals, layoffs, and recurring red flags.",
-  "category": "basic",
+  "category": "company-research",
   "version": "0.1.1",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/wenchiehlee-money/TW.good-job",
