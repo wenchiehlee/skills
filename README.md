@@ -19,7 +19,7 @@
 <!-- SKILLS-TABLE:START -->
 | 技能 | 群組 | 分類 | 版本 | repo 數 | 說明 | 修訂日期 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| [skill-llm-api-client](common/skill-llm-api-client) | common | library | 1.0.8 | 8 | 統一的 LLM 客戶端函式庫（llm），封裝 Gemini API 金鑰輪轉、skill-llm-api-server 的 codex-cli/gemini-cli 橋接、以及本地 MLX 推論，內建 codex → gemini → mlx 自動備援鏈與智慧路由（Smart Routing）。 | 2026-10-11 |
+| [skill-llm-api-client](common/skill-llm-api-client) | common | server | 1.0.8 | 8 | 統一的 LLM 客戶端函式庫（llm），封裝 Gemini API 金鑰輪轉、skill-llm-api-server 的 codex-cli/gemini-cli 橋接、以及本地 MLX 推論，內建 codex → gemini → mlx 自動備援鏈與智慧路由（Smart Routing）。 | 2026-10-23 |
 | [skill-mlx-api-client-ocr](common/skill-mlx-api-client-ocr) | common | document | 1.8.0 | 6 | 呼叫 Mac-mini MLX API Server 的 OCR 客戶端（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown 格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。 | 2026-10-10 |
 | [skill-container-manager-orchestrator](common/skill-container-manager-orchestrator) | common | server | 1.0.0 | 5 | 跨平台容器管理與遠端協調技能。以 Synology NAS Container Manager 為首要平台，結合 wenchiehlee.quickconnect.to-Container.Manager 配置與 GitOps 自動化，擴展至 Mac mini、樹莓派等跨平台設備的容器遠端監控、同步、部署與維護。 | 2026-10-11 |
 | [skill-stock-investorevent-fetch](common/skill-stock-investorevent-fetch) | common | financial-data | 1.3.2 | 4 | 維護財報／法說會、AI、股利、歷史崩盤、NVIDIA 與股市事件六份 raw_event CSV 的組合技能；依事件來源選擇既有產生器，財報季度使用共享解析器，並對齊投資人素材矩陣。 | 2026-10-08 |
