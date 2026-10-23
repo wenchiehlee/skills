@@ -69,7 +69,7 @@
 | [skill-yahoo-finance-fetch](common/skill-yahoo-finance-fetch) | common | financial-data | 1.1.0 | 1 | Fetch Yahoo Finance analyst estimates, daily/60-minute price history, and Wayback Machine historical consensus for Taiwan and US stocks into long-format raw CSVs. | 2026-10-05 |
 | [skill-company-decision-report](common/skill-company-decision-report) | common | financial-strategy | 1.0.2 | 1 | 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖） | 2026-10-05 |
 | [skill-google-analytics-monitor](common/skill-google-analytics-monitor) | common | analytics | 1.0.2 | 1 | 使用 google-analytics-cli 產生 GA4 網站監控 Markdown/README 報告，包含 YAML daily metadata、即時活躍人數、近 7/28 天短期趨勢、近 3 個月流量趨勢、來源/媒介、Top 10 URL、熱門頁面、事件與異常觀察。 | 2026-10-05 |
-| [skill-stock-market-cost-distribution](common/skill-stock-market-cost-distribution) | common | financial-forecasting | 1.0.2 | 1 | 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。 | 2026-10-05 |
+| [skill-stock-market-cost-distribution](common/skill-stock-market-cost-distribution) | common | financial-strategy | 1.0.2 | 1 | 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。 | 2026-10-23 |
 | [skill-usb-gadget-debug](common/skill-usb-gadget-debug) | common | basic | 1.0.2 | 1 | Enumerate Windows USB devices via SetupAPI to verify USB composite gadget (VID:046D) enumeration, interface presence, and device node status. | 2026-10-05 |
 | [skill-usb-gadget-monitor](common/skill-usb-gadget-monitor) | common | analytics | 1.0.2 | 1 | Real-time Tkinter GUI monitor for USB composite gadget (Wired RoomDock) on Windows — tracks USB device status, UVC stream resolution/fps, UAC2 call state, display topology (single/clone/extend), UC app presence, and HID vendor report exchange. | 2026-10-05 |
 | [skill-usb-wasapi-capture-debug](common/skill-usb-wasapi-capture-debug) | common | basic | 1.0.2 | 1 | Enumerate Windows WASAPI capture endpoints via COM IMMDeviceEnumerator to verify UAC2 speakerphone visibility, device state, and active audio sessions. | 2026-10-05 |
@@ -77,9 +77,9 @@
 | [skill-company-download-logo](common/skill-company-download-logo) | common | basic | 1.0.1 | 1 | 指定台灣股票代碼或美股概念股 Ticker，自動下載高解析度公司官方 Logo PNG，並限制在固定大小。 | 2026-10-05 |
 | [skill-company-earnings-social-verify](common/skill-company-earnings-social-verify) | common | basic | 1.0.1 | 1 | 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異 | 2026-10-05 |
 | [skill-company-investorconference-ir-pdf-md](common/skill-company-investorconference-ir-pdf-md) | common | financial-data | 1.0.1 | 1 | Fetch InvestorConference official IR PDFs through ingest, then convert them to Markdown using the repo-local Mac-mini OCR hybrid pipeline with auditable TODO/OCR markers. | 2026-10-05 |
-| [skill-company-revenue-expense-profit-predict](common/skill-company-revenue-expense-profit-predict) | common | financial-forecasting | 1.0.1 | 1 | 季度損益三線（營業收入 / 總支出 / 營業利益）底部加總預測 SOP | 2026-10-05 |
-| [skill-company-revenue-forecast-benchmark](common/skill-company-revenue-forecast-benchmark) | common | financial-forecasting | 1.0.1 | 1 | 多模型與分析師共識效能評估標準作業程序。 | 2026-10-05 |
-| [skill-company-revenue-predict](common/skill-company-revenue-predict) | common | financial-forecasting | 1.0.1 | 1 | 營收預測與 10-Model 評估 SOP | 2026-10-05 |
+| [skill-company-revenue-expense-profit-predict](common/skill-company-revenue-expense-profit-predict) | common | financial-strategy | 1.0.1 | 1 | 季度損益三線（營業收入 / 總支出 / 營業利益）底部加總預測 SOP | 2026-10-23 |
+| [skill-company-revenue-forecast-benchmark](common/skill-company-revenue-forecast-benchmark) | common | financial-strategy | 1.0.1 | 1 | 多模型與分析師共識效能評估標準作業程序。 | 2026-10-23 |
+| [skill-company-revenue-predict](common/skill-company-revenue-predict) | common | financial-strategy | 1.0.1 | 1 | 營收預測與 10-Model 評估 SOP | 2026-10-23 |
 | [skill-company-segment-viz](common/skill-company-segment-viz) | common | financial-accounting | 1.0.1 | 1 | 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖 | 2026-10-05 |
 | [skill-stock-earnings-calendar-monitor](common/skill-stock-earnings-calendar-monitor) | common | basic | 1.0.1 | 1 | 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板 | 2026-10-05 |
 | [skill-tw-land-geo-signal](common/skill-tw-land-geo-signal) | common | geo-data | 1.0.1 | 1 | 查詢桃園市 TY_UPGIS 圖層（甲乙工/容移/都市設計審議等案件位置）與內政部 easymap 地號官方地圖，彙整地號周邊指定半徑的城市信號 CSV 與疊圖 PNG，供土地資產分析使用。 | 2026-10-05 |

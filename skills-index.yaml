@@ -138,34 +138,34 @@ skills:
   path: common/skill-company-revenue-expense-profit-predict
   version: 1.0.1
   description: 季度損益三線（營業收入 / 總支出 / 營業利益）底部加總預測 SOP
-  category: financial-forecasting
+  category: financial-strategy
   maintainer: ''
   source: ''
   repo_count: 1
   updated_at: ''
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-23'
 - name: skill-company-revenue-forecast-benchmark
   group: common
   path: common/skill-company-revenue-forecast-benchmark
   version: 1.0.1
   description: 多模型與分析師共識效能評估標準作業程序。
-  category: financial-forecasting
+  category: financial-strategy
   maintainer: WJLEE
   source: biztrends.TW/Skills/skill-company-revenue-forecast-benchmark.md
   repo_count: 1
   updated_at: '2026-07-05'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-23'
 - name: skill-company-revenue-predict
   group: common
   path: common/skill-company-revenue-predict
   version: 1.0.1
   description: 營收預測與 10-Model 評估 SOP
-  category: financial-forecasting
+  category: financial-strategy
   maintainer: ''
   source: ''
   repo_count: 1
   updated_at: ''
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-23'
 - name: skill-company-revenue-segment-weights
   group: common
   path: common/skill-company-revenue-segment-weights
@@ -582,12 +582,12 @@ skills:
   path: common/skill-stock-market-cost-distribution
   version: 1.0.2
   description: 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。
-  category: financial-forecasting
+  category: financial-strategy
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/MarketCostDistribution
   repo_count: 1
   updated_at: '2026-07-15'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-23'
 - name: skill-stock-pipeline-health-monitor
   group: common
   path: common/skill-stock-pipeline-health-monitor
