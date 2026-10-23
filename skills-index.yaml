@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-10-22'
+generated_at: '2026-10-23'
 skills:
 - name: skill-android-adb-gadget
   group: common
@@ -780,7 +780,7 @@ skills:
 - name: skill-ux-design-system
   group: common
   path: common/skill-ux-design-system
-  version: 1.1.0
+  version: 1.2.0
   description: Master UX Design System and unified visual language across sibling
     repositories (mkdocs-life, GoogleAlertManager, YoutubeAudio.Fetch, mkdocs-investment,
     HomeAssistant TV, Synology NAS, My-TW-Coverage). Standardized 10-foot TV HUD on
@@ -789,12 +789,12 @@ skills:
   maintainer: wenchiehlee
   source: ''
   repo_count: 1
-  updated_at: '2026-10-18'
-  revised_at: '2026-10-18'
+  updated_at: '2026-10-23'
+  revised_at: '2026-10-23'
 - name: skill-ux-google-alert-manager
   group: common
   path: common/skill-ux-google-alert-manager
-  version: 1.1.0
+  version: 1.2.0
   description: UX styling, component patterns, and interaction design for GoogleAlertManager
     (GitHub Pages web dashboard). Upgraded mascot to Alert Bird (破曉警報鳥 🐦, Lucide bird)
     with Alert Orange (#ea580c) theme.
@@ -802,12 +802,12 @@ skills:
   maintainer: wenchiehlee
   source: ''
   repo_count: 1
-  updated_at: '2026-10-18'
-  revised_at: '2026-10-18'
+  updated_at: '2026-10-23'
+  revised_at: '2026-10-23'
 - name: skill-ux-homeassistant-tv
   group: common
   path: common/skill-ux-homeassistant-tv
-  version: 1.1.0
+  version: 1.3.0
   description: '10-foot UI design, glanceable frosted HUD overlays, and remote-control
     accessible popup notifications for HomeAssistant on Android TV. Standardized on
     60% translucent Dark Slate (#660f172a), position: 0 (TopRight), and verified PiPup
@@ -816,12 +816,12 @@ skills:
   maintainer: wenchiehlee
   source: ''
   repo_count: 2
-  updated_at: '2026-10-18'
-  revised_at: '2026-10-20'
+  updated_at: '2026-10-23'
+  revised_at: '2026-10-23'
 - name: skill-ux-mkdocs-investment
   group: common
   path: common/skill-ux-mkdocs-investment
-  version: 1.0.0
+  version: 1.1.0
   description: Fintech design system, KPI metric widgets, financial table styling,
     and Material for MkDocs customizations for mkdocs-investment. Use for stock dashboards,
     research notes, and asset tracking UIs.
@@ -829,12 +829,12 @@ skills:
   maintainer: wenchiehlee
   source: ''
   repo_count: 1
-  updated_at: '2026-10-17'
-  revised_at: '2026-10-18'
+  updated_at: '2026-10-23'
+  revised_at: '2026-10-23'
 - name: skill-ux-mkdocs-life
   group: common
   path: common/skill-ux-mkdocs-life
-  version: 1.1.0
+  version: 1.2.0
   description: UX styling, design guidelines, and Material for MkDocs customizations
     for mkdocs-life. Standardized on LXGW WenKai TC + Quicksand editorial typography
     and warm paper palette.
@@ -842,12 +842,12 @@ skills:
   maintainer: wenchiehlee
   source: ''
   repo_count: 1
-  updated_at: '2026-10-18'
-  revised_at: '2026-10-18'
+  updated_at: '2026-10-23'
+  revised_at: '2026-10-23'
 - name: skill-ux-synology-nas
   group: common
   path: common/skill-ux-synology-nas
-  version: 1.0.0
+  version: 1.1.0
   description: UX styling, Cyber Slate & Synology Blue palette, Armored Pangolin mascot,
     and MkDocs customizations for wenchiehlee.quickconnect.to on Synology NAS. Use
     for cloud dashboards, Docker container cards, and Tailscale status.
@@ -855,12 +855,12 @@ skills:
   maintainer: wenchiehlee
   source: ''
   repo_count: 1
-  updated_at: '2026-10-17'
-  revised_at: '2026-10-18'
+  updated_at: '2026-10-23'
+  revised_at: '2026-10-23'
 - name: skill-ux-tw-coverage
   group: common
   path: common/skill-ux-tw-coverage
-  version: 1.0.0
+  version: 1.1.0
   description: Taiwan stock equity research design system, valuation radar, financial
     metric badges, and report UI for My-TW-Coverage (GitHub Pages). Use for equity
     deep-dive notes, target price trackers, and valuation radar.
@@ -868,12 +868,12 @@ skills:
   maintainer: wenchiehlee
   source: ''
   repo_count: 1
-  updated_at: '2026-10-17'
-  revised_at: '2026-10-18'
+  updated_at: '2026-10-23'
+  revised_at: '2026-10-23'
 - name: skill-ux-vix
   group: common
   path: common/skill-ux-vix
-  version: 1.0.0
+  version: 1.1.0
   description: UX styling, design system tokens, and Plotly wrapper architecture for
     the VIX repository (wenchiehlee-money.github.io/VIX). Use for Taiwan VIX vs TAIEX
     dual-axis volatility radar, crash stress tests, and Black Swan branding.
@@ -881,12 +881,12 @@ skills:
   maintainer: wenchiehlee
   source: ''
   repo_count: 2
-  updated_at: '2026-10-20'
-  revised_at: '2026-10-20'
+  updated_at: '2026-10-23'
+  revised_at: '2026-10-23'
 - name: skill-ux-youtube-audio-fetch
   group: common
   path: common/skill-ux-youtube-audio-fetch
-  version: 1.0.0
+  version: 1.1.0
   description: UX styling, player components, and tactile media controls for YoutubeAudio.Fetch
     (GitHub Pages web player & extractor). Use for media player interface, track queues,
     and dark atmospheric aesthetics.
@@ -894,8 +894,8 @@ skills:
   maintainer: wenchiehlee
   source: ''
   repo_count: 1
-  updated_at: '2026-10-17'
-  revised_at: '2026-10-20'
+  updated_at: '2026-10-23'
+  revised_at: '2026-10-23'
 - name: skill-yahoo-finance-fetch
   group: common
   path: common/skill-yahoo-finance-fetch
