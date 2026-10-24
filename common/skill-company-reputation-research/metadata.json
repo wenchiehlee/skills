@@ -1,5 +1,6 @@
 {
   "name": "skill-company-reputation-research",
+  "release_status": "Personal only",
   "description": "Collect Taiwan and global public jobseeker intelligence for a specified company, including employer reviews, interview/salary transparency, workplace reputation, labor/legal signals, layoffs, and recurring red flags.",
   "category": "company-research",
   "version": "0.1.1",

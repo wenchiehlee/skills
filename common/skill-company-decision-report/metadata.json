@@ -1,5 +1,6 @@
 {
   "name": "skill-company-decision-report",
+  "release_status": "Personal only",
   "description": "生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖）",
   "category": "finance-strategy",
   "version": "1.0.2",

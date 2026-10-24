@@ -1,5 +1,6 @@
 {
   "name": "skill-scribd-pdf-fetch",
+  "release_status": "Personal only",
   "description": "從 Scribd 文件網址下載乾淨的 PDF 副本，透過外部工具 themrsami/scribd-downloader（headless Chrome + CDP 逐頁列印）執行，本登錄庫不複製該工具原始碼；自動修補 Chrome 130+ 因 excludeSwitches 選項導致啟動即崩潰的相容性問題。",
   "category": "document-ingestion",
   "version": "1.0.1",
@@ -36,6 +37,8 @@
   ],
   "files": [
     "SKILL.md",
+    "README.md",
+    "package.json",
     "metadata.json",
     "self_update.py",
     "scripts/scribd_pdf_fetch.py"

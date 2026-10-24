@@ -1,5 +1,6 @@
 {
   "name": "skill-document-ppt-design",
+  "release_status": "Personal only",
   "description": "Design and generate editorial-quality PPT/PPTX slide decks as SVG or PPTX, following the design systems from software-ai-life/Awesome-PPT-Design-Skills. Supports 7 house styles: Futuristic Tech Editorial, Japanese Lifestyle Editorial, Washi Paper Soft Glow, Soft 3D Clay, Minimalist Luxury Branding, Modern Illustration Editorial, Japanese Hand-Drawn Editorial. Use for ppt-master workflows, slide deck design, SVG page generation, PPTX export, and PDF-to-PPT transformation.",
   "category": "document-design",
   "version": "1.0.0",

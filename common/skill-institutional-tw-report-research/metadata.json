@@ -1,5 +1,6 @@
 {
   "name": "skill-institutional-tw-report-research",
+  "release_status": "Personal only",
   "description": "Maintain auditable Taiwan listed/OTC institutional research intelligence: broker/advisory reports, ratings, target prices, EPS revisions, investor-conference linkage, consensus, and TWSE/TPEx institutional-flow comparison.",
   "category": "finance-strategy",
   "version": "0.1.2",
@@ -10,14 +11,17 @@
   "dependencies": [
     {
       "name": "skill-company-investorconference-ingest",
+  "release_status": "Personal only",
       "version": ">=1.3.2"
     },
     {
       "name": "skill-company-investorconference-digest",
+  "release_status": "Personal only",
       "version": ">=2.4.6"
     },
     {
       "name": "skill-company-investorconference-ir-pdf-md",
+  "release_status": "Personal only",
       "version": ">=1.0.1"
     }
   ],

@@ -1,5 +1,6 @@
 {
   "name": "skill-usb-uvc-4k-capture",
+  "release_status": "Personal only",
   "description": "Enable camera-agnostic 4K UVC capture on Android BaseUnit: setup_uvc.sh advertises 4K frame descriptor, uvc_camera_forward detects camera max MJPEG resolution at runtime and clamps negotiation — Jieli U20 stays at 1080p, Logitech MeetUp unlocks 3840×2160@30fps.",
   "category": "hardware-usb",
   "platforms": ["android"],

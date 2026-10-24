@@ -1,5 +1,6 @@
 {
   "name": "skill-institutional-thesis-research",
+  "release_status": "Personal only",
   "description": "Maintain auditable five-institution investment thesis research and interpret articles/news through selected institutional lenses for TW-institutional-investment-theses.",
   "category": "finance-strategy",
   "version": "1.2.0",

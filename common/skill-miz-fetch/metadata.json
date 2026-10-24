@@ -1,5 +1,6 @@
 {
   "name": "skill-miz-fetch",
+  "release_status": "Personal only",
   "description": "Fetch or process authorized EPUB/PDF book sources into Miz.Fetch's chapter Markdown, metadata, JPG assets, and requested book summaries or investment frameworks.",
   "category": "document-ingestion",
   "version": "1.3.0",

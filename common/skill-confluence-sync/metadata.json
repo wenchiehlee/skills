@@ -1,5 +1,6 @@
 {
   "name": "skill-confluence-sync",
+  "release_status": "Personal only",
   "description": "Read and overwrite a single Confluence Wiki page via REST API using CONFLUENCE_EMAIL / CONFLUENCE_API_TOKEN / CONFLUENCE_BASE_URL / CONFLUENCE_PAGE_ID, based on SpillwaveSolutions/confluence-skill.",
   "category": "document-sync",
   "version": "1.0.0",

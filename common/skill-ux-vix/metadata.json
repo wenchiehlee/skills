@@ -1,5 +1,6 @@
 {
   "name": "skill-ux-vix",
+  "release_status": "Personal only",
   "version": "1.1.0",
   "description": "UX styling, design system tokens, and Plotly wrapper architecture for the VIX repository (wenchiehlee-money.github.io/VIX). Use for Taiwan VIX vs TAIEX dual-axis volatility radar, crash stress tests, and Black Swan branding.",
   "category": "ux-design",

@@ -1,5 +1,6 @@
 {
   "name": "skill-company-segment-viz",
+  "release_status": "Personal only",
   "description": "不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖",
   "category": "finance-analytics",
   "version": "1.0.1",

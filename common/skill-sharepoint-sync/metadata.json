@@ -1,5 +1,6 @@
 {
   "name": "skill-sharepoint-sync",
+  "release_status": "Personal only",
   "description": "Access a single SharePoint file through an approved Microsoft Graph delegated app or policy-compliant Microsoft Edge with CDP remote debugging enabled.",
   "category": "document-sync",
   "version": "1.3.0",

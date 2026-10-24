@@ -1,5 +1,6 @@
 {
   "name": "skill-document-diagram-design",
+  "release_status": "Personal only",
   "description": "以 cathrynlavery/diagram-design 的編輯級圖表方法論，產生可嵌入 Docsify、Material for MkDocs、PowerPoint 的圖表，或以 open-slide／mkslides 輸出具互動的簡報；支援從既有 PlantUML/Mermaid 原始碼或圖片匯入語意後，改畫成統一風格的原生 SVG。",
   "category": "document-design",
   "version": "1.4.0",

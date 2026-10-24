@@ -1,5 +1,6 @@
 {
   "name": "skill-ux-google-alert-manager",
+  "release_status": "Personal only",
   "version": "1.2.0",
   "description": "UX styling, component patterns, and interaction design for GoogleAlertManager (GitHub Pages web dashboard). Upgraded mascot to Alert Bird (破曉警報鳥 🐦, Lucide bird) with Alert Orange (#ea580c) theme.",
   "category": "ux-design",

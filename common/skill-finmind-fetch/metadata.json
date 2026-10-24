@@ -1,5 +1,6 @@
 {
   "name": "skill-finmind-fetch",
+  "release_status": "Personal only",
   "description": "Fetch FinMind Taiwan stock margin/price data and quarterly financial-ratio data, exporting GoodInfo Analyzer-compatible CSVs.",
   "category": "financial-data",
   "version": "1.13.0",

@@ -1,5 +1,6 @@
 {
   "name": "skill-android-adb-gadget",
+  "release_status": "Personal only",
   "description": "PowerShell module for managing dual ADB transports (USB + Ethernet) on an embedded Android device that exposes a USB composite gadget — handles state detection, Ethernet bootstrapping, safe reboot/recovery, gadget mount, and HID function control.",
   "category": "hardware-usb",
   "platforms": ["android","windows"],

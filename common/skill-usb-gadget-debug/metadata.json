@@ -1,5 +1,6 @@
 {
   "name": "skill-usb-gadget-debug",
+  "release_status": "Personal only",
   "description": "Enumerate Windows USB devices via SetupAPI to verify USB composite gadget (VID:046D) enumeration, interface presence, and device node status.",
   "category": "hardware-usb",
   "platforms": ["windows"],

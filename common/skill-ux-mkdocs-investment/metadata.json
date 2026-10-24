@@ -1,5 +1,6 @@
 {
   "name": "skill-ux-mkdocs-investment",
+  "release_status": "Personal only",
   "version": "1.1.0",
   "description": "Fintech design system, KPI metric widgets, financial table styling, and Material for MkDocs customizations for mkdocs-investment. Use for stock dashboards, research notes, and asset tracking UIs.",
   "category": "ux-design",
