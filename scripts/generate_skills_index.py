@@ -106,6 +106,9 @@ def collect_skills() -> list[dict]:
                 "updated_at": meta.get("updated_at", ""),
                 "revised_at": _git_last_commit_date(skill_dir) or _mtime_date(skill_dir),
             }
+            for field in ("npm_package", "npm_url", "install_command"):
+                if meta.get(field):
+                    skill_entry[field] = meta[field]
             skills.append(skill_entry)
     return skills
 
