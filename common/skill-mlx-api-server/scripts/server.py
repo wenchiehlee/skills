@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import signal
+import subprocess
 import tempfile
 import time
 from datetime import datetime, timezone, timedelta
@@ -142,6 +143,23 @@ app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024  # 32 MB max request body
 
 
+def _photo_format(path: Path) -> str | None:
+    """Detect supported image types from file bytes, not the upload MIME header."""
+    with path.open("rb") as image_file:
+        header = image_file.read(32)
+    if header.startswith(b"\xff\xd8\xff"):
+        return "JPEG"
+    if header.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "PNG"
+    if header.startswith(b"RIFF") and header[8:12] == b"WEBP":
+        return "WebP"
+    if len(header) >= 12 and header[4:8] == b"ftyp" and header[8:12] in {
+        b"heic", b"heix", b"hevc", b"hevx", b"heif", b"mif1", b"msf1",
+    }:
+        return "HEIC/HEIF"
+    return None
+
+
 @app.route("/exec", methods=["POST"])
 @require_api_key
 def execute():
@@ -189,6 +207,85 @@ def execute():
         return jsonify({"error": str(e)}), e.status_code
     except Exception:
         logger.exception("Unexpected error")
+        return jsonify({"error": "Internal server error"}), 500
+
+
+@app.route("/photo-analyze", methods=["POST"])
+@require_api_key
+def photo_analyze():
+    """Analyze one uploaded image with an enabled MLX vision-language model."""
+    if "file" not in request.files:
+        return jsonify({"error": "No file part in the request"}), 400
+
+    file = request.files["file"]
+    if not file.filename:
+        return jsonify({"error": "No file selected"}), 400
+
+    prompt = request.form.get("prompt", "").strip()
+    if not prompt:
+        return jsonify({"error": "No prompt provided"}), 400
+    if len(prompt) > config.MAX_PROMPT_LENGTH:
+        return jsonify({"error": f"Prompt exceeds {config.MAX_PROMPT_LENGTH} character limit"}), 400
+
+    model = request.form.get("model", "mlx-gemma4").strip()
+    if model not in config.ALLOWED_MODELS:
+        return jsonify({"error": f"Model not allowed. Choose from: {sorted(config.ALLOWED_MODELS)}"}), 400
+
+    started = time.monotonic()
+    try:
+        with tempfile.TemporaryDirectory(prefix="mlx_photo_") as temp_dir:
+            source_path = Path(temp_dir) / "source-image"
+            file.save(source_path)
+            input_format = _photo_format(source_path)
+            if input_format is None:
+                return jsonify({"error": "Unsupported or invalid image. Use JPEG, PNG, WebP, or HEIC/HEIF."}), 415
+
+            inference_path = source_path
+            converted = False
+            if input_format == "HEIC/HEIF":
+                # sips relies on the filename extension for some HEIF variants.
+                heic_path = Path(temp_dir) / "source-image.heic"
+                source_path.replace(heic_path)
+                source_path = heic_path
+                inference_path = Path(temp_dir) / "image.jpg"
+                try:
+                    conversion = subprocess.run(
+                        ["sips", "-s", "format", "jpeg", str(source_path), "--out", str(inference_path)],
+                        capture_output=True,
+                        text=True,
+                        timeout=60,
+                        check=False,
+                    )
+                except (FileNotFoundError, subprocess.TimeoutExpired):
+                    return jsonify({"error": "HEIC conversion failed on the MLX server."}), 415
+                if conversion.returncode != 0 or not inference_path.is_file():
+                    return jsonify({"error": "HEIC conversion failed on the MLX server."}), 415
+                converted = True
+
+            output, actual_model = run(prompt, model=model, image_path=str(inference_path))
+            elapsed = time.monotonic() - started
+            _record_stat(prompt, actual_model, len(output), elapsed)
+            _send_amplitude_event_async(
+                model,
+                elapsed,
+                len(output),
+                request.headers.get("X-App-Name") or "Photo-Analyzer",
+                stage="photo-analyze",
+                provider="mlx-vlm",
+                model_repo=actual_model,
+            )
+            return jsonify({
+                "output": output,
+                "model": actual_model,
+                "input_format": input_format,
+                "converted": converted,
+                "elapsed_s": round(elapsed, 3),
+                "temporary_file_deleted": True,
+            })
+    except ExecutionError as e:
+        return jsonify({"error": str(e)}), e.status_code
+    except Exception:
+        logger.exception("Unexpected error in photo analysis")
         return jsonify({"error": "Internal server error"}), 500
 
 

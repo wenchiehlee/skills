@@ -103,6 +103,25 @@ def calc_macd(close: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9)
     return pd.DataFrame({"dif": dif, "signal": macd_signal, "hist": hist})
 
 
+# 2026-10-15教訓：8299這種近幾季EPS暴衝（TTM EPS從24.21衝到220.38，9倍）的股票，
+# 樣本窗口裡的「trailing PE」其實混了兩個完全不同的EPS基準——大部分窗口期是用舊的
+# 低EPS當分母（PE因此虛高），只有最後一小段是用新的高EPS。window.mean()算出來的μ
+# 本質上是「舊EPS基準下的歷史平均PE倍數」，拿去乘「現在的新EPS」換算價格帶，等於
+# 假設「股價會漲到讓舊PE倍數套用在新EPS上」，這個數字從來沒有在任何時間點真實發生
+# 過（使用者實測：8299的μ價格帶算出4808，但MA240顯示近一年均價只有1830左右，兩者
+# 根本不是同一個量級）。這不是哪個數字算錯，是「PE服從單一常態分布」這個假設在EPS
+# 基準本身換代時整個失效——μ/σ跟它們換算出的6個band（P欄分類＋Z:AD價格帶）全部
+# 一起不可信，不是只有μ-2σ那一條會出現負數而已。
+# 修法：樣本窗口內實際用到的EPS如果波動超過EPS_REGIME_CHANGE_RATIO倍，判定為EPS
+# 基準換代（不是正常的獲利成長/衰退波動——2330(TSMC)同樣窗口EPS成長到1.91倍還算
+# 合理成長，但8299這種9倍只可能是基期太低或業外一次性損益），整個PE band（P欄+
+# Z:AD／calc_pe_band_series()的pe_mean/pe_std/price_*）都回傳空值/NaN顯示"-"，不要
+# 生出一個看起來煞有介事但從未真實發生過的估值目標。calc_pe_band()跟calc_pe_band_series()
+# 共用這個常數，確保兩邊口徑一致——不是只修快照版，向量化版（dynamic-valuation-box用）
+# 沒跟著改的話，畫出來的估值帶一樣會出現8299那種從未真實發生過的區間。
+EPS_REGIME_CHANGE_RATIO = 3.0
+
+
 def calc_pe_band_series(
     close: pd.Series, eps: float | pd.Series, period: int = 240, min_periods: int | None = None,
 ) -> pd.DataFrame:
@@ -151,6 +170,16 @@ def calc_pe_band_series(
     out = pd.DataFrame({"eps": aligned_eps, "pe": pe, "pe_mean": pe_mean, "pe_std": pe_std})
     for sigma, name in ((-2, "m2"), (-1, "m1"), (0, "mean"), (1, "p1"), (2, "p2")):
         out[f"price_{name}"] = (pe_mean + sigma * pe_std) * aligned_eps
+
+    # 跟calc_pe_band()共用EPS_REGIME_CHANGE_RATIO（見上方註解），這裡是逐日滾動版本——
+    # 每一天各自看「它自己那個period窗口」裡的EPS波動夠不夠大，不是整段close只判斷
+    # 一次。換代判定成立的那些日子，pe_mean/pe_std跟5條price_*都蓋成NaN（matplotlib
+    # 畫圖對NaN就是自然斷線/斷區，不用額外處理），只留eps/pe這兩個當天真實發生過的
+    # 原始數字。
+    eps_roll_min = aligned_eps.rolling(period, min_periods=mp).min()
+    eps_roll_max = aligned_eps.rolling(period, min_periods=mp).max()
+    regime_changed = (eps_roll_min <= 0) | (eps_roll_max / eps_roll_min > EPS_REGIME_CHANGE_RATIO)
+    out.loc[regime_changed, ["pe_mean", "pe_std", "price_m2", "price_m1", "price_mean", "price_p1", "price_p2"]] = float("nan")
     return out
 
 
@@ -160,11 +189,13 @@ def calc_pe_band(close: pd.Series, eps: float | pd.Series, period: int = 240) ->
     PE 分布 = daily close / EPS。EPS 可為固定數字（例如最新 forward EPS consensus），
     也可為日期索引 Series（例如 daily consensus EPS），會用交易日向前填補後對齊價格。
     回傳最新 PE、樣本平均 μ、樣本標準差 σ、μ±1σ/±2σ 的 PE 倍數與用同一 EPS 換算的價格帶。
+    樣本窗口內EPS基準換代太劇烈（見EPS_REGIME_CHANGE_RATIO註解）時回傳空dict。
     """
     close = close.dropna().astype(float)
     if close.empty or period <= 1:
         return {}
 
+    eps_window_for_sanity = None
     if isinstance(eps, pd.Series):
         eps_series = eps.dropna().astype(float).sort_index()
         if eps_series.empty:
@@ -177,6 +208,7 @@ def calc_pe_band(close: pd.Series, eps: float | pd.Series, period: int = 240) ->
         )
         pe = (close / aligned_eps).dropna()
         latest_eps = aligned_eps.reindex(pe.index).iloc[-1] if not pe.empty else None
+        eps_window_for_sanity = aligned_eps.reindex(pe.tail(period).dropna().index).dropna()
     else:
         try:
             latest_eps = float(eps)
@@ -190,6 +222,11 @@ def calc_pe_band(close: pd.Series, eps: float | pd.Series, period: int = 240) ->
     if len(window) < 2 or latest_eps is None or pd.isna(latest_eps) or latest_eps <= 0:
         return {}
 
+    if eps_window_for_sanity is not None and not eps_window_for_sanity.empty:
+        eps_min = float(eps_window_for_sanity.min())
+        if eps_min <= 0 or float(eps_window_for_sanity.max()) / eps_min > EPS_REGIME_CHANGE_RATIO:
+            return {}
+
     mean = float(window.mean())
     std = float(window.std(ddof=1))
     latest_pe = float(pe.iloc[-1])
@@ -198,16 +235,29 @@ def calc_pe_band(close: pd.Series, eps: float | pd.Series, period: int = 240) ->
         "PE_current": latest_pe,
         "PE_mean": mean,
         "PE_std": std,
+        # PE_minus_2std/PE_minus_1std故意不clamp——classify_pe_band()的z-score分類要用
+        # 原始(mean-k*std)算z，clamp過的話band 0/1的門檻會悄悄跟PE_current位置對不上。
         "PE_minus_2std": mean - 2 * std,
         "PE_minus_1std": mean - std,
         "PE_plus_1std": mean + std,
         "PE_plus_2std": mean + 2 * std,
     }
-    bands["PEBand_price_minus_2std"] = bands["PE_minus_2std"] * float(latest_eps)
-    bands["PEBand_price_minus_1std"] = bands["PE_minus_1std"] * float(latest_eps)
-    bands["PEBand_price_mean"] = bands["PE_mean"] * float(latest_eps)
-    bands["PEBand_price_plus_1std"] = bands["PE_plus_1std"] * float(latest_eps)
-    bands["PEBand_price_plus_2std"] = bands["PE_plus_2std"] * float(latest_eps)
+    # 2026-10-15教訓：EPS波動很大的股票（例如近兩季TTM EPS從~40暴衝到~220的8299，
+    # 或其他本益比因為分母劇烈變動而波動度很高的個股），樣本窗口內的PE標準差相對
+    # 平均值會大到μ-2σ算出負的本益比倍數，乘上現在的EPS換算成「價格帶」後出現負
+    # 股價（例如-323元）——股價不可能是負的，這不是程式bug，是「PE服從常態分布」
+    # 這個假設在EPS劇烈變動時失效，純數學算出來的下緣已經沒有估值意義。顯示端
+    # （股票決策摘要Z:AD）只在乎看得懂的價格帶，所以這裡把換算出來的5個價格帶
+    # 全部floor在0——即使PE倍數的z-score分類（P欄band 0~5）本身不受影響，仍然用
+    # 上面沒clamp過的原始mean/std去算。
+    for key, pe_key in (
+        ("PEBand_price_minus_2std", "PE_minus_2std"),
+        ("PEBand_price_minus_1std", "PE_minus_1std"),
+        ("PEBand_price_mean", "PE_mean"),
+        ("PEBand_price_plus_1std", "PE_plus_1std"),
+        ("PEBand_price_plus_2std", "PE_plus_2std"),
+    ):
+        bands[key] = max(bands[pe_key] * float(latest_eps), 0.0)
     return bands
 
 

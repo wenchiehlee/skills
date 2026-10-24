@@ -36,6 +36,7 @@ skill-stock-ma-rsi-bband-macd-peband/
 
 ## 版本
 
+- 1.10.0 (2026-10-15)：`calc_pe_band()`/`calc_pe_band_series()` 新增 EPS 基準換代偵測——樣本窗口內實際用到的 EPS 如果波動超過 `EPS_REGIME_CHANGE_RATIO`（3倍，判定為獲利基期換代而非正常成長），整組 PE band（分類＋μ±1σ/±2σ 價格帶）回傳空值/NaN，不再套用「舊 EPS 基準算出的歷史平均本益比」乘「新 EPS」，生出從未真實發生過的估值目標（實測案例：8299 TTM EPS 兩季內從 24.21 衝到 220.38，μ 價格帶原本算出 4808，但同期實際均價只有約 1830）。另外把換算出的 5 條價格帶 floor 在 0（股價不可能是負的）。
 - 1.7.0 (2026-08-24)：新增 `scripts/build_trailing_ttm_eps.py`，把 quarterly actual EPS fact table 轉成 `trailing_eps` / TTM dated series，供標準 PEBand 使用；支援 official overlay row，並在缺少 historical disclosure date 時標示 `period_end_effective_for_historical_band_until_disclosure_dates_available`。
 - 1.6.1 (2026-08-24)：default `--pe-period` 改為 `1200`，對應常見 5Y normalized PE band；文件明確標示 `60`=季度短期 regime、`240`=1Y trading band、`720`=3Y、`1200`=5Y。
 - 1.6.0 (2026-08-24)：PEBand 改成標準 historical PE series 定義：EPS CSV 預設必須有 `date` / `asof_date` / `forecast_asof_date`，逐日計算 `PE_t = adjusted_close_t / EPS_t` 後再算 μ、樣本 σ、μ±1σ/±2σ；沒有日期欄的固定 EPS 只能用 `--pe-allow-static-eps-band` 作為非標準 fallback。

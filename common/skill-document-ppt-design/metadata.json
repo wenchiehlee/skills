@@ -1,0 +1,29 @@
+{
+  "name": "skill-document-ppt-design",
+  "description": "Design and generate editorial-quality PPT/PPTX slide decks as SVG or PPTX, following the design systems from software-ai-life/Awesome-PPT-Design-Skills. Supports 7 house styles: Futuristic Tech Editorial, Japanese Lifestyle Editorial, Washi Paper Soft Glow, Soft 3D Clay, Minimalist Luxury Branding, Modern Illustration Editorial, Japanese Hand-Drawn Editorial. Use for ppt-master workflows, slide deck design, SVG page generation, PPTX export, and PDF-to-PPT transformation.",
+  "category": "document-design",
+  "version": "1.0.0",
+  "maintainer": "wenchiehlee",
+  "source": "https://github.com/software-ai-life/Awesome-PPT-Design-Skills",
+  "updated_at": "2026-10-07",
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-document-ppt-design",
+  "files": [
+    "metadata.json",
+    "self_update.py",
+    "SKILL.md",
+    "references/style-system.md",
+    "references/slide-patterns.md",
+    "references/ppt-master-integration.md",
+    "references/qa-checklist.md",
+    "scripts/svg_to_pptx.py",
+    "assets/template.html",
+    "assets/examples/01_cover.svg"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-document-ppt-design"
+    }
+  ]
+}

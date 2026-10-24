@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <!-- ========================================================================
+       UX-Deck Minimal Line Iconography (ask-bridge / Lucide Inspired)
+       Grid: 24x24 · Stroke: 1.6px · Round Caps & Joins · Fill: None
+       Pure Geometric Lines · High Recognition · Zero Visual Noise
+       ======================================================================== -->
+
+  <!-- 1. mkdocs-life: Scandinavian Line Deer (Graceful, Reflective, Clean) -->
+  <symbol id="icon-deer-life" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Antlers -->
+    <path d="M3 3c0 2 1 3 4 3c2 0 3 1 3 3" />
+    <path d="M21 3c0 2-1 3-4 3c-2 0-3 .3-3 3" />
+    <path d="M7 3c0 1.3.3 2.3 1 3" />
+    <path d="M17 3c0 1.3-.3 2.3-1 3" />
+    <!-- Deer Head Contour -->
+    <path d="M12 19c-1 0-4-3-4-6.5 0-2 1.3-3.5 4-3.5s4 1.5 4 3.5c0 3.5-3 6.5-4 6.5" />
+    <!-- Ears -->
+    <path d="M8 10.5l-2-1.5" />
+    <path d="M16 10.5l2-1.5" />
+    <!-- Eyes & Nose -->
+    <path d="M10 13v.01" />
+    <path d="M14 13v.01" />
+    <path d="M12 16.5h.01" />
+  </symbol>
+
+  <!-- 2. GoogleAlertManager: Precision Radar Falcon (Swift Scout, Alert Bird) -->
+  <symbol id="icon-falcon-radar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Radar Alert Ping Arc -->
+    <path d="M19 4a4 4 0 0 1 2 3.5" />
+    <!-- Eye -->
+    <path d="M16 8h.01" />
+    <!-- Streamlined Body Contour -->
+    <path d="M3.5 18H12a8 8 0 0 0 8-8V8a4 4 0 0 0-7.3-2.3L2 20" />
+    <!-- Sharp Precision Beak -->
+    <path d="m20 8 2.5.5-2.5.5" />
+    <!-- Wing Contour -->
+    <path d="M7 18a6 6 0 0 0 3.8-10.6" />
+    <!-- Alert Perch Feet -->
+    <path d="M10 18v3" />
+    <path d="M14 18v3" />
+  </symbol>
+
+  <!-- 3. YoutubeAudio.Fetch: Fluid Wave Whale (Harmonic Resonance, Oceanic Cadence) -->
+  <symbol id="icon-whale-sonic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Acoustic Water Spout (Blowhole Resonance) -->
+    <path d="M18 9V5a2 2 0 0 0-4 0" />
+    <path d="M18 5a2 2 0 0 1 4 0" />
+    <!-- Fluid Whale Body & Tail Fluke -->
+    <path d="M6 9.7 3.9 8.4C2.7 7.7 2 6.4 2 5V3c2 0 4 2 4 2s2-2 4-2v2c0 1.4-.7 2.7-1.9 3.4l-3.8 2.4A5 5 0 0 0 7 20h12c1.7 0 3-1.3 3-3v-3c0-2.8-2.2-5-5-5-2.7 0-5.1 1.4-6.4 3.6L9.7 14A2 2 0 0 1 6 13Z" />
+    <!-- Eye Accent -->
+    <path d="M15 15h.01" />
+  </symbol>
+
+  <!-- 4. mkdocs-investment: Wall Street Geometric Bull (Alpha & Strength) -->
+  <symbol id="icon-bull-fintech" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Swept Bull Horns -->
+    <path d="M7 10a5 5 0 0 1-4-8 4 4 0 0 0 4 4h10a4 4 0 0 0 4-4 5 5 0 0 1-4 8" />
+    <!-- Cheeks & Head -->
+    <path d="M6.4 15c-.3-.6-.4-1.3-.4-2 0-4 3-3 3-7" />
+    <path d="M17.6 15c.3-.6.4-1.3.4-2 0-4-3-3-3-7" />
+    <!-- Determined Eyes -->
+    <path d="M10 12.5v1.5" />
+    <path d="M14 12.5v1.5" />
+    <!-- Strong Muzzle & Ring -->
+    <path d="M15 22a4 4 0 1 0-3-6.7A4 4 0 1 0 9 22Z" />
+    <path d="M9 18h.01" />
+    <path d="M15 18h.01" />
+  </symbol>
+
+  <!-- 5. mkdocs-investment: Nordic Geometric Bear (Preservation & Risk Shield) -->
+  <symbol id="icon-bear-defense" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Round Bear Ears -->
+    <path d="m6 7 .5.5" />
+    <path d="m18 7-.5.5" />
+    <!-- Chubby Head Contour -->
+    <path d="M20.8 4.2c-1.6-1.6-4.1-1.6-5.7 0l-1 1a13.6 13.6 0 0 0-4.2 0l-1-1a4 4 0 0 0-5.8 5.6A7 7 0 0 0 2 13.5C2 18.2 6.5 22 12 22s10-3.8 10-8.5a7 7 0 0 0-1.1-3.8c1.5-1.6 1.5-4-.1-5.5" />
+    <!-- Cute Eyes -->
+    <path d="M10 12v-.5" />
+    <path d="M14 12v-.5" />
+    <!-- Snout & Mouth -->
+    <path d="M14 16h-4" />
+    <path d="M12 16v2" />
+  </symbol>
+
+  <!-- 6. HomeAssistant TV: 10-ft Sentinel Guardian Dog (Alert, Faithful, High Contrast) -->
+  <symbol id="icon-sentinel-tv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Floppy Puppy Ears & Forehead -->
+    <path d="M8.5 8.5c-.38 1.05-1.08 2.03-2.34 2.5-1.93.72-3.58-.3-3.66-1-.11-.99 1.18-6.53 4-7 1.92-.32 3.65.85 3.65 2.24A7.5 7.5 0 0 1 14 5.28c0-1.39 1.84-2.6 3.77-2.28 2.82.47 4.11 6.01 4 7-.08.7-1.73 1.72-3.66 1-1.26-.47-1.85-1.45-2.24-2.5" />
+    <!-- Friendly Jawline Contour -->
+    <path d="M4.42 11.25A13.15 13.15 0 0 0 4 14.56C4 18.73 7.58 21 12 21s8-2.27 8-6.44a11.7 11.7 0 0 0-.49-3.31" />
+    <!-- Clear Eyes -->
+    <path d="M8 14v.5" />
+    <path d="M16 14v.5" />
+    <!-- Nose Tip -->
+    <path d="M11.25 16.25h1.5L12 17z" />
+  </symbol>
+</svg>

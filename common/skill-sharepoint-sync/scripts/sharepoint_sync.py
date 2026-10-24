@@ -40,6 +40,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import json
 import os
 import platform
 import shutil
@@ -321,6 +322,80 @@ def open_cdp_tab(url: str, port: int = 9222) -> Optional[dict]:
     return None
 
 
+def download_via_cdp(port: int, output_dir: Path, target_ws_url: Optional[str] = None) -> bool:
+    """透過 CDP 在 Edge 的 SharePoint 頁面中自動觸發下載。"""
+    try:
+        import websockets
+        import asyncio
+    except ImportError:
+        print("ERROR: 自動下載功能需安裝 websockets 套件（pip install websockets）", file=sys.stderr)
+        return False
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    if not target_ws_url:
+        targets = get_cdp_targets(port)
+        sp_pages = [t for t in targets if t.get("type") == "page" and "sharepoint" in t.get("url", "").lower()]
+        if not sp_pages:
+            print("ERROR: 未在 Edge 中找到 SharePoint 分頁", file=sys.stderr)
+            return False
+        target_ws_url = sp_pages[0].get("webSocketDebuggerUrl")
+
+    async def _run():
+        async with websockets.connect(target_ws_url) as ws:
+            # 1. 設定下載行為
+            await ws.send(json.dumps({"id": 1, "method": "Page.enable"}))
+            await ws.recv()
+            await ws.send(json.dumps({
+                "id": 2,
+                "method": "Page.setDownloadBehavior",
+                "params": {"behavior": "allow", "downloadPath": str(output_dir.resolve())}
+            }))
+            await ws.recv()
+
+            # 2. 點擊 More Actions (...)
+            click_more_js = """
+            (() => {
+                const btn = document.querySelector('[data-automationid="moreActionsHeroField"]') || document.querySelector('[aria-label="More Actions"]');
+                if (btn) { btn.click(); return true; }
+                return false;
+            })()
+            """
+            await ws.send(json.dumps({"id": 3, "method": "Runtime.evaluate", "params": {"expression": click_more_js, "returnByValue": True}}))
+            await ws.recv()
+            await asyncio.sleep(1)
+
+            # 3. 點擊 Download 選單項
+            click_download_js = """
+            (() => {
+                const items = Array.from(document.querySelectorAll('button, [role="menuitem"]'));
+                const downloadBtn = items.find(el => el.innerText && el.innerText.includes('Download'));
+                if (downloadBtn) { downloadBtn.click(); return true; }
+                return false;
+            })()
+            """
+            await ws.send(json.dumps({"id": 4, "method": "Runtime.evaluate", "params": {"expression": click_download_js, "returnByValue": True}}))
+            res = json.loads(await ws.recv())
+            clicked = res.get("result", {}).get("result", {}).get("value")
+            if not clicked:
+                print("⚠️  無法在選單中點擊 Download 按鈕，請確認選單是否開啟。", file=sys.stderr)
+                return False
+
+            print(f"已觸發下載，正在寫入 {output_dir.resolve()} …")
+            for _ in range(30):
+                await asyncio.sleep(0.5)
+                pptx_files = list(output_dir.glob("*.pptx"))
+                crdownload_files = list(output_dir.glob("*.crdownload"))
+                if pptx_files and not crdownload_files:
+                    latest = max(pptx_files, key=lambda p: p.stat().st_mtime)
+                    print(f"✓ 下載完成: {latest.name} ({latest.stat().st_size:,} bytes)")
+                    return True
+            print("⚠️  下載未在超時時間內完成，請檢查瀏覽器下載進度。")
+            return False
+
+    return asyncio.run(_run())
+
+
 def cmd_edge(args: argparse.Namespace) -> None:
     port = args.port
     share_url = args.url or os.getenv("SHAREPOINT_SHARE_URL")
@@ -345,6 +420,8 @@ def cmd_edge(args: argparse.Namespace) -> None:
         print("ERROR: 缺少目標檔案連結，請使用 --url 指定或在 .env 設定 SHAREPOINT_SHARE_URL", file=sys.stderr)
         sys.exit(1)
 
+    target_ws = None
+
     # 檢查 CDP 是否已經在監聽
     ver = check_cdp_status(port)
     if ver:
@@ -354,54 +431,68 @@ def cmd_edge(args: argparse.Namespace) -> None:
             print(f"✓ 已透過 CDP 開啟分頁: {share_url}")
             print(f"  分頁 ID    : {tab.get('id')}")
             print(f"  WebSocket  : {tab.get('webSocketDebuggerUrl')}")
-        else:
-            print(f"⚠️  CDP 埠號在線上，但建立分頁失敗，請手動確認瀏覽器視窗。")
-        return
-
-    # 未監聽，需啟動 Edge
-    edge_bin = find_edge_path()
-    if not edge_bin:
-        print("ERROR: 找不到 Microsoft Edge 執行檔 (msedge.exe)", file=sys.stderr)
-        sys.exit(1)
-
-    cmd = [str(edge_bin), f"--remote-debugging-port={port}"]
-
-    if args.kill_existing:
-        print("正在關閉既有 msedge 行程以套用預設 Profile 並啟用 CDP…")
-        subprocess.run(["taskkill", "/IM", "msedge.exe", "/F"], capture_output=True)
-        time.sleep(1)
+            target_ws = tab.get("webSocketDebuggerUrl")
     else:
-        # 使用專用 User Data Dir，確保即使一般 Edge 正在執行也能成功啟動獨立 CDP 實例
-        user_data_dir = args.user_data_dir
-        if not user_data_dir:
-            base_appdata = os.environ.get("LOCALAPPDATA", str(Path.home()))
-            user_data_dir = str(Path(base_appdata) / "Microsoft" / "Edge" / "User Data - CDP")
-        cmd.append(f"--user-data-dir={user_data_dir}")
+        # 未監聽，需啟動 Edge
+        edge_bin = find_edge_path()
+        if not edge_bin:
+            print("ERROR: 找不到 Microsoft Edge 執行檔 (msedge.exe)", file=sys.stderr)
+            sys.exit(1)
 
-    cmd.append(share_url)
+        cmd = [str(edge_bin), f"--remote-debugging-port={port}"]
 
-    print(f"啟動 Microsoft Edge 並啟用 CDP（埠號 {port}）…")
-    flags = (
-        subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
-        if platform.system() == "Windows"
-        else 0
-    )
-    subprocess.Popen(cmd, creationflags=flags)
+        if args.kill_existing:
+            print("正在關閉既有 msedge 行程以套用預設 Profile 並啟用 CDP…")
+            subprocess.run(["taskkill", "/IM", "msedge.exe", "/F"], capture_output=True)
+            time.sleep(1)
+        else:
+            user_data_dir = args.user_data_dir
+            if not user_data_dir:
+                base_appdata = os.environ.get("LOCALAPPDATA", str(Path.home()))
+                user_data_dir = str(Path(base_appdata) / "Microsoft" / "Edge" / "User Data - CDP")
+            cmd.append(f"--user-data-dir={user_data_dir}")
 
-    # 等待 CDP 埠號就緒
-    connected = False
-    for _ in range(10):
-        time.sleep(0.5)
-        ver = check_cdp_status(port)
-        if ver:
-            connected = True
-            print(f"✓ Edge 已就緒且 CDP 監聽中（127.0.0.1:{port}）")
-            print(f"  瀏覽器版本 : {ver.get('Browser')}")
-            print(f"  WebSocket  : {ver.get('webSocketDebuggerUrl')}")
-            break
+        cmd.append(share_url)
 
-    if not connected:
-        print(f"⚠️  Edge 已啟動，但在 5 秒內未能偵測到 CDP 埠號 {port}。若未開啟成功，請嘗試加上 --kill-existing。")
+        print(f"啟動 Microsoft Edge 並啟用 CDP（埠號 {port}）…")
+        launched = False
+        if platform.system() == "Windows":
+            try:
+                escaped_args = " ".join(f'`"{arg}`"' for arg in cmd)
+                ps_cmd = f"Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{{ CommandLine = '{escaped_args}' }}"
+                wmi_res = subprocess.run(["powershell", "-NoProfile", "-Command", ps_cmd], capture_output=True, text=True)
+                if wmi_res.returncode == 0 and "ReturnValue : 0" in wmi_res.stdout or "0" in wmi_res.stdout:
+                    launched = True
+            except Exception:
+                pass
+
+        if not launched:
+            flags = (
+                subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
+                if platform.system() == "Windows"
+                else 0
+            )
+            subprocess.Popen(cmd, creationflags=flags)
+
+        # 等待 CDP 埠號就緒
+        connected = False
+        for _ in range(10):
+            time.sleep(0.5)
+            ver = check_cdp_status(port)
+            if ver:
+                connected = True
+                print(f"✓ Edge 已就緒且 CDP 監聽中（127.0.0.1:{port}）")
+                print(f"  瀏覽器版本 : {ver.get('Browser')}")
+                print(f"  WebSocket  : {ver.get('webSocketDebuggerUrl')}")
+                break
+
+        if not connected:
+            print(f"⚠️  Edge 已啟動，但在 5 秒內未能偵測到 CDP 埠號 {port}。若未開啟成功，請嘗試加上 --kill-existing。")
+
+    if args.download:
+        time.sleep(2)
+        out_dir = Path(args.output_dir)
+        download_via_cdp(port, out_dir, target_ws)
 
 
 def main() -> None:
@@ -449,6 +540,16 @@ def main() -> None:
         "--check-only",
         action="store_true",
         help="僅檢查 CDP 埠號是否正常連線，不重新啟動瀏覽器",
+    )
+    edge_parser.add_argument(
+        "--download",
+        action="store_true",
+        help="透過 CDP 自動點擊下載目標檔案",
+    )
+    edge_parser.add_argument(
+        "--output-dir",
+        default="downloads",
+        help="檔案下載目標目錄（預設 downloads/）",
     )
     edge_parser.set_defaults(func=cmd_edge)
 

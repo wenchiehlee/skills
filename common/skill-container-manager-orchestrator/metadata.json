@@ -1,7 +1,8 @@
 {
   "name": "skill-container-manager-orchestrator",
   "description": "跨平台容器管理與遠端協調技能。以 Synology NAS Container Manager 為首要平台，結合 wenchiehlee.quickconnect.to-Container.Manager 配置與 GitOps 自動化，擴展至 Mac mini、樹莓派等跨平台設備的容器遠端監控、同步、部署與維護。",
-  "category": "server",
+  "category": "server-infrastructure",
+  "platforms": ["synology-dsm","macos","linux"],
   "version": "1.0.0",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",

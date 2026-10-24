@@ -1,7 +1,7 @@
 {
   "name": "skill-stock-pipeline-health-monitor",
   "description": "複合技能：委派給所有 skill-*-fetch 抓取技能，維護 Data Health Dashboard 新鮮度、資料系統架構 Repo 角色對照表，並稽核跨 repo CSV 同步 YAML 與 GoodInfo/FinMind 智慧選源。",
-  "category": "financial-data",
+  "category": "finance-data",
   "version": "1.1.0",
   "maintainer": "wenchiehlee",
   "source": "biztrends.TW",

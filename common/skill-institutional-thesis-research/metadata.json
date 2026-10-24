@@ -1,7 +1,7 @@
 {
   "name": "skill-institutional-thesis-research",
   "description": "Maintain auditable five-institution investment thesis research and interpret articles/news through selected institutional lenses for TW-institutional-investment-theses.",
-  "category": "financial-strategy",
+  "category": "finance-strategy",
   "version": "1.2.0",
   "maintainer": "wenchiehlee-money",
   "source": "https://github.com/wenchiehlee-money/TW-institutional-investment-theses",

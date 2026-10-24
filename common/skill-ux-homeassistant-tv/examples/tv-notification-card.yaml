@@ -1,0 +1,53 @@
+# Home Assistant Automation Example: Android TV 10-foot Glancable Toast (PiPup REST + Lovelace)
+# Verified on Android TV (PiPup Port 7979)
+
+# Standard REST Command Definition in Home Assistant (configuration.yaml)
+# rest_command:
+#   pipup_tv_notify:
+#     url: "http://{{ tv_ip | default('192.168.31.232') }}:7979/notify"
+#     method: POST
+#     headers:
+#       Content-Type: "application/json"
+#     payload: >-
+#       {
+#         "duration": {{ duration | default(10) }},
+#         "position": 0,
+#         "title": "{{ title }}",
+#         "titleColor": "{{ title_color | default('#38bdf8') }}",
+#         "titleSize": 20,
+#         "message": "{{ message }}",
+#         "messageColor": "#f1f5f9",
+#         "messageSize": 16,
+#         "backgroundColor": "#660f172a",
+#         "media": {{ media | default('{}') }}
+#       }
+
+alias: "TV Popup: 客廳守護者與智能門鈴偵測"
+description: "在 Android 電視右上角顯示 60% 半透明 Cyber Dark Slate HUD 通知 (position: 0, #660f172a)"
+trigger:
+  - platform: state
+    entity_id: binary_sensor.front_door_motion
+    to: "on"
+action:
+  - service: rest_command.pipup_tv_notify
+    data:
+      tv_ip: "192.168.31.232"
+      duration: 10
+      title: "玄關動態偵測"
+      title_color: "#38bdf8"
+      message: "偵測到訪客接近玄關門口，已啟動即時安防監控錄影。"
+      media: >-
+        {"image": {"uri": "https://img.icons8.com/fluency/96/doorbell.png", "width": 120}}
+
+# Alternative: Browser Mod Popup (for Fully Kiosk / Lovelace Webview TV)
+# service: browser_mod.popup
+# data:
+#   title: "客廳安全防護 (Living Room Sentinel)"
+#   card:
+#     type: custom:button-card
+#     template: tv_frosted_hud
+#     custom_fields:
+#       mascot_icon: |
+#         [[[
+#           return `<svg class="ux-icon ux-icon-sentinel" style="width:36px;height:36px;"><use href="#icon-sentinel-tv"/></svg>`;
+#         ]]]
