@@ -17,7 +17,7 @@ skills:
   source: wj-lee_Barco.github.com/gadget/skills/Android BaseUnit-adb
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-company-data-index-sync
   group: common
   path: common/skill-company-data-index-sync
@@ -29,7 +29,7 @@ skills:
   source: TAIEX.TW
   repo_count: 1
   updated_at: '2026-07-07'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-company-decision-report
   group: common
   path: common/skill-company-decision-report
@@ -41,7 +41,7 @@ skills:
   source: TAIEX.TW
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-company-download-logo
   group: common
   path: common/skill-company-download-logo
@@ -53,7 +53,7 @@ skills:
   source: ''
   repo_count: 1
   updated_at: '2026-07-07'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-company-earnings-social-verify
   group: common
   path: common/skill-company-earnings-social-verify
@@ -65,7 +65,7 @@ skills:
   source: TAIEX.TW
   repo_count: 1
   updated_at: '2026-09-03'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-company-enrichment-json
   group: common
   path: common/skill-company-enrichment-json
@@ -78,7 +78,7 @@ skills:
   source: https://github.com/wenchiehlee/My-TW-Coverage
   repo_count: 2
   updated_at: '2026-10-03'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-company-enrichment-render
   group: common
   path: common/skill-company-enrichment-render
@@ -91,7 +91,7 @@ skills:
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
   repo_count: 1
   updated_at: '2026-10-04'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-company-investorconference-digest
   group: common
   path: common/skill-company-investorconference-digest
@@ -104,7 +104,7 @@ skills:
   source: https://github.com/wenchiehlee-money/InvestorConference
   repo_count: 1
   updated_at: '2026-07-23'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-company-investorconference-ingest
   group: common
   path: common/skill-company-investorconference-ingest
@@ -117,7 +117,7 @@ skills:
   source: https://github.com/wenchiehlee-money/InvestorConference
   repo_count: 1
   updated_at: '2026-08-17'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-company-investorconference-ir-pdf-md
   group: common
   path: common/skill-company-investorconference-ir-pdf-md
@@ -131,7 +131,7 @@ skills:
   source: https://github.com/wenchiehlee-money/InvestorConference
   repo_count: 1
   updated_at: '2026-07-19'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-company-reputation-research
   group: common
   path: common/skill-company-reputation-research
@@ -145,7 +145,7 @@ skills:
   source: https://github.com/wenchiehlee-money/TW.good-job
   repo_count: 1
   updated_at: '2026-08-20'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-company-revenue-expense-profit-predict
   group: common
   path: common/skill-company-revenue-expense-profit-predict
@@ -157,7 +157,7 @@ skills:
   source: ''
   repo_count: 1
   updated_at: ''
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-company-revenue-forecast-benchmark
   group: common
   path: common/skill-company-revenue-forecast-benchmark
@@ -169,7 +169,7 @@ skills:
   source: biztrends.TW/Skills/skill-company-revenue-forecast-benchmark.md
   repo_count: 1
   updated_at: '2026-07-05'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-company-revenue-predict
   group: common
   path: common/skill-company-revenue-predict
@@ -181,7 +181,7 @@ skills:
   source: ''
   repo_count: 1
   updated_at: ''
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-company-revenue-segment-weights
   group: common
   path: common/skill-company-revenue-segment-weights
@@ -195,7 +195,7 @@ skills:
   source: biztrends.TW
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-company-segment-viz
   group: common
   path: common/skill-company-segment-viz
@@ -207,7 +207,7 @@ skills:
   source: TAIEX.TW
   repo_count: 1
   updated_at: '2026-07-07'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-confluence-sync
   group: common
   path: common/skill-confluence-sync
@@ -221,7 +221,7 @@ skills:
   source: https://github.com/SpillwaveSolutions/confluence-skill
   repo_count: 0
   updated_at: '2026-10-14'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-container-manager-orchestrator
   group: common
   path: common/skill-container-manager-orchestrator
@@ -237,7 +237,7 @@ skills:
   source: https://github.com/ZhongZheng782/wenchiehlee.quickconnect.to-Container.Manager
   repo_count: 5
   updated_at: '2026-10-10'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-document-diagram-design
   group: common
   path: common/skill-document-diagram-design
@@ -251,7 +251,7 @@ skills:
   source: https://github.com/cathrynlavery/diagram-design
   repo_count: 0
   updated_at: '2026-09-05'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-document-ppt-design
   group: common
   path: common/skill-document-ppt-design
@@ -268,7 +268,7 @@ skills:
   source: https://github.com/software-ai-life/Awesome-PPT-Design-Skills
   repo_count: 0
   updated_at: '2026-10-07'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-document-vids-prompt-generate
   group: common
   path: common/skill-document-vids-prompt-generate
@@ -281,7 +281,7 @@ skills:
   source: https://github.com/wenchiehlee/skills
   repo_count: 1
   updated_at: '2026-10-21'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-facebook-fetch
   group: common
   path: common/skill-facebook-fetch
@@ -294,7 +294,7 @@ skills:
   source: https://github.com/wenchiehlee-money/Facebook.Fetch
   repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-finmind-fetch
   group: common
   path: common/skill-finmind-fetch
@@ -307,7 +307,7 @@ skills:
   source: https://github.com/wenchiehlee/Python-Actions.FinMind
   repo_count: 2
   updated_at: '2026-10-24'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-goodinfo-fetch
   group: common
   path: common/skill-goodinfo-fetch
@@ -321,7 +321,7 @@ skills:
   source: https://github.com/wenchiehlee-investment/Python-Actions.GoodInfo.Analyzer
   repo_count: 2
   updated_at: '2026-10-12'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-google-alert-fetch
   group: common
   path: common/skill-google-alert-fetch
@@ -335,7 +335,7 @@ skills:
   source: https://github.com/wenchiehlee-money/GoogleAlertManager
   repo_count: 1
   updated_at: '2026-08-25'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-google-analytics-monitor
   group: common
   path: common/skill-google-analytics-monitor
@@ -348,7 +348,7 @@ skills:
   source: https://pypi.org/project/google-analytics-cli/
   repo_count: 1
   updated_at: '2026-10-03'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-googlesearch-factsets-fetch
   group: common
   path: common/skill-googlesearch-factsets-fetch
@@ -364,7 +364,7 @@ skills:
   source: https://github.com/wenchiehlee/GoogleSearch.Factset
   repo_count: 1
   updated_at: '2026-08-25'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-institutional-thesis-research
   group: common
   path: common/skill-institutional-thesis-research
@@ -377,7 +377,7 @@ skills:
   source: https://github.com/wenchiehlee-money/TW-institutional-investment-theses
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-institutional-tw-report-research
   group: common
   path: common/skill-institutional-tw-report-research
@@ -391,7 +391,7 @@ skills:
   source: https://github.com/wenchiehlee-money/TW-institutional-research
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-investment-decision-coach
   group: common
   path: common/skill-investment-decision-coach
@@ -407,7 +407,7 @@ skills:
   source: https://github.com/wenchiehlee-money/Miz.Fetch
   repo_count: 1
   updated_at: '2026-10-23'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-llm-api-client
   group: common
   path: common/skill-llm-api-client
@@ -420,7 +420,7 @@ skills:
   source: https://github.com/wenchiehlee/llm
   repo_count: 8
   updated_at: '2026-10-11'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-llm-api-server
   group: common
   path: common/skill-llm-api-server
@@ -435,7 +435,7 @@ skills:
   source: https://github.com/ZhongZheng782/Llm-Cli-APIServer
   repo_count: 1
   updated_at: '2026-10-04'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-miz-fetch
   group: common
   path: common/skill-miz-fetch
@@ -449,7 +449,7 @@ skills:
   source: https://github.com/wenchiehlee-money/Miz.Fetch
   repo_count: 1
   updated_at: '2026-10-13'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-mlx-api-client-ocr
   group: common
   path: common/skill-mlx-api-client-ocr
@@ -462,7 +462,7 @@ skills:
   source: https://github.com/wenchiehlee/FamilyHealthyCheck
   repo_count: 6
   updated_at: '2026-10-10'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-mlx-api-client-whisper
   group: common
   path: common/skill-mlx-api-client-whisper
@@ -475,7 +475,7 @@ skills:
   source: https://github.com/wenchiehlee/InvestorConference
   repo_count: 2
   updated_at: '2026-08-30'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-mlx-api-server
   group: common
   path: common/skill-mlx-api-server
@@ -489,7 +489,7 @@ skills:
   source: https://github.com/ZhongZheng782/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts
   repo_count: 1
   updated_at: '2026-10-23'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-mlx-api-server-whisper
   group: common
   path: common/skill-mlx-api-server-whisper
@@ -503,7 +503,7 @@ skills:
   source: https://github.com/ZhongZheng782/Mac-mini/tree/main/skills/skill-mlx-api-server-whisper/scripts
   repo_count: 1
   updated_at: '2026-10-11'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-mops-fetch
   group: common
   path: common/skill-mops-fetch
@@ -518,7 +518,7 @@ skills:
   source: https://github.com/wenchiehlee-money/MOPS
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-pptx-to-md
   group: common
   path: common/skill-pptx-to-md
@@ -530,7 +530,7 @@ skills:
   source: ''
   repo_count: 0
   updated_at: '2026-07-09'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-scribd-pdf-fetch
   group: common
   path: common/skill-scribd-pdf-fetch
@@ -559,7 +559,7 @@ skills:
   source: https://learn.microsoft.com/en-us/graph/auth-v2-user
   repo_count: 1
   updated_at: '2026-10-14'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-stock-dynamic-valuation-box
   group: common
   path: common/skill-stock-dynamic-valuation-box
@@ -581,7 +581,7 @@ skills:
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
   repo_count: 2
   updated_at: '2026-10-15'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-stock-earnings-calendar-monitor
   group: common
   path: common/skill-stock-earnings-calendar-monitor
@@ -593,7 +593,7 @@ skills:
   source: TAIEX.TW
   repo_count: 1
   updated_at: '2026-09-03'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-stock-fiscal-quarter-resolve
   group: common
   path: common/skill-stock-fiscal-quarter-resolve
@@ -607,7 +607,7 @@ skills:
   source: https://github.com/wenchiehlee/skills
   repo_count: 3
   updated_at: '2026-09-25'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-stock-investorevent-fetch
   group: common
   path: common/skill-stock-investorevent-fetch
@@ -619,7 +619,7 @@ skills:
   source: https://github.com/wenchiehlee-money/InvestorConference
   repo_count: 4
   updated_at: '2026-10-08'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-stock-ma-rsi-bband-macd-peband
   group: common
   path: common/skill-stock-ma-rsi-bband-macd-peband
@@ -633,7 +633,7 @@ skills:
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
   repo_count: 3
   updated_at: '2026-10-15'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-stock-market-cost-distribution
   group: common
   path: common/skill-stock-market-cost-distribution
@@ -645,7 +645,7 @@ skills:
   source: https://github.com/wenchiehlee/MarketCostDistribution
   repo_count: 1
   updated_at: '2026-07-15'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-stock-pipeline-health-monitor
   group: common
   path: common/skill-stock-pipeline-health-monitor
@@ -658,7 +658,7 @@ skills:
   source: biztrends.TW
   repo_count: 1
   updated_at: '2026-09-23'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-stock-topcrash
   group: common
   path: common/skill-stock-topcrash
@@ -670,7 +670,7 @@ skills:
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
   repo_count: 3
   updated_at: '2026-10-08'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-stock-universe-onboarding
   group: common
   path: common/skill-stock-universe-onboarding
@@ -683,7 +683,7 @@ skills:
   source: biztrends.TW / ConceptStocks / Selenium-Actions.Auction
   repo_count: 3
   updated_at: '2026-07-22'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-theme-competitor-analysis
   group: common
   path: common/skill-theme-competitor-analysis
@@ -697,7 +697,7 @@ skills:
   source: biztrends.TW
   repo_count: 2
   updated_at: '2026-09-01'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-theme-competitor-groups-curate
   group: common
   path: common/skill-theme-competitor-groups-curate
@@ -711,7 +711,7 @@ skills:
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
   repo_count: 3
   updated_at: '2026-10-03'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-theme-cycle-coverage
   group: common
   path: common/skill-theme-cycle-coverage
@@ -724,7 +724,7 @@ skills:
   source: biztrends.TW
   repo_count: 1
   updated_at: ''
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-theme-cycle-index
   group: common
   path: common/skill-theme-cycle-index
@@ -738,7 +738,7 @@ skills:
   source: biztrends.TW
   repo_count: 1
   updated_at: '2026-07-20'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-tw-land-geo-signal
   group: common
   path: common/skill-tw-land-geo-signal
@@ -751,7 +751,7 @@ skills:
   source: https://github.com/wenchiehlee-money/LandAsset
   repo_count: 1
   updated_at: '2026-07-25'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-tw-land-realty-comps
   group: common
   path: common/skill-tw-land-realty-comps
@@ -763,7 +763,7 @@ skills:
   source: https://github.com/wenchiehlee-money/LandAsset
   repo_count: 2
   updated_at: '2026-07-25'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-tw-legal-rag
   group: common
   path: common/skill-tw-legal-rag
@@ -780,7 +780,7 @@ skills:
     skills/tw-legal-rag/)
   repo_count: 1
   updated_at: '2026-08-31'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-tw-legal-search-console
   group: common
   path: common/skill-tw-legal-search-console
@@ -793,7 +793,7 @@ skills:
   source: TW-person-legal-search
   repo_count: 1
   updated_at: '2026-08-31'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-usb-gadget-debug
   group: common
   path: common/skill-usb-gadget-debug
@@ -807,7 +807,7 @@ skills:
   source: wj-lee_Barco.github.com/gadget/debug_usb.py
   repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-usb-gadget-monitor
   group: common
   path: common/skill-usb-gadget-monitor
@@ -823,7 +823,7 @@ skills:
   source: wj-lee_Barco.github.com/gadget/android_baseunit_monitor.py
   repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-usb-uvc-4k-capture
   group: common
   path: common/skill-usb-uvc-4k-capture
@@ -839,7 +839,7 @@ skills:
   source: wj-lee_Barco.github.com/gadget/uvc_camera_forward.c
   repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-usb-wasapi-capture-debug
   group: common
   path: common/skill-usb-wasapi-capture-debug
@@ -853,7 +853,7 @@ skills:
   source: wj-lee_Barco.github.com/gadget/debug_wasapi.py
   repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-ux-design-system
   group: common
   path: common/skill-ux-design-system
@@ -868,7 +868,7 @@ skills:
   source: ''
   repo_count: 1
   updated_at: '2026-10-23'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-ux-google-alert-manager
   group: common
   path: common/skill-ux-google-alert-manager
@@ -882,7 +882,7 @@ skills:
   source: ''
   repo_count: 1
   updated_at: '2026-10-23'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-ux-homeassistant-tv
   group: common
   path: common/skill-ux-homeassistant-tv
@@ -897,7 +897,7 @@ skills:
   source: ''
   repo_count: 2
   updated_at: '2026-10-23'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-ux-mkdocs-investment
   group: common
   path: common/skill-ux-mkdocs-investment
@@ -911,7 +911,7 @@ skills:
   source: ''
   repo_count: 1
   updated_at: '2026-10-23'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-ux-mkdocs-life
   group: common
   path: common/skill-ux-mkdocs-life
@@ -925,7 +925,7 @@ skills:
   source: ''
   repo_count: 1
   updated_at: '2026-10-23'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-ux-synology-nas
   group: common
   path: common/skill-ux-synology-nas
@@ -939,7 +939,7 @@ skills:
   source: ''
   repo_count: 1
   updated_at: '2026-10-23'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-ux-tw-coverage
   group: common
   path: common/skill-ux-tw-coverage
@@ -953,7 +953,7 @@ skills:
   source: ''
   repo_count: 1
   updated_at: '2026-10-23'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-ux-vix
   group: common
   path: common/skill-ux-vix
@@ -967,7 +967,7 @@ skills:
   source: ''
   repo_count: 2
   updated_at: '2026-10-23'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-ux-youtube-audio-fetch
   group: common
   path: common/skill-ux-youtube-audio-fetch
@@ -981,7 +981,7 @@ skills:
   source: ''
   repo_count: 1
   updated_at: '2026-10-23'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-yahoo-finance-fetch
   group: common
   path: common/skill-yahoo-finance-fetch
@@ -995,7 +995,7 @@ skills:
   source: https://github.com/wenchiehlee/Yahoo.Finance
   repo_count: 1
   updated_at: '2026-08-18'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-youtube-channel-fetch
   group: common
   path: common/skill-youtube-channel-fetch
@@ -1012,7 +1012,7 @@ skills:
   source: https://github.com/ZhongZheng782/YoutubeAudio.Fetch
   repo_count: 1
   updated_at: '2026-09-17'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-youtube-channel-srt-keyframe-extract
   group: common
   path: common/skill-youtube-channel-srt-keyframe-extract
@@ -1025,7 +1025,7 @@ skills:
   source: https://github.com/ZhongZheng782/YoutubeAudio.Fetch
   repo_count: 1
   updated_at: '2026-09-02'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-youtube-podcast-feed
   group: common
   path: common/skill-youtube-podcast-feed
@@ -1040,7 +1040,7 @@ skills:
   source: https://github.com/ZhongZheng782/YoutubeAudio.Fetch
   repo_count: 1
   updated_at: '2026-10-07'
-  revised_at: '2026-10-24'
+  revised_at: '2026-10-25'
 standalone_skills:
 - name: '@wenchiehlee1020/mcp-cli'
   version: 0.1.8
