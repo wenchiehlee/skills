@@ -2,7 +2,7 @@
 generated_at: '2026-10-24'
 skills:
 - name: skill-android-adb-gadget
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-android-adb-gadget
   version: 2.0.0
@@ -18,9 +18,9 @@ skills:
   source: wj-lee_Barco.github.com/gadget/skills/Android BaseUnit-adb
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-company-data-index-sync
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-company-data-index-sync
   version: 1.0.1
@@ -31,9 +31,9 @@ skills:
   source: TAIEX.TW
   repo_count: 1
   updated_at: '2026-07-07'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-company-decision-report
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-company-decision-report
   version: 1.0.2
@@ -44,9 +44,9 @@ skills:
   source: TAIEX.TW
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-company-download-logo
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-company-download-logo
   version: 1.0.1
@@ -57,9 +57,9 @@ skills:
   source: ''
   repo_count: 1
   updated_at: '2026-07-07'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-company-earnings-social-verify
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-company-earnings-social-verify
   version: 1.0.1
@@ -70,9 +70,9 @@ skills:
   source: TAIEX.TW
   repo_count: 1
   updated_at: '2026-09-03'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-company-enrichment-json
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-company-enrichment-json
   version: 0.2.0
@@ -84,9 +84,9 @@ skills:
   source: https://github.com/wenchiehlee/My-TW-Coverage
   repo_count: 2
   updated_at: '2026-10-03'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-company-enrichment-render
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-company-enrichment-render
   version: 1.1.1
@@ -98,9 +98,9 @@ skills:
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
   repo_count: 1
   updated_at: '2026-10-04'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-company-investorconference-digest
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-company-investorconference-digest
   version: 2.4.6
@@ -112,9 +112,9 @@ skills:
   source: https://github.com/wenchiehlee-money/InvestorConference
   repo_count: 1
   updated_at: '2026-07-23'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-company-investorconference-ingest
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-company-investorconference-ingest
   version: 1.3.2
@@ -126,9 +126,9 @@ skills:
   source: https://github.com/wenchiehlee-money/InvestorConference
   repo_count: 1
   updated_at: '2026-08-17'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-company-investorconference-ir-pdf-md
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-company-investorconference-ir-pdf-md
   version: 1.0.1
@@ -141,9 +141,9 @@ skills:
   source: https://github.com/wenchiehlee-money/InvestorConference
   repo_count: 1
   updated_at: '2026-07-19'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-company-reputation-research
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-company-reputation-research
   version: 0.1.1
@@ -156,9 +156,9 @@ skills:
   source: https://github.com/wenchiehlee-money/TW.good-job
   repo_count: 1
   updated_at: '2026-08-20'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-company-revenue-expense-profit-predict
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-company-revenue-expense-profit-predict
   version: 1.0.1
@@ -169,9 +169,9 @@ skills:
   source: ''
   repo_count: 1
   updated_at: ''
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-company-revenue-forecast-benchmark
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-company-revenue-forecast-benchmark
   version: 1.0.1
@@ -182,9 +182,9 @@ skills:
   source: biztrends.TW/Skills/skill-company-revenue-forecast-benchmark.md
   repo_count: 1
   updated_at: '2026-07-05'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-company-revenue-predict
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-company-revenue-predict
   version: 1.0.1
@@ -195,9 +195,9 @@ skills:
   source: ''
   repo_count: 1
   updated_at: ''
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-company-revenue-segment-weights
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-company-revenue-segment-weights
   version: 1.4.0
@@ -210,9 +210,9 @@ skills:
   source: biztrends.TW
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-company-segment-viz
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-company-segment-viz
   version: 1.0.1
@@ -223,9 +223,9 @@ skills:
   source: TAIEX.TW
   repo_count: 1
   updated_at: '2026-07-07'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-confluence-sync
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-confluence-sync
   version: 1.0.0
@@ -238,9 +238,9 @@ skills:
   source: https://github.com/SpillwaveSolutions/confluence-skill
   repo_count: 0
   updated_at: '2026-10-14'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-container-manager-orchestrator
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-container-manager-orchestrator
   version: 1.0.0
@@ -255,9 +255,9 @@ skills:
   source: https://github.com/ZhongZheng782/wenchiehlee.quickconnect.to-Container.Manager
   repo_count: 5
   updated_at: '2026-10-10'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-document-diagram-design
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-document-diagram-design
   version: 1.4.0
@@ -270,9 +270,9 @@ skills:
   source: https://github.com/cathrynlavery/diagram-design
   repo_count: 0
   updated_at: '2026-09-05'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-document-ppt-design
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-document-ppt-design
   version: 1.0.0
@@ -288,9 +288,9 @@ skills:
   source: https://github.com/software-ai-life/Awesome-PPT-Design-Skills
   repo_count: 0
   updated_at: '2026-10-07'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-document-vids-prompt-generate
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-document-vids-prompt-generate
   version: 1.0.0
@@ -302,9 +302,9 @@ skills:
   source: https://github.com/wenchiehlee/skills
   repo_count: 1
   updated_at: '2026-10-21'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-facebook-fetch
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-facebook-fetch
   version: 1.2.3
@@ -316,23 +316,23 @@ skills:
   source: https://github.com/wenchiehlee-money/Facebook.Fetch
   repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-finmind-fetch
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-finmind-fetch
-  version: 1.12.0
+  version: 1.13.0
   description: Fetch FinMind Taiwan stock margin/price data and quarterly financial-ratio
     data, exporting GoodInfo Analyzer-compatible CSVs.
-  category: finance-data
+  category: financial-data
   platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/Python-Actions.FinMind
   repo_count: 2
-  updated_at: '2026-10-07'
-  revised_at: '2026-10-23'
+  updated_at: '2026-10-24'
+  revised_at: '2026-10-24'
 - name: skill-goodinfo-fetch
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-goodinfo-fetch
   version: 1.4.0
@@ -345,9 +345,9 @@ skills:
   source: https://github.com/wenchiehlee-investment/Python-Actions.GoodInfo.Analyzer
   repo_count: 2
   updated_at: '2026-10-12'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-google-alert-fetch
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-google-alert-fetch
   version: 1.2.0
@@ -360,9 +360,9 @@ skills:
   source: https://github.com/wenchiehlee-money/GoogleAlertManager
   repo_count: 1
   updated_at: '2026-08-25'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-google-analytics-monitor
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-google-analytics-monitor
   version: 1.0.2
@@ -374,9 +374,9 @@ skills:
   source: https://pypi.org/project/google-analytics-cli/
   repo_count: 1
   updated_at: '2026-10-03'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-googlesearch-factsets-fetch
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-googlesearch-factsets-fetch
   version: 1.0.0
@@ -391,9 +391,9 @@ skills:
   source: https://github.com/wenchiehlee/GoogleSearch.Factset
   repo_count: 1
   updated_at: '2026-08-25'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-institutional-thesis-research
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-institutional-thesis-research
   version: 1.2.0
@@ -405,9 +405,9 @@ skills:
   source: https://github.com/wenchiehlee-money/TW-institutional-investment-theses
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-institutional-tw-report-research
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-institutional-tw-report-research
   version: 0.1.2
@@ -420,9 +420,9 @@ skills:
   source: https://github.com/wenchiehlee-money/TW-institutional-research
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-investment-decision-coach
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-investment-decision-coach
   version: 1.5.0
@@ -437,9 +437,9 @@ skills:
   source: https://github.com/wenchiehlee-money/Miz.Fetch
   repo_count: 1
   updated_at: '2026-10-23'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-llm-api-client
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-llm-api-client
   version: 1.0.8
@@ -451,9 +451,9 @@ skills:
   source: https://github.com/wenchiehlee/llm
   repo_count: 8
   updated_at: '2026-10-11'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-llm-api-server
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-llm-api-server
   version: 1.3.1
@@ -467,9 +467,9 @@ skills:
   source: https://github.com/ZhongZheng782/Llm-Cli-APIServer
   repo_count: 1
   updated_at: '2026-10-04'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-miz-fetch
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-miz-fetch
   version: 1.3.0
@@ -482,9 +482,9 @@ skills:
   source: https://github.com/wenchiehlee-money/Miz.Fetch
   repo_count: 1
   updated_at: '2026-10-13'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-mlx-api-client-ocr
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-mlx-api-client-ocr
   version: 1.8.0
@@ -496,9 +496,9 @@ skills:
   source: https://github.com/wenchiehlee/FamilyHealthyCheck
   repo_count: 6
   updated_at: '2026-10-10'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-mlx-api-client-whisper
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-mlx-api-client-whisper
   version: 1.0.3
@@ -510,9 +510,9 @@ skills:
   source: https://github.com/wenchiehlee/InvestorConference
   repo_count: 2
   updated_at: '2026-08-30'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-mlx-api-server
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-mlx-api-server
   version: 1.4.0
@@ -525,9 +525,9 @@ skills:
   source: https://github.com/ZhongZheng782/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts
   repo_count: 1
   updated_at: '2026-10-23'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-mlx-api-server-whisper
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-mlx-api-server-whisper
   version: 2.0.2
@@ -540,9 +540,9 @@ skills:
   source: https://github.com/ZhongZheng782/Mac-mini/tree/main/skills/skill-mlx-api-server-whisper/scripts
   repo_count: 1
   updated_at: '2026-10-11'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-mops-fetch
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-mops-fetch
   version: 1.3.0
@@ -556,9 +556,9 @@ skills:
   source: https://github.com/wenchiehlee-money/MOPS
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-pptx-to-md
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-pptx-to-md
   version: 1.0.1
@@ -569,9 +569,9 @@ skills:
   source: ''
   repo_count: 0
   updated_at: '2026-07-09'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-scribd-pdf-fetch
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-scribd-pdf-fetch
   version: 1.0.1
@@ -583,9 +583,9 @@ skills:
   source: ''
   repo_count: 2
   updated_at: '2026-09-02'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-sharepoint-sync
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-sharepoint-sync
   version: 1.3.0
@@ -597,9 +597,9 @@ skills:
   source: https://learn.microsoft.com/en-us/graph/auth-v2-user
   repo_count: 1
   updated_at: '2026-10-14'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-stock-dynamic-valuation-box
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-stock-dynamic-valuation-box
   version: 1.23.0
@@ -620,9 +620,9 @@ skills:
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
   repo_count: 2
   updated_at: '2026-10-15'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-stock-earnings-calendar-monitor
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-stock-earnings-calendar-monitor
   version: 1.0.1
@@ -633,9 +633,9 @@ skills:
   source: TAIEX.TW
   repo_count: 1
   updated_at: '2026-09-03'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-stock-fiscal-quarter-resolve
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-stock-fiscal-quarter-resolve
   version: 1.1.0
@@ -648,9 +648,9 @@ skills:
   source: https://github.com/wenchiehlee/skills
   repo_count: 3
   updated_at: '2026-09-25'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-stock-investorevent-fetch
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-stock-investorevent-fetch
   version: 1.3.2
@@ -661,9 +661,9 @@ skills:
   source: https://github.com/wenchiehlee-money/InvestorConference
   repo_count: 4
   updated_at: '2026-10-08'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-stock-ma-rsi-bband-macd-peband
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-stock-ma-rsi-bband-macd-peband
   version: 1.10.0
@@ -676,9 +676,9 @@ skills:
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
   repo_count: 3
   updated_at: '2026-10-15'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-stock-market-cost-distribution
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-stock-market-cost-distribution
   version: 1.0.2
@@ -689,9 +689,9 @@ skills:
   source: https://github.com/wenchiehlee/MarketCostDistribution
   repo_count: 1
   updated_at: '2026-07-15'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-stock-pipeline-health-monitor
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-stock-pipeline-health-monitor
   version: 1.1.0
@@ -703,9 +703,9 @@ skills:
   source: biztrends.TW
   repo_count: 1
   updated_at: '2026-09-23'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-stock-topcrash
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-stock-topcrash
   version: 1.0.2
@@ -716,9 +716,9 @@ skills:
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
   repo_count: 3
   updated_at: '2026-10-08'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-stock-universe-onboarding
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-stock-universe-onboarding
   version: 1.0.1
@@ -730,9 +730,9 @@ skills:
   source: biztrends.TW / ConceptStocks / Selenium-Actions.Auction
   repo_count: 3
   updated_at: '2026-07-22'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-theme-competitor-analysis
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-theme-competitor-analysis
   version: 0.1.2
@@ -745,9 +745,9 @@ skills:
   source: biztrends.TW
   repo_count: 2
   updated_at: '2026-09-01'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-theme-competitor-groups-curate
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-theme-competitor-groups-curate
   version: 0.3.0
@@ -760,9 +760,9 @@ skills:
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
   repo_count: 3
   updated_at: '2026-10-03'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-theme-cycle-coverage
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-theme-cycle-coverage
   version: 0.2.3
@@ -774,9 +774,9 @@ skills:
   source: biztrends.TW
   repo_count: 1
   updated_at: ''
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-theme-cycle-index
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-theme-cycle-index
   version: 1.3.2
@@ -789,9 +789,9 @@ skills:
   source: biztrends.TW
   repo_count: 1
   updated_at: '2026-07-20'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-tw-land-geo-signal
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-tw-land-geo-signal
   version: 1.0.1
@@ -803,9 +803,9 @@ skills:
   source: https://github.com/wenchiehlee-money/LandAsset
   repo_count: 1
   updated_at: '2026-07-25'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-24'
 - name: skill-tw-land-realty-comps
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-tw-land-realty-comps
   version: 1.1.1
@@ -816,9 +816,9 @@ skills:
   source: https://github.com/wenchiehlee-money/LandAsset
   repo_count: 2
   updated_at: '2026-07-25'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-tw-legal-rag
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-tw-legal-rag
   version: 1.0.0
@@ -834,9 +834,9 @@ skills:
     skills/tw-legal-rag/)
   repo_count: 1
   updated_at: '2026-08-31'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-tw-legal-search-console
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-tw-legal-search-console
   version: 1.1.0
@@ -848,9 +848,9 @@ skills:
   source: TW-person-legal-search
   repo_count: 1
   updated_at: '2026-08-31'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-usb-gadget-debug
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-usb-gadget-debug
   version: 1.0.2
@@ -863,9 +863,9 @@ skills:
   source: wj-lee_Barco.github.com/gadget/debug_usb.py
   repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-usb-gadget-monitor
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-usb-gadget-monitor
   version: 1.0.2
@@ -880,9 +880,9 @@ skills:
   source: wj-lee_Barco.github.com/gadget/android_baseunit_monitor.py
   repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-usb-uvc-4k-capture
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-usb-uvc-4k-capture
   version: 1.0.1
@@ -897,9 +897,9 @@ skills:
   source: wj-lee_Barco.github.com/gadget/uvc_camera_forward.c
   repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-usb-wasapi-capture-debug
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-usb-wasapi-capture-debug
   version: 1.0.2
@@ -912,9 +912,9 @@ skills:
   source: wj-lee_Barco.github.com/gadget/debug_wasapi.py
   repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-ux-design-system
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-ux-design-system
   version: 1.2.0
@@ -928,9 +928,9 @@ skills:
   source: ''
   repo_count: 1
   updated_at: '2026-10-23'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-ux-google-alert-manager
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-ux-google-alert-manager
   version: 1.2.0
@@ -943,9 +943,9 @@ skills:
   source: ''
   repo_count: 1
   updated_at: '2026-10-23'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-ux-homeassistant-tv
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-ux-homeassistant-tv
   version: 1.3.0
@@ -959,9 +959,9 @@ skills:
   source: ''
   repo_count: 2
   updated_at: '2026-10-23'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-ux-mkdocs-investment
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-ux-mkdocs-investment
   version: 1.1.0
@@ -974,9 +974,9 @@ skills:
   source: ''
   repo_count: 1
   updated_at: '2026-10-23'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-ux-mkdocs-life
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-ux-mkdocs-life
   version: 1.2.0
@@ -989,9 +989,9 @@ skills:
   source: ''
   repo_count: 1
   updated_at: '2026-10-23'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-ux-synology-nas
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-ux-synology-nas
   version: 1.1.0
@@ -1004,9 +1004,9 @@ skills:
   source: ''
   repo_count: 1
   updated_at: '2026-10-23'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-ux-tw-coverage
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-ux-tw-coverage
   version: 1.1.0
@@ -1019,9 +1019,9 @@ skills:
   source: ''
   repo_count: 1
   updated_at: '2026-10-23'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-ux-vix
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-ux-vix
   version: 1.1.0
@@ -1034,9 +1034,9 @@ skills:
   source: ''
   repo_count: 2
   updated_at: '2026-10-23'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-ux-youtube-audio-fetch
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-ux-youtube-audio-fetch
   version: 1.1.0
@@ -1049,9 +1049,9 @@ skills:
   source: ''
   repo_count: 1
   updated_at: '2026-10-23'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-yahoo-finance-fetch
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-yahoo-finance-fetch
   version: 1.1.0
@@ -1064,9 +1064,9 @@ skills:
   source: https://github.com/wenchiehlee/Yahoo.Finance
   repo_count: 1
   updated_at: '2026-08-18'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-youtube-channel-fetch
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-youtube-channel-fetch
   version: 1.7.0
@@ -1082,9 +1082,9 @@ skills:
   source: https://github.com/ZhongZheng782/YoutubeAudio.Fetch
   repo_count: 1
   updated_at: '2026-09-17'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-youtube-channel-srt-keyframe-extract
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-youtube-channel-srt-keyframe-extract
   version: 1.2.1
@@ -1096,9 +1096,9 @@ skills:
   source: https://github.com/ZhongZheng782/YoutubeAudio.Fetch
   repo_count: 1
   updated_at: '2026-09-02'
-  revised_at: '2026-10-23'
+  revised_at: '2026-10-24'
 - name: skill-youtube-podcast-feed
-  release_status: "Personal only"
+  release_status: Personal only
   group: common
   path: common/skill-youtube-podcast-feed
   version: 1.3.0
@@ -1112,12 +1112,13 @@ skills:
   source: https://github.com/ZhongZheng782/YoutubeAudio.Fetch
   repo_count: 1
   updated_at: '2026-10-07'
-  revised_at: '2026-10-08'
+  revised_at: '2026-10-24'
 standalone_skills:
 - name: '@wenchiehlee1020/mcp-cli'
   version: 0.1.8
   release_status: Ready for public
-  description: MCP 命令列用戶端：探索已設定伺服器提供的 tools、查看輸入 schema，並透過 stdio、Streamable HTTP 或 HTTP+SSE 呼叫工具。
+  description: MCP 命令列用戶端：探索已設定伺服器提供的 tools、查看輸入 schema，並透過 stdio、Streamable HTTP
+    或 HTTP+SSE 呼叫工具。
   category: server-cli
   npm_url: https://www.npmjs.com/package/@wenchiehlee1020/mcp-cli
   source: https://github.com/wenchiehlee/mcp-cli
