@@ -1,6 +1,5 @@
 {
   "name": "skill-company-earnings-social-verify",
-  "release_status": "Personal only",
   "category": "finance-accounting",
   "description": "財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異",
   "version": "1.0.1",

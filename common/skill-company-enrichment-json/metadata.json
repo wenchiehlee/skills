@@ -1,6 +1,5 @@
 {
   "name": "skill-company-enrichment-json",
-  "release_status": "Personal only",
   "category": "finance-data",
   "description": "Extract and review My-TW-Coverage Markdown enrichment as atomic JSON using the biztrends.TW focus list.",
   "version": "0.2.0",

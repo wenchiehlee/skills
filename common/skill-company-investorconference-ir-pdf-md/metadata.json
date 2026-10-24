@@ -1,6 +1,5 @@
 {
   "name": "skill-company-investorconference-ir-pdf-md",
-  "release_status": "Personal only",
   "description": "Fetch InvestorConference official IR PDFs through ingest, then convert them to Markdown using the repo-local Mac-mini OCR hybrid pipeline with auditable TODO/OCR markers.",
   "category": "finance-data",
   "version": "1.0.1",

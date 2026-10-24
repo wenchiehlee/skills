@@ -1,6 +1,5 @@
 {
   "name": "skill-tw-legal-rag",
-  "release_status": "Personal only",
   "description": "Retrieve real Taiwan court judgments with verifiable citations before answering any question about Taiwan law or case law. Use when the user asks about 台灣/臺灣 judgments, 判決, 法院見解, legal precedents, or wants case support for a legal argument. Wraps the twlegalrag CLI (pack subcommand); answers must cite only citation_ids present in the returned bundle.",
   "category": "legal-research",
   "version": "1.0.0",

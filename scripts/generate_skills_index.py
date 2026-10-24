@@ -43,7 +43,6 @@ STANDALONE_TABLE_END = "<!-- STANDALONE-SKILLS-TABLE:END -->"
 
 # 不視為 LLM 群組的頂層資料夾
 EXCLUDED_DIRS = {".git", ".github", "scripts"}
-RELEASE_STATUSES = {"Ready for public", "Personal only"}
 
 
 def _git_last_commit_date(path: Path) -> str | None:
@@ -86,14 +85,8 @@ def collect_skills() -> list[dict]:
                 continue
             deployments = meta.get("deployments", [])
             repo_count = len([d for d in deployments if d.get("role") != "registry"])
-            release_status = meta.get("release_status", "Personal only")
-            if release_status not in RELEASE_STATUSES:
-                raise ValueError(
-                    f"{meta_path}: release_status must be one of {sorted(RELEASE_STATUSES)}; got {release_status!r}"
-                )
             skill_entry = {
                 "name": skill_dir.name,
-                "release_status": release_status,
                 "group": group_dir.name,
                 "path": f"{group_dir.name}/{skill_dir.name}",
                 "version": meta.get("version", "0.0.0"),
@@ -120,10 +113,6 @@ def collect_standalone_skills() -> list[dict]:
         catalog = json.load(f)
     standalone_skills = catalog.get("standalone_skills", [])
     for skill in standalone_skills:
-        if skill.get("release_status") not in RELEASE_STATUSES:
-            raise ValueError(
-                f"{STANDALONE_SKILLS_FILE}: invalid release_status for {skill.get('name')!r}"
-            )
         for required in ("name", "version", "description", "source", "install_command"):
             if not skill.get(required):
                 raise ValueError(f"{STANDALONE_SKILLS_FILE}: standalone skill missing {required!r}")
@@ -158,8 +147,8 @@ def render_table(skills: list[dict]) -> str:
         reverse=True,
     )
     lines = [
-        "| 技能 | 發佈狀態 | 群組 | 分類 | 平台 | 版本 | repo 數 | 說明 | 修訂日期 |",
-        "| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
+        "| 技能 | 群組 | 分類 | 平台 | 版本 | repo 數 | 說明 | 修訂日期 |",
+        "| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
     ]
     for s in ordered:
         desc = s["description"].replace("|", "\\|")
@@ -167,20 +156,20 @@ def render_table(skills: list[dict]) -> str:
         repo_display = str(repo_count) if repo_count else "—"
         platform_display = ", ".join(s.get("platforms", [])) or "—"
         lines.append(
-            f"| [{s['name']}]({s['path']}) | {s['release_status']} | {s['group']} | {s['category']} | {platform_display} | {s['version']} | {repo_display} | {desc} | {s['revised_at']} |"
+            f"| [{s['name']}]({s['path']}) | {s['group']} | {s['category']} | {platform_display} | {s['version']} | {repo_display} | {desc} | {s['revised_at']} |"
         )
     return "\n".join(lines)
 
 
 def render_standalone_table(standalone_skills: list[dict]) -> str:
     lines = [
-        "| 獨立技能 | 發佈狀態 | 版本 | 說明 | 安裝指令 |",
-        "| :--- | :--- | :--- | :--- | :--- |",
+        "| 獨立技能 | 版本 | 說明 | 安裝指令 |",
+        "| :--- | :--- | :--- | :--- |",
     ]
     for skill in sorted(standalone_skills, key=lambda s: s["name"].casefold()):
         desc = skill["description"].replace("|", "\\|")
         lines.append(
-            f"| [{skill['name']}]({skill.get('npm_url') or skill['source']}) | {skill['release_status']} | {skill['version']} | {desc} | `{skill['install_command']}` |"
+            f"| [{skill['name']}]({skill.get('npm_url') or skill['source']}) | {skill['version']} | {desc} | `{skill['install_command']}` |"
         )
     return "\n".join(lines)
 

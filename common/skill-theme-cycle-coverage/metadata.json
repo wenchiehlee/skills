@@ -1,6 +1,5 @@
 {
   "name": "skill-theme-cycle-coverage",
-  "release_status": "Personal only",
   "category": "finance-analytics",
   "version": "0.2.3",
   "description": "Build AI trend coverage, validity, issue register, and inference quality-gate outputs from company canonical cycle data.",

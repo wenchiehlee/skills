@@ -1,6 +1,5 @@
 {
   "name": "skill-ux-mkdocs-life",
-  "release_status": "Personal only",
   "version": "1.2.0",
   "description": "UX styling, design guidelines, and Material for MkDocs customizations for mkdocs-life. Standardized on LXGW WenKai TC + Quicksand editorial typography and warm paper palette.",
   "category": "ux-design",

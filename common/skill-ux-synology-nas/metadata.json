@@ -1,6 +1,5 @@
 {
   "name": "skill-ux-synology-nas",
-  "release_status": "Personal only",
   "version": "1.1.0",
   "description": "UX styling, Cyber Slate & Synology Blue palette, Armored Pangolin mascot, and MkDocs customizations for wenchiehlee.quickconnect.to on Synology NAS. Use for cloud dashboards, Docker container cards, and Tailscale status.",
   "category": "ux-design",

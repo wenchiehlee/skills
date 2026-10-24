@@ -1,6 +1,5 @@
 {
   "name": "skill-stock-fiscal-quarter-resolve",
-  "release_status": "Personal only",
   "description": "Deterministic, dependency-free US fiscal-year/quarter resolution shared by skill-company-investorconference-ingest, skill-stock-investorevent-fetch, and ConceptStocks' update_concept_metadata.py.",
   "category": "finance-data",
   "version": "1.1.0",

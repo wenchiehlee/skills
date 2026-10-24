@@ -3,7 +3,6 @@
     {
       "name": "@wenchiehlee1020/mcp-cli",
       "version": "0.1.8",
-      "release_status": "Ready for public",
       "description": "MCP 命令列用戶端：探索已設定伺服器提供的 tools、查看輸入 schema，並透過 stdio、Streamable HTTP 或 HTTP+SSE 呼叫工具。",
       "category": "server-cli",
       "npm_url": "https://www.npmjs.com/package/@wenchiehlee1020/mcp-cli",

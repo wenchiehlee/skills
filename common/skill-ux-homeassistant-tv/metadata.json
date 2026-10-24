@@ -1,6 +1,5 @@
 {
   "name": "skill-ux-homeassistant-tv",
-  "release_status": "Personal only",
   "version": "1.3.0",
   "description": "10-foot UI design, glanceable frosted HUD overlays, and remote-control accessible popup notifications for HomeAssistant on Android TV. Standardized on 60% translucent Dark Slate (#660f172a), position: 0 (TopRight), and verified PiPup REST API payloads.",
   "category": "ux-design",

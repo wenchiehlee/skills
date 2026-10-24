@@ -1,6 +1,5 @@
 {
   "name": "skill-mops-fetch",
-  "release_status": "Personal only",
   "description": "Fetch Taiwan MOPS data end to end: download quarterly financial-report PDFs, convert same-stem Markdown sidecars with the skill-mac-mini-ocr hybrid PDF/OCR workflow, track official filing deadlines, and orchestrate the repo's batch/early-filer/health-report fetch pipeline.",
   "category": "finance-data",
   "version": "1.3.0",
@@ -43,5 +42,7 @@
       "local_path": "github.com/MOPS/skills/skill-mops-fetch"
     }
   ],
-  "replaces": ["skill-company-mops-financialreport-pdf-md"]
+  "replaces": [
+    "skill-company-mops-financialreport-pdf-md"
+  ]
 }

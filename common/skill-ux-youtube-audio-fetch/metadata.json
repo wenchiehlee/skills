@@ -1,6 +1,5 @@
 {
   "name": "skill-ux-youtube-audio-fetch",
-  "release_status": "Personal only",
   "version": "1.1.0",
   "description": "UX styling, player components, and tactile media controls for YoutubeAudio.Fetch (GitHub Pages web player & extractor). Use for media player interface, track queues, and dark atmospheric aesthetics.",
   "category": "ux-design",

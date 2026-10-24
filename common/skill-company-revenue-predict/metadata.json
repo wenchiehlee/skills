@@ -1,6 +1,5 @@
 {
   "name": "skill-company-revenue-predict",
-  "release_status": "Personal only",
   "description": "營收預測與 10-Model 評估 SOP",
   "category": "finance-forecasting",
   "version": "1.0.1",

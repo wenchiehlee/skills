@@ -1,6 +1,5 @@
 {
   "name": "skill-yahoo-finance-fetch",
-  "release_status": "Personal only",
   "description": "Fetch Yahoo Finance analyst estimates, daily/60-minute price history, and Wayback Machine historical consensus for Taiwan and US stocks into long-format raw CSVs.",
   "category": "finance-data",
   "version": "1.1.0",
