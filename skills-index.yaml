@@ -453,7 +453,7 @@ skills:
 - name: skill-mlx-api-client-ocr
   group: common
   path: common/skill-mlx-api-client-ocr
-  version: 1.8.2
+  version: 1.8.3
   description: 呼叫 Mac-mini MLX API Server 的 OCR 客戶端（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown
     格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。
   category: document-extraction
@@ -479,7 +479,7 @@ skills:
 - name: skill-mlx-api-server
   group: common
   path: common/skill-mlx-api-server
-  version: 1.4.4
+  version: 1.4.5
   description: 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，提供 Baidu Unlimited-OCR
     與 GLM-OCR 文件轉錄、單張照片 VLM 分析及 MLX LLM 推理，以 Flask/Waitress 常駐服務形式運行。
   category: server-inference
