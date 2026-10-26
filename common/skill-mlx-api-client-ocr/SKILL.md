@@ -7,7 +7,7 @@ description: 使用自建在 Mac-mini 上的 OCR API 服務，將 PDF 或圖片�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.8.1（詳見 `metadata.json`） |
+| 版本 | 1.8.2（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/FamilyHealthyCheck |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-client-ocr`） |
 | 維護者 | wenchiehlee |
@@ -15,6 +15,10 @@ description: 使用自建在 Mac-mini 上的 OCR API 服務，將 PDF 或圖片�
 此技能封裝了與 Tailscale 虛擬局域網路內自建的 Mac-mini OCR API 的連線與排版抓取。它能自動將您上傳的 PDF 檔案或圖片（JPG/PNG 等）傳送至 Mac-mini 伺服器，利用 OCR 引擎進行文字轉錄，並以結構清晰的 Markdown 格式回傳，方便後續的數據提取與分析。
 
 對 PDF，預設採用 hybrid 流程：先保留 PDF 內建文字層，只有無文字層或文字層不足的頁面才送 Mac-mini OCR。這可避免把乾淨的官方文字層覆蓋成較差的 OCR 結果，也能大幅降低整份簡報 OCR 的時間。
+
+### Photo Tagger 照片單次上傳模式
+
+Photo Tagger 對照片使用 MLX server 的 `POST /photo-analyze`，在同一個 multipart 請求帶入 `file`、`prompt`、`model`，以及選用的 `ocr_engine=baidu|glm`。server 先做 VLM 分析；輸出判定為掃描文件時，再以同一請求暫存影像執行 OCR，並在回應的 `ocr.text` 回傳 Markdown。HEIC/HEIF 會由 server 轉成一次性的暫存 JPEG，VLM 和 OCR 共用該檔。這樣原圖只需由 NAS 下載一次，也只需從 Photo Tagger 傳到 Mac-mini 一次。需要獨立轉錄 PDF 或文件時，仍使用標準 `/ocr` endpoint。
 
 ## 📦 技能結構說明
 當您將此技能複製到其他專案時，整個技能資料夾結構如下：

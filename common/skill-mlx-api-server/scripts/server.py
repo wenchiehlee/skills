@@ -160,6 +160,16 @@ def _photo_format(path: Path) -> str | None:
     return None
 
 
+def _photo_needs_ocr(output: str) -> bool:
+    """Detect likely document scans from the structured vision-analysis output."""
+    hints = (
+        "文件", "掃描", "表格", "收據", "發票", "單據", "合約", "表單", "報告",
+        "document", "scan", "receipt", "invoice", "form", "table",
+    )
+    normalized = output.casefold()
+    return any(hint in normalized for hint in hints)
+
+
 @app.route("/exec", methods=["POST"])
 @require_api_key
 def execute():
@@ -230,6 +240,11 @@ def photo_analyze():
     model = request.form.get("model", "mlx-gemma4").strip()
     if model not in config.ALLOWED_MODELS:
         return jsonify({"error": f"Model not allowed. Choose from: {sorted(config.ALLOWED_MODELS)}"}), 400
+    ocr_engine = request.form.get("ocr_engine", "").strip().lower()
+    if ocr_engine and ocr_engine not in config.OCR_ENGINES:
+        return jsonify({
+            "error": f"OCR engine not enabled. Choose from: {sorted(config.OCR_ENGINES)}"
+        }), 400
 
     started = time.monotonic()
     try:
@@ -274,13 +289,82 @@ def photo_analyze():
                 provider="mlx-vlm",
                 model_repo=actual_model,
             )
+
+            ocr_result = None
+            if ocr_engine and _photo_needs_ocr(output):
+                ocr_started = time.monotonic()
+                ocr_model = (
+                    "baidu/Unlimited-OCR"
+                    if ocr_engine == "baidu"
+                    else "mlx-community/GLM-OCR-bf16"
+                )
+                try:
+                    markdown_output, ocr_timings = run_ocr(
+                        str(inference_path), dpi=200, engine=ocr_engine
+                    )
+                    ocr_elapsed = time.monotonic() - ocr_started
+                    ocr_timings["request_total_s"] = round(ocr_elapsed, 3)
+                    _record_ocr_stat(
+                        file.filename, ocr_engine, ocr_model, ocr_elapsed,
+                        len(markdown_output), 200, ocr_timings
+                    )
+                    _send_amplitude_event_async(
+                        ocr_model, ocr_elapsed, len(markdown_output),
+                        request.headers.get("X-App-Name") or "Photo-Analyzer",
+                        stage="ocr", provider=f"{ocr_engine}-ocr",
+                        model_repo=ocr_model,
+                    )
+                    ocr_result = {
+                        "text": markdown_output.strip(),
+                        "engine": ocr_engine,
+                        "elapsed_s": ocr_timings.get("request_total_s"),
+                    }
+                except ExecutionError as e:
+                    ocr_elapsed = time.monotonic() - ocr_started
+                    ocr_timings = dict(e.details)
+                    ocr_timings["request_total_s"] = round(ocr_elapsed, 3)
+                    _record_ocr_stat(
+                        file.filename, ocr_engine, ocr_model, ocr_elapsed,
+                        0, e.status_code, ocr_timings
+                    )
+                    _send_amplitude_event_async(
+                        ocr_model, ocr_elapsed, 0,
+                        request.headers.get("X-App-Name") or "Photo-Analyzer",
+                        stage="ocr", provider=f"{ocr_engine}-ocr",
+                        model_repo=ocr_model, success=False,
+                    )
+                    logger.warning("Photo OCR failed: %s", e)
+                    ocr_result = {
+                        "error": "OCR 文字擷取失敗；視覺分析建議仍可使用。",
+                        "engine": ocr_engine,
+                    }
+                except Exception:
+                    ocr_elapsed = time.monotonic() - ocr_started
+                    ocr_timings = {"request_total_s": round(ocr_elapsed, 3)}
+                    _record_ocr_stat(
+                        file.filename, ocr_engine, ocr_model, ocr_elapsed,
+                        0, 500, ocr_timings
+                    )
+                    _send_amplitude_event_async(
+                        ocr_model, ocr_elapsed, 0,
+                        request.headers.get("X-App-Name") or "Photo-Analyzer",
+                        stage="ocr", provider=f"{ocr_engine}-ocr",
+                        model_repo=ocr_model, success=False,
+                    )
+                    logger.exception("Unexpected error in photo OCR")
+                    ocr_result = {
+                        "error": "OCR 文字擷取失敗；視覺分析建議仍可使用。",
+                        "engine": ocr_engine,
+                    }
+
             return jsonify({
                 "output": output,
                 "model": actual_model,
                 "input_format": input_format,
                 "converted": converted,
-                "elapsed_s": round(elapsed, 3),
+                "elapsed_s": round(time.monotonic() - started, 3),
                 "temporary_file_deleted": True,
+                "ocr": ocr_result,
             })
     except ExecutionError as e:
         return jsonify({"error": str(e)}), e.status_code

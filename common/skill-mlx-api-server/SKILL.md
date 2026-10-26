@@ -7,7 +7,7 @@ description: 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.4.3（詳見 `metadata.json`） |
+| 版本 | 1.4.4（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-server`） |
 | 維護者 | wenchiehlee |
@@ -16,7 +16,7 @@ description: 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，�
 
 此技能封裝了運行於 Mac-mini 上的 AI 推理伺服器，提供以下服務：
 1. **`POST /ocr`** — Baidu Unlimited-OCR 或 GLM-OCR 文件轉錄，將 PDF 或圖片轉為 Markdown
-2. **`POST /photo-analyze`** — 將單張 JPEG、PNG、WebP 或 HEIC/HEIF 照片送給允許使用的 MLX 視覺語言模型分析
+2. **`POST /photo-analyze`** — 將單張 JPEG、PNG、WebP 或 HEIC/HEIF 照片送給允許使用的 MLX 視覺語言模型分析；可選擇同一請求對掃描文件接續 OCR
 3. **`POST /exec`** — MLX 本地文字 LLM 推理，支援 Qwen3.5-9B 與 Gemma-4 模型
 
 服務透過 Tailscale VPN 對外提供，由 `launchd` (`com.mlx.apiserver`) 常駐管理，GitHub Actions 每 6 小時自動健康檢查並於異常時自動恢復。
@@ -337,15 +337,16 @@ OCR 呼叫透過 `_send_amplitude_event_async()` 非同步送出 `llm_call` 事�
 
 ### `POST /photo-analyze` — 單張照片視覺分析
 
-此 endpoint 使用獨立的照片分析用途，不會改變 `/exec` 或 `/ocr` 的既有行為。請求需帶 `X-API-Key`，採用 `multipart/form-data`：
+此 endpoint 使用獨立的照片分析用途，不會改變 `/exec` 或 `/ocr` 的既有行為。可選擇在同一個照片上傳請求中啟用文件 OCR；server 先完成視覺分析，再用同一份 request-scoped 暫存影像執行 OCR。請求需帶 `X-API-Key`，採用 `multipart/form-data`：
 
 | 欄位 | 必填 | 說明 |
 |------|------|------|
 | `file` | 是 | 單張 JPEG、PNG、WebP 或 HEIC/HEIF 圖片，檔案內容會檢查簽章 |
 | `prompt` | 是 | 此次視覺分析指示，長度上限沿用 `MLX_MAX_PROMPT_LENGTH` |
 | `model` | 否 | 模型別名，預設 `mlx-gemma4`；所選模型必須支援 VLM 圖片輸入並在 allowlist 中 |
+| `ocr_engine` | 否 | 傳入 `baidu` 或 `glm` 時，視覺輸出命中文件／掃描提示後才接續 OCR；省略時不執行 OCR |
 
-Photo Tagger 可在 NAS 端以 Photos API 取得原圖，再逐張呼叫此 endpoint；MLX server 不需要 NAS 帳密或 NAS 檔案掛載。請求大小上限為 32 MiB。HEIC/HEIF 會在 Mac-mini 使用 `sips` 轉成暫存 JPEG，原始上傳與轉換檔都位於請求專用的暫存目錄，推論完成或發生錯誤後一併刪除。圖片內容不寫入 stats 或 Amplitude；只記錄 prompt 摘要、輸出長度、模型與耗時。
+Photo Tagger 可在 NAS 端以 Photos API 取得原圖，再逐張呼叫此 endpoint；MLX server 不需要 NAS 帳密或 NAS 檔案掛載。請求大小上限為 32 MiB。HEIC/HEIF 會在 Mac-mini 使用 `sips` 轉成暫存 JPEG；同一份 JPEG 可供 VLM 和條件式 OCR 共用。原始上傳與轉換檔都位於請求專用的暫存目錄，視覺分析與 OCR 完成或發生錯誤後一併刪除。圖片內容不寫入 stats 或 Amplitude；只記錄 prompt 摘要、輸出長度、模型與耗時。
 
 Response：
 
@@ -356,13 +357,14 @@ Response：
   "input_format": "HEIC/HEIF",
   "converted": true,
   "elapsed_s": 12.345,
-  "temporary_file_deleted": true
+  "temporary_file_deleted": true,
+  "ocr": {"text": "文件 OCR 的 Markdown", "engine": "baidu", "elapsed_s": 23.4}
 }
 ```
 
 ### `POST /ocr` — 文件 OCR
 
-OCR 由獨立 FIFO 佇列依序執行，一次只跑一個 OCR；排隊數上限由 `MLX_OCR_QUEUE_MAX_SIZE` 控制（預設 8，不含執行中的請求）。等待超過 `MLX_OCR_QUEUE_WAIT_SECONDS`（預設 1800 秒）會回傳 `503`。OCR 不佔用 `/exec` 的併發額度。服務會為排隊中的請求保留 Waitress request threads，避免佇列等待耗盡所有執行緒。
+需要獨立 OCR 工作流程（例如 PDF）時呼叫此 endpoint；照片分析整合流程應改用 `/photo-analyze` 的 `ocr_engine` 欄位，避免重傳相同照片。OCR 由獨立 FIFO 佇列依序執行，一次只跑一個 OCR；排隊數上限由 `MLX_OCR_QUEUE_MAX_SIZE` 控制（預設 8，不含執行中的請求）。等待超過 `MLX_OCR_QUEUE_WAIT_SECONDS`（預設 1800 秒）會回傳 `503`。OCR 不佔用 `/exec` 的併發額度。服務會為排隊中的請求保留 Waitress request threads，避免佇列等待耗盡所有執行緒。
 
 **Request（multipart/form-data）：**
 - `file`：PDF 或圖片（PNG/JPG/HEIC/HEIF）；HEIC/HEIF 會在 Mac-mini 轉成請求專用的暫存 JPEG，請求結束後刪除原檔與轉檔
