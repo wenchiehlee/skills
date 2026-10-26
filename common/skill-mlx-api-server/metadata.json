@@ -5,11 +5,11 @@
   "platforms": [
     "macos"
   ],
-  "version": "1.4.0",
+  "version": "1.4.1",
   "author": "wenchiehlee",
   "maintainer": "wenchiehlee",
   "source": "https://github.com/ZhongZheng782/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts",
-  "updated_at": "2026-10-23",
+  "updated_at": "2026-10-26",
   "license": "MIT",
   "tags": [
     "server",

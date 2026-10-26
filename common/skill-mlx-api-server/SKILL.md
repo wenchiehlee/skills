@@ -7,7 +7,7 @@ description: 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.3.1（詳見 `metadata.json`） |
+| 版本 | 1.4.1（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-server`） |
 | 維護者 | wenchiehlee |

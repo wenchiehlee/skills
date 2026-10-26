@@ -150,7 +150,7 @@ def run(
     try:
         if target_model in _VLM_REPOS:
             cmd = [
-                sys.executable, "-m", "mlx_vlm.generate",
+                sys.executable, "-m", "mlx_vlm", "generate",
                 "--model", target_model,
                 *(["--image", image_path] if image_path is not None else []),
                 "--prompt", prompt,
