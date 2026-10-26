@@ -7,7 +7,7 @@ description: 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.4.2（詳見 `metadata.json`） |
+| 版本 | 1.4.3（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-server`） |
 | 維護者 | wenchiehlee |
@@ -365,7 +365,7 @@ Response：
 OCR 由獨立 FIFO 佇列依序執行，一次只跑一個 OCR；排隊數上限由 `MLX_OCR_QUEUE_MAX_SIZE` 控制（預設 8，不含執行中的請求）。等待超過 `MLX_OCR_QUEUE_WAIT_SECONDS`（預設 1800 秒）會回傳 `503`。OCR 不佔用 `/exec` 的併發額度。服務會為排隊中的請求保留 Waitress request threads，避免佇列等待耗盡所有執行緒。
 
 **Request（multipart/form-data）：**
-- `file`：PDF 或圖片（PNG/JPG）
+- `file`：PDF 或圖片（PNG/JPG/HEIC/HEIF）；HEIC/HEIF 會在 Mac-mini 轉成請求專用的暫存 JPEG，請求結束後刪除原檔與轉檔
 - `dpi`（選填）：PDF 渲染解析度，預設 `200`
 - `engine`（選填）：`baidu`（相容預設）或 `glm`
 - 建議設定 header：`X-App-Name: <your-app-name>`（Amplitude 追蹤用）

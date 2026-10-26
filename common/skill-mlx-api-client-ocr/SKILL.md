@@ -7,7 +7,7 @@ description: 使用自建在 Mac-mini 上的 OCR API 服務，將 PDF 或圖片�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.8.0（詳見 `metadata.json`） |
+| 版本 | 1.8.1（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/FamilyHealthyCheck |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-client-ocr`） |
 | 維護者 | wenchiehlee |
@@ -156,7 +156,7 @@ Timeout 記錄範例：
 
 ### 📸 方式 F：HEIC 圖片轉錄
 
-手機（尤其 iPhone）拍攝留存的政府文件、單據常以 HEIC 格式儲存，OCR API 只吃 PDF/JPG/PNG，需先轉檔。`heic_convert.py` 會把 HEIC 轉成暫存 PNG 後再送 OCR：
+手機（尤其 iPhone）拍攝留存的政府文件、單據常以 HEIC 格式儲存。Mac-mini OCR API 現可直接接收 HEIC/HEIF 並在請求暫存目錄轉為 JPEG；`heic_convert.py` 仍可用於必須相容舊版 OCR server 的 client，會把 HEIC 轉成暫存 PNG 後再送 OCR：
 
 ```bash
 # 單一檔案，輸出至 stdout

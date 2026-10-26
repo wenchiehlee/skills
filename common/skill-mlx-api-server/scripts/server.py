@@ -326,7 +326,9 @@ def ocr():
     suffix = Path(file.filename).suffix
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         file.save(tmp.name)
-        tmp_path = tmp.name
+        tmp_path = Path(tmp.name)
+    temp_paths = [tmp_path]
+    ocr_path = tmp_path
 
     t0 = time.monotonic()
     timings: dict = {}
@@ -334,7 +336,32 @@ def ocr():
         "baidu/Unlimited-OCR" if engine == "baidu" else "mlx-community/GLM-OCR-bf16"
     )
     try:
-        markdown_output, timings = run_ocr(tmp_path, dpi=dpi_val, engine=engine)
+        if _photo_format(ocr_path) == "HEIC/HEIF":
+            heic_path = ocr_path.with_suffix(".heic")
+            if heic_path != ocr_path:
+                ocr_path.replace(heic_path)
+                ocr_path = heic_path
+                temp_paths.append(ocr_path)
+            jpeg_path = ocr_path.with_suffix(".jpg")
+            temp_paths.append(jpeg_path)
+            conversion_started = time.monotonic()
+            try:
+                conversion = subprocess.run(
+                    ["sips", "-s", "format", "jpeg", str(ocr_path), "--out", str(jpeg_path)],
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                    check=False,
+                )
+            except (FileNotFoundError, subprocess.TimeoutExpired):
+                return jsonify({"error": "HEIC conversion failed on the OCR server."}), 415
+            if conversion.returncode != 0 or not jpeg_path.is_file():
+                return jsonify({"error": "HEIC conversion failed on the OCR server."}), 415
+            ocr_path = jpeg_path
+            timings["heic_conversion_s"] = round(time.monotonic() - conversion_started, 3)
+
+        markdown_output, ocr_timings = run_ocr(str(ocr_path), dpi=dpi_val, engine=engine)
+        timings.update(ocr_timings)
         elapsed = time.monotonic() - t0
         timings["request_total_s"] = round(elapsed, 3)
         _record_ocr_stat(file.filename, engine, model_repo, elapsed, len(markdown_output), 200, timings)
@@ -359,10 +386,11 @@ def ocr():
         return jsonify({"error": "Internal server error"}), 500
     finally:
         # Clean up the temporary file
-        try:
-            os.unlink(tmp_path)
-        except Exception:
-            pass
+        for temp_path in temp_paths:
+            try:
+                temp_path.unlink(missing_ok=True)
+            except Exception:
+                logger.warning("Failed to remove request-scoped OCR temp file")
 
 
 @app.route("/health", methods=["GET"])
