@@ -1,7 +1,6 @@
 flask>=3.0
 python-dotenv>=1.0
 waitress>=3.0
-mlx-vlm>=0.1.0
 torch
 torchvision
 einops

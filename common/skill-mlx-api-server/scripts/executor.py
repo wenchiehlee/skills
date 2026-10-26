@@ -149,8 +149,14 @@ def run(
 
     try:
         if target_model in _VLM_REPOS:
+            vlm_python = Path(config.VLM_PYTHON)
+            if not vlm_python.is_file():
+                raise ExecutionError(
+                    "Vision-language model runtime is not installed. Check the MLX-VLM environment deployment.",
+                    status_code=503,
+                )
             cmd = [
-                sys.executable, "-m", "mlx_vlm", "generate",
+                str(vlm_python), "-m", "mlx_vlm", "generate",
                 "--model", target_model,
                 *(["--image", image_path] if image_path is not None else []),
                 "--prompt", prompt,
