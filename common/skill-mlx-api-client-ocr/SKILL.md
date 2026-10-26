@@ -7,7 +7,7 @@ description: 使用自建在 Mac-mini 上的 OCR API 服務，將 PDF 或圖片�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.8.2（詳見 `metadata.json`） |
+| 版本 | 1.8.3（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/FamilyHealthyCheck |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-client-ocr`） |
 | 維護者 | wenchiehlee |
@@ -18,7 +18,7 @@ description: 使用自建在 Mac-mini 上的 OCR API 服務，將 PDF 或圖片�
 
 ### Photo Tagger 照片單次上傳模式
 
-Photo Tagger 對照片使用 MLX server 的 `POST /photo-analyze`，在同一個 multipart 請求帶入 `file`、`prompt`、`model`，以及選用的 `ocr_engine=baidu|glm`。server 先做 VLM 分析；輸出判定為掃描文件時，再以同一請求暫存影像執行 OCR，並在回應的 `ocr.text` 回傳 Markdown。HEIC/HEIF 會由 server 轉成一次性的暫存 JPEG，VLM 和 OCR 共用該檔。這樣原圖只需由 NAS 下載一次，也只需從 Photo Tagger 傳到 Mac-mini 一次。需要獨立轉錄 PDF 或文件時，仍使用標準 `/ocr` endpoint。
+Photo Tagger 對照片使用 MLX server 的 `POST /photo-analyze`，在同一個 multipart 請求帶入 `file`、`prompt`、`model`，以及選用的 `ocr_engine=baidu|glm`。server 先做 VLM 分析並立即回應；輸出判定為掃描文件時，接著以同一請求暫存影像在背景執行 OCR。初次回應提供 `ocr.task_id`，呼叫端以 `GET /photo-analyze/ocr-status/<task_id>` 輪詢，直到 `ocr.text` 回傳 Markdown。HEIC/HEIF 會由 server 轉成一次性的暫存 JPEG，VLM 和 OCR 共用該檔。這樣原圖只需由 NAS 下載一次，也只需從 Photo Tagger 傳到 Mac-mini 一次；輪詢只取工作狀態和結果，不會再次上傳影像。需要獨立轉錄 PDF 或文件時，仍使用標準 `/ocr` endpoint。
 
 ## 📦 技能結構說明
 當您將此技能複製到其他專案時，整個技能資料夾結構如下：
