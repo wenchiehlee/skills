@@ -186,6 +186,17 @@ def _prune_photo_ocr_tasks() -> None:
             _PHOTO_OCR_TASKS.pop(task_id, None)
 
 
+def _expire_photo_ocr_task(task_id: str) -> None:
+    with _PHOTO_OCR_TASKS_LOCK:
+        task = _PHOTO_OCR_TASKS.get(task_id)
+        if (
+            task is not None
+            and task.get("finished_at")
+            and time.time() - task["finished_at"] >= _PHOTO_OCR_TASK_TTL_SECONDS
+        ):
+            _PHOTO_OCR_TASKS.pop(task_id, None)
+
+
 def _run_photo_ocr_task(
     task_id: str, image_path: str, temp_dir: str, filename: str, engine: str, app_name: str
 ) -> None:
@@ -241,6 +252,11 @@ def _run_photo_ocr_task(
         task = _PHOTO_OCR_TASKS.get(task_id)
         if task is not None:
             task.update({"status": status, "ocr": result, "finished_at": time.time()})
+    expiry_timer = threading.Timer(
+        _PHOTO_OCR_TASK_TTL_SECONDS, _expire_photo_ocr_task, args=(task_id,)
+    )
+    expiry_timer.daemon = True
+    expiry_timer.start()
 
 
 @app.route("/exec", methods=["POST"])
