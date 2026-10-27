@@ -339,16 +339,17 @@ skills:
 - name: skill-google-analytics-monitor
   group: common
   path: common/skill-google-analytics-monitor
-  version: 1.0.2
-  description: 使用 google-analytics-cli 產生 GA4 網站監控 Markdown/README 報告，包含 YAML daily
-    metadata、即時活躍人數、近 7/28 天短期趨勢、近 3 個月流量趨勢、來源/媒介、Top 10 URL、熱門頁面、事件與異常觀察。
+  version: 1.1.0
+  description: 使用 Google Analytics Data API (原生 REST 或 google-analytics-cli) 產生 GA4
+    網站監控 Markdown/README 報告，支援全站與特定路徑 (Path Filter) 觀測，包含 YAML daily metadata、即時活躍人數、近
+    7/28 天短期趨勢、近 3 個月流量趨勢、來源/媒介、Top URL、熱門頁面、事件與異常觀察。
   category: analytics-web
   platforms: []
   maintainer: wenchiehlee
-  source: https://pypi.org/project/google-analytics-cli/
-  repo_count: 1
-  updated_at: '2026-10-03'
-  revised_at: '2026-10-25'
+  source: https://github.com/wenchiehlee/Analytics-Deck
+  repo_count: 2
+  updated_at: '2026-10-27'
+  revised_at: '2026-10-27'
 - name: skill-googlesearch-factsets-fetch
   group: common
   path: common/skill-googlesearch-factsets-fetch
