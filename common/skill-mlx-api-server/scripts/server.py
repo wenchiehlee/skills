@@ -6,8 +6,11 @@ import json
 import logging
 import os
 import signal
+import shutil
+import subprocess
 import tempfile
 import time
+import uuid
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 import urllib.request
@@ -32,6 +35,9 @@ _STATS_FILE = Path(__file__).parent / "stats.jsonl"
 
 _PROMPT_PREVIEW_LEN = 60
 _OCR_STATS_LOCK = threading.Lock()
+_PHOTO_OCR_TASKS: dict[str, dict] = {}
+_PHOTO_OCR_TASKS_LOCK = threading.Lock()
+_PHOTO_OCR_TASK_TTL_SECONDS = 900
 
 
 def _record_stat(prompt: str, model: str | None, output_len: int, elapsed: float) -> None:
@@ -142,6 +148,117 @@ app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024  # 32 MB max request body
 
 
+def _photo_format(path: Path) -> str | None:
+    """Detect supported image types from file bytes, not the upload MIME header."""
+    with path.open("rb") as image_file:
+        header = image_file.read(32)
+    if header.startswith(b"\xff\xd8\xff"):
+        return "JPEG"
+    if header.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "PNG"
+    if header.startswith(b"RIFF") and header[8:12] == b"WEBP":
+        return "WebP"
+    if len(header) >= 12 and header[4:8] == b"ftyp" and header[8:12] in {
+        b"heic", b"heix", b"hevc", b"hevx", b"heif", b"mif1", b"msf1",
+    }:
+        return "HEIC/HEIF"
+    return None
+
+
+def _photo_needs_ocr(output: str) -> bool:
+    """Detect likely document scans from the structured vision-analysis output."""
+    hints = (
+        "文件", "掃描", "表格", "收據", "發票", "單據", "合約", "表單", "報告",
+        "document", "scan", "receipt", "invoice", "form", "table",
+    )
+    normalized = output.casefold()
+    return any(hint in normalized for hint in hints)
+
+
+def _prune_photo_ocr_tasks() -> None:
+    now = time.time()
+    with _PHOTO_OCR_TASKS_LOCK:
+        expired = [
+            task_id for task_id, task in _PHOTO_OCR_TASKS.items()
+            if task.get("finished_at") and now - task["finished_at"] > _PHOTO_OCR_TASK_TTL_SECONDS
+        ]
+        for task_id in expired:
+            _PHOTO_OCR_TASKS.pop(task_id, None)
+
+
+def _expire_photo_ocr_task(task_id: str) -> None:
+    with _PHOTO_OCR_TASKS_LOCK:
+        task = _PHOTO_OCR_TASKS.get(task_id)
+        if (
+            task is not None
+            and task.get("finished_at")
+            and time.time() - task["finished_at"] >= _PHOTO_OCR_TASK_TTL_SECONDS
+        ):
+            _PHOTO_OCR_TASKS.pop(task_id, None)
+
+
+def _run_photo_ocr_task(
+    task_id: str, image_path: str, temp_dir: str, filename: str, engine: str, app_name: str
+) -> None:
+    model_repo = "baidu/Unlimited-OCR" if engine == "baidu" else "mlx-community/GLM-OCR-bf16"
+    started = time.monotonic()
+    with _PHOTO_OCR_TASKS_LOCK:
+        task = _PHOTO_OCR_TASKS.get(task_id)
+        if task is not None:
+            task["status"] = "running"
+    try:
+        markdown_output, timings = run_ocr(image_path, dpi=200, engine=engine)
+        elapsed = time.monotonic() - started
+        timings["request_total_s"] = round(elapsed, 3)
+        _record_ocr_stat(filename, engine, model_repo, elapsed, len(markdown_output), 200, timings)
+        _send_amplitude_event_async(
+            model_repo, elapsed, len(markdown_output), app_name,
+            stage="ocr", provider=f"{engine}-ocr", model_repo=model_repo,
+        )
+        result = {
+            "text": markdown_output.strip(),
+            "engine": engine,
+            "elapsed_s": timings.get("request_total_s"),
+        }
+        status = "complete"
+    except ExecutionError as exc:
+        elapsed = time.monotonic() - started
+        timings = dict(exc.details)
+        timings["request_total_s"] = round(elapsed, 3)
+        _record_ocr_stat(filename, engine, model_repo, elapsed, 0, exc.status_code, timings)
+        _send_amplitude_event_async(
+            model_repo, elapsed, 0, app_name, stage="ocr",
+            provider=f"{engine}-ocr", model_repo=model_repo, success=False,
+        )
+        logger.warning("Photo OCR task failed: %s", exc)
+        result = {"error": "OCR 文字擷取失敗；視覺分析建議仍可使用。", "engine": engine}
+        status = "failed"
+    except Exception:
+        elapsed = time.monotonic() - started
+        _record_ocr_stat(
+            filename, engine, model_repo, elapsed, 0, 500,
+            {"request_total_s": round(elapsed, 3)},
+        )
+        _send_amplitude_event_async(
+            model_repo, elapsed, 0, app_name, stage="ocr",
+            provider=f"{engine}-ocr", model_repo=model_repo, success=False,
+        )
+        logger.exception("Unexpected error in photo OCR task")
+        result = {"error": "OCR 文字擷取失敗；視覺分析建議仍可使用。", "engine": engine}
+        status = "failed"
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+    with _PHOTO_OCR_TASKS_LOCK:
+        task = _PHOTO_OCR_TASKS.get(task_id)
+        if task is not None:
+            task.update({"status": status, "ocr": result, "finished_at": time.time()})
+    expiry_timer = threading.Timer(
+        _PHOTO_OCR_TASK_TTL_SECONDS, _expire_photo_ocr_task, args=(task_id,)
+    )
+    expiry_timer.daemon = True
+    expiry_timer.start()
+
+
 @app.route("/exec", methods=["POST"])
 @require_api_key
 def execute():
@@ -192,6 +309,141 @@ def execute():
         return jsonify({"error": "Internal server error"}), 500
 
 
+@app.route("/photo-analyze", methods=["POST"])
+@require_api_key
+def photo_analyze():
+    """Analyze one uploaded image with an enabled MLX vision-language model."""
+    if "file" not in request.files:
+        return jsonify({"error": "No file part in the request"}), 400
+
+    file = request.files["file"]
+    if not file.filename:
+        return jsonify({"error": "No file selected"}), 400
+
+    prompt = request.form.get("prompt", "").strip()
+    if not prompt:
+        return jsonify({"error": "No prompt provided"}), 400
+    if len(prompt) > config.MAX_PROMPT_LENGTH:
+        return jsonify({"error": f"Prompt exceeds {config.MAX_PROMPT_LENGTH} character limit"}), 400
+
+    model = request.form.get("model", "mlx-gemma4").strip()
+    if model not in config.ALLOWED_MODELS:
+        return jsonify({"error": f"Model not allowed. Choose from: {sorted(config.ALLOWED_MODELS)}"}), 400
+    ocr_engine = request.form.get("ocr_engine", "").strip().lower()
+    if ocr_engine and ocr_engine not in config.OCR_ENGINES:
+        return jsonify({
+            "error": f"OCR engine not enabled. Choose from: {sorted(config.OCR_ENGINES)}"
+        }), 400
+
+    started = time.monotonic()
+    temp_dir = tempfile.mkdtemp(prefix="mlx_photo_")
+    background_ocr_started = False
+    try:
+        source_path = Path(temp_dir) / "source-image"
+        file.save(source_path)
+        input_format = _photo_format(source_path)
+        if input_format is None:
+            return jsonify({"error": "Unsupported or invalid image. Use JPEG, PNG, WebP, or HEIC/HEIF."}), 415
+
+        inference_path = source_path
+        converted = False
+        if input_format == "HEIC/HEIF":
+            # sips relies on the filename extension for some HEIF variants.
+            heic_path = Path(temp_dir) / "source-image.heic"
+            source_path.replace(heic_path)
+            source_path = heic_path
+            inference_path = Path(temp_dir) / "image.jpg"
+            try:
+                conversion = subprocess.run(
+                    ["sips", "-s", "format", "jpeg", str(source_path), "--out", str(inference_path)],
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                    check=False,
+                )
+            except (FileNotFoundError, subprocess.TimeoutExpired):
+                return jsonify({"error": "HEIC conversion failed on the MLX server."}), 415
+            if conversion.returncode != 0 or not inference_path.is_file():
+                return jsonify({"error": "HEIC conversion failed on the MLX server."}), 415
+            converted = True
+
+        output, actual_model = run(prompt, model=model, image_path=str(inference_path))
+        elapsed = time.monotonic() - started
+        _record_stat(prompt, actual_model, len(output), elapsed)
+        _send_amplitude_event_async(
+            model,
+            elapsed,
+            len(output),
+            request.headers.get("X-App-Name") or "Photo-Analyzer",
+            stage="photo-analyze",
+            provider="mlx-vlm",
+            model_repo=actual_model,
+        )
+
+        ocr_result = None
+        if ocr_engine and _photo_needs_ocr(output):
+            _prune_photo_ocr_tasks()
+            task_id = uuid.uuid4().hex
+            with _PHOTO_OCR_TASKS_LOCK:
+                _PHOTO_OCR_TASKS[task_id] = {
+                    "status": "queued", "ocr": None, "created_at": time.time(),
+                    "finished_at": None,
+                }
+            try:
+                worker = threading.Thread(
+                    target=_run_photo_ocr_task,
+                    args=(
+                        task_id, str(inference_path), str(temp_dir), file.filename,
+                        ocr_engine, request.headers.get("X-App-Name") or "Photo-Analyzer",
+                    ),
+                    name=f"photo-ocr-{task_id[:8]}",
+                    daemon=True,
+                )
+                worker.start()
+                background_ocr_started = True
+                ocr_result = {"status": "queued", "task_id": task_id, "engine": ocr_engine}
+            except Exception:
+                with _PHOTO_OCR_TASKS_LOCK:
+                    _PHOTO_OCR_TASKS[task_id] = {
+                        "status": "failed", "ocr": {"error": "無法啟動 OCR 工作。", "engine": ocr_engine},
+                        "finished_at": time.time(),
+                    }
+                logger.exception("Could not start photo OCR task")
+                ocr_result = {"error": "無法啟動 OCR 工作；視覺分析建議仍可使用。", "engine": ocr_engine}
+
+        return jsonify({
+            "output": output,
+            "model": actual_model,
+            "input_format": input_format,
+            "converted": converted,
+            "elapsed_s": round(time.monotonic() - started, 3),
+            "temporary_file_deleted": not background_ocr_started,
+            "ocr": ocr_result,
+        })
+
+    except ExecutionError as e:
+        return jsonify({"error": str(e)}), e.status_code
+    except Exception:
+        logger.exception("Unexpected error in photo analysis")
+        return jsonify({"error": "Internal server error"}), 500
+
+    finally:
+        if not background_ocr_started:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+
+@app.route("/photo-analyze/ocr-status/<task_id>", methods=["GET"])
+@require_api_key
+def photo_ocr_status(task_id: str):
+    if len(task_id) != 32 or any(ch not in "0123456789abcdef" for ch in task_id):
+        return jsonify({"error": "Invalid OCR task ID"}), 400
+    _prune_photo_ocr_tasks()
+    with _PHOTO_OCR_TASKS_LOCK:
+        task = _PHOTO_OCR_TASKS.get(task_id)
+        if task is None:
+            return jsonify({"error": "OCR task not found or expired"}), 404
+        return jsonify({"status": task["status"], "ocr": task.get("ocr")})
+
+
 @app.route("/ocr", methods=["POST"])
 @require_api_key
 def ocr():
@@ -229,7 +481,9 @@ def ocr():
     suffix = Path(file.filename).suffix
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         file.save(tmp.name)
-        tmp_path = tmp.name
+        tmp_path = Path(tmp.name)
+    temp_paths = [tmp_path]
+    ocr_path = tmp_path
 
     t0 = time.monotonic()
     timings: dict = {}
@@ -237,7 +491,32 @@ def ocr():
         "baidu/Unlimited-OCR" if engine == "baidu" else "mlx-community/GLM-OCR-bf16"
     )
     try:
-        markdown_output, timings = run_ocr(tmp_path, dpi=dpi_val, engine=engine)
+        if _photo_format(ocr_path) == "HEIC/HEIF":
+            heic_path = ocr_path.with_suffix(".heic")
+            if heic_path != ocr_path:
+                ocr_path.replace(heic_path)
+                ocr_path = heic_path
+                temp_paths.append(ocr_path)
+            jpeg_path = ocr_path.with_suffix(".jpg")
+            temp_paths.append(jpeg_path)
+            conversion_started = time.monotonic()
+            try:
+                conversion = subprocess.run(
+                    ["sips", "-s", "format", "jpeg", str(ocr_path), "--out", str(jpeg_path)],
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                    check=False,
+                )
+            except (FileNotFoundError, subprocess.TimeoutExpired):
+                return jsonify({"error": "HEIC conversion failed on the OCR server."}), 415
+            if conversion.returncode != 0 or not jpeg_path.is_file():
+                return jsonify({"error": "HEIC conversion failed on the OCR server."}), 415
+            ocr_path = jpeg_path
+            timings["heic_conversion_s"] = round(time.monotonic() - conversion_started, 3)
+
+        markdown_output, ocr_timings = run_ocr(str(ocr_path), dpi=dpi_val, engine=engine)
+        timings.update(ocr_timings)
         elapsed = time.monotonic() - t0
         timings["request_total_s"] = round(elapsed, 3)
         _record_ocr_stat(file.filename, engine, model_repo, elapsed, len(markdown_output), 200, timings)
@@ -262,16 +541,26 @@ def ocr():
         return jsonify({"error": "Internal server error"}), 500
     finally:
         # Clean up the temporary file
-        try:
-            os.unlink(tmp_path)
-        except Exception:
-            pass
+        for temp_path in temp_paths:
+            try:
+                temp_path.unlink(missing_ok=True)
+            except Exception:
+                logger.warning("Failed to remove request-scoped OCR temp file")
 
 
 @app.route("/health", methods=["GET"])
 def health():
     """Unauthenticated health check for Synology reverse proxy monitoring."""
-    return jsonify({"status": "ok", "ocr": ocr_queue_status()}), 200
+    with _PHOTO_OCR_TASKS_LOCK:
+        photo_ocr_tasks = sum(
+            task.get("status") in {"queued", "running"}
+            for task in _PHOTO_OCR_TASKS.values()
+        )
+    return jsonify({
+        "status": "ok",
+        "ocr": ocr_queue_status(),
+        "photo_ocr_tasks": photo_ocr_tasks,
+    }), 200
 
 
 if __name__ == "__main__":

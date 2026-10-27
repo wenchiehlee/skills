@@ -60,6 +60,8 @@ GLM_VLM_LOG: str = _get(
 GLM_VLM_PYTHON: str = _get(
     "MLX_GLM_VLM_PYTHON", str(Path.home() / "mlx-api" / "glm-mlx-venv" / "bin" / "python")
 )
+# Keep VLM inference out of the Baidu OCR environment, which pins transformers<5.
+VLM_PYTHON: str = _get("MLX_VLM_PYTHON", GLM_VLM_PYTHON)
 GLM_OCR_TIMEOUT_SECONDS: int = int(
     _get("MLX_GLM_OCR_TIMEOUT", str(int(_get("MLX_TIMEOUT", "900"))))
 )

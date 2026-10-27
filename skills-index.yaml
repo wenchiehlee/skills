@@ -1,5 +1,5 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
-generated_at: '2026-10-21'
+generated_at: '2026-10-27'
 skills:
 - name: skill-android-adb-gadget
   group: common
@@ -9,104 +9,115 @@ skills:
     on an embedded Android device that exposes a USB composite gadget — handles state
     detection, Ethernet bootstrapping, safe reboot/recovery, gadget mount, and HID
     function control.
-  category: basic
+  category: hardware-usb
+  platforms:
+  - android
+  - windows
   maintainer: WJLEE
   source: wj-lee_Barco.github.com/gadget/skills/Android BaseUnit-adb
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-company-data-index-sync
   group: common
   path: common/skill-company-data-index-sync
   version: 1.0.1
   description: 更新本地資料目錄索引，生成批次處理所需的投資標的清單
-  category: financial-data
+  category: finance-data
+  platforms: []
   maintainer: wenchiehlee
   source: TAIEX.TW
   repo_count: 1
   updated_at: '2026-07-07'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-company-decision-report
   group: common
   path: common/skill-company-decision-report
   version: 1.0.2
   description: 生成台股/美股 SVG 投資決策報告（Finguider 卡片 + 營收歷史圖）
-  category: financial-strategy
+  category: finance-strategy
+  platforms: []
   maintainer: wenchiehlee
   source: TAIEX.TW
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-company-download-logo
   group: common
   path: common/skill-company-download-logo
   version: 1.0.1
   description: 指定台灣股票代碼或美股概念股 Ticker，自動下載高解析度公司官方 Logo PNG，並限制在固定大小。
-  category: basic
+  category: company-assets
+  platforms: []
   maintainer: wenchiehlee
   source: ''
   repo_count: 1
   updated_at: '2026-07-07'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-company-earnings-social-verify
   group: common
   path: common/skill-company-earnings-social-verify
   version: 1.0.1
   description: 財報公布後，從 GitHub Issue 取得貼文內容，與內部 CSV 數字逐欄比對，自動回報差異
-  category: basic
+  category: finance-accounting
+  platforms: []
   maintainer: wenchiehlee
   source: TAIEX.TW
   repo_count: 1
   updated_at: '2026-09-03'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-company-enrichment-json
   group: common
   path: common/skill-company-enrichment-json
   version: 0.2.0
   description: Extract and review My-TW-Coverage Markdown enrichment as atomic JSON
     using the biztrends.TW focus list.
-  category: basic
+  category: finance-data
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/My-TW-Coverage
   repo_count: 2
   updated_at: '2026-10-03'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-company-enrichment-render
   group: common
   path: common/skill-company-enrichment-render
   version: 1.1.1
   description: Render My-TW-Coverage canonical enrichment JSON into organized Markdown
     without using Pilot_Reports as an active source.
-  category: financial-data
+  category: finance-data
+  platforms: []
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
   repo_count: 1
   updated_at: '2026-10-04'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-company-investorconference-digest
   group: common
   path: common/skill-company-investorconference-digest
   version: 2.4.6
   description: 法說會/earnings call 與財報結果 digest SOP；支援 FIN/GT/IR/Q&A、Skills 財報結果、公司財報文件、Yahoo
     consensus、預期差、模型修正路徑與美股對台股 read-through。
-  category: basic
+  category: finance-strategy
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
   repo_count: 1
   updated_at: '2026-07-23'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-company-investorconference-ingest
   group: common
   path: common/skill-company-investorconference-ingest
   version: 1.3.2
   description: 投資人說明會/財報事件材料蒐集 Ingest 模組；法說會抓音檔、IR、逐字稿，財報事件抓 Skills 財報結果、earnings
     release、financial tables、SEC filing，並避免對純財報事件產生 FIN/GT。
-  category: basic
+  category: finance-data
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
   repo_count: 1
   updated_at: '2026-08-17'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-company-investorconference-ir-pdf-md
   group: common
   path: common/skill-company-investorconference-ir-pdf-md
@@ -114,12 +125,13 @@ skills:
   description: Fetch InvestorConference official IR PDFs through ingest, then convert
     them to Markdown using the repo-local Mac-mini OCR hybrid pipeline with auditable
     TODO/OCR markers.
-  category: financial-data
+  category: finance-data
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
   repo_count: 1
   updated_at: '2026-07-19'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-company-reputation-research
   group: common
   path: common/skill-company-reputation-research
@@ -127,45 +139,49 @@ skills:
   description: Collect Taiwan and global public jobseeker intelligence for a specified
     company, including employer reviews, interview/salary transparency, workplace
     reputation, labor/legal signals, layoffs, and recurring red flags.
-  category: basic
+  category: company-research
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/TW.good-job
   repo_count: 1
   updated_at: '2026-08-20'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-company-revenue-expense-profit-predict
   group: common
   path: common/skill-company-revenue-expense-profit-predict
   version: 1.0.1
   description: 季度損益三線（營業收入 / 總支出 / 營業利益）底部加總預測 SOP
-  category: financial-forecasting
+  category: finance-forecasting
+  platforms: []
   maintainer: ''
   source: ''
   repo_count: 1
   updated_at: ''
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-company-revenue-forecast-benchmark
   group: common
   path: common/skill-company-revenue-forecast-benchmark
   version: 1.0.1
   description: 多模型與分析師共識效能評估標準作業程序。
-  category: financial-forecasting
+  category: finance-forecasting
+  platforms: []
   maintainer: WJLEE
   source: biztrends.TW/Skills/skill-company-revenue-forecast-benchmark.md
   repo_count: 1
   updated_at: '2026-07-05'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-company-revenue-predict
   group: common
   path: common/skill-company-revenue-predict
   version: 1.0.1
   description: 營收預測與 10-Model 評估 SOP
-  category: financial-forecasting
+  category: finance-forecasting
+  platforms: []
   maintainer: ''
   source: ''
   repo_count: 1
   updated_at: ''
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-company-revenue-segment-weights
   group: common
   path: common/skill-company-revenue-segment-weights
@@ -173,23 +189,25 @@ skills:
   description: 更新與稽核 company revenue segment weights evidence、quarterly candidates、QA
     report 與 active snapshot；目前支援 biztrends.TW 台股 InvestorConference/MOPS/IR Markdown
     evidence，並在更新 company_segment_weights.csv 前產出資料解讀 QA。
-  category: financial-strategy
+  category: finance-data
+  platforms: []
   maintainer: wenchiehlee
   source: biztrends.TW
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-company-segment-viz
   group: common
   path: common/skill-company-segment-viz
   version: 1.0.1
   description: 不需 LLM，用 matplotlib 直接生成美股分部營收靜態 PNG 圖
-  category: financial-accounting
+  category: finance-analytics
+  platforms: []
   maintainer: wenchiehlee
   source: TAIEX.TW
   repo_count: 1
   updated_at: '2026-07-07'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-confluence-sync
   group: common
   path: common/skill-confluence-sync
@@ -197,24 +215,29 @@ skills:
   description: Read and overwrite a single Confluence Wiki page via REST API using
     CONFLUENCE_EMAIL / CONFLUENCE_API_TOKEN / CONFLUENCE_BASE_URL / CONFLUENCE_PAGE_ID,
     based on SpillwaveSolutions/confluence-skill.
-  category: basic
+  category: document-sync
+  platforms: []
   maintainer: wenchiehlee-money
   source: https://github.com/SpillwaveSolutions/confluence-skill
   repo_count: 0
   updated_at: '2026-10-14'
-  revised_at: '2026-10-14'
+  revised_at: '2026-10-25'
 - name: skill-container-manager-orchestrator
   group: common
   path: common/skill-container-manager-orchestrator
   version: 1.0.0
   description: 跨平台容器管理與遠端協調技能。以 Synology NAS Container Manager 為首要平台，結合 wenchiehlee.quickconnect.to-Container.Manager
     配置與 GitOps 自動化，擴展至 Mac mini、樹莓派等跨平台設備的容器遠端監控、同步、部署與維護。
-  category: server
+  category: server-infrastructure
+  platforms:
+  - synology-dsm
+  - macos
+  - linux
   maintainer: wenchiehlee
   source: https://github.com/ZhongZheng782/wenchiehlee.quickconnect.to-Container.Manager
   repo_count: 5
   updated_at: '2026-10-10'
-  revised_at: '2026-10-11'
+  revised_at: '2026-10-25'
 - name: skill-document-diagram-design
   group: common
   path: common/skill-document-diagram-design
@@ -222,12 +245,13 @@ skills:
   description: 以 cathrynlavery/diagram-design 的編輯級圖表方法論，產生可嵌入 Docsify、Material for
     MkDocs、PowerPoint 的圖表，或以 open-slide／mkslides 輸出具互動的簡報；支援從既有 PlantUML/Mermaid 原始碼或圖片匯入語意後，改畫成統一風格的原生
     SVG。
-  category: document
+  category: document-design
+  platforms: []
   maintainer: wenchiehlee-money
   source: https://github.com/cathrynlavery/diagram-design
   repo_count: 0
   updated_at: '2026-09-05'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-document-ppt-design
   group: common
   path: common/skill-document-ppt-design
@@ -238,48 +262,52 @@ skills:
     Washi Paper Soft Glow, Soft 3D Clay, Minimalist Luxury Branding, Modern Illustration
     Editorial, Japanese Hand-Drawn Editorial. Use for ppt-master workflows, slide
     deck design, SVG page generation, PPTX export, and PDF-to-PPT transformation.'
-  category: document
+  category: document-design
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/software-ai-life/Awesome-PPT-Design-Skills
   repo_count: 0
   updated_at: '2026-10-07'
-  revised_at: '2026-10-18'
+  revised_at: '2026-10-25'
 - name: skill-document-vids-prompt-generate
   group: common
   path: common/skill-document-vids-prompt-generate
   version: 1.0.0
   description: 將 Wikipedia 長文、PPT 投影片或長篇文件轉化為最適合 Google Vids (Gemini Omni 模型) 吸收的高畫質分鏡與影片生成提示詞；嚴格遵循防
     AI 罐頭感原則，產出具備專業導演風範的畫面構圖與口播腳本。
-  category: document
+  category: media-production
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/skills
-  repo_count: 0
+  repo_count: 1
   updated_at: '2026-10-21'
-  revised_at: '2026-10-21'
+  revised_at: '2026-10-25'
 - name: skill-facebook-fetch
   group: common
   path: common/skill-facebook-fetch
   version: 1.2.3
   description: 管理 Facebook.Fetch 專案的每日粉專/珍藏清單貼文抓取 — 本機執行與 GitHub Actions 共用同一支 run_daily_fetch.py，更新過期的
     FB_COOKIE、手動觸發並監看 daily_fetch workflow、排查已知的資料夾命名衝突與 sync 觸發失敗問題。
-  category: financial-data
+  category: social-ingestion
+  platforms: []
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/Facebook.Fetch
   repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-finmind-fetch
   group: common
   path: common/skill-finmind-fetch
-  version: 1.12.0
+  version: 1.13.0
   description: Fetch FinMind Taiwan stock margin/price data and quarterly financial-ratio
     data, exporting GoodInfo Analyzer-compatible CSVs.
   category: financial-data
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/Python-Actions.FinMind
   repo_count: 2
-  updated_at: '2026-10-07'
-  revised_at: '2026-10-07'
+  updated_at: '2026-10-24'
+  revised_at: '2026-10-25'
 - name: skill-goodinfo-fetch
   group: common
   path: common/skill-goodinfo-fetch
@@ -287,12 +315,13 @@ skills:
   description: 'Unified dispatcher across the GoodInfo.tw data pipeline: download
     raw XLS (Python-Actions.GoodInfo), convert to CSV via stage1 extraction (Python-Actions.GoodInfo.Analyzer),
     and enrich company-level metadata (Python-Actions.GoodInfo.CompanyInfo).'
-  category: financial-data
+  category: finance-data
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-investment/Python-Actions.GoodInfo.Analyzer
   repo_count: 2
   updated_at: '2026-10-12'
-  revised_at: '2026-10-12'
+  revised_at: '2026-10-25'
 - name: skill-google-alert-fetch
   group: common
   path: common/skill-google-alert-fetch
@@ -300,24 +329,26 @@ skills:
   description: 維運 GoogleAlertManager 的 Google Alerts 抓取管線，並提供內建 scripts/google_alert_fetch.py
     以更新股票觀察/專注清單 CSV、檢查 README/focus CSV 一致性、依 focus CSV 重建 README、同步/匯出 RSS、抓取文章、LLM
     分析評分、人工標註與 sync-stale issue 自動化。
-  category: financial-data
+  category: finance-data
+  platforms: []
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/GoogleAlertManager
   repo_count: 1
   updated_at: '2026-08-25'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-google-analytics-monitor
   group: common
   path: common/skill-google-analytics-monitor
   version: 1.0.2
   description: 使用 google-analytics-cli 產生 GA4 網站監控 Markdown/README 報告，包含 YAML daily
     metadata、即時活躍人數、近 7/28 天短期趨勢、近 3 個月流量趨勢、來源/媒介、Top 10 URL、熱門頁面、事件與異常觀察。
-  category: analytics
+  category: analytics-web
+  platforms: []
   maintainer: wenchiehlee
   source: https://pypi.org/project/google-analytics-cli/
   repo_count: 1
   updated_at: '2026-10-03'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-googlesearch-factsets-fetch
   group: common
   path: common/skill-googlesearch-factsets-fetch
@@ -327,24 +358,26 @@ skills:
     Sheets 上傳），涵蓋 Actions-update-lists.yaml / Actions-search.yaml / Actions-quarantine-files.yaml
     / Actions-process.yaml 四個 workflow 的手動觸發與除錯，並負責處理與解決 GitHub Issues（每日自動產生的 Quarantine
     Alert 資料品質議題）。
-  category: financial-data
+  category: finance-data
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/GoogleSearch.Factset
   repo_count: 1
   updated_at: '2026-08-25'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-institutional-thesis-research
   group: common
   path: common/skill-institutional-thesis-research
   version: 1.2.0
   description: Maintain auditable five-institution investment thesis research and
     interpret articles/news through selected institutional lenses for TW-institutional-investment-theses.
-  category: financial-strategy
+  category: finance-strategy
+  platforms: []
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/TW-institutional-investment-theses
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-institutional-tw-report-research
   group: common
   path: common/skill-institutional-tw-report-research
@@ -352,39 +385,42 @@ skills:
   description: 'Maintain auditable Taiwan listed/OTC institutional research intelligence:
     broker/advisory reports, ratings, target prices, EPS revisions, investor-conference
     linkage, consensus, and TWSE/TPEx institutional-flow comparison.'
-  category: financial-strategy
+  category: finance-strategy
+  platforms: []
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/TW-institutional-research
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-investment-decision-coach
   group: common
   path: common/skill-investment-decision-coach
-  version: 1.4.0
+  version: 1.5.0
   description: Coach investment decisions in Traditional Chinese with traceable evidence,
     calibrated confidence, falsifiable theses, comparative advantage, and complementary
     reasoning frameworks. Use for evaluating opportunities and risks, comparing investor
     methods or competitor-groups, building investment routines, extracting book-derived
-    investment frameworks, and reviewing finance-skill taxonomy.
-  category: financial-strategy
+    investment frameworks, and governing the Skills Registry domain-function taxonomy.
+  category: finance-strategy
+  platforms: []
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/Miz.Fetch
   repo_count: 1
-  updated_at: '2026-10-06'
-  revised_at: '2026-10-06'
+  updated_at: '2026-10-23'
+  revised_at: '2026-10-25'
 - name: skill-llm-api-client
   group: common
   path: common/skill-llm-api-client
   version: 1.0.8
   description: 統一的 LLM 客戶端函式庫（llm），封裝 Gemini API 金鑰輪轉、skill-llm-api-server 的 codex-cli/gemini-cli
     橋接、以及本地 MLX 推論，內建 codex → gemini → mlx 自動備援鏈與智慧路由（Smart Routing）。
-  category: library
+  category: server-client
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/llm
   repo_count: 8
   updated_at: '2026-10-11'
-  revised_at: '2026-10-11'
+  revised_at: '2026-10-25'
 - name: skill-llm-api-server
   group: common
   path: common/skill-llm-api-server
@@ -392,12 +428,14 @@ skills:
   description: 在 Synology NAS Docker 容器中運行的 LLM CLI 橋接伺服器，將 OpenAI codex-cli（ChatGPT
     Pro）與 Google gemini-cli 封裝為 Flask/Waitress HTTP API（/exec、/gemini/exec、/smart/exec），供
     llm 函式庫的 CodexProvider 遠端呼叫。
-  category: server
+  category: server-api
+  platforms:
+  - synology-dsm
   maintainer: wenchiehlee
   source: https://github.com/ZhongZheng782/Llm-Cli-APIServer
   repo_count: 1
   updated_at: '2026-10-04'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-miz-fetch
   group: common
   path: common/skill-miz-fetch
@@ -405,60 +443,67 @@ skills:
   description: Fetch or process authorized EPUB/PDF book sources into Miz.Fetch's
     chapter Markdown, metadata, JPG assets, and requested book summaries or investment
     frameworks.
-  category: document
+  category: document-ingestion
+  platforms: []
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/Miz.Fetch
   repo_count: 1
   updated_at: '2026-10-13'
-  revised_at: '2026-10-13'
+  revised_at: '2026-10-25'
 - name: skill-mlx-api-client-ocr
   group: common
   path: common/skill-mlx-api-client-ocr
-  version: 1.8.0
+  version: 1.8.3
   description: 呼叫 Mac-mini MLX API Server 的 OCR 客戶端（Tailscale 網內），將 PDF 或圖片轉錄為 Markdown
     格式，適用於健康報告、稅務文件、財報等各類文件的數位化分析。
-  category: document
+  category: document-extraction
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/FamilyHealthyCheck
   repo_count: 6
-  updated_at: '2026-10-10'
-  revised_at: '2026-10-10'
+  updated_at: '2026-10-26'
+  revised_at: '2026-10-26'
 - name: skill-mlx-api-client-whisper
   group: common
   path: common/skill-mlx-api-client-whisper
   version: 1.0.3
   description: 以 GitHub issue 觸發 Mac-mini 上的 whisper 轉錄 pipeline（skill-mlx-api-server-whisper），並輪詢結果是否已同步回本
     repo。支援法說會音訊、YouTube 財經影片等多種來源。
-  category: document
+  category: media-transcription
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/InvestorConference
   repo_count: 2
   updated_at: '2026-08-30'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-mlx-api-server
   group: common
   path: common/skill-mlx-api-server
-  version: 1.3.1
+  version: 1.4.6
   description: 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，提供 Baidu Unlimited-OCR
-    與 GLM-OCR 文件轉錄（共用單一 FIFO worker）及 MLX LLM 推理（/exec），以 Flask/Waitress 常駐服務形式運行。
-  category: server
+    與 GLM-OCR 文件轉錄、單張照片 VLM 分析及 MLX LLM 推理，以 Flask/Waitress 常駐服務形式運行。
+  category: server-inference
+  platforms:
+  - macos
   maintainer: wenchiehlee
   source: https://github.com/ZhongZheng782/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts
   repo_count: 1
-  updated_at: '2026-10-11'
-  revised_at: '2026-10-11'
+  updated_at: '2026-10-26'
+  revised_at: '2026-10-26'
 - name: skill-mlx-api-server-whisper
   group: common
   path: common/skill-mlx-api-server-whisper
   version: 2.0.2
   description: Mac-mini 上以 self-hosted GitHub Actions runner 執行的語音轉錄 pipeline（whisper
     轉錄 → LLM postprocess → CER 校驗 → GT 校正迴圈），透過 issue 驅動、支援多種音訊來源（法說會、YouTube 財經影片…）。
-  category: server
+  category: server-transcription
+  platforms:
+  - macos
   maintainer: wenchiehlee
   source: https://github.com/ZhongZheng782/Mac-mini/tree/main/skills/skill-mlx-api-server-whisper/scripts
   repo_count: 1
   updated_at: '2026-10-11'
-  revised_at: '2026-10-11'
+  revised_at: '2026-10-25'
 - name: skill-mops-fetch
   group: common
   path: common/skill-mops-fetch
@@ -467,47 +512,54 @@ skills:
     PDFs, convert same-stem Markdown sidecars with the skill-mac-mini-ocr hybrid PDF/OCR
     workflow, track official filing deadlines, and orchestrate the repo''s batch/early-filer/health-report
     fetch pipeline.'
-  category: financial-data
+  category: finance-data
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/MOPS
   repo_count: 1
   updated_at: '2026-09-30'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-pptx-to-md
   group: common
   path: common/skill-pptx-to-md
   version: 1.0.1
   description: 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。
-  category: document
+  category: document-conversion
+  platforms: []
   maintainer: wenchiehlee
   source: ''
   repo_count: 0
   updated_at: '2026-07-09'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-scribd-pdf-fetch
   group: common
   path: common/skill-scribd-pdf-fetch
   version: 1.0.1
   description: 從 Scribd 文件網址下載乾淨的 PDF 副本，透過外部工具 themrsami/scribd-downloader（headless
     Chrome + CDP 逐頁列印）執行，本登錄庫不複製該工具原始碼；自動修補 Chrome 130+ 因 excludeSwitches 選項導致啟動即崩潰的相容性問題。
-  category: document
+  category: document-ingestion
+  platforms: []
   maintainer: wenchiehlee-money
-  source: ''
+  source: https://github.com/wenchiehlee/skills/tree/main/common/skill-scribd-pdf-fetch
   repo_count: 2
-  updated_at: '2026-09-02'
-  revised_at: '2026-10-10'
+  updated_at: '2026-10-25'
+  revised_at: '2026-10-25'
+  npm_package: '@wenchiehlee1020/skill-scribd-pdf-fetch'
+  npm_url: https://www.npmjs.com/package/@wenchiehlee1020/skill-scribd-pdf-fetch
+  install_command: npm i @wenchiehlee1020/skill-scribd-pdf-fetch
 - name: skill-sharepoint-sync
   group: common
   path: common/skill-sharepoint-sync
   version: 1.3.0
   description: Access a single SharePoint file through an approved Microsoft Graph
     delegated app or policy-compliant Microsoft Edge with CDP remote debugging enabled.
-  category: basic
+  category: document-sync
+  platforms: []
   maintainer: wenchiehlee-money
   source: https://learn.microsoft.com/en-us/graph/auth-v2-user
   repo_count: 1
   updated_at: '2026-10-14'
-  revised_at: '2026-10-14'
+  revised_at: '2026-10-25'
 - name: skill-stock-dynamic-valuation-box
   group: common
   path: common/skill-stock-dynamic-valuation-box
@@ -523,23 +575,25 @@ skills:
     box (NaN) for date ranges where the trailing TTM EPS swung past a 3x regime-change
     threshold within the lookback window, instead of drawing a band that blends two
     incompatible earnings bases and never corresponds to any real historical price.
-  category: financial-strategy
+  category: finance-analytics
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
   repo_count: 2
   updated_at: '2026-10-15'
-  revised_at: '2026-10-15'
+  revised_at: '2026-10-25'
 - name: skill-stock-earnings-calendar-monitor
   group: common
   path: common/skill-stock-earnings-calendar-monitor
   version: 1.0.1
   description: 財報行事曆監控：偵測資料缺漏並自動開 Issue，更新 README 看板
-  category: basic
+  category: finance-data
+  platforms: []
   maintainer: wenchiehlee
   source: TAIEX.TW
   repo_count: 1
   updated_at: '2026-09-03'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-stock-fiscal-quarter-resolve
   group: common
   path: common/skill-stock-fiscal-quarter-resolve
@@ -547,23 +601,25 @@ skills:
   description: Deterministic, dependency-free US fiscal-year/quarter resolution shared
     by skill-company-investorconference-ingest, skill-stock-investorevent-fetch, and
     ConceptStocks' update_concept_metadata.py.
-  category: financial-data
+  category: finance-data
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/skills
   repo_count: 3
   updated_at: '2026-09-25'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-stock-investorevent-fetch
   group: common
   path: common/skill-stock-investorevent-fetch
   version: 1.3.2
   description: 維護財報／法說會、AI、股利、歷史崩盤、NVIDIA 與股市事件六份 raw_event CSV 的組合技能；依事件來源選擇既有產生器，財報季度使用共享解析器，並對齊投資人素材矩陣。
-  category: financial-data
+  category: finance-data
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/InvestorConference
   repo_count: 4
   updated_at: '2026-10-08'
-  revised_at: '2026-10-08'
+  revised_at: '2026-10-25'
 - name: skill-stock-ma-rsi-bband-macd-peband
   group: common
   path: common/skill-stock-ma-rsi-bband-macd-peband
@@ -571,58 +627,63 @@ skills:
   description: 台股個股/ETF技術指標快照（MA/STD/布林通道、RSI、MACD）與標準 common market PE band；PEBand
     用 dated EPS historical PE series，支援 trailing TTM EPS builder、forward EPS、forward
     consensus EPS、離散PE band分類（classify_pe_band，0~5共6段）。calc_pe_band()/calc_pe_band_series()會在樣本窗口內EPS波動超過3倍（EPS_REGIME_CHANGE_RATIO，判定為獲利基期換代而非正常成長）時整組band回傳空值/NaN，不產生從未真實發生過的估值目標。
-  category: financial-strategy
+  category: finance-analytics
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
   repo_count: 3
   updated_at: '2026-10-15'
-  revised_at: '2026-10-15'
+  revised_at: '2026-10-25'
 - name: skill-stock-market-cost-distribution
   group: common
   path: common/skill-stock-market-cost-distribution
   version: 1.0.2
   description: 台股市場籌碼持股成本分佈模擬（台新小時K+日K暖機雙池模型），輸出一致格式 PNG/CSV 與統一可信度、資料新鮮度標籤。
-  category: financial-forecasting
+  category: finance-analytics
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/MarketCostDistribution
   repo_count: 1
   updated_at: '2026-07-15'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-stock-pipeline-health-monitor
   group: common
   path: common/skill-stock-pipeline-health-monitor
   version: 1.1.0
   description: 複合技能：委派給所有 skill-*-fetch 抓取技能，維護 Data Health Dashboard 新鮮度、資料系統架構 Repo
     角色對照表，並稽核跨 repo CSV 同步 YAML 與 GoodInfo/FinMind 智慧選源。
-  category: financial-data
+  category: finance-data
+  platforms: []
   maintainer: wenchiehlee
   source: biztrends.TW
   repo_count: 1
   updated_at: '2026-09-23'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-stock-topcrash
   group: common
   path: common/skill-stock-topcrash
   version: 1.0.2
   description: 任意指數/股票在指定年份範圍內的「崩盤Top N」清單——1/3/5/7/9/11日跌幅、事件標籤、VIX/CNN恐慌貪婪情境、恢復天數與形態(V/U修復)，輸出CSV。
-  category: financial-strategy
+  category: finance-analytics
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee-money/GoogleSheet.Banks
   repo_count: 3
   updated_at: '2026-10-08'
-  revised_at: '2026-10-08'
+  revised_at: '2026-10-25'
 - name: skill-stock-universe-onboarding
   group: common
   path: common/skill-stock-universe-onboarding
   version: 1.0.1
   description: Add stocks or tickers to upstream ConceptStocks and TAIEX monitor/focus
     source lists without editing generated downstream outputs.
-  category: financial-data
+  category: finance-data
+  platforms: []
   maintainer: wenchiehlee
   source: biztrends.TW / ConceptStocks / Selenium-Actions.Auction
   repo_count: 3
   updated_at: '2026-07-22'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-theme-competitor-analysis
   group: common
   path: common/skill-theme-competitor-analysis
@@ -630,12 +691,13 @@ skills:
   description: 依指定 stock id，使用 supply-chain product peer seed 與 relationship rules
     區分 brand competitor、ODM peer、server peer 與 supplier/component，並輸出最近三年季度 Revenue、Revenue
     YoY、Profit、Profit YoY、GM 競爭者分析表。
-  category: financial-strategy
+  category: finance-analytics
+  platforms: []
   maintainer: wenchiehlee
   source: biztrends.TW
   repo_count: 2
   updated_at: '2026-09-01'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-theme-competitor-groups-curate
   group: common
   path: common/skill-theme-competitor-groups-curate
@@ -643,24 +705,26 @@ skills:
   description: 維護 data/themes/*.json 的 competitive_groups 與 extra_entities，讓 output/themes/*.md
     主題頁面依真實產品/商業模式競爭關係分組，並與 data/enrichment_all/*.json 的 relationships.competitors
     交叉比對一致性。
-  category: financial-strategy
+  category: finance-data
+  platforms: []
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/My-TW-Coverage
   repo_count: 3
   updated_at: '2026-10-03'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-theme-cycle-coverage
   group: common
   path: common/skill-theme-cycle-coverage
   version: 0.2.3
   description: Build AI trend coverage, validity, issue register, and inference quality-gate
     outputs from company canonical cycle data.
-  category: basic
+  category: finance-analytics
+  platforms: []
   maintainer: wenchiehlee
   source: biztrends.TW
   repo_count: 1
   updated_at: ''
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-theme-cycle-index
   group: common
   path: common/skill-theme-cycle-index
@@ -668,12 +732,13 @@ skills:
   description: 套用已審核或已結構化的 company revenue segment weights 到 canonical cycle model；支援
     Taiwan 與 United_States pipeline，US 對齊 canonical_cycle_specification 並用 latest-mix
     proxy 補齊缺 segment quarters，生成對應 company_cycle_index_*.png 並更新 README。
-  category: financial-strategy
+  category: finance-analytics
+  platforms: []
   maintainer: wenchiehlee
   source: biztrends.TW
   repo_count: 1
   updated_at: '2026-07-20'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-tw-land-geo-signal
   group: common
   path: common/skill-tw-land-geo-signal
@@ -681,22 +746,24 @@ skills:
   description: 查詢桃園市 TY_UPGIS 圖層（甲乙工/容移/都市設計審議等案件位置）與內政部 easymap 地號官方地圖，彙整地號周邊指定半徑的城市信號
     CSV 與疊圖 PNG，供土地資產分析使用。
   category: geo-data
+  platforms: []
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/LandAsset
   repo_count: 1
   updated_at: '2026-07-25'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-tw-land-realty-comps
   group: common
   path: common/skill-tw-land-realty-comps
   version: 1.1.1
   description: 下載並彙整內政部不動產成交案件實際資訊資料供應系統（實價登錄）季資料，篩選指定地號/門牌周邊的土地或房屋成交紀錄，輸出近鄰統計、同棟/同段明細、年度活動與加權估值，供土地或房屋資產分析使用。
-  category: financial-data
+  category: finance-analytics
+  platforms: []
   maintainer: wenchiehlee-money
   source: https://github.com/wenchiehlee-money/LandAsset
   repo_count: 2
   updated_at: '2026-07-25'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-tw-legal-rag
   group: common
   path: common/skill-tw-legal-rag
@@ -706,37 +773,41 @@ skills:
     台灣/臺灣 judgments, 判決, 法院見解, legal precedents, or wants case support for a legal
     argument. Wraps the twlegalrag CLI (pack subcommand); answers must cite only citation_ids
     present in the returned bundle.
-  category: basic
+  category: legal-research
+  platforms: []
   maintainer: wenchiehlee
   source: TW-person-legal-search (vendored from https://github.com/aa0101181514/tw-legal-rag,
     skills/tw-legal-rag/)
   repo_count: 1
   updated_at: '2026-08-31'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-tw-legal-search-console
   group: common
   path: common/skill-tw-legal-search-console
   version: 1.1.0
   description: 台灣人物法律查核搜尋主控台——支援兩種輸入模式：(1) 一篇提及人物的新聞連結 (2) 人名（建議附地區/公司/職稱等輔助資訊）。整合
     tw-legal-rag（22,534,636 筆裁判書語義檢索，含引用防護）、司法院裁判書系統即時備援查詢與新聞搜尋佐證，依身分比對信心與風險分級規則產出查核報告。當使用者提供新聞連結或人名，要求「查有無官司」「法律查核」「背景調查」時使用。
-  category: basic
+  category: legal-research
+  platforms: []
   maintainer: wenchiehlee
   source: TW-person-legal-search
   repo_count: 1
   updated_at: '2026-08-31'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-usb-gadget-debug
   group: common
   path: common/skill-usb-gadget-debug
   version: 1.0.2
   description: Enumerate Windows USB devices via SetupAPI to verify USB composite
     gadget (VID:046D) enumeration, interface presence, and device node status.
-  category: basic
+  category: hardware-usb
+  platforms:
+  - windows
   maintainer: WJLEE
   source: wj-lee_Barco.github.com/gadget/debug_usb.py
   repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-usb-gadget-monitor
   group: common
   path: common/skill-usb-gadget-monitor
@@ -745,12 +816,14 @@ skills:
     on Windows — tracks USB device status, UVC stream resolution/fps, UAC2 call state,
     display topology (single/clone/extend), UC app presence, and HID vendor report
     exchange.
-  category: analytics
+  category: hardware-usb
+  platforms:
+  - windows
   maintainer: WJLEE
   source: wj-lee_Barco.github.com/gadget/android_baseunit_monitor.py
   repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-usb-uvc-4k-capture
   group: common
   path: common/skill-usb-uvc-4k-capture
@@ -759,143 +832,156 @@ skills:
     advertises 4K frame descriptor, uvc_camera_forward detects camera max MJPEG resolution
     at runtime and clamps negotiation — Jieli U20 stays at 1080p, Logitech MeetUp
     unlocks 3840×2160@30fps.'
-  category: basic
+  category: hardware-usb
+  platforms:
+  - android
   maintainer: WJLEE
   source: wj-lee_Barco.github.com/gadget/uvc_camera_forward.c
   repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-usb-wasapi-capture-debug
   group: common
   path: common/skill-usb-wasapi-capture-debug
   version: 1.0.2
   description: Enumerate Windows WASAPI capture endpoints via COM IMMDeviceEnumerator
     to verify UAC2 speakerphone visibility, device state, and active audio sessions.
-  category: basic
+  category: hardware-usb
+  platforms:
+  - windows
   maintainer: WJLEE
   source: wj-lee_Barco.github.com/gadget/debug_wasapi.py
   repo_count: 1
   updated_at: '2026-07-21'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-ux-design-system
   group: common
   path: common/skill-ux-design-system
-  version: 1.1.0
+  version: 1.2.0
   description: Master UX Design System and unified visual language across sibling
     repositories (mkdocs-life, GoogleAlertManager, YoutubeAudio.Fetch, mkdocs-investment,
     HomeAssistant TV, Synology NAS, My-TW-Coverage). Standardized 10-foot TV HUD on
     60% translucent dark slate (#660f172a) and Position 0 TopRight.
   category: ux-design
+  platforms: []
   maintainer: wenchiehlee
   source: ''
   repo_count: 1
-  updated_at: '2026-10-18'
-  revised_at: '2026-10-18'
+  updated_at: '2026-10-23'
+  revised_at: '2026-10-25'
 - name: skill-ux-google-alert-manager
   group: common
   path: common/skill-ux-google-alert-manager
-  version: 1.1.0
+  version: 1.2.0
   description: UX styling, component patterns, and interaction design for GoogleAlertManager
     (GitHub Pages web dashboard). Upgraded mascot to Alert Bird (破曉警報鳥 🐦, Lucide bird)
     with Alert Orange (#ea580c) theme.
   category: ux-design
+  platforms: []
   maintainer: wenchiehlee
   source: ''
   repo_count: 1
-  updated_at: '2026-10-18'
-  revised_at: '2026-10-18'
+  updated_at: '2026-10-23'
+  revised_at: '2026-10-25'
 - name: skill-ux-homeassistant-tv
   group: common
   path: common/skill-ux-homeassistant-tv
-  version: 1.1.0
+  version: 1.3.0
   description: '10-foot UI design, glanceable frosted HUD overlays, and remote-control
     accessible popup notifications for HomeAssistant on Android TV. Standardized on
     60% translucent Dark Slate (#660f172a), position: 0 (TopRight), and verified PiPup
     REST API payloads.'
   category: ux-design
+  platforms: []
   maintainer: wenchiehlee
   source: ''
   repo_count: 2
-  updated_at: '2026-10-18'
-  revised_at: '2026-10-20'
+  updated_at: '2026-10-23'
+  revised_at: '2026-10-25'
 - name: skill-ux-mkdocs-investment
   group: common
   path: common/skill-ux-mkdocs-investment
-  version: 1.0.0
+  version: 1.1.0
   description: Fintech design system, KPI metric widgets, financial table styling,
     and Material for MkDocs customizations for mkdocs-investment. Use for stock dashboards,
     research notes, and asset tracking UIs.
   category: ux-design
+  platforms: []
   maintainer: wenchiehlee
   source: ''
   repo_count: 1
-  updated_at: '2026-10-17'
-  revised_at: '2026-10-18'
+  updated_at: '2026-10-23'
+  revised_at: '2026-10-25'
 - name: skill-ux-mkdocs-life
   group: common
   path: common/skill-ux-mkdocs-life
-  version: 1.1.0
+  version: 1.2.0
   description: UX styling, design guidelines, and Material for MkDocs customizations
     for mkdocs-life. Standardized on LXGW WenKai TC + Quicksand editorial typography
     and warm paper palette.
   category: ux-design
+  platforms: []
   maintainer: wenchiehlee
   source: ''
   repo_count: 1
-  updated_at: '2026-10-18'
-  revised_at: '2026-10-18'
+  updated_at: '2026-10-23'
+  revised_at: '2026-10-25'
 - name: skill-ux-synology-nas
   group: common
   path: common/skill-ux-synology-nas
-  version: 1.0.0
+  version: 1.1.0
   description: UX styling, Cyber Slate & Synology Blue palette, Armored Pangolin mascot,
     and MkDocs customizations for wenchiehlee.quickconnect.to on Synology NAS. Use
     for cloud dashboards, Docker container cards, and Tailscale status.
   category: ux-design
+  platforms: []
   maintainer: wenchiehlee
   source: ''
   repo_count: 1
-  updated_at: '2026-10-17'
-  revised_at: '2026-10-18'
+  updated_at: '2026-10-23'
+  revised_at: '2026-10-25'
 - name: skill-ux-tw-coverage
   group: common
   path: common/skill-ux-tw-coverage
-  version: 1.0.0
+  version: 1.1.0
   description: Taiwan stock equity research design system, valuation radar, financial
     metric badges, and report UI for My-TW-Coverage (GitHub Pages). Use for equity
     deep-dive notes, target price trackers, and valuation radar.
   category: ux-design
+  platforms: []
   maintainer: wenchiehlee
   source: ''
   repo_count: 1
-  updated_at: '2026-10-17'
-  revised_at: '2026-10-18'
+  updated_at: '2026-10-23'
+  revised_at: '2026-10-25'
 - name: skill-ux-vix
   group: common
   path: common/skill-ux-vix
-  version: 1.0.0
+  version: 1.1.0
   description: UX styling, design system tokens, and Plotly wrapper architecture for
     the VIX repository (wenchiehlee-money.github.io/VIX). Use for Taiwan VIX vs TAIEX
     dual-axis volatility radar, crash stress tests, and Black Swan branding.
   category: ux-design
+  platforms: []
   maintainer: wenchiehlee
   source: ''
   repo_count: 2
-  updated_at: '2026-10-20'
-  revised_at: '2026-10-20'
+  updated_at: '2026-10-23'
+  revised_at: '2026-10-25'
 - name: skill-ux-youtube-audio-fetch
   group: common
   path: common/skill-ux-youtube-audio-fetch
-  version: 1.0.0
+  version: 1.1.0
   description: UX styling, player components, and tactile media controls for YoutubeAudio.Fetch
     (GitHub Pages web player & extractor). Use for media player interface, track queues,
     and dark atmospheric aesthetics.
   category: ux-design
+  platforms: []
   maintainer: wenchiehlee
   source: ''
   repo_count: 1
-  updated_at: '2026-10-17'
-  revised_at: '2026-10-20'
+  updated_at: '2026-10-23'
+  revised_at: '2026-10-25'
 - name: skill-yahoo-finance-fetch
   group: common
   path: common/skill-yahoo-finance-fetch
@@ -903,12 +989,13 @@ skills:
   description: Fetch Yahoo Finance analyst estimates, daily/60-minute price history,
     and Wayback Machine historical consensus for Taiwan and US stocks into long-format
     raw CSVs.
-  category: financial-data
+  category: finance-data
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/Yahoo.Finance
   repo_count: 1
   updated_at: '2026-08-18'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-youtube-channel-fetch
   group: common
   path: common/skill-youtube-channel-fetch
@@ -919,24 +1006,26 @@ skills:
     refine 子指令針對有 GT.srt 但無 FIN.srt 的 stem 補觸發 whisper pipeline 的 refine_fin_srt；沒有逐字稿的才下載音訊、發佈為本
     repo 的 GitHub Release 附件並寫入 audio_manifest.json，供 skill-mlx-api-client-whisper
     觸發轉錄。
-  category: document
+  category: media-ingestion
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/ZhongZheng782/YoutubeAudio.Fetch
   repo_count: 1
   updated_at: '2026-09-17'
-  revised_at: '2026-10-08'
+  revised_at: '2026-10-25'
 - name: skill-youtube-channel-srt-keyframe-extract
   group: common
   path: common/skill-youtube-channel-srt-keyframe-extract
   version: 1.2.1
   description: 分析 FIN.srt/GT.srt 逐字稿，用 LLM 找出提及圖表／簡報／數字等視覺重點的時間點，下載對應影片並擷取該時間點的畫面存成帶時間碼的
     JPEG，索引 md 裡每張截圖都附上該時間區段的實際逐字稿片段（可關鍵字搜尋）與 LLM 話題推測。
-  category: document
+  category: media-analysis
+  platforms: []
   maintainer: wenchiehlee
   source: https://github.com/ZhongZheng782/YoutubeAudio.Fetch
   repo_count: 1
   updated_at: '2026-09-02'
-  revised_at: '2026-10-05'
+  revised_at: '2026-10-25'
 - name: skill-youtube-podcast-feed
   group: common
   path: common/skill-youtube-podcast-feed
@@ -946,8 +1035,18 @@ skills:
     HTML timelines, real-time player lyrics, per-channel and combined feeds, and GitHub
     Pages artifacts.
   category: media-publishing
+  platforms: []
   maintainer: ZhongZheng782
   source: https://github.com/ZhongZheng782/YoutubeAudio.Fetch
   repo_count: 1
   updated_at: '2026-10-07'
-  revised_at: '2026-10-08'
+  revised_at: '2026-10-25'
+standalone_skills:
+- name: '@wenchiehlee1020/mcp-cli'
+  version: 0.1.8
+  description: MCP 命令列用戶端：探索已設定伺服器提供的 tools、查看輸入 schema，並透過 stdio、Streamable HTTP
+    或 HTTP+SSE 呼叫工具。
+  category: server-cli
+  npm_url: https://www.npmjs.com/package/@wenchiehlee1020/mcp-cli
+  source: https://github.com/wenchiehlee/mcp-cli
+  install_command: npm i @wenchiehlee1020/mcp-cli

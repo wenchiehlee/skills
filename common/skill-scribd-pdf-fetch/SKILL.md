@@ -7,8 +7,9 @@ description: 從 Scribd 文件網址（/document/... 或舊版 /doc/...）下載
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.0.0（詳見 `metadata.json`） |
+| 版本 | 1.0.1（詳見 `metadata.json`） |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-scribd-pdf-fetch`） |
+| npm 套件 | `@wenchiehlee1020/skill-scribd-pdf-fetch` |
 | 維護者 | wenchiehlee-money |
 | 上游工具 | https://github.com/themrsami/scribd-downloader （外部相依，不隨本技能複製散布） |
 
@@ -16,6 +17,17 @@ description: 從 Scribd 文件網址（/document/... 或舊版 /doc/...）下載
 外部開源工具 [`themrsami/scribd-downloader`](https://github.com/themrsami/scribd-downloader)（headless
 Chrome 逐頁載入 + Chrome DevTools Protocol `Page.printToPDF`），本技能只負責：定位/下載該工具、
 套用已知相容性修補、以非互動方式呼叫、整理輸出路徑。
+
+## 從 npm 安裝技能
+
+在要安裝技能的專案目錄執行（此 npm 套件發布後即可使用）：
+
+```bash
+npm install --save-dev @wenchiehlee1020/skill-scribd-pdf-fetch
+npx skills experimental_sync -a codex -y
+```
+
+如使用 Claude Code，將 `-a codex` 改成 `-a claude-code`。`experimental_sync` 目前仍是實驗性功能。
 
 ## 📦 技能結構說明
 ```text

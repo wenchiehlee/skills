@@ -1,6 +1,6 @@
 ---
 name: skill-ux-google-alert-manager
-version: 1.1.0
+version: 1.2.0
 description: >-
   UX styling, component patterns, and interaction design for GoogleAlertManager (GitHub Pages web dashboard).
   Use this skill when designing, building, or refining the alert feed triage, card layouts, filter chips,
@@ -9,7 +9,7 @@ description: >-
 
 # UX Skill: GoogleAlertManager (SaaS Signal Intelligence)
 
-> **Version**: `1.1.0` | **Updated**: `2026-10-18` | **Release Note**: 吉祥物升級為破曉警報鳥 (Alert Bird 🐦, Lucide bird) 與活力警報橘 (`#ea580c`) 語意色調
+> **Version**: `1.2.0` | **Updated**: `2026-10-23` | **Release Note**: 吉祥物升級為破曉警報鳥 (Alert Bird 🐦, Lucide bird) 與活力警報橘 (`#ea580c`) 語意色調；新增繁中/英文瀏覽器語系偵測與偏好記憶規則
 
 This skill provides the design system, component patterns, and interaction rules for **GoogleAlertManager**, turning high-volume feed clutter into an organized, rapid-triage intelligence dashboard.
 
@@ -50,3 +50,13 @@ Sticky top filter bar with quick counts:
 
 ### 3. Incorporating the Stylesheet
 Link [alert-manager-theme.css](./resources/alert-manager-theme.css) into the main HTML head or bundle.
+
+## Shared Language Behavior / 共用語言行為
+
+Apply this policy whenever this skill is used to design or implement user-facing interfaces:
+
+- Provide **English (`en`) and Traditional Chinese (`zh-TW`)** for interface labels, controls, navigation, and system messages.
+- On first visit, use a previously saved valid user choice if available. Otherwise inspect the browser's primary locale (`navigator.languages[0]`, falling back to `navigator.language`): any locale beginning with `zh` selects `zh-TW`; every other locale selects `en`.
+- Keep an accessible, visible language switch. When the user changes language, persist `zh-TW` or `en` in `localStorage` under `ux-language-preference`, restore that choice on later visits, and update the document's `lang` attribute. Never replace a saved user choice with browser detection.
+- Do not machine-translate skill descriptions, user-authored text, names, tickers, units, or technical values just because the interface language changes. Translate interface copy where approved translations exist; preserve source content otherwise. Use locale-aware date/number formatting only when it does not alter domain meaning.
+- For non-browser surfaces (such as Android TV notifications, generated images, and PDFs), use the host application's saved language preference. Do not assume browser APIs exist there; offer locale selection in the companion app or settings when that surface needs its own choice.

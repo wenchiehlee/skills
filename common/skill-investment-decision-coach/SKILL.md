@@ -1,6 +1,6 @@
 ---
 name: skill-investment-decision-coach
-description: Coach investment decisions in Traditional Chinese using traceable book knowledge and complementary reasoning frameworks. Use for evaluating opportunities and risks, comparing investor methods or competitor-groups, building investment routines, extracting book-derived investment frameworks, and reviewing finance-skill taxonomy.
+description: Coach investment decisions in Traditional Chinese using traceable book knowledge and complementary reasoning frameworks. Use for evaluating opportunities and risks, comparing investor methods or competitor-groups, building investment routines, extracting book-derived investment frameworks, and governing the Skills Registry domain-function taxonomy.
 ---
 
 # 投資決策教練
@@ -414,38 +414,55 @@ Identify Value -> Understand Value Creation -> Track Value Storage -> Verify Rei
 - 至少包含：核心命題、主要原則、每日/每週/每月/每季流程、一頁式檢查表、投資行動準則。
 - 避免長篇引用原文；以摘要、提煉與應用為主。
 
-## 財務技能命名與分類治理
+## Skills Registry 分類治理
 
-此節只在命名／分類任務使用。採用本專案慣例 `skill-<domain>-<object>-<action>`，先判斷主要交付物的語意與資料責任，再看資料形狀；輸入一家公司或輸出多家公司都不足以單獨決定 domain。
+此節供財務技能與全庫 category 維護任務使用。命名慣例 `skill-<domain>-<object>-<action>` 與 `category` 是不同欄位：命名描述技能責任；category 描述主要領域與職能。分類前閱讀完整 `SKILL.md` 與 metadata，不能只看技能名稱、舊 category、輸入資料或程式實作語言。
+
+### 兩段式 category
+
+全庫 category 使用小寫 `domain-function` 形式，以單一主要交付物決定一個 category。`domain` 說明技能工作的領域；`function` 說明它在該領域負責的工作。不要把平台、資料來源、執行工具、消費 repo 或部署位置塞進 category。
+
+| Category | 使用準則 | 例子 |
+|---|---|---|
+| `finance-accounting` | 核對、整理或呈現已公告的財務報表／歷史數字，會計口徑與揭露 | `skill-company-earnings-social-verify` |
+| `finance-data` | 取得、轉換、同步、維護財務資料、參照資料或分析輸入 | `skill-mops-fetch`、`skill-company-revenue-segment-weights` |
+| `finance-forecasting` | 產生或評估未來營收、獲利、估值輸入或其他金融預測 | `skill-company-revenue-predict`、`skill-company-revenue-forecast-benchmark` |
+| `finance-analytics` | 量測、比較、視覺化金融／投資指標或風險；不直接產生投資決策 | `skill-stock-dynamic-valuation-box`、`skill-theme-competitor-analysis` |
+| `finance-strategy` | 建立投資論點、估值判斷、配置／風險選項與條件式行動 | `skill-investment-decision-coach`、`skill-company-decision-report` |
+| `hardware-usb` | 操作、診斷或量測 USB／周邊硬體 | `skill-usb-gadget-debug`、`skill-usb-uvc-4k-capture` |
+| `analytics-web` / `analytics-monitoring` | 網站指標分析或跨領域系統／服務監控 | `skill-google-analytics-monitor` |
+| `company-assets` / `company-research` | 公司識別素材取得；或雇主／公司背景研究 | `skill-company-download-logo`、`skill-company-reputation-research` |
+| `document-*` | 文件攝取、擷取、轉換、設計或同步，以文件為主要交付物 | `document-ingestion`、`document-extraction`、`document-design`、`document-sync` |
+| `media-*` | 媒體攝取、分析、製作、轉錄或發布 | `media-ingestion`、`media-analysis`、`media-production`、`media-transcription`、`media-publishing` |
+| `legal-research` | 法規、判決與人物法律查核研究 | `skill-tw-legal-rag` |
+| `geo-data` | 地理圖層、地號、空間查詢與地圖成果 | `skill-tw-land-geo-signal` |
+| `server-*` | 伺服器、推論 API、基礎設施或服務端 pipeline 的部署與維運 | `server-api`、`server-inference`、`server-infrastructure` |
+| `social-ingestion` | 社群平台貼文的抓取與同步 | `skill-facebook-fetch` |
+| `ux-design` | 使用者介面、互動與視覺設計系統 | `skill-ux-design-system` |
+| `utility-general` | 沒有更合適的領域類別、可跨領域重用的通用工具 | 僅作最後選項，不作預設分類 |
+
+金融分類的判斷順序是看主要交付物：原始／整理後的資料屬 `finance-data`；已公告數字的核對與呈現屬 `finance-accounting`；未來估計與模型表現屬 `finance-forecasting`；描述性指標與比較圖表屬 `finance-analytics`；把證據轉成投資論點或行動條件屬 `finance-strategy`。不能因技能含有「forecast」「valuation」「analysis」等字眼就直接定類；要依完整流程最終交付物判斷。
+
+跨領域技能以其主要使用者、核心產物與負責維護的資料判定。多功能 dispatcher／orchestrator 依其管理的主要領域分類，不依呼叫了哪些下游技能。若同一技能兼有多項工作，選擇其主要交付物作 category，其他能力保留在 description／tags，避免重複分類。`basic`、`document`、`server` 等單段舊值須遷移到明確的兩段式 category；若無法歸類，先記錄待確認理由，不用舊標籤掩蓋歧義。
+
+### 執行平台是獨立維度
+
+作業系統、執行環境與硬體平台不屬於 category。metadata 可選填 `platforms` 陣列，只列技能實際要求或直接操作的平台，使用穩定的小寫識別值，例如 `android`、`windows`、`macos`、`linux`、`synology-dsm`。USB 技能以 `hardware-usb` 表示硬體領域，再用 `platforms` 表示 Android／Windows；同一技能可有多個平台。不得因 Windows 或 Android 是其執行平台，就把硬體技能改歸 OS 類別。若技能跨平台或未限定平台，省略此欄或留空。
+
+### 財務技能 domain 命名
+
+本專案慣例 `skill-<domain>-<object>-<action>` 的主要 domain：
 
 | Domain | 主要責任 | 區分要點 |
 |---|---|---|
-| `company` | 公司自身的基本面、財報、法說、營收與部門權重 | 批次執行公司資料處理不會自動變成 stock |
-| `theme` | 主題、供應鏈、競爭分組、跨公司關係與 canonical cycle | 含逐股 competitor analysis，因其主要交付物是市場中的競爭關係 |
-| `institutional` | 外部研究者的觀點、評等、目標價、預估與 thesis | 區分第三方觀點與公司原始事實 |
-| `stock` | 股票／ETF 的價格、技術指標、籌碼及 watchlist／universe 操作 | 以股票宇宙為範圍的事件行事曆亦屬此層 |
+| `company` | 公司基本面、財報、法說、營收與部門權重 | 批次處理不會自動變成 stock |
+| `theme` | 主題、供應鏈、競爭分組、跨公司關係與 canonical cycle | 依交付責任命名，不依輸出存放位置 |
+| `institutional` | 外部研究者觀點、評等、目標價、預估與 thesis | 區分第三方觀點與公司原始事實 |
+| `stock` | 股票／ETF 價格、指標、籌碼及 watchlist／universe 操作 | 股票宇宙事件行事曆屬此層 |
 | `investment` | 決策、配置、風險、策略與教練框架 | 例如本 skill |
 | `book` | 書籍摘要、概念提煉與知識框架 | 以書本知識為交付物 |
 
-`competitor`／`competitor-groups` 是 **object**；`analysis`／`curate` 是 **action**。依本專案慣例，兩者使用 theme domain，不另創 competitor domain，也不因輸出存成公司 CSV 就改名 company。這是技能責任分類，並非「公司研究不能包含競爭分析」。
-
-相關責任邊界：
-
-- `skill-company-revenue-segment-weights` 提供公司 segment/cycle 占比；`skill-theme-cycle-index` 彙總主題指數；`skill-theme-cycle-coverage` 評估主題覆蓋與資料缺口。依主要結論歸類，不依歷史檔名中的 company 字樣。
-- 同一 cycle 可跨市場有時間落差；公司也可涉入多個 cycle。權重描述曝險，不證明彼此是競爭者。
-- `skill-stock-investorevent-fetch` 的交付物是股票宇宙事件行事曆；公司法說內容消化則屬 company。不要用「跨公司就是 theme／stock」取代責任判斷。
-- `skill-institutional-thesis-research` 處理機構敘事型論述；`skill-institutional-tw-report-research` 處理台灣券商報告中的結構化 rating／target price／EPS 等研究數字。觀點、公司事實與市場交易 flow 必須分層，不因同一標的就合併。
-- 不用 `tw`、`taiex`、`my-tw` 另創 domain；地域限制放在 object（例如 `tw-report`），repository 位置不當成業務分類。
-
-category 與 domain 是兩個維度，依主要交付物選擇：
-
-| Category | 主要交付物 |
-|---|---|
-| `financial-data` | 抓取、清理、同步、轉換原始財務資料 |
-| `financial-accounting` | 財報、會計數字、歷史紀錄與揭露比對 |
-| `financial-forecasting` | 營收、毛利、獲利、景氣或模型預測 |
-| `financial-strategy` | 投資判斷、風險、配置與決策框架 |
-| `document` | 書籍、PDF、簡報、逐字稿等文件處理 |
+`competitor`／`competitor-groups` 是 object；`analysis`／`curate` 是 action。依本專案慣例使用 theme domain，不另創 competitor domain，也不因結果存成公司 CSV 就改名 company。
 
 ## 完成前檢查
 

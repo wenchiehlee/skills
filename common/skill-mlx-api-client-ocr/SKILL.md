@@ -7,7 +7,7 @@ description: 使用自建在 Mac-mini 上的 OCR API 服務，將 PDF 或圖片�
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.8.0（詳見 `metadata.json`） |
+| 版本 | 1.8.3（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/FamilyHealthyCheck |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-client-ocr`） |
 | 維護者 | wenchiehlee |
@@ -15,6 +15,10 @@ description: 使用自建在 Mac-mini 上的 OCR API 服務，將 PDF 或圖片�
 此技能封裝了與 Tailscale 虛擬局域網路內自建的 Mac-mini OCR API 的連線與排版抓取。它能自動將您上傳的 PDF 檔案或圖片（JPG/PNG 等）傳送至 Mac-mini 伺服器，利用 OCR 引擎進行文字轉錄，並以結構清晰的 Markdown 格式回傳，方便後續的數據提取與分析。
 
 對 PDF，預設採用 hybrid 流程：先保留 PDF 內建文字層，只有無文字層或文字層不足的頁面才送 Mac-mini OCR。這可避免把乾淨的官方文字層覆蓋成較差的 OCR 結果，也能大幅降低整份簡報 OCR 的時間。
+
+### Photo Tagger 照片單次上傳模式
+
+Photo Tagger 對照片使用 MLX server 的 `POST /photo-analyze`，在同一個 multipart 請求帶入 `file`、`prompt`、`model`，以及選用的 `ocr_engine=baidu|glm`。server 先做 VLM 分析並立即回應；輸出判定為掃描文件時，接著以同一請求暫存影像在背景執行 OCR。初次回應提供 `ocr.task_id`，呼叫端以 `GET /photo-analyze/ocr-status/<task_id>` 輪詢，直到 `ocr.text` 回傳 Markdown。HEIC/HEIF 會由 server 轉成一次性的暫存 JPEG，VLM 和 OCR 共用該檔。這樣原圖只需由 NAS 下載一次，也只需從 Photo Tagger 傳到 Mac-mini 一次；輪詢只取工作狀態和結果，不會再次上傳影像。需要獨立轉錄 PDF 或文件時，仍使用標準 `/ocr` endpoint。
 
 ## 📦 技能結構說明
 當您將此技能複製到其他專案時，整個技能資料夾結構如下：
@@ -156,7 +160,7 @@ Timeout 記錄範例：
 
 ### 📸 方式 F：HEIC 圖片轉錄
 
-手機（尤其 iPhone）拍攝留存的政府文件、單據常以 HEIC 格式儲存，OCR API 只吃 PDF/JPG/PNG，需先轉檔。`heic_convert.py` 會把 HEIC 轉成暫存 PNG 後再送 OCR：
+手機（尤其 iPhone）拍攝留存的政府文件、單據常以 HEIC 格式儲存。Mac-mini OCR API 現可直接接收 HEIC/HEIF 並在請求暫存目錄轉為 JPEG；`heic_convert.py` 仍可用於必須相容舊版 OCR server 的 client，會把 HEIC 轉成暫存 PNG 後再送 OCR：
 
 ```bash
 # 單一檔案，輸出至 stdout

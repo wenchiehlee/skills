@@ -35,8 +35,11 @@ if platform.system() == "Windows":
 REPO_ROOT = Path(__file__).resolve().parents[1]
 INDEX_FILE = REPO_ROOT / "skills-index.yaml"
 README_FILE = REPO_ROOT / "README.md"
+STANDALONE_SKILLS_FILE = REPO_ROOT / "standalone-skills.json"
 TABLE_START = "<!-- SKILLS-TABLE:START -->"
 TABLE_END = "<!-- SKILLS-TABLE:END -->"
+STANDALONE_TABLE_START = "<!-- STANDALONE-SKILLS-TABLE:START -->"
+STANDALONE_TABLE_END = "<!-- STANDALONE-SKILLS-TABLE:END -->"
 
 # 不視為 LLM 群組的頂層資料夾
 EXCLUDED_DIRS = {".git", ".github", "scripts"}
@@ -82,26 +85,45 @@ def collect_skills() -> list[dict]:
                 continue
             deployments = meta.get("deployments", [])
             repo_count = len([d for d in deployments if d.get("role") != "registry"])
-            skills.append({
+            skill_entry = {
                 "name": skill_dir.name,
                 "group": group_dir.name,
                 "path": f"{group_dir.name}/{skill_dir.name}",
                 "version": meta.get("version", "0.0.0"),
                 "description": meta.get("description", ""),
-                "category": meta.get("category", "basic"),
+                "category": meta.get("category", "utility-general"),
+                "platforms": meta.get("platforms", []),
                 "maintainer": meta.get("maintainer", ""),
                 "source": meta.get("source", ""),
                 "repo_count": repo_count,
                 "updated_at": meta.get("updated_at", ""),
                 "revised_at": _git_last_commit_date(skill_dir) or _mtime_date(skill_dir),
-            })
+            }
+            for field in ("npm_package", "npm_url", "install_command"):
+                if meta.get(field):
+                    skill_entry[field] = meta[field]
+            skills.append(skill_entry)
     return skills
 
 
-def write_index(skills: list[dict]) -> None:
+def collect_standalone_skills() -> list[dict]:
+    if not STANDALONE_SKILLS_FILE.exists():
+        return []
+    with open(STANDALONE_SKILLS_FILE, encoding="utf-8") as f:
+        catalog = json.load(f)
+    standalone_skills = catalog.get("standalone_skills", [])
+    for skill in standalone_skills:
+        for required in ("name", "version", "description", "source", "install_command"):
+            if not skill.get(required):
+                raise ValueError(f"{STANDALONE_SKILLS_FILE}: standalone skill missing {required!r}")
+    return standalone_skills
+
+
+def write_index(skills: list[dict], standalone_skills: list[dict]) -> None:
     index = {
         "generated_at": datetime.date.today().isoformat(),
         "skills": skills,
+        "standalone_skills": standalone_skills,
     }
     header = "# 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。\n"
     body = yaml.safe_dump(index, allow_unicode=True, sort_keys=False, default_flow_style=False)
@@ -125,20 +147,34 @@ def render_table(skills: list[dict]) -> str:
         reverse=True,
     )
     lines = [
-        "| 技能 | 群組 | 分類 | 版本 | repo 數 | 說明 | 修訂日期 |",
-        "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
+        "| 技能 | 群組 | 分類 | 平台 | 版本 | repo 數 | 說明 | 修訂日期 |",
+        "| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
     ]
     for s in ordered:
         desc = s["description"].replace("|", "\\|")
         repo_count = s.get("repo_count", 0)
         repo_display = str(repo_count) if repo_count else "—"
+        platform_display = ", ".join(s.get("platforms", [])) or "—"
         lines.append(
-            f"| [{s['name']}]({s['path']}) | {s['group']} | {s['category']} | {s['version']} | {repo_display} | {desc} | {s['revised_at']} |"
+            f"| [{s['name']}]({s['path']}) | {s['group']} | {s['category']} | {platform_display} | {s['version']} | {repo_display} | {desc} | {s['revised_at']} |"
         )
     return "\n".join(lines)
 
 
-def update_readme(skills: list[dict]) -> None:
+def render_standalone_table(standalone_skills: list[dict]) -> str:
+    lines = [
+        "| 獨立技能 | 版本 | 說明 | 安裝指令 |",
+        "| :--- | :--- | :--- | :--- |",
+    ]
+    for skill in sorted(standalone_skills, key=lambda s: s["name"].casefold()):
+        desc = skill["description"].replace("|", "\\|")
+        lines.append(
+            f"| [{skill['name']}]({skill.get('npm_url') or skill['source']}) | {skill['version']} | {desc} | `{skill['install_command']}` |"
+        )
+    return "\n".join(lines)
+
+
+def update_readme(skills: list[dict], standalone_skills: list[dict]) -> None:
     content = README_FILE.read_text(encoding="utf-8")
     if TABLE_START not in content or TABLE_END not in content:
         print(f"[index] README.md 缺少 {TABLE_START} / {TABLE_END} 標記，未更新表格", file=sys.stderr)
@@ -152,11 +188,22 @@ def update_readme(skills: list[dict]) -> None:
         f"最後產生日期：{generated}\n"
         f"{TABLE_END}"
     )
-    README_FILE.write_text(before + new_section + after, encoding="utf-8", newline="\n")
+    content = before + new_section + after
+    if STANDALONE_TABLE_START in content and STANDALONE_TABLE_END in content:
+        before, remainder = content.split(STANDALONE_TABLE_START, 1)
+        after = remainder.split(STANDALONE_TABLE_END, 1)[1]
+        standalone_section = (
+            f"{STANDALONE_TABLE_START}\n"
+            f"{render_standalone_table(standalone_skills)}\n\n"
+            f"{STANDALONE_TABLE_END}"
+        )
+        content = before + standalone_section + after
+    README_FILE.write_text(content, encoding="utf-8", newline="\n")
     print("[index] 已更新 README.md 技能總表")
 
 
 if __name__ == "__main__":
     all_skills = collect_skills()
-    write_index(all_skills)
-    update_readme(all_skills)
+    standalone_skills = collect_standalone_skills()
+    write_index(all_skills, standalone_skills)
+    update_readme(all_skills, standalone_skills)

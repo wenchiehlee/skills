@@ -1,7 +1,10 @@
 {
   "name": "skill-usb-wasapi-capture-debug",
   "description": "Enumerate Windows WASAPI capture endpoints via COM IMMDeviceEnumerator to verify UAC2 speakerphone visibility, device state, and active audio sessions.",
-  "category": "basic",
+  "category": "hardware-usb",
+  "platforms": [
+    "windows"
+  ],
   "version": "1.0.2",
   "maintainer": "WJLEE",
   "source": "wj-lee_Barco.github.com/gadget/debug_wasapi.py",

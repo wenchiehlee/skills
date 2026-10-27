@@ -1,6 +1,6 @@
 ---
 name: skill-ux-vix
-version: 1.0.0
+version: 1.1.0
 description: >-
   UX styling, design system tokens, and Plotly wrapper architecture for the VIX repository (wenchiehlee-money.github.io/VIX).
   Use this skill when designing, building, or refining the Taiwan VIX vs TAIEX dual-axis volatility radar, crash stress tests,
@@ -9,7 +9,7 @@ description: >-
 
 # UX Skill: VIX (Global Volatility Radar & Crash Sentinel)
 
-> **Version**: `1.0.0` | **Updated**: `2026-10-20` | **Mascot**: 幾何黑天鵝 (Black Swan · Vecteezy 70781740)
+> **Version**: `1.1.0` | **Updated**: `2026-10-23` | **Mascot**: 幾何黑天鵝 (Black Swan · Vecteezy 70781740)
 
 This skill provides the design system, Plotly shell components, and brand tokens for **VIX (Global Volatility Radar)**, integrating long-term financial market sentiment with institutional institutional crisis stress testing.
 
@@ -81,3 +81,13 @@ In the `wenchiehlee-money/VIX` repository, wrap the Plotly figure with the stand
 </body>
 </html>
 ```
+
+## Shared Language Behavior / 共用語言行為
+
+Apply this policy whenever this skill is used to design or implement user-facing interfaces:
+
+- Provide **English (`en`) and Traditional Chinese (`zh-TW`)** for interface labels, controls, navigation, and system messages.
+- On first visit, use a previously saved valid user choice if available. Otherwise inspect the browser's primary locale (`navigator.languages[0]`, falling back to `navigator.language`): any locale beginning with `zh` selects `zh-TW`; every other locale selects `en`.
+- Keep an accessible, visible language switch. When the user changes language, persist `zh-TW` or `en` in `localStorage` under `ux-language-preference`, restore that choice on later visits, and update the document's `lang` attribute. Never replace a saved user choice with browser detection.
+- Do not machine-translate skill descriptions, user-authored text, names, tickers, units, or technical values just because the interface language changes. Translate interface copy where approved translations exist; preserve source content otherwise. Use locale-aware date/number formatting only when it does not alter domain meaning.
+- For non-browser surfaces (such as Android TV notifications, generated images, and PDFs), use the host application's saved language preference. Do not assume browser APIs exist there; offer locale selection in the companion app or settings when that surface needs its own choice.

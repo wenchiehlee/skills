@@ -1,22 +1,23 @@
 ---
 name: skill-mlx-api-server
-description: 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，提供 Baidu Unlimited-OCR 與 GLM-OCR 文件轉錄（共用單一 FIFO worker）及 MLX LLM 推理（/exec），以 Flask/Waitress 常駐服務形式運行。
+description: 在 Mac-mini (Apple Silicon M4) 本機執行的 AI 推理服務，提供 Baidu Unlimited-OCR 與 GLM-OCR 文件轉錄、單張照片 VLM 分析及 MLX LLM 推理，以 Flask/Waitress 常駐服務形式運行。
 ---
 
 # Mac-mini MLX API Server 技能 (mlx-api-server)
 
 | 項目 | 內容 |
 | :--- | :--- |
-| 版本 | 1.3.1（詳見 `metadata.json`） |
+| 版本 | 1.4.6（詳見 `metadata.json`） |
 | 來源 | https://github.com/wenchiehlee/Mac-mini/tree/main/skills/skill-mlx-api-server/scripts |
 | 登錄庫 | https://github.com/wenchiehlee/skills （`common/skill-mlx-api-server`） |
 | 維護者 | wenchiehlee |
 | 執行位置 | **Mac-mini 本機**（Apple Silicon M4，24 GB Unified Memory） |
 | 對應 Caller Skill | `common/skill-mlx-api-client-ocr`（在外部機器呼叫此服務） |
 
-此技能封裝了運行於 Mac-mini 上的 AI 推理伺服器，提供兩大核心服務：
+此技能封裝了運行於 Mac-mini 上的 AI 推理伺服器，提供以下服務：
 1. **`POST /ocr`** — Baidu Unlimited-OCR 或 GLM-OCR 文件轉錄，將 PDF 或圖片轉為 Markdown
-2. **`POST /exec`** — MLX 本地 LLM 推理，支援 Qwen3.5-9B 與 Gemma-4 模型
+2. **`POST /photo-analyze`** — 將單張 JPEG、PNG、WebP 或 HEIC/HEIF 照片送給允許使用的 MLX 視覺語言模型分析；可選擇同一請求對掃描文件接續 OCR
+3. **`POST /exec`** — MLX 本地文字 LLM 推理，支援 Qwen3.5-9B 與 Gemma-4 模型
 
 服務透過 Tailscale VPN 對外提供，由 `launchd` (`com.mlx.apiserver`) 常駐管理，GitHub Actions 每 6 小時自動健康檢查並於異常時自動恢復。
 
@@ -32,7 +33,7 @@ skill-mlx-api-server/
 ├── metadata.json          # 機器可讀 metadata（名稱、版本、來源），供版本檢查使用
 ├── self_update.py         # 從 skills 登錄庫檢查並更新此技能的工具
 └── scripts/
-    ├── server.py          # Flask/Waitress API 伺服器主程式（路由 /exec /ocr /health）
+    ├── server.py          # Flask/Waitress API 伺服器主程式（路由 /exec /photo-analyze /ocr /health）
     ├── auth.py            # X-API-Key 認證裝飾器（hmac.compare_digest 防時序攻擊）
     ├── config.py          # 設定載入（讀取 .env，含必填欄位驗證）
     ├── executor.py        # MLX 執行引擎（subprocess 管理、Semaphore 並發控制）
@@ -56,9 +57,8 @@ skill-mlx-api-server/
         ↓
 [Flask/Waitress server.py :5001]  ← com.mlx.apiserver (launchd 常駐)
         ↓  認證（auth.py）+ 設定（config.py）
-        ├── /exec → executor.run()
-        │           ├── mlx_lm generate（Qwen3.5，enable_thinking=False）
-        │           └── mlx_vlm generate（Gemma4，VLM）
+        ├── /exec → executor.run()（文字輸入）
+        ├── /photo-analyze → executor.run(image_path=...) → mlx_vlm generate（Gemma4）
         └── /ocr  → 共用 FIFO 單一 worker
                     ├── baidu → ocr_run.py（PyTorch + MPS）
                     └── glm → glm_ocr_run.py + 隔離的 glm-mlx-venv / MLX-VLM server
@@ -120,6 +120,7 @@ skill-mlx-api-server/
 | `MLX_GLM_VLM_PORT` | 可選 | `8111` | GLM-OCR 使用的 loopback MLX-VLM server 埠 |
 | `MLX_GLM_OCR_TIMEOUT` | 可選 | `900` | GLM 單一請求逾時秒數 |
 | `MLX_GLM_VLM_PYTHON` | 可選 | `~/mlx-api/glm-mlx-venv/bin/python` | GLM 專用 MLX-VLM 環境 Python |
+| `MLX_VLM_PYTHON` | 可選 | 同 `MLX_GLM_VLM_PYTHON` | 照片 VLM 推理 Python；使用 Transformers 5 相容環境，與 Baidu OCR 分離 |
 | `MLX_GLM_VLM_LOG` | 可選 | `~/mlx-api/glm-vlm.log` | GLM 模型 server 日誌 |
 | `MLX_MAX_PROMPT_LENGTH` | 可選 | `16000` | prompt 最大字元數 |
 | `AMPLITUDE_API_KEY` | ✅ | — | Amplitude 埋點 API Key（未設定則 API 請求回傳 500 錯誤） |
@@ -138,6 +139,7 @@ MLX_OCR_ENGINES=baidu,glm
 MLX_GLM_VLM_PORT=8111
 MLX_GLM_OCR_TIMEOUT=900
 MLX_GLM_VLM_PYTHON=/Users/<user>/mlx-api/glm-mlx-venv/bin/python
+MLX_VLM_PYTHON=/Users/<user>/mlx-api/glm-mlx-venv/bin/python
 MLX_GLM_VLM_LOG=/Users/<user>/mlx-api/glm-vlm.log
 AMPLITUDE_API_KEY=<optional>
 ```
@@ -157,7 +159,7 @@ pip install --upgrade pip
 pip install -r scripts/requirements.txt
 pip install mlx-lm "transformers<5.0.0" huggingface_hub sentencepiece
 
-# GLM 的 mlx-vlm 要求 transformers>=5，與 Baidu runtime 分開安裝。
+# GLM OCR 與照片 Gemma 4 共用此 MLX-VLM 環境；它要求 transformers>=5，與 Baidu runtime 分開安裝。
 /opt/homebrew/bin/python3.11 -m venv ~/mlx-api/glm-mlx-venv
 ~/mlx-api/glm-mlx-venv/bin/python -m pip install 'transformers>=5.0.0rc3' 'git+https://github.com/Blaizzy/mlx-vlm.git'
 
@@ -239,7 +241,7 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.mlx.apiserver.plist
 ```
 Layer 1 (Transport)   — Tailscale VPN（WireGuard 加密，僅 VPN 內可訪問）
 Layer 2 (AuthN)       — X-API-Key header，hmac.compare_digest 防時序攻擊（auth.py）
-Layer 3 (Input)       — prompt ≤ 16,000 chars，model allowlist 驗證（config.py + server.py）
+Layer 3 (Input)       — prompt ≤ 16,000 chars、image request ≤ 32 MiB、model allowlist 與圖片簽章驗證（config.py + server.py）
 Layer 4 (Process)     — subprocess list form（防 shell injection），非 root 執行（executor.py）
 Layer 5 (Concurrency) — `/exec` 使用 `MLX_MAX_CONCURRENT`；`/ocr` 使用 FIFO 單一 worker，最多排隊 `MLX_OCR_QUEUE_MAX_SIZE` 個請求（executor.py）
 ```
@@ -333,12 +335,42 @@ OCR 呼叫透過 `_send_amplitude_event_async()` 非同步送出 `llm_call` 事�
 | `503` | `/exec` 併發額度已滿，或 OCR 佇列已滿／等待超時 |
 | `504` | 執行超時（超過 `MLX_TIMEOUT` 秒） |
 
+### `POST /photo-analyze` — 單張照片視覺分析
+
+此 endpoint 使用獨立的照片分析用途，不會改變 `/exec` 或 `/ocr` 的既有行為。可選擇在同一個照片上傳請求中啟用文件 OCR；server 先完成視覺分析並立即回應，再將 OCR 放入背景工作，以同一份 request-scoped 暫存影像執行；呼叫端輪詢狀態，不必等待長時間同步 HTTP 請求。請求需帶 `X-API-Key`，採用 `multipart/form-data`：
+
+| 欄位 | 必填 | 說明 |
+|------|------|------|
+| `file` | 是 | 單張 JPEG、PNG、WebP 或 HEIC/HEIF 圖片，檔案內容會檢查簽章 |
+| `prompt` | 是 | 此次視覺分析指示，長度上限沿用 `MLX_MAX_PROMPT_LENGTH` |
+| `model` | 否 | 模型別名，預設 `mlx-gemma4`；所選模型必須支援 VLM 圖片輸入並在 allowlist 中 |
+| `ocr_engine` | 否 | 傳入 `baidu` 或 `glm` 時，視覺輸出命中文件／掃描提示後才接續 OCR；省略時不執行 OCR |
+
+Photo Tagger 可在 NAS 端以 Photos API 取得原圖，再逐張呼叫此 endpoint；MLX server 不需要 NAS 帳密或 NAS 檔案掛載。請求大小上限為 32 MiB。HEIC/HEIF 會在 Mac-mini 使用 `sips` 轉成暫存 JPEG；同一份 JPEG 可供 VLM 和條件式 OCR 共用。原始上傳與轉換檔都位於請求專用的暫存目錄；無 OCR 時視覺分析結束即刪除，有 OCR 時工作完成或失敗後刪除。OCR 結果只暫存在 server 記憶體供輪詢取回，完成 15 分鐘後清除。圖片內容不寫入 stats 或 Amplitude；只記錄 prompt 摘要、輸出長度、模型與耗時。
+
+Response：
+
+```json
+{
+  "output": "模型輸出文字（呼叫端 prompt 應要求 JSON 結果）",
+  "model": "mlx-community/gemma-4-e4b-it-8bit",
+  "input_format": "HEIC/HEIF",
+  "converted": true,
+  "elapsed_s": 12.345,
+  "temporary_file_deleted": false,
+  "ocr": {"status": "queued", "task_id": "32 位十六進位 ID", "engine": "baidu"}
+}
+```
+
+
+掃描文件的 OCR 會以背景工作執行；`POST /photo-analyze` 在 VLM 分析完成後即回應 `ocr.status=queued` 和 `task_id`。以 `GET /photo-analyze/ocr-status/<task_id>`（同樣需 `X-API-Key`）輪詢，狀態為 `queued`、`running`、`complete` 或 `failed`；完成後 `ocr` 欄位包含 Markdown `text`。輪詢只傳狀態，不重傳影像。工作完成或失敗時刪除影像暫存目錄，OCR 文字只在 server 記憶體保留至完成後 15 分鐘。
+
 ### `POST /ocr` — 文件 OCR
 
-OCR 由獨立 FIFO 佇列依序執行，一次只跑一個 OCR；排隊數上限由 `MLX_OCR_QUEUE_MAX_SIZE` 控制（預設 8，不含執行中的請求）。等待超過 `MLX_OCR_QUEUE_WAIT_SECONDS`（預設 1800 秒）會回傳 `503`。OCR 不佔用 `/exec` 的併發額度。服務會為排隊中的請求保留 Waitress request threads，避免佇列等待耗盡所有執行緒。
+需要獨立 OCR 工作流程（例如 PDF）時呼叫此 endpoint；照片分析整合流程應改用 `/photo-analyze` 的 `ocr_engine` 欄位，避免重傳相同照片；OCR 結果透過 `/photo-analyze/ocr-status/<task_id>` 取回。OCR 由獨立 FIFO 佇列依序執行，一次只跑一個 OCR；排隊數上限由 `MLX_OCR_QUEUE_MAX_SIZE` 控制（預設 8，不含執行中的請求）。等待超過 `MLX_OCR_QUEUE_WAIT_SECONDS`（預設 1800 秒）會回傳 `503`。OCR 不佔用 `/exec` 的併發額度。服務會為排隊中的請求保留 Waitress request threads，避免佇列等待耗盡所有執行緒。
 
 **Request（multipart/form-data）：**
-- `file`：PDF 或圖片（PNG/JPG）
+- `file`：PDF 或圖片（PNG/JPG/HEIC/HEIF）；HEIC/HEIF 會在 Mac-mini 轉成請求專用的暫存 JPEG，請求結束後刪除原檔與轉檔
 - `dpi`（選填）：PDF 渲染解析度，預設 `200`
 - `engine`（選填）：`baidu`（相容預設）或 `glm`
 - 建議設定 header：`X-App-Name: <your-app-name>`（Amplitude 追蹤用）
@@ -360,8 +392,9 @@ OCR 由獨立 FIFO 佇列依序執行，一次只跑一個 OCR；排隊數上限
 
 無需認證，直接回傳：
 ```json
-{"status": "ok"}
+{"status": "ok", "ocr": {"active": false, "active_engine": null, "queued": 0}, "photo_ocr_tasks": 0}
 ```
+部署和故障復原流程會等候 `ocr` worker/queue 與 `photo_ocr_tasks` 都清空，再重啟服務。
 
 ## 🛠️ 效能調參參考（`bench_params.py`）
 
