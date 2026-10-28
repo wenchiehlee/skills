@@ -1,23 +1,13 @@
-# Google Vids 分鏡提示詞規範 (Vids Prompt Patterns)
+# Narrative & Style Patterns / 敘事與風格模式
 
-Google Vids 核心由 Gemini Omni 模型驅動，支援多模態分鏡組合（影片畫面提示詞 + 配音音軌 + 字幕圖層 + 畫面比例）。
-
----
-
-## 1. 規格硬性限制
-
-| 參數 | 規格限制 | 最佳實踐 |
-|---|---|---|
-| **畫面比例** | `16:9`（橫式寬螢幕）或 `9:16`（直式短影音） | 長篇主題解說建議 `16:9`；社群精簡提煉建議 `9:16`。 |
-| **單場景時長** | 3 秒 ～ 10 秒 | 資訊密度高取 4-6 秒；史詩大景或情緒定鏡取 7-9 秒。 |
-| **總片長** | 通常 60 秒 ～ 180 秒 | 維基長文轉化通常切分為 10 ～ 16 個場景（約 60-90 秒）。 |
-| **配音軌道** | 支援 TTS 語音朗讀 | 嚴格依照單場景秒數控制中英文字數預算。 |
+Tool-neutral: these patterns decide **what** the video says and **how it looks**. Tool limits (scene length,
+clip caps, text rendering) live in `references/adapters/*.md`.
+與工具無關：本文件決定影片「說什麼、長什麼樣」；各工具的硬性限制請見 `references/adapters/`。
 
 ---
+## 1. 雙大視覺風格系統 (Visual Style Systems)
 
-## 2. 雙大視覺風格系統 (Visual Style Systems)
-
-根據實際成功案例分析，維基百科與技術文件轉影片主要分為兩大最佳視覺體系：
+Two proven style systems. Pick one per video and keep its anchor (palette + mascot / lens + era) identical in every scene. 依成功案例，文件轉影片主要分為兩大視覺體系，全片只選一種並保持錨點一致：
 
 ### 風格 A：極簡向量動態解說風格 (Minimalist Vector Explainer)
 > **適用情境**：技術架構、軟體流程、流程地圖（如 `mx-flow-map`）、商業模式、PPT 轉影片。
@@ -52,7 +42,7 @@ Google Vids 核心由 Gemini Omni 模型驅動，支援多模態分鏡組合（�
 
 ---
 
-## 3. 三幕式解說敘事弧線 (The 3-Act Explainer Arc)
+## 2. 三幕式解說敘事弧線 (The 3-Act Explainer Arc)
 
 從優秀範例（`mx-flow-map-global-v7-2.mp4`）提煉的最佳旁白節奏：
 
@@ -76,27 +66,7 @@ Google Vids 核心由 Gemini Omni 模型驅動，支援多模態分鏡組合（�
 
 ---
 
-## 4. 標準分鏡卡結構（Scene Card Template）
-
-每個分鏡建議輸出為結構化的 Markdown 或 JSON 格式：
-
-### Markdown 分鏡卡格式
-
-```markdown
-### Scene [編號]: [場景核心標題]
-- **時長**：5s | **畫幅**：16:9
-- **景別與鏡頭**：Medium Close-Up (中特寫), Slow Pan Left (緩慢左搖)
-- **視覺描述 (Visual Prompt)**：
-  > [詳細英文/中文提示詞：包含主體、動作、光線、材質、環境細節]
-- **導演筆記 (Director Note)**：[光影氛圍、道具強調、轉場建議]
-- **配音旁白 (Voiceover Script)**：
-  > 「[不超過字數上限的精確旁白，具備人聲節奏]」
-- **畫面字幕 (On-Screen Text)**：[可選，關鍵數據或年份]
-```
-
----
-
-## 3. 雙輸入源處理模式
+## 3. 輸入源處理模式 (Source Modes)
 
 ### 模式 A：維基百科條目 (Wikipedia Source)
 1. **事實提煉**：跳過序言空泛評價，直接抓取「年表/時間軸（Timeline）」或「Top 5 關鍵轉折事實」。
@@ -112,3 +82,18 @@ Google Vids 核心由 Gemini Omni 模型驅動，支援多模態分鏡組合（�
 1. **單頁解構**：每一頁 PPT 投影片拆解為 1～2 個連續鏡頭。
 2. **圖表動態化**：靜態折線圖、流程圖轉化為「攝影機掃過手繪藍圖或全像投影介面」。
 3. **消除條列感**：禁止念出「第一點、第二點」，將 Bullet Points 轉化為前後因果故事線。
+### 模式 C：技術文件 / 規格 / Flow Map (Technical Source)
+1. 用三幕式弧線（§2）而非時間軸；每個流程步驟 → 一個 `flow` / `cards` 場景。
+2. 一個場景只講一個機制；數字（延遲、次數、節省時間）優先用 `stat` 場景呈現。
+3. 結尾給具體行動（CTA），不要用「讓我們一起擁抱未來」收尾。
+
+---
+
+## 4. Pacing defaults / 節奏預設
+
+| Video length | Scenes | Typical scene | Notes |
+|---|---|---|---|
+| 30 s teaser | 5–6 | 4–6 s | Hook → 3 beats → CTA |
+| 60–90 s explainer | 10–14 | 5–8 s | Three-act arc |
+| 2–3 min explainer | 12–20 | 6–10 s | Add one recap scene before CTA |
+| Slides + narration | 1 slide ≈ 20–60 s | — | Notes carry the VO; slides carry ≤ 6 bullets |

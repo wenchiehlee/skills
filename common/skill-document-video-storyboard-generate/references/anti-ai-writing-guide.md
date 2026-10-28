@@ -1,6 +1,6 @@
 # 防 AI 罐頭寫作指南 (Anti-AI Slop & Editorial Guide)
 
-本指南參考維基百科社群對 AI 生成內容的偵測特徵（Wikipedia:Signs of AI-generated text）與專業紀錄片導演的分鏡規範，用於在生成 Google Vids 提示詞與配音腳本時消除「AI 罐頭感」。
+本指南參考維基百科社群對 AI 生成內容的偵測特徵（Wikipedia:Signs of AI-generated text）與專業紀錄片導演的分鏡規範，用於在生成任何影片分鏡（Google Vids、Veo/Sora/Runway/Kling、程式化渲染、簡報旁白）時消除「AI 罐頭感」。Applies to every target adapter.
 
 ---
 
@@ -9,7 +9,7 @@
 LLM 生成影片腳本與分鏡時常犯的三大通病：
 1. **空洞的浮誇詞（Puffery & Superlatives）**：滿篇「璀璨的明珠」、「劃時代的里程碑」、「不可抹滅的貢獻」、「深深震撼了世人」。
 2. **公式化過渡與開場（Formulaic Transitions）**：每一段都以「在當今快節奏的世界中」、「值得注意的是」、「此外」、「總結來說」、「讓我們一同深入探討」開頭。
-3. **模糊泛化的視覺描述（Vague Visuals）**：例如「畫面上展示科技感背景與光影交織，展現未來的繁榮」——這種描述對影片生成模型（Gemini Omni / Imagen Video）而言缺乏實體細節，生成出來往往是一團混亂的廉價 CGI。
+3. **模糊泛化的視覺描述（Vague Visuals）**：例如「畫面上展示科技感背景與光影交織，展現未來的繁榮」——這種描述對影片生成模型（Gemini Omni、Veo、Sora、Runway、Kling）而言缺乏實體細節，生成出來往往是一團混亂的廉價 CGI。
 
 ---
 
@@ -22,6 +22,10 @@ LLM 生成影片腳本與分鏡時常犯的三大通病：
   - 「這不僅是……更是……」、「這無疑是人類歷史上一座偉大的里程碑」、「留給後人無限的啟發與深思」。
 - ❌ **AI 銜接詞**：
   - 「值得注意的是」、「深入探討」、「猶如璀璨的明珠」、「令人嘆為觀止的是」、「不可忽視的是」。
+- ❌ **English equivalents**:
+  - "In today's fast-paced world", "It's worth noting", "Let's dive in / delve into", "game-changer", "revolutionize",
+    "seamless", "cutting-edge", "unlock / harness the power of", "a testament to", "embark on a journey", "paving the way".
+  - Fix: name the concrete actor + verb + object ("The agent reads 400 tickets in a minute").
 
 ### 視覺提示詞禁用詞（Visual Prompt Ban List）
 - ❌ **抽象空詞**：`hyperrealistic`, `4k`, `8k`, `photorealistic`, `masterpiece`, `trending on artstation`, `stunning atmosphere`（這些對現代 Diffusion / Omni 模型大多無實質幾何控制力）。
@@ -42,13 +46,14 @@ LLM 生成影片腳本與分鏡時常犯的三大通病：
 - 避免複雜的多重從屬子句。
 
 ### 規則三：嚴格對齊單場景秒數（Duration vs. Word Budget）
-Google Vids 單一場景長度通常限制在 **3 秒到 10 秒**：
+單一場景長度受目標工具限制（Vids 3–10 秒、AI 影片單段 5–20 秒、程式化渲染不限；見 `adapters/`），但字數預算一律如下：
 - **中文語速標準**：每秒 3.5 ～ 4 個字。
   - 3 秒場景：10 ～ 12 字。
   - 5 秒場景：18 ～ 20 字。
   - 8 秒場景：28 ～ 32 字。
   - 10 秒場景：35 ～ 40 字。
-- 超出字數會導致 TTS 配音被強制加速或分鏡切換突兀。
+- 英文語速標準：每秒約 2.5 words（3 s ≈ 7 words；5 s ≈ 12；8 s ≈ 20）。
+- 超出字數會導致 TTS 配音被強制加速或分鏡切換突兀。`scripts/source_to_storyboard.py --lint` 會自動檢查。
 
 ---
 
@@ -77,7 +82,7 @@ Google Vids 單一場景長度通常限制在 **3 秒到 10 秒**：
 
 ### 範例對比
 
-| 元素 | ❌ 典型 AI 罐頭提示詞 | ✅ 導演級 Google Vids 提示詞 |
+| 元素 | ❌ 典型 AI 罐頭提示詞 | ✅ 導演級視覺提示詞 |
 |---|---|---|
 | **視覺** | 一個很有歷史感的古老圖書館，滿滿的書，很有學術氛圍。 | 廣角低角度微仰拍。19 世紀維多利亞風格閱覽室，高聳的深胡桃木書架延伸至拱形天花板。晨光斜射穿過塵埃微粒，照亮桌上攤開的羊皮紙地圖。攝影機緩慢向前推軌（Slow Dolly In）。膠卷質感，暖調自然光。 |
 | **旁白** | 知識的浩瀚在這裡得到了最好的體現，每一本書都記錄著古人無窮的智慧。 | 晨光穿過拱窗時，閱覽室通常很安靜。攤開的地圖邊緣，還留著墨水乾涸的深色指印。 |

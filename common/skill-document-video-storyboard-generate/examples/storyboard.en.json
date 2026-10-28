@@ -1,0 +1,62 @@
+{
+  "title": "Why our release checklist moved to an AI agent",
+  "language": "en-US",
+  "voice": "en-US-AndrewNeural",
+  "aspect_ratio": "16:9",
+  "style": "vector-explainer",
+  "music": true,
+  "subtitles": true,
+  "scenes": [
+    {
+      "id": 1, "duration": 4, "layout": "title",
+      "title": "Opening",
+      "heading": "Release Day, Rewritten",
+      "on_screen": "From a 40-step checklist to one review",
+      "voiceover": "Release day used to take all afternoon.",
+      "visual": "Cream paper background, the teal robot with an orange backpack waves beside a large title card that draws itself in.",
+      "camera": "slow push-in", "sfx": "chime"
+    },
+    {
+      "id": 2, "duration": 7, "layout": "split",
+      "title": "Before vs after",
+      "heading": "Same release, two afternoons",
+      "items": [
+        {"label": "Before", "text": "Forty manual checks across five tools", "icon": "clock"},
+        {"label": "After", "text": "The agent runs them; we review one report", "icon": "robot"}
+      ],
+      "voiceover": "Forty manual checks across five tools. Now the agent runs them, and we review a single report.",
+      "visual": "Split frame: left desk buried in sticky notes ticking clock; right side the robot hands over one clean report card.",
+      "camera": "lateral truck left to right"
+    },
+    {
+      "id": 3, "duration": 7, "layout": "flow",
+      "title": "How it works",
+      "heading": "Three steps, no copy-paste",
+      "items": [
+        {"label": "Collect", "text": "Pull tickets & builds", "icon": "doc"},
+        {"label": "Verify", "text": "Run every check", "icon": "gear"},
+        {"label": "Report", "text": "One page to approve", "icon": "check"}
+      ],
+      "voiceover": "It collects the tickets, verifies every build, and writes one page we can approve.",
+      "visual": "Three cards slide in left to right, connected by drawn arrows with glowing dots travelling along the path.",
+      "sfx": "whoosh"
+    },
+    {
+      "id": 4, "duration": 6, "layout": "stat",
+      "title": "Result",
+      "heading": "Time to sign-off",
+      "items": [{"label": "35 min", "text": "down from four hours"}],
+      "voiceover": "Sign-off now takes thirty-five minutes, down from four hours.",
+      "visual": "A large counter ticks up to 35 min on cream background with a soft teal glow."
+    },
+    {
+      "id": 5, "duration": 5, "layout": "cta",
+      "title": "Close",
+      "on_screen": "Try it on your next release",
+      "subheading": "#release-agent on Slack",
+      "voiceover": "Try it on your next release.",
+      "visual": "Navy end card, white title, mint subline, light confetti.",
+      "sfx": "chime", "sfx_at": 1.2
+    }
+  ]
+}

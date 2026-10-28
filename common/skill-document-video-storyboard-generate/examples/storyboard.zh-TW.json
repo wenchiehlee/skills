@@ -1,0 +1,54 @@
+{
+  "title": "會議室三秒開會",
+  "language": "zh-TW",
+  "voice": "zh-TW-HsiaoChenNeural",
+  "aspect_ratio": "16:9",
+  "style": "vector-explainer",
+  "scenes": [
+    {
+      "id": 1, "duration": 4, "layout": "title",
+      "heading": "三秒開會",
+      "on_screen": "從找線材到按一下就投影",
+      "voiceover": "以前開會，先花五分鐘找線。"
+    },
+    {
+      "id": 2, "duration": 7, "layout": "bullets",
+      "heading": "卡住會議的三件事",
+      "items": [
+        {"label": "線材不對", "text": "HDMI、USB-C 各一條", "icon": "warning"},
+        {"label": "音訊沒聲", "text": "喇叭選錯裝置", "icon": "question"},
+        {"label": "等待 IT", "text": "每次十分鐘", "icon": "clock"}
+      ],
+      "voiceover": "線材不對、喇叭沒聲、再等 IT 十分鐘，會議還沒開始就累了。"
+    },
+    {
+      "id": 3, "duration": 7, "layout": "hub",
+      "heading": "一個按鈕串起全部",
+      "center": "按一下",
+      "items": [
+        {"label": "畫面", "icon": "deck"},
+        {"label": "音訊", "icon": "people"},
+        {"label": "鏡頭", "icon": "target"},
+        {"label": "雲端", "icon": "cloud"}
+      ],
+      "voiceover": "按一下按鈕，畫面、聲音、鏡頭和雲端同時接上。",
+      "sfx": "pop"
+    },
+    {
+      "id": 4, "duration": 7, "layout": "timeline",
+      "heading": "導入路線",
+      "items": [
+        {"label": "Q1", "text": "試點兩間會議室"},
+        {"label": "Q2", "text": "全樓層上線"},
+        {"label": "Q3", "text": "跨國分公司"}
+      ],
+      "voiceover": "第一季試點兩間，第二季全樓層，第三季擴到海外分公司。"
+    },
+    {
+      "id": 5, "duration": 5, "layout": "cta",
+      "on_screen": "下一場會議，三秒開始",
+      "voiceover": "下一場會議，三秒開始。",
+      "sfx": "chime", "sfx_at": 1.2
+    }
+  ]
+}
