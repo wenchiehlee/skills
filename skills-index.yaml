@@ -272,15 +272,17 @@ skills:
 - name: skill-document-video-storyboard-generate
   group: common
   path: common/skill-document-video-storyboard-generate
-  version: 1.0.0
-  description: 將 Wikipedia 長文、PPT 投影片或長篇文件轉化為最適合 Google Vids (Gemini Omni 模型) 吸收的高畫質分鏡與影片生成提示詞；嚴格遵循防
-    AI 罐頭感原則，產出具備專業導演風範的畫面構圖與口播腳本。
+  version: 2.0.0
+  description: Turn Wikipedia articles, PPT decks, specs or notes into a tool-neutral,
+    anti-AI-slop video storyboard, then export to Google Vids / Gemini, Veo / Sora
+    / Runway / Kling shot lists, a programmatic pycairo+edge-tts MP4 render, or slides
+    with speaker notes. 將長文、簡報或規格轉成與工具無關的影片分鏡，並輸出至 Google Vids、AI 影片工具、程式化渲染或簡報旁白。
   category: media-production
   platforms: []
   maintainer: wenchiehlee
   source: https://github.com/wenchiehlee/skills
   repo_count: 1
-  updated_at: '2026-10-21'
+  updated_at: '2026-10-28'
   revised_at: '2026-10-28'
 - name: skill-facebook-fetch
   group: common
