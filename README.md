@@ -95,7 +95,7 @@
 | [skill-confluence-sync](common/skill-confluence-sync) | common | document-sync | — | 1.0.0 | — | Read and overwrite a single Confluence Wiki page via REST API using CONFLUENCE_EMAIL / CONFLUENCE_API_TOKEN / CONFLUENCE_BASE_URL / CONFLUENCE_PAGE_ID, based on SpillwaveSolutions/confluence-skill. | 2026-10-25 |
 | [skill-document-ppt-design](common/skill-document-ppt-design) | common | document-design | — | 1.0.0 | — | Design and generate editorial-quality PPT/PPTX slide decks as SVG or PPTX, following the design systems from software-ai-life/Awesome-PPT-Design-Skills. Supports 7 house styles: Futuristic Tech Editorial, Japanese Lifestyle Editorial, Washi Paper Soft Glow, Soft 3D Clay, Minimalist Luxury Branding, Modern Illustration Editorial, Japanese Hand-Drawn Editorial. Use for ppt-master workflows, slide deck design, SVG page generation, PPTX export, and PDF-to-PPT transformation. | 2026-10-25 |
 
-最後產生日期：2026-10-28
+最後產生日期：2026-10-29
 <!-- SKILLS-TABLE:END -->
 
 ## 獨立技能
