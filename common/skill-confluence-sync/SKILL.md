@@ -1,6 +1,6 @@
 ---
 name: skill-confluence-sync
-description: Read and overwrite a single Confluence Wiki page via REST API using CONFLUENCE_EMAIL / CONFLUENCE_API_TOKEN / CONFLUENCE_BASE_URL / CONFLUENCE_PAGE_ID. Use when asked to "read Confluence page", "sync to Confluence", "update Confluence wiki", or "export a Confluence page to Markdown".
+description: Read and overwrite a single Confluence Wiki page via REST API using CONFLUENCE_EMAIL / CONFLUENCE_API_TOKEN / CONFLUENCE_BASE_URL / CONFLUENCE_PAGE_ID. Use when asked to "read Confluence page", "sync to Confluence", "update Confluence wiki", or "export a Confluence page to Markdown". Also reads Jira issues/comments (read Jira, Jira link, focusedCommentId) with the same credentials via scripts/jira_sync.py.
 ---
 
 # Confluence Sync Skill（單頁 Confluence Wiki 讀寫）
@@ -115,6 +115,24 @@ python scripts/confluence_sync.py info
 | `404 找不到頁面` | 確認 `CONFLUENCE_PAGE_ID` 是否為正確的頁面 ID（不是 space key，也不是頁面標題） |
 | `409 版本衝突` | 頁面已被其他人更新；重新 `read` 一次取得最新內容後再 `write` |
 | Markdown 轉換結果跑掉（表格/程式碼區塊跑版） | 改用 `--format storage` 直接提供 Confluence storage format，或手動調整 Markdown 語法後再試 |
+
+## Jira 讀取（`scripts/jira_sync.py`）
+
+與 Confluence 共用同一組 `CONFLUENCE_EMAIL` / `CONFLUENCE_API_TOKEN` /
+`CONFLUENCE_BASE_URL`，不需額外設定。`TARGET` 可為 issue key 或 Jira 網址
+（含 `focusedCommentId`，Outlook safelinks 包裝過的網址也會自動解析）。
+當使用者貼 Jira 連結（如 `https://barco-nv.atlassian.net/browse/CS0048-8843?focusedCommentId=1724781`）
+時，直接用此腳本讀取，不要再手寫 curl，也不要印出 token。
+
+```bash
+python scripts/jira_sync.py issue CS0048-8843            # 摘要 / 狀態 / 描述
+python scripts/jira_sync.py comments CS0048-8843         # 全部留言
+python scripts/jira_sync.py comment "<URL>"              # 網址內的單一留言
+python scripts/jira_sync.py comment CS0048-8843 --id 1724781
+python scripts/jira_sync.py add-comment CS0048-8843 "文字" --dry-run   # 新增留言前先預覽
+```
+
+注意：`add-comment` 會對外發佈留言，僅在使用者明確要求時執行。
 
 ## 完成前檢查
 

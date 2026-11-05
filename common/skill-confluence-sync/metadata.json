@@ -1,17 +1,18 @@
 {
   "name": "skill-confluence-sync",
-  "description": "Read and overwrite a single Confluence Wiki page via REST API using CONFLUENCE_EMAIL / CONFLUENCE_API_TOKEN / CONFLUENCE_BASE_URL / CONFLUENCE_PAGE_ID, based on SpillwaveSolutions/confluence-skill.",
+  "description": "Read and overwrite a single Confluence Wiki page, and read Jira issues/comments, via REST API using CONFLUENCE_EMAIL / CONFLUENCE_API_TOKEN / CONFLUENCE_BASE_URL / CONFLUENCE_PAGE_ID, based on SpillwaveSolutions/confluence-skill.",
   "category": "document-sync",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "maintainer": "wenchiehlee-money",
   "source": "https://github.com/SpillwaveSolutions/confluence-skill",
-  "updated_at": "2026-10-14",
+  "updated_at": "2026-11-05",
   "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-confluence-sync",
   "files": [
     "metadata.json",
     "self_update.py",
     "SKILL.md",
     "scripts/confluence_sync.py",
+    "scripts/jira_sync.py",
     "scripts/requirements.txt"
   ],
   "deployments": [
@@ -19,6 +20,11 @@
       "repo": "wenchiehlee/skills",
       "role": "registry",
       "local_path": "github.com/skills/common/skill-confluence-sync"
+    },
+    {
+      "repo": "wj-lee_Barco/OpenRepo",
+      "role": "consumer",
+      "local_path": "wj-lee_Barco.github.com/OpenRepo/skills/skill-confluence-sync"
     }
   ]
 }

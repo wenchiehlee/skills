@@ -211,16 +211,16 @@ skills:
 - name: skill-confluence-sync
   group: common
   path: common/skill-confluence-sync
-  version: 1.0.0
-  description: Read and overwrite a single Confluence Wiki page via REST API using
-    CONFLUENCE_EMAIL / CONFLUENCE_API_TOKEN / CONFLUENCE_BASE_URL / CONFLUENCE_PAGE_ID,
-    based on SpillwaveSolutions/confluence-skill.
+  version: 1.1.0
+  description: Read and overwrite a single Confluence Wiki page, and read Jira issues/comments,
+    via REST API using CONFLUENCE_EMAIL / CONFLUENCE_API_TOKEN / CONFLUENCE_BASE_URL
+    / CONFLUENCE_PAGE_ID, based on SpillwaveSolutions/confluence-skill.
   category: document-sync
   platforms: []
   maintainer: wenchiehlee-money
   source: https://github.com/SpillwaveSolutions/confluence-skill
-  repo_count: 0
-  updated_at: '2026-10-14'
+  repo_count: 1
+  updated_at: '2026-11-05'
   revised_at: '2026-10-25'
 - name: skill-container-manager-orchestrator
   group: common
