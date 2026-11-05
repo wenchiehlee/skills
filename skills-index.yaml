@@ -221,7 +221,7 @@ skills:
   source: https://github.com/SpillwaveSolutions/confluence-skill
   repo_count: 1
   updated_at: '2026-11-05'
-  revised_at: '2026-10-25'
+  revised_at: '2026-11-05'
 - name: skill-container-manager-orchestrator
   group: common
   path: common/skill-container-manager-orchestrator
