@@ -1,6 +1,20 @@
 # 本檔案由 scripts/generate_skills_index.py 自動產生，請勿手動編輯。
 generated_at: '2026-11-06'
 skills:
+- name: skill-amplitude-monitor
+  group: common
+  path: common/skill-amplitude-monitor
+  version: 1.0.0
+  description: 使用 Amplitude 官方 REST API 產生產品行為分析與監控 Markdown/README 報告，涵蓋活躍用戶趨勢 (DAU/WAU/MAU)、事件分佈
+    (Top Events)、留存率 (Retention) 與漏斗流失 (Funnels)，支援 100% 獨立本機執行（透過 API/Secret Key
+    Basic Auth，不依賴 OAuth 或 Claude）。
+  category: analytics-product
+  platforms: []
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee/Analytics-Deck
+  repo_count: 2
+  updated_at: '2026-10-28'
+  revised_at: '2026-10-28'
 - name: skill-android-adb-gadget
   group: common
   path: common/skill-android-adb-gadget
