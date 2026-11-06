@@ -6,7 +6,7 @@ $NAS_USER      = "wjlee"                          # 修改為你的 NAS 使用�
 $NAS_SSH_PORT  = "22"                             # NAS 本身的 SSH port
 $NAS_GEMINI_PATH = "/volume1/docker/Llm-Cli-APIServer/gemini-auth/"
 $CONTAINER_NAME  = "llm-cli-api-server"
-$API_BASE        = "https://api.wenchiehlee.synology.me:8443"
+$API_BASE        = "http://llm-cli-api.tail28f10.ts.net:5001"
 $envLine = Get-Content "$PSScriptRoot\.env" -ErrorAction SilentlyContinue | Where-Object { $_ -match "^CODEX_API_KEY=" }
 $API_KEY = if ($envLine) { ($envLine -split "=", 2)[1] } else { $env:CODEX_API_KEY }
 

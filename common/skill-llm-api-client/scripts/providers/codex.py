@@ -18,9 +18,8 @@ _READ_TIMEOUT = 180         # codex exec 最長執行時間（秒）
 _PROBE_CONNECT_TIMEOUT = 1.5  # 健康檢查連線上限（秒）
 _PROBE_READ_TIMEOUT = 2.0     # 健康檢查讀取上限（秒）
 
-# 已知的雙端點候選位址（Tailscale 內網直連 + 外網反向代理）
+# 已知的端點位址（Tailscale 內網直連）
 DEFAULT_CODEX_URLS = [
-    "https://api.wenchiehlee.synology.me:8443",
     "http://llm-cli-api.tail28f10.ts.net:5001",
 ]
 

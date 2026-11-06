@@ -548,6 +548,37 @@ skills:
   repo_count: 0
   updated_at: '2026-07-09'
   revised_at: '2026-10-25'
+- name: skill-router-dsl6740c-config
+  group: common
+  path: common/skill-router-dsl6740c-config
+  version: 1.0.0
+  description: 中華電信 D-Link DSL-6740C 數據機/路由器 (192.168.1.2) 配置與維護技能。涵蓋 DMZ 轉發至次級路由器
+    (192.168.1.101)、PPPoE 公網 IP 監控、ISP 80/443 入站封鎖規避、直連設備維護 (如樹莓派 eth0) 與 Web 管理介面探測。
+  category: server-infrastructure
+  platforms:
+  - embedded-linux
+  - web
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee/wenchiehlee.quickconnect.to
+  repo_count: 1
+  updated_at: '2026-11-06'
+  revised_at: '2026-11-06'
+- name: skill-router-miwifi-config
+  group: common
+  path: common/skill-router-miwifi-config
+  version: 1.0.0
+  description: '小米路由器 (MiWiFi / 192.168.31.1) 網路閘道配置與維護技能。涵蓋端口轉發 (Port Forwarding:
+    8080/8443)、靜態 DHCP 租約綁定、Double NAT 穿透、HTTP ALG 避讓以及網關健康度探測。'
+  category: server-infrastructure
+  platforms:
+  - openwrt
+  - embedded-linux
+  - web
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee/wenchiehlee.quickconnect.to
+  repo_count: 1
+  updated_at: '2026-11-06'
+  revised_at: '2026-11-06'
 - name: skill-scribd-pdf-fetch
   group: common
   path: common/skill-scribd-pdf-fetch
@@ -701,6 +732,22 @@ skills:
   repo_count: 3
   updated_at: '2026-07-22'
   revised_at: '2026-10-25'
+- name: skill-synology-nas-config-ssh
+  group: common
+  path: common/skill-synology-nas-config-ssh
+  version: 1.0.0
+  description: 透過 SSH 進行 Synology NAS (DSM) 系統層配置與自動化維護技能。涵蓋 Nginx 反向代理設定 (http.ddns-ssl.conf)
+    安全編輯、DSM 原生 WebAPI 調用 (DDNS/QuickConnect/ReverseProxy)、Docker 容器生命週期檢測與 Tailscale
+    Funnel 背景運行維護。
+  category: server-infrastructure
+  platforms:
+  - synology-dsm
+  - linux
+  maintainer: wenchiehlee
+  source: https://github.com/wenchiehlee/wenchiehlee.quickconnect.to
+  repo_count: 1
+  updated_at: '2026-11-06'
+  revised_at: '2026-11-06'
 - name: skill-theme-competitor-analysis
   group: common
   path: common/skill-theme-competitor-analysis

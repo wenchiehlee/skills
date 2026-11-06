@@ -1,0 +1,47 @@
+{
+  "name": "skill-synology-nas-config-ssh",
+  "description": "透過 SSH 進行 Synology NAS (DSM) 系統層配置與自動化維護技能。涵蓋 Nginx 反向代理設定 (http.ddns-ssl.conf) 安全編輯、DSM 原生 WebAPI 調用 (DDNS/QuickConnect/ReverseProxy)、Docker 容器生命週期檢測與 Tailscale Funnel 背景運行維護。",
+  "category": "server-infrastructure",
+  "platforms": [
+    "synology-dsm",
+    "linux"
+  ],
+  "version": "1.0.0",
+  "author": "wenchiehlee",
+  "maintainer": "wenchiehlee",
+  "source": "https://github.com/wenchiehlee/wenchiehlee.quickconnect.to",
+  "updated_at": "2026-11-06",
+  "license": "MIT",
+  "tags": [
+    "synology",
+    "dsm",
+    "nas",
+    "ssh",
+    "nginx",
+    "reverse-proxy",
+    "docker",
+    "tailscale",
+    "infrastructure"
+  ],
+  "compatibility": {
+    "python": ">=3.9"
+  },
+  "files": [
+    "SKILL.md",
+    "metadata.json",
+    "scripts/syno_ssh_manager.py"
+  ],
+  "deployments": [
+    {
+      "repo": "wenchiehlee/skills",
+      "role": "registry",
+      "local_path": "github.com/skills/common/skill-synology-nas-config-ssh"
+    },
+    {
+      "repo": "ZhongZheng782/wenchiehlee.quickconnect.to",
+      "role": "consumer",
+      "local_path": "github.com/wenchiehlee.quickconnect.to/skills/skill-synology-nas-config-ssh"
+    }
+  ],
+  "registry": "https://github.com/wenchiehlee/skills/tree/main/common/skill-synology-nas-config-ssh"
+}

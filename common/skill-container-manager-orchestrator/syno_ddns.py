@@ -237,79 +237,66 @@ class SynologyDDNSManager:
 
         ur_statuses = self.fetch_uptimerobot_status()
 
-        def fmt_ur(url: str, label: str = "") -> str:
+        def fmt_ext(url: str, label: str = "") -> str:
             u_clean = url.rstrip("/")
-            if u_clean in ur_statuses:
-                st = ur_statuses[u_clean]
-                return f"[{label or url}]({url}) ({st})"
-            return "-"
+            st = ur_statuses.get(u_clean, "")
+            lbl = f" ({label} {st})" if (label and st) else (f" ({label})" if label else (f" ({st})" if st else ""))
+            return f"[{url}]({url}){lbl}"
 
-        # Unified service entries (Consistent full URL formatting across all columns)
+        # Unified service entries (Merged UptimeRobot status & public indicator directly into access columns)
         services = [
             {
                 "name": "MkDocs Blog",
                 "container": "Web Station (DSM)",
                 "local_port": "80",
-                "external_access": "[https://wenchiehlee.synology.me:8443](https://wenchiehlee.synology.me:8443) (DDNS)<br>[https://newton.tail28f10.ts.net](https://newton.tail28f10.ts.net) (Funnel)",
-                "ts_vpn": "[https://newton.tail28f10.ts.net](https://newton.tail28f10.ts.net)",
+                "external_access": f"{fmt_ext('https://wenchiehlee.synology.me:8443', 'DDNS')}<br>{fmt_ext('https://newton.tail28f10.ts.net', 'Funnel')}",
+                "ts_vpn": "[https://newton.tail28f10.ts.net](https://newton.tail28f10.ts.net) 🟢 連通",
                 "status": "🟢 運行中",
-                "public_access": "🟢 正常 (Funnel 200)",
-                "uptimerobot": f"{fmt_ur('https://newton.tail28f10.ts.net', 'Funnel')}<br>{fmt_ur('https://wenchiehlee.synology.me:8443', 'DDNS')}",
                 "prio": 0,
             },
             {
                 "name": "Home Assistant",
                 "container": "HOMEASSISTANT",
                 "local_port": "8123",
-                "external_access": "[https://ha.wenchiehlee.synology.me:8443](https://ha.wenchiehlee.synology.me:8443) (DDNS)",
-                "ts_vpn": "[http://newton.tail28f10.ts.net:8123](http://newton.tail28f10.ts.net:8123)",
+                "external_access": "-",
+                "ts_vpn": f"[http://newton.tail28f10.ts.net:8123](http://newton.tail28f10.ts.net:8123) {'🟢 連通' if is_up('HOMEASSISTANT') else '⚪ 已停止'}",
                 "status": "🟢 運行中" if is_up("HOMEASSISTANT") else "⚪ 已停止",
-                "public_access": "🟢 正常 (200)",
-                "uptimerobot": fmt_ur('https://ha.wenchiehlee.synology.me:8443', 'DDNS'),
                 "prio": 0,
             },
             {
                 "name": "Travel App",
                 "container": "TRAVEL-APP",
                 "local_port": "3333",
-                "external_access": "[https://travel.wenchiehlee.synology.me:8443](https://travel.wenchiehlee.synology.me:8443) (DDNS)",
-                "ts_vpn": "[http://newton.tail28f10.ts.net:3333](http://newton.tail28f10.ts.net:3333)",
+                "external_access": fmt_ext("https://travel.wenchiehlee.synology.me:8443", "DDNS"),
+                "ts_vpn": f"[http://newton.tail28f10.ts.net:3333](http://newton.tail28f10.ts.net:3333) {'🟢 連通' if is_up('TRAVEL-APP') else '⚪ 已停止'}",
                 "status": "🟢 運行中" if is_up("TRAVEL-APP") else "⚪ 已停止",
-                "public_access": "🟢 正常 (200)",
-                "uptimerobot": fmt_ur('https://travel.wenchiehlee.synology.me:8443', 'DDNS'),
                 "prio": 0,
             },
             {
                 "name": "LLM CLI API",
                 "container": "LLM-CLI-API-SERVER",
                 "local_port": "5055",
-                "external_access": "[https://api.wenchiehlee.synology.me:8443](https://api.wenchiehlee.synology.me:8443) (DDNS)",
-                "ts_vpn": "[http://llm-cli-api.tail28f10.ts.net:5001](http://llm-cli-api.tail28f10.ts.net:5001) (API) <br> `llm-cli-api.tail28f10.ts.net:22` (SSH)",
+                "external_access": "-",
+                "ts_vpn": f"[http://llm-cli-api.tail28f10.ts.net:5001](http://llm-cli-api.tail28f10.ts.net:5001) (API) {'🟢 連通' if is_up('LLM-CLI-API-SERVER') else '⚪ 已停止'}<br>`llm-cli-api.tail28f10.ts.net:22` (SSH) {'🟢 連通' if is_up('LLM-CLI-API-SERVER') else '⚪ 已停止'}",
                 "status": "🟢 運行中" if is_up("LLM-CLI-API-SERVER") else "⚪ 已停止",
-                "public_access": "🟢 正常 (200)",
-                "uptimerobot": fmt_ur('https://api.wenchiehlee.synology.me:8443', 'DDNS'),
-                "prio": 0,
+                "prio": 1,
             },
             {
                 "name": "Chromium (VNC)",
                 "container": "CHROMIUM",
                 "local_port": "3021 / 9222",
-                "external_access": "[https://vnc.wenchiehlee.synology.me:8443](https://vnc.wenchiehlee.synology.me:8443) (DDNS)",
-                "ts_vpn": "[https://newton.tail28f10.ts.net:13021](https://newton.tail28f10.ts.net:13021)",
+                "external_access": "-",
+                "ts_vpn": f"[https://newton.tail28f10.ts.net:13021](https://newton.tail28f10.ts.net:13021) {'🟢 連通' if is_up('CHROMIUM') else '⚪ 已停止'}",
                 "status": "🟢 運行中" if is_up("CHROMIUM") else "⚪ 已停止",
-                "public_access": "🟢 正常 (401 Auth)",
-                "uptimerobot": "-",
-                "prio": 0,
+                "prio": 1,
             },
             {
                 "name": "DSM 管理後台",
                 "container": "DSM 桌面服務",
                 "local_port": "7777 / 7778",
-                "external_access": "[https://wenchiehlee.synology.me:8443](https://wenchiehlee.synology.me:8443) (DDNS)<br>[https://wenchiehlee.quickconnect.to](https://wenchiehlee.quickconnect.to) (QC)",
-                "ts_vpn": "[https://newton.tail28f10.ts.net:7778](https://newton.tail28f10.ts.net:7778)",
+                "external_access": f"{fmt_ext('https://wenchiehlee.synology.me:8443', 'DDNS')}<br>{fmt_ext('https://wenchiehlee.quickconnect.to', 'QC')}",
+                "ts_vpn": "[https://newton.tail28f10.ts.net:7778](https://newton.tail28f10.ts.net:7778) 🟢 連通",
                 "status": "🟢 運行中",
-                "public_access": "🟢 正常 (QuickConnect 200)",
-                "uptimerobot": f"{fmt_ur('https://wenchiehlee.quickconnect.to', 'QC')}<br>{fmt_ur('https://wenchiehlee.synology.me:8443', 'DDNS')}",
                 "prio": 0,
             },
             {
@@ -317,21 +304,17 @@ class SynologyDDNSManager:
                 "container": "Mac mini (外部主機)",
                 "local_port": "5901",
                 "external_access": "-",
-                "ts_vpn": "`mac-mini.tail28f10.ts.net` (VNC:5900/SSH:22)",
+                "ts_vpn": "`mac-mini.tail28f10.ts.net` (VNC:5900/SSH:22) ⚪ 外部主機",
                 "status": "⚪ 外部主機",
-                "public_access": "⚪ Tailscale 直連 (DDNS 已停用)",
-                "uptimerobot": "-",
                 "prio": 1,
             },
             {
                 "name": "Line Monitoring",
                 "container": "LineMonitoring",
                 "local_port": "7788",
-                "external_access": "[https://linebot.wenchiehlee.synology.me:8443](https://linebot.wenchiehlee.synology.me:8443) (DDNS)",
+                "external_access": "[https://linebot.wenchiehlee.synology.me:8443](https://linebot.wenchiehlee.synology.me:8443) (DDNS ⚪ 服務已停止)",
                 "ts_vpn": "-",
                 "status": "⚪ 已停止",
-                "public_access": "⚪ 服務已停止",
-                "uptimerobot": "-",
                 "prio": 1,
             },
         ]
@@ -345,18 +328,18 @@ class SynologyDDNSManager:
             "## Web Services & Reverse Proxy Configuration (Master Table)",
             "",
             f"- Update time: {ts} (UptimeRobot Live Sync)",
-            "- 外部公網探測（portchecker.co & HTTP）：WAN IP `61.228.35.108` ｜ Port 8443 (🔴 CLOSED/未轉發) ｜ Port 8080 (🟢 OPEN)",
+            "- 外部公網探測（portchecker.co & HTTP）：WAN IP `61.228.57.220` ｜ Port 8443 (🟢 OPEN) ｜ Port 8080 (🟢 OPEN)",
             "",
             "> **ISP 限制**：CHT 住宅封鎖 port 80/443 入站。DDNS 外部存取統一使用 **8443 (HTTPS)**。",
             "> MiWiFi Port Forwarding: 8443 → NAS (192.168.31.101)",
             "",
-            "| Service Name | 對應容器 / 服務 | Local Port | 外部公網存取 (DDNS / Funnel / QC) | Tailscale VPN 內部連線 | 容器狀態 | 公網連通性 (實測) | UptimeRobot 監控 |",
-            "| :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: |",
+            "| Service Name | 對應容器 / 服務 | Local Port | 外部公網存取 (DDNS / Funnel / QC) | Tailscale VPN 內部連線 | 容器狀態 |",
+            "| :--- | :--- | :--- | :--- | :--- | :---: |",
         ]
 
         for s in services:
             lines.append(
-                f"| **{s['name']}** | `{s['container']}` | {s['local_port']} | {s['external_access']} | {s['ts_vpn']} | {s['status']} | {s['public_access']} | {s['uptimerobot']} |"
+                f"| **{s['name']}** | `{s['container']}` | {s['local_port']} | {s['external_access']} | {s['ts_vpn']} | {s['status']} |"
             )
 
         lines.append("<!-- UPTIMEROBOT_STATUS_END -->")

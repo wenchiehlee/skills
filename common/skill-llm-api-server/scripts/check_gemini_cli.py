@@ -22,7 +22,6 @@ if sys.platform == "win32":
         pass
 
 DEFAULT_CANDIDATES = [
-    "https://api.wenchiehlee.synology.me:8443",
     "http://llm-cli-api.tail28f10.ts.net:5001",
 ]
 

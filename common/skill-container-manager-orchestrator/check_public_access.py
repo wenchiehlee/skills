@@ -267,27 +267,9 @@ class PublicAccessChecker:
                 "port": 8443,
             },
             {
-                "name": "DDNS HTTPS (Home Assistant)",
-                "type": "DDNS (8443)",
-                "url": "https://ha.wenchiehlee.synology.me:8443",
-                "port": 8443,
-            },
-            {
                 "name": "DDNS HTTPS (Travel App)",
                 "type": "DDNS (8443)",
                 "url": "https://travel.wenchiehlee.synology.me:8443",
-                "port": 8443,
-            },
-            {
-                "name": "DDNS HTTPS (LLM API)",
-                "type": "DDNS (8443)",
-                "url": "https://api.wenchiehlee.synology.me:8443",
-                "port": 8443,
-            },
-            {
-                "name": "DDNS HTTPS (Chromium VNC)",
-                "type": "DDNS (8443)",
-                "url": "https://vnc.wenchiehlee.synology.me:8443",
                 "port": 8443,
             },
             {

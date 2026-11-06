@@ -60,7 +60,7 @@ Docker/部署相關檔案（`Dockerfile`、`docker-compose.yml`、`entrypoint.sh
 ```
 [外部呼叫端 — llm 函式庫 (skill-llm-api-client) / GitHub Actions / 本機 CLI]
         ↓  HTTP POST /exec, /gemini/exec, /smart/exec（X-API-Key header）
-[api.wenchiehlee.synology.me:8443]  ← Cloudflare / Synology reverse proxy
+[Tailscale VPN / 容器直連 :5001]  ← http://llm-cli-api.tail28f10.ts.net:5001
         ↓
 [Docker container :5001]  ← Flask/Waitress main.py
         ├── /exec           → subprocess ["codex", "exec", "--skip-git-repo-check", "--yolo", (--model <model>,) prompt]
@@ -79,9 +79,9 @@ Docker/部署相關檔案（`Dockerfile`、`docker-compose.yml`、`entrypoint.sh
 **網路：**
 | 項目 | 值 | 說明 |
 |------|----|------|
-| 外網 HTTPS (WAN) | `https://api.wenchiehlee.synology.me:8443` | 供外部 client/GitHub Actions 呼叫 |
 | 內網 Tailscale（容器直連，推薦） | `http://llm-cli-api.tail28f10.ts.net:5001` | 私網端對端加密直連 |
 | 內網 Tailscale（NAS 轉發） | `http://newton.tail28f10.ts.net:5055` | 經 NAS host port 轉發 |
+| 外網 HTTPS (WAN) | `-` | ⚪ DDNS 已停用（改採 Tailscale 直連） |
 | 容器內部埠 | `5001`（Waitress/Flask），對外映射 `5055` | API 伺服器監聽埠 |
 | OpenAI Secure MCP Tunnel | `tunnel_6ac1b9e0779c819190ebb87b8e1570e6` | ChatGPT 專用主動出站通道（免開 Port） |
 
@@ -153,7 +153,7 @@ Layer 5 (Timeout)     — CODEX_TIMEOUT / GEMINI_TIMEOUT 限制 subprocess 最�
 需 Header `X-API-Key`（若未設定 `CODEX_API_KEY` 則不需要）。與 `llm` 函式庫的 `CodexProvider` 相容。
 
 ```bash
-curl -X POST https://api.wenchiehlee.synology.me:8443/exec \
+curl -X POST http://llm-cli-api.tail28f10.ts.net:5001/exec \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{"prompt": "請幫我寫一個 Python 的 hello world 程式", "model": "gpt-5-codex"}'
@@ -166,7 +166,7 @@ curl -X POST https://api.wenchiehlee.synology.me:8443/exec \
 呼叫 NAS 容器內的 `agy`（Google Antigravity CLI），支援最新多模型選擇與 `effort` 思考層級調節：
 
 ```bash
-curl -X POST https://api.wenchiehlee.synology.me:8443/gemini/exec \
+curl -X POST http://llm-cli-api.tail28f10.ts.net:5001/gemini/exec \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{"prompt": "分析這份財報重點", "model": "Gemini 3.8 Flash (High)", "effort": "high", "json_mode": false}'
@@ -181,7 +181,7 @@ curl -X POST https://api.wenchiehlee.synology.me:8443/gemini/exec \
 回傳目前容器內 `agy` CLI 支援的模型名稱與思考層級：
 
 ```bash
-curl https://api.wenchiehlee.synology.me:8443/gemini/models
+curl http://llm-cli-api.tail28f10.ts.net:5001/gemini/models
 ```
 
 回應範例：

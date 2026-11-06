@@ -24,4 +24,4 @@ ssh -p "$NAS_SSH_PORT" "$NAS_USER@$NAS_HOST" "docker restart $CONTAINER_NAME"
 
 echo ""
 echo "=== 完成！驗證 Gemini CLI 狀態 ==="
-curl -s "https://api.wenchiehlee.synology.me:8443/gemini/status" | python3 -m json.tool
+curl -s "http://llm-cli-api.tail28f10.ts.net:5001/gemini/status" | python3 -m json.tool

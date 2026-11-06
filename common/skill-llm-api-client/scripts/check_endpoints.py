@@ -3,7 +3,7 @@
 
 用法：
     python skills/skill-llm-api-client/scripts/check_endpoints.py
-    python skills/skill-llm-api-client/scripts/check_endpoints.py --url https://api.wenchiehlee.synology.me:8443
+    python skills/skill-llm-api-client/scripts/check_endpoints.py --url http://llm-cli-api.tail28f10.ts.net:5001
 """
 from __future__ import annotations
 
@@ -28,7 +28,6 @@ except ImportError:
 import httpx
 
 DEFAULT_CANDIDATES = [
-    "https://api.wenchiehlee.synology.me:8443",
     "http://llm-cli-api.tail28f10.ts.net:5001",
 ]
 

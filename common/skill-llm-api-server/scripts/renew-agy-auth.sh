@@ -19,7 +19,7 @@ ssh -t -p "$NAS_SSH_PORT" "$NAS_USER@$NAS_HOST" \
 
 echo ""
 echo "=== Step 2: 驗證 agy 狀態 ==="
-curl -s "https://api.wenchiehlee.synology.me:8443/gemini/status" | python3 -m json.tool
+curl -s "http://llm-cli-api.tail28f10.ts.net:5001/gemini/status" | python3 -m json.tool
 
 echo ""
 echo "若 primary.installed 為 true，代表 agy 已可用；建議額外測試一次非互動模式："

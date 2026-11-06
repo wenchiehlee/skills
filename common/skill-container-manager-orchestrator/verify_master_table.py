@@ -289,24 +289,6 @@ class MasterTableVerifier:
                 "port": 8443,
             },
             {
-                "name": "Home Assistant (DDNS 8443)",
-                "type": "DDNS (8443 HTTPS)",
-                "url": "https://ha.wenchiehlee.synology.me:8443",
-                "port": 8443,
-            },
-            {
-                "name": "LLM API (DDNS 8443)",
-                "type": "DDNS (8443 HTTPS)",
-                "url": "https://api.wenchiehlee.synology.me:8443",
-                "port": 8443,
-            },
-            {
-                "name": "Chromium VNC (DDNS 8443)",
-                "type": "DDNS (8443 HTTPS)",
-                "url": "https://vnc.wenchiehlee.synology.me:8443",
-                "port": 8443,
-            },
-            {
                 "name": "Travel App (DDNS 8443)",
                 "type": "DDNS (8443 HTTPS)",
                 "url": "https://travel.wenchiehlee.synology.me:8443",

@@ -159,9 +159,9 @@ Raspberry Pi 5:    /home/pi/docker/<service>/compose.yaml
 | DDNS 服務子網域 | DDNS 外部存取網址 (:8080 / :8443) | 轉發本機埠 | 對應 Docker 容器 | 當前 Docker 狀態 | 存取預期結果 |
 | :--- | :--- | :---: | :--- | :---: | :--- |
 | **travel** | `travel.wenchiehlee.synology.me` | 3333 | `travel-app` | **✅ Up** | 正常存取 Web 應用 |
-| **api** | `api.wenchiehlee.synology.me` | 5055 | `llm-cli-api-server` | **✅ Up** | 正常存取 LLM API |
-| **vnc** | `vnc.wenchiehlee.synology.me` | 3021 | `CHROMIUM` | **✅ Up** | 正常存取 KasmVNC 瀏覽器 |
-| **ha** | `ha.wenchiehlee.synology.me` | 8123 | `homeassistant` | **✅ Up** | 正常存取 Home Assistant |
+| **api** | - (已自 DDNS 移除) | 5055 | `llm-cli-api-server` | **✅ Up** | 僅供 Tailscale P2P 直連 (Port 5001) |
+| **vnc** | - (已自 DDNS 移除) | 3021 | `CHROMIUM` | **✅ Up** | 僅供 Tailscale P2P 直連 (Port 13021) |
+| **ha** | - (已自 DDNS 移除) | 8123 | `homeassistant` | **✅ Up** | 僅供 Tailscale P2P 直連 (Port 8123) |
 | **immich** | `immich.wenchiehlee.synology.me` | 2283 | `immich_server` | ❌ Exited (5d) | **502 Bad Gateway** |
 | **influxdb** | `influxdb.wenchiehlee.synology.me` | 8086 | `INFLUXDB` | ❌ Exited (5d) | **502 Bad Gateway** |
 | **putty** | `putty.wenchiehlee.synology.me` | 5800 | `PUTTY` | ❌ Exited (5d) | **502 Bad Gateway** |
@@ -233,7 +233,7 @@ python skills/skill-container-manager-orchestrator/syno_ddns.py --host newton.ta
 2. **QuickConnect 狀態獲取**：
    - 呼叫 `SYNO.Core.QuickConnect` (method: `get`) 取得 QuickConnect ID (`wenchiehlee.quickconnect.to`) 與開關狀態。
 3. **子域名埠位對應 (Reverse Proxy Routing)**：
-   - 呼叫 `SYNO.Core.AppPortal.ReverseProxy` (method: `list`) 剖析所有反向代理規則（如 `travel.wenchiehlee.synology.me -> localhost:3333`、`api.wenchiehlee.synology.me -> localhost:5055`）。
+   - 呼叫 `SYNO.Core.AppPortal.ReverseProxy` (method: `list`) 剖析所有反向代理規則（如 `travel.wenchiehlee.synology.me -> localhost:3333`、`linebot.wenchiehlee.synology.me -> localhost:7788`）。
    - 自動交叉比對 `docker ps -a` 即時容器狀態，標記對應的容器是否處於 `🟢 Up` 或 `⚪ Parked` 狀態。
 
 ---
