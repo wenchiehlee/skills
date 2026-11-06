@@ -251,7 +251,7 @@ skills:
   source: https://github.com/ZhongZheng782/wenchiehlee.quickconnect.to-Container.Manager
   repo_count: 5
   updated_at: '2026-10-10'
-  revised_at: '2026-10-25'
+  revised_at: '2026-11-06'
 - name: skill-document-diagram-design
   group: common
   path: common/skill-document-diagram-design
@@ -437,7 +437,7 @@ skills:
   source: https://github.com/wenchiehlee/llm
   repo_count: 8
   updated_at: '2026-10-11'
-  revised_at: '2026-10-25'
+  revised_at: '2026-11-06'
 - name: skill-llm-api-server
   group: common
   path: common/skill-llm-api-server
@@ -452,7 +452,7 @@ skills:
   source: https://github.com/ZhongZheng782/Llm-Cli-APIServer
   repo_count: 1
   updated_at: '2026-10-04'
-  revised_at: '2026-10-25'
+  revised_at: '2026-11-06'
 - name: skill-miz-fetch
   group: common
   path: common/skill-miz-fetch
