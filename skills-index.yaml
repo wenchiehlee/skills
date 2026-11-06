@@ -14,7 +14,7 @@ skills:
   source: https://github.com/wenchiehlee/Analytics-Deck
   repo_count: 2
   updated_at: '2026-10-28'
-  revised_at: '2026-10-28'
+  revised_at: '2026-11-06'
 - name: skill-android-adb-gadget
   group: common
   path: common/skill-android-adb-gadget
