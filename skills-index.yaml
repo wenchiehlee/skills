@@ -264,7 +264,7 @@ skills:
   platforms: []
   maintainer: wenchiehlee
   source: https://github.com/ZhongZheng782/Llm-Cli-APIServer
-  repo_count: 1
+  repo_count: 2
   updated_at: '2026-11-07'
   revised_at: '2026-11-07'
 - name: skill-document-diagram-design
