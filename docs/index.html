@@ -24,6 +24,455 @@
     <section aria-labelledby="catalog-title"><div class="section-head"><div><h2 id="catalog-title" data-zh="技能與獨立工具目錄" data-en="Skills & standalone tools">技能與獨立工具目錄</h2><p data-zh="依名稱、用途、分類或來源搜尋" data-en="Search names, purposes, categories, or sources">依名稱、用途、分類或來源搜尋</p></div><div class="stats"><span class="stat"><strong id="stat-count">—</strong> <span data-zh="個項目" data-en="items">個項目</span></span><span class="stat"><strong id="stat-groups">—</strong> <span data-zh="個分類" data-en="categories">個分類</span></span><span class="stat"><span data-zh="索引更新" data-en="Index updated">索引更新</span> <strong id="stat-date">—</strong></span></div></div>
       <div class="toolbar"><label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" class="search" type="search" data-placeholder-zh="搜尋技能名稱、用途或關鍵字…" data-placeholder-en="Search skills by name, purpose, or keyword…" placeholder="搜尋技能名稱、用途或關鍵字…" autocomplete="off"></label></div><div id="filters" class="filters" aria-label="Skill categories"></div><div class="results-row"><span id="result-count" aria-live="polite"></span><span data-zh="點選技能名稱查看詳細內容" data-en="Select a skill to view its details">點選技能名稱查看詳細內容</span></div><div id="results" class="grid"><div class="loading" data-zh="正在載入技能目錄…" data-en="Loading the skill catalog…">正在載入技能目錄…</div></div>
     </section></main>
+  <div class="shell" style="margin-top: 24px;">
+<style>
+*, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      padding: 40px 20px;
+      line-height: 1.4;
+    }
+
+    .preview-canvas {
+      max-width: 1380px;
+      margin: 0 auto;
+    }
+
+    .preview-header {
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .preview-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      background: #e2e8f0;
+      color: #334155;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border-radius: 9999px;
+      margin-bottom: 8px;
+    }
+
+    .preview-badge::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+    }
+
+    .preview-header h1 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+    }
+
+    .preview-header p {
+      font-size: 12.5px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    /* =========================================================
+       PURE 6 CARDS FOOTER (Ultra-Clean, No Top/Bottom Fluff)
+       ========================================================= */
+    .deck-family-footer {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 2px 10px -2px rgba(15, 23, 42, 0.04);
+    }
+
+    /* 6 COMPACT CARDS ROW */
+    .deck-cards-row {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 1180px) {
+      .deck-cards-row {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .deck-cards-row {
+        grid-template-columns: repeat(1, 1fr);
+      }
+    }
+
+    /* ULTRA COMPACT CARD (~95px height) */
+    .deck-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 9px;
+      padding: 9px 10px 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 6px;
+      transition: all 0.16s ease;
+      position: relative;
+    }
+
+    .deck-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px -3px rgba(15, 23, 42, 0.08);
+      border-color: var(--deck-accent, #3b82f6);
+    }
+
+    /* Card Head: Avatar + Title + Tag */
+    .deck-card-head {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .deck-avatar {
+      font-size: 14px;
+      line-height: 1;
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      background: var(--deck-bg, #f1f5f9);
+      border: 1px solid var(--deck-border, #e2e8f0);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .deck-card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+
+    .deck-tag {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: var(--deck-bg, #f1f5f9);
+      color: var(--deck-accent, #475569);
+      margin-left: auto;
+      border: 1px solid var(--deck-border, #e2e8f0);
+    }
+
+    /* Compact Key Numbers Tray */
+    .deck-numbers-compact {
+      background: #f8fafc;
+      border: 1px solid #edf2f7;
+      border-radius: 6px;
+      padding: 5px 7px;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5px;
+    }
+
+    .stat-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 9.5px;
+      line-height: 1.2;
+    }
+
+    .stat-lbl {
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    .stat-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: var(--deck-accent, #0f172a);
+      font-size: 10px;
+    }
+
+    /* Compact Dual Action Buttons */
+    .deck-actions-compact {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+    }
+
+    .deck-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 3.5px 0;
+      font-size: 10px;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 5px;
+      line-height: 1;
+      transition: all 0.12s ease;
+    }
+
+    .deck-btn-portal {
+      background: var(--deck-accent, #0f172a);
+      color: #ffffff;
+      border: 1px solid var(--deck-accent, #0f172a);
+    }
+
+    .deck-btn-portal:hover {
+      opacity: 0.9;
+    }
+
+    .deck-btn-repo {
+      background: #ffffff;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+    }
+
+    .deck-btn-repo:hover {
+      background: #f8fafc;
+      border-color: #94a3b8;
+      color: #0f172a;
+    }
+
+    .deck-btn svg {
+      width: 9px;
+      height: 9px;
+      stroke-width: 2.2;
+    }
+
+    /* THEME ACCENTS */
+    .theme-ux {
+      --deck-accent: #0d9488;
+      --deck-bg: #f0fdfa;
+      --deck-border: #ccfbf1;
+    }
+    .theme-skill {
+      --deck-accent: #059669;
+      --deck-bg: #ecfdf5;
+      --deck-border: #a7f3d0;
+    }
+    .theme-analytics {
+      --deck-accent: #2563eb;
+      --deck-bg: #eff6ff;
+      --deck-border: #bfdbfe;
+    }
+    .theme-pipeline {
+      --deck-accent: #7c3aed;
+      --deck-bg: #f5f3ff;
+      --deck-border: #ddd6fe;
+    }
+    .theme-data {
+      --deck-accent: #d97706;
+      --deck-bg: #fffbeb;
+      --deck-border: #fde68a;
+    }
+    .theme-docker {
+      --deck-accent: #0284c7;
+      --deck-bg: #f0f9ff;
+      --deck-border: #bae6fd;
+    }
+</style>
+<footer class="deck-family-footer">
+      
+      <!-- 6 COMPACT CARDS IN ONE ROW -->
+      <div class="deck-cards-row">
+
+        <!-- 1. UX-Deck -->
+        <article class="deck-card theme-ux">
+          <div class="deck-card-head">
+            <span class="deck-avatar">🦌</span>
+            <span class="deck-card-title">UX-Deck</span>
+            <span class="deck-tag">Design</span>
+          </div>
+          <div class="deck-numbers-compact">
+            <div class="stat-line">
+              <span class="stat-lbl">幾何吉祥物</span>
+              <span class="stat-val">13 Mascots</span>
+            </div>
+            <div class="stat-line">
+              <span class="stat-lbl">涵蓋端點</span>
+              <span class="stat-val">9+ Hubs · AA</span>
+            </div>
+          </div>
+          <div class="deck-actions-compact">
+            <a href="https://wenchiehlee-ux.github.io/UX-Deck/" target="_blank" rel="noopener noreferrer" class="deck-btn deck-btn-portal">
+              <span>Portal</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </a>
+            <a href="https://github.com/wenchiehlee-ux/UX-Deck" target="_blank" rel="noopener noreferrer" class="deck-btn deck-btn-repo">
+              <span>Repo</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            </a>
+          </div>
+        </article>
+
+        <!-- 2. Skill-Deck -->
+        <article class="deck-card theme-skill">
+          <div class="deck-card-head">
+            <span class="deck-avatar">🐇</span>
+            <span class="deck-card-title">Skill-Deck</span>
+            <span class="deck-tag">Registry</span>
+          </div>
+          <div class="deck-numbers-compact">
+            <div class="stat-line">
+              <span class="stat-lbl">收錄技能</span>
+              <span class="stat-val">60+ Skills</span>
+            </div>
+            <div class="stat-line">
+              <span class="stat-lbl">分類 / 下游</span>
+              <span class="stat-val">8 Cats · 8+ Repos</span>
+            </div>
+          </div>
+          <div class="deck-actions-compact">
+            <a href="https://wenchiehlee.github.io/skills/" target="_blank" rel="noopener noreferrer" class="deck-btn deck-btn-portal">
+              <span>Portal</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </a>
+            <a href="https://github.com/wenchiehlee/skills" target="_blank" rel="noopener noreferrer" class="deck-btn deck-btn-repo">
+              <span>Repo</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            </a>
+          </div>
+        </article>
+
+        <!-- 3. Analytics-Deck -->
+        <article class="deck-card theme-analytics">
+          <div class="deck-card-head">
+            <span class="deck-avatar">📊</span>
+            <span class="deck-card-title">Analytics-Deck</span>
+            <span class="deck-tag">Telemetry</span>
+          </div>
+          <div class="deck-numbers-compact">
+            <div class="stat-line">
+              <span class="stat-lbl">全站累積</span>
+              <span class="stat-val">20.5k Views</span>
+            </div>
+            <div class="stat-line">
+              <span class="stat-lbl">觀測 / 頻率</span>
+              <span class="stat-val">13 Pods · 4x/D</span>
+            </div>
+          </div>
+          <div class="deck-actions-compact">
+            <a href="https://wenchiehlee.github.io/Analytics-Deck/" target="_blank" rel="noopener noreferrer" class="deck-btn deck-btn-portal">
+              <span>Portal</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </a>
+            <a href="https://github.com/wenchiehlee/Analytics-Deck" target="_blank" rel="noopener noreferrer" class="deck-btn deck-btn-repo">
+              <span>Repo</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            </a>
+          </div>
+        </article>
+
+        <!-- 4. Pipeline-Deck -->
+        <article class="deck-card theme-pipeline">
+          <div class="deck-card-head">
+            <span class="deck-avatar">⚙️</span>
+            <span class="deck-card-title">Pipeline-Deck</span>
+            <span class="deck-tag">Workflow</span>
+          </div>
+          <div class="deck-numbers-compact">
+            <div class="stat-line">
+              <span class="stat-lbl">自動化架構</span>
+              <span class="stat-val">CI/CD Engine</span>
+            </div>
+            <div class="stat-line">
+              <span class="stat-lbl">排程調度</span>
+              <span class="stat-val">GitOps · Actions</span>
+            </div>
+          </div>
+          <div class="deck-actions-compact">
+            <a href="https://wenchiehlee.github.io/Pipeline-Deck/" target="_blank" rel="noopener noreferrer" class="deck-btn deck-btn-portal">
+              <span>Portal</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </a>
+            <a href="https://github.com/wenchiehlee/Pipeline-Deck" target="_blank" rel="noopener noreferrer" class="deck-btn deck-btn-repo">
+              <span>Repo</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            </a>
+          </div>
+        </article>
+
+        <!-- 5. Data-Deck -->
+        <article class="deck-card theme-data">
+          <div class="deck-card-head">
+            <span class="deck-avatar">📈</span>
+            <span class="deck-card-title">Data-Deck</span>
+            <span class="deck-tag">Finance</span>
+          </div>
+          <div class="deck-numbers-compact">
+            <div class="stat-line">
+              <span class="stat-lbl">核心管線</span>
+              <span class="stat-val">89 Pipelines</span>
+            </div>
+            <div class="stat-line">
+              <span class="stat-lbl">個股 / 資料源</span>
+              <span class="stat-val">1,735 · 16 Src</span>
+            </div>
+          </div>
+          <div class="deck-actions-compact">
+            <a href="https://wenchiehlee-money.github.io/biztrends.TW/" target="_blank" rel="noopener noreferrer" class="deck-btn deck-btn-portal">
+              <span>Portal</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </a>
+            <a href="https://github.com/wenchiehlee-money/biztrends.TW" target="_blank" rel="noopener noreferrer" class="deck-btn deck-btn-repo">
+              <span>Repo</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            </a>
+          </div>
+        </article>
+
+        <!-- 6. Docker-Deck -->
+        <article class="deck-card theme-docker">
+          <div class="deck-card-head">
+            <span class="deck-avatar">🐳</span>
+            <span class="deck-card-title">Docker-Deck</span>
+            <span class="deck-tag">Catalog</span>
+          </div>
+          <div class="deck-numbers-compact">
+            <div class="stat-line">
+              <span class="stat-lbl">正式映像</span>
+              <span class="stat-val">3 Images</span>
+            </div>
+            <div class="stat-line">
+              <span class="stat-lbl">累計拉取</span>
+              <span class="stat-val">3,600+ Pulls</span>
+            </div>
+          </div>
+          <div class="deck-actions-compact">
+            <a href="https://wenchiehlee.github.io/dockers/" target="_blank" rel="noopener noreferrer" class="deck-btn deck-btn-portal">
+              <span>Portal</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </a>
+            <a href="https://github.com/wenchiehlee/dockers" target="_blank" rel="noopener noreferrer" class="deck-btn deck-btn-repo">
+              <span>Repo</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            </a>
+          </div>
+        </article>
+
+      </div>
+
+    </footer>
+
+</div>
   <footer class="shell footer"><span>Skills Registry · <span data-zh="共享、版本化、可重用" data-en="Shared, versioned, reusable">共享、版本化、可重用</span></span><span><a href="https://github.com/wenchiehlee/skills" target="_blank" rel="noopener">GitHub</a> · <a href="https://github.com/wenchiehlee/skills/blob/main/README.md" target="_blank" rel="noopener">README</a></span></footer>
   <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
   <script>
