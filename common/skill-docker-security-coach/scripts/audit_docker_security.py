@@ -271,6 +271,46 @@ class DockerSecurityAuditor:
                 description="機密設定皆以 ${VAR} 格式或環境變數注入。",
             ))
 
+    def audit_dockerignore(self, dockerignore_path: Path) -> None:
+        if not dockerignore_path.exists():
+            self.findings.append(AuditFinding(
+                rule_id="DSC-010",
+                title="缺少 .dockerignore 檔案",
+                category="Secrets",
+                severity="Medium",
+                status="WARN",
+                description="未配置 .dockerignore，可能意外將 .env、.git 或敏感檔案打包進 Docker image。",
+                recommendation="建議在專案根目錄新增 .dockerignore 並排除 .env、.git、node_modules 等檔案。",
+            ))
+            return
+
+        rel_path = str(dockerignore_path.relative_to(self.root_dir))
+        content = dockerignore_path.read_text(encoding="utf-8", errors="ignore")
+        patterns = [line.strip() for line in content.splitlines() if line.strip() and not line.strip().startswith("#")]
+
+        has_env_ignored = any(p in [".env", "*.env", ".env*"] or p.startswith(".env") for p in patterns)
+        if not has_env_ignored:
+            self.findings.append(AuditFinding(
+                rule_id="DSC-010",
+                title=".dockerignore 未排除 .env 機密設定檔",
+                category="Secrets",
+                severity="High",
+                status="FAIL",
+                file_path=rel_path,
+                description="發現 .dockerignore 中未定義 .env 或 .env*，若在 Dockerfile 執行 COPY 指令可能導致機密外洩。",
+                recommendation="在 .dockerignore 中加入 .env 與 .env.*，防止敏感憑證被打包進映像檔中。",
+            ))
+        else:
+            self.findings.append(AuditFinding(
+                rule_id="DSC-010",
+                title=".dockerignore 已妥善排除機密設定檔",
+                category="Secrets",
+                severity="High",
+                status="PASS",
+                file_path=rel_path,
+                description="已於 .dockerignore 排除 .env 等機密檔案。",
+            ))
+
     def audit_node_dependencies(self, mcp_dir: Path) -> None:
         package_json = mcp_dir / "package.json"
         if not package_json.exists():
@@ -353,10 +393,17 @@ class DockerSecurityAuditor:
         # 1. Dockerfile
         self.audit_dockerfile(self.root_dir / "Dockerfile")
 
-        # 2. docker-compose.yml
-        self.audit_docker_compose(self.root_dir / "docker-compose.yml")
+        # 2. docker-compose / compose files
+        for compose_name in ["docker-compose.yml", "docker-compose.yaml", "compose.yaml", "compose.yml"]:
+            compose_path = self.root_dir / compose_name
+            if compose_path.exists():
+                self.audit_docker_compose(compose_path)
+                break
 
-        # 3. Node.js MCP Engine
+        # 3. .dockerignore
+        self.audit_dockerignore(self.root_dir / ".dockerignore")
+
+        # 4. Node.js MCP Engine
         self.audit_node_dependencies(self.root_dir / "mcp")
 
         # 計算評分與統計
