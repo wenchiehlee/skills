@@ -252,6 +252,21 @@ skills:
   repo_count: 5
   updated_at: '2026-10-10'
   revised_at: '2026-11-06'
+- name: skill-docker-security-coach
+  group: common
+  path: common/skill-docker-security-coach
+  version: 1.0.0
+  description: Coach Docker and Node.js container security audits, hardening recipes,
+    and vulnerability assessments in Traditional Chinese. Use for evaluating Dockerfile
+    practices, container privilege boundaries, npm dependency supply chains, secrets
+    isolation, and producing structured audit reports.
+  category: devops-security
+  platforms: []
+  maintainer: wenchiehlee
+  source: https://github.com/ZhongZheng782/Llm-Cli-APIServer
+  repo_count: 1
+  updated_at: '2026-11-07'
+  revised_at: '2026-11-07'
 - name: skill-document-diagram-design
   group: common
   path: common/skill-document-diagram-design
@@ -441,7 +456,7 @@ skills:
 - name: skill-llm-api-server
   group: common
   path: common/skill-llm-api-server
-  version: 1.3.1
+  version: 1.3.4
   description: 在 Synology NAS Docker 容器中運行的 LLM CLI 橋接伺服器，將 OpenAI codex-cli（ChatGPT
     Pro）與 Google gemini-cli 封裝為 Flask/Waitress HTTP API（/exec、/gemini/exec、/smart/exec），供
     llm 函式庫的 CodexProvider 遠端呼叫。
@@ -451,8 +466,8 @@ skills:
   maintainer: wenchiehlee
   source: https://github.com/ZhongZheng782/Llm-Cli-APIServer
   repo_count: 1
-  updated_at: '2026-10-04'
-  revised_at: '2026-11-06'
+  updated_at: '2026-11-07'
+  revised_at: '2026-11-07'
 - name: skill-miz-fetch
   group: common
   path: common/skill-miz-fetch
