@@ -20,6 +20,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
+__version__ = "1.0.0"
+
 
 @dataclass
 class AuditFinding:
@@ -421,6 +423,7 @@ def format_markdown_report(report: AuditReport) -> str:
 
 def main():
     parser = argparse.ArgumentParser(description="Docker & Node.js 容器安全審計工具")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("--root-dir", type=Path, default=Path.cwd(), help="專案根目錄")
     parser.add_argument("--json", action="store_true", help="以 JSON 格式輸出")
     args = parser.parse_args()

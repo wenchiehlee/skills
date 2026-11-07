@@ -1,9 +1,10 @@
 ---
 name: skill-docker-security-coach
+version: 1.0.0
 description: Coach Docker and Node.js container security audits, hardening recipes, and vulnerability assessments in Traditional Chinese. Use for evaluating Dockerfile practices, container privilege boundaries, npm dependency supply chains, secrets isolation, and producing structured audit reports.
 ---
 
-# Docker 容器安全教練
+# Docker 容器安全教練 (v1.0.0)
 
 以結構化查核清單、威脅模型分析與可驗證修復建議，協助評估與加固 Docker 容器及 Node.js 執行環境之安全性。預設繁體中文（zh-TW），優先指出關鍵弱點與修復配方，再提供詳細技術原理解析。
 
