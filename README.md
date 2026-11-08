@@ -100,7 +100,7 @@
 | [skill-pptx-to-md](common/skill-pptx-to-md) | common | document-conversion | — | 1.0.1 | — | 使用 python-pptx 將 PowerPoint (.pptx) 簡報轉換為 Markdown 格式，保留標題、項目符號、表格與講者備忘稿，並可選擇抽取內嵌圖片。 | 2026-10-25 |
 | [skill-document-ppt-design](common/skill-document-ppt-design) | common | document-design | — | 1.0.0 | — | Design and generate editorial-quality PPT/PPTX slide decks as SVG or PPTX, following the design systems from software-ai-life/Awesome-PPT-Design-Skills. Supports 7 house styles: Futuristic Tech Editorial, Japanese Lifestyle Editorial, Washi Paper Soft Glow, Soft 3D Clay, Minimalist Luxury Branding, Modern Illustration Editorial, Japanese Hand-Drawn Editorial. Use for ppt-master workflows, slide deck design, SVG page generation, PPTX export, and PDF-to-PPT transformation. | 2026-10-25 |
 
-最後產生日期：2026-11-07
+最後產生日期：2026-11-08
 <!-- SKILLS-TABLE:END -->
 
 ## 獨立技能
