@@ -408,15 +408,15 @@
           <div class="deck-card-head">
             <span class="deck-avatar">⚙️</span>
             <span class="deck-card-title">Pipeline-Deck</span>
-            <span class="deck-tag" style="background:#f5f3ff; color:#7c3aed; border-color:#ddd6fe;">227/75/0/1</span>
+            <span class="deck-tag">CI/CD</span>
           </div>
           <div class="deck-numbers-compact">
             <div class="stat-line">
-              <span class="stat-lbl">全域規模</span>
-              <span class="stat-val" style="color:#7c3aed;">227 WFs · 75 Repos</span>
+              <span class="stat-lbl">工作流程</span>
+              <span class="stat-val">227 WFs · 75 庫</span>
             </div>
             <div class="stat-line">
-              <span class="stat-lbl">健康警報</span>
+              <span class="stat-lbl">異常警報</span>
               <span class="stat-val">0 嚴重 · 1 警告</span>
             </div>
           </div>
@@ -534,7 +534,7 @@
       document.querySelectorAll('[data-lang]').forEach(b=>b.addEventListener('click',()=>setLanguage(b.dataset.lang)));setLanguage(lang,false);$('#search').addEventListener('input',render);fetch('https://raw.githubusercontent.com/wenchiehlee/skills/main/skills-index.yaml',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error(`HTTP ${r.status}`);return r.text()}).then(src=>{if(!window.jsyaml)throw Error('YAML parser unavailable');const data=jsyaml.load(src)||{};skills=Array.isArray(data.skills)?data.skills:[];const standaloneSkills=Array.isArray(data.standalone_skills)?data.standalone_skills:[];skills=skills.concat(standaloneSkills.map(s=>({...s,item_type:'standalone-skill',group:'standalone'})));$('#stat-count').textContent=skills.length.toLocaleString();$('#stat-groups').textContent=new Set(skills.map(s=>categoryRoot(s.category)).filter(Boolean)).size;$('#stat-date').textContent=data.generated_at||'—';renderFilters();render()}).catch(err=>{$('#results').innerHTML=`<div class="error">${t('技能索引目前無法載入。請改從 GitHub 查看最新索引。','The skill index could not be loaded. Open the latest index on GitHub.')}</div>`;$('#result-count').textContent='';console.error('Unable to load skills index',err)})
     })();
   </script>
-  <!-- Deck Family Auto-Hydration Script (Live Sync 227/75/0/1) -->
+  <!-- Deck Family Auto-Hydration Script (Live Sync Pipeline Metrics) -->
   <script>
     (function() {
       fetch('https://wenchiehlee.github.io/Pipeline-Deck/data/kpi.json')
@@ -553,6 +553,7 @@
         }).catch(function() {});
     })();
   </script>
+
 
 </body>
 </html>
