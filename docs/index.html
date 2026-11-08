@@ -36,12 +36,12 @@
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: #f8fafc;
       color: #0f172a;
-      padding: 40px 20px;
+      padding: 40px 16px;
       line-height: 1.4;
     }
 
     .preview-canvas {
-      max-width: 1380px;
+      max-width: 1440px;
       margin: 0 auto;
     }
 
@@ -87,47 +87,38 @@
     }
 
     /* =========================================================
-       PURE 6 CARDS FOOTER (Ultra-Clean, No Top/Bottom Fluff)
+       STRICT ONE ROW 7 CARDS FOOTER
        ========================================================= */
     .deck-family-footer {
       background: #ffffff;
       border: 1px solid #e2e8f0;
       border-radius: 12px;
-      padding: 12px;
+      padding: 8px;
       box-shadow: 0 2px 10px -2px rgba(15, 23, 42, 0.04);
+      width: 100%;
+      overflow-x: auto;
     }
 
-    /* 6 COMPACT CARDS ROW */
+    /* STRICT ONE ROW (7 CARDS EQUAL WIDTH, NO WRAPPING) */
     .deck-cards-row {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 10px;
+      grid-template-columns: repeat(7, minmax(130px, 1fr));
+      gap: 6px;
+      width: 100%;
     }
 
-    @media (max-width: 1180px) {
-      .deck-cards-row {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-
-    @media (max-width: 640px) {
-      .deck-cards-row {
-        grid-template-columns: repeat(1, 1fr);
-      }
-    }
-
-    /* ULTRA COMPACT CARD (~95px height) */
+    /* ULTRA COMPACT CARD (~90px height) */
     .deck-card {
       background: #ffffff;
       border: 1px solid #e2e8f0;
-      border-radius: 9px;
-      padding: 9px 10px 8px;
+      border-radius: 8px;
+      padding: 7px 8px 6px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 6px;
+      gap: 5px;
       transition: all 0.16s ease;
-      position: relative;
+      min-width: 0;
     }
 
     .deck-card:hover {
@@ -140,15 +131,16 @@
     .deck-card-head {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
+      min-width: 0;
     }
 
     .deck-avatar {
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1;
-      width: 22px;
-      height: 22px;
-      border-radius: 5px;
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
       background: var(--deck-bg, #f1f5f9);
       border: 1px solid var(--deck-border, #e2e8f0);
       display: inline-flex;
@@ -158,75 +150,85 @@
     }
 
     .deck-card-title {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       color: #0f172a;
       letter-spacing: -0.01em;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .deck-tag {
-      font-size: 9px;
+      font-size: 8px;
       font-weight: 700;
       text-transform: uppercase;
-      padding: 1px 5px;
-      border-radius: 4px;
+      padding: 1px 3px;
+      border-radius: 3px;
       background: var(--deck-bg, #f1f5f9);
       color: var(--deck-accent, #475569);
       margin-left: auto;
       border: 1px solid var(--deck-border, #e2e8f0);
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     /* Compact Key Numbers Tray */
     .deck-numbers-compact {
       background: #f8fafc;
       border: 1px solid #edf2f7;
-      border-radius: 6px;
-      padding: 5px 7px;
+      border-radius: 4px;
+      padding: 3px 5px;
       display: flex;
       flex-direction: column;
-      gap: 2.5px;
+      gap: 2px;
     }
 
     .stat-line {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 9.5px;
+      font-size: 8.5px;
       line-height: 1.2;
+      white-space: nowrap;
+      gap: 4px;
     }
 
     .stat-lbl {
       color: #64748b;
       font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .stat-val {
       font-family: 'JetBrains Mono', monospace;
       font-weight: 700;
       color: var(--deck-accent, #0f172a);
-      font-size: 10px;
+      font-size: 9px;
+      flex-shrink: 0;
     }
 
     /* Compact Dual Action Buttons */
     .deck-actions-compact {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 5px;
+      gap: 4px;
     }
 
     .deck-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 3px;
-      padding: 3.5px 0;
-      font-size: 10px;
+      gap: 2px;
+      padding: 3px 0;
+      font-size: 9px;
       font-weight: 600;
       text-decoration: none;
-      border-radius: 5px;
+      border-radius: 4px;
       line-height: 1;
       transition: all 0.12s ease;
+      white-space: nowrap;
     }
 
     .deck-btn-portal {
@@ -252,8 +254,8 @@
     }
 
     .deck-btn svg {
-      width: 9px;
-      height: 9px;
+      width: 8px;
+      height: 8px;
       stroke-width: 2.2;
     }
 
@@ -283,6 +285,11 @@
       --deck-bg: #fffbeb;
       --deck-border: #fde68a;
     }
+    .theme-llm {
+      --deck-accent: #4f46e5;
+      --deck-bg: #eef2ff;
+      --deck-border: #c7d2fe;
+    }
     .theme-docker {
       --deck-accent: #0284c7;
       --deck-bg: #f0f9ff;
@@ -291,7 +298,7 @@
 </style>
 <footer class="deck-family-footer">
       
-      <!-- 6 COMPACT CARDS IN ONE ROW -->
+      <!-- STRICT 7 CARDS IN ONE ROW -->
       <div class="deck-cards-row">
 
         <!-- 1. UX-Deck -->
@@ -337,7 +344,7 @@
             </div>
             <div class="stat-line">
               <span class="stat-lbl">分類 / 下游</span>
-              <span class="stat-val">8 Cats · 8+ Repos</span>
+              <span class="stat-val">8 Cats · 8+</span>
             </div>
           </div>
           <div class="deck-actions-compact">
@@ -423,7 +430,7 @@
               <span class="stat-val">89 Pipelines</span>
             </div>
             <div class="stat-line">
-              <span class="stat-lbl">個股 / 資料源</span>
+              <span class="stat-lbl">個股 / 來源</span>
               <span class="stat-val">1,735 · 16 Src</span>
             </div>
           </div>
@@ -439,7 +446,36 @@
           </div>
         </article>
 
-        <!-- 6. Docker-Deck -->
+        <!-- 6. Llm-Deck -->
+        <article class="deck-card theme-llm">
+          <div class="deck-card-head">
+            <span class="deck-avatar">🧠</span>
+            <span class="deck-card-title">Llm-Deck</span>
+            <span class="deck-tag">Inference</span>
+          </div>
+          <div class="deck-numbers-compact">
+            <div class="stat-line">
+              <span class="stat-lbl">總調用量</span>
+              <span class="stat-val">25k+ Calls</span>
+            </div>
+            <div class="stat-line">
+              <span class="stat-lbl">路由 / 提供</span>
+              <span class="stat-val">3 Provider · AI</span>
+            </div>
+          </div>
+          <div class="deck-actions-compact">
+            <a href="https://wenchiehlee.github.io/llm/" target="_blank" rel="noopener noreferrer" class="deck-btn deck-btn-portal">
+              <span>Portal</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </a>
+            <a href="https://github.com/wenchiehlee/llm" target="_blank" rel="noopener noreferrer" class="deck-btn deck-btn-repo">
+              <span>Repo</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            </a>
+          </div>
+        </article>
+
+        <!-- 7. Docker-Deck -->
         <article class="deck-card theme-docker">
           <div class="deck-card-head">
             <span class="deck-avatar">🐳</span>
