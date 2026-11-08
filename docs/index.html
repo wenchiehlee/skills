@@ -412,12 +412,12 @@
           </div>
           <div class="deck-numbers-compact">
             <div class="stat-line">
-              <span class="stat-lbl">北極星指標</span>
-              <span class="stat-val" style="color:#7c3aed;">227/75/0/1</span>
+              <span class="stat-lbl">全域規模</span>
+              <span class="stat-val" style="color:#7c3aed;">227 WFs · 75 Repos</span>
             </div>
             <div class="stat-line">
-              <span class="stat-lbl">CI/CD 規模</span>
-              <span class="stat-val">227 WFs · 75 Repos</span>
+              <span class="stat-lbl">健康警報</span>
+              <span class="stat-val">0 嚴重 · 1 警告</span>
             </div>
           </div>
           <div class="deck-actions-compact">
@@ -544,11 +544,15 @@
           if (!card || !d || !d.card) return;
           var tag = card.querySelector('.deck-tag');
           if (tag && d.card.tag) tag.textContent = d.card.tag;
+          var lbls = card.querySelectorAll('.stat-lbl');
           var vals = card.querySelectorAll('.stat-val');
+          if (lbls[0] && d.card.stat1) lbls[0].textContent = d.card.stat1.label;
           if (vals[0] && d.card.stat1) vals[0].textContent = d.card.stat1.value;
+          if (lbls[1] && d.card.stat2) lbls[1].textContent = d.card.stat2.label;
           if (vals[1] && d.card.stat2) vals[1].textContent = d.card.stat2.value;
         }).catch(function() {});
     })();
   </script>
+
 </body>
 </html>
